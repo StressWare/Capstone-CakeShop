@@ -1,0 +1,21 @@
+.cake-carousel {
+  max-width: 1100px;
+  margin: auto;
+}
+
+.cake-carousel .carousel-item {
+  height: 500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f8f9fa;
+}
+
+.cake-carousel img {
+  max-width: 80%;
+  max-height: 80%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+   object-position: center;
+}

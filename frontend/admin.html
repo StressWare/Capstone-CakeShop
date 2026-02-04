@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Ms. Brave Cake Shop</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container my-5">
+  <h1 class="mb-4">📊 Admin Dashboard</h1>
+
+  <!-- SALES -->
+  <h4>Sales Record</h4>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Order</th>
+        <th>Amount (₱)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-02-01</td>
+        <td>Birthday Cake</td>
+        <td>1500</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- EXPENSES -->
+  <h4>Expenses</h4>
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Description</th>
+        <th>Cost (₱)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>2026-02-01</td>
+        <td>Flour & Sugar</td>
+        <td>800</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- INVENTORY -->
+  <h4>Inventory</h4>
+  <form id="inventory-form" class="row g-3 mb-3">
+    <div class="col-md-4">
+      <input type="text" id="item-name" class="form-control" placeholder="Item Name" required>
+    </div>
+    <div class="col-md-3">
+      <input type="number" id="item-qty" class="form-control" placeholder="Quantity" required>
+    </div>
+    <div class="col-md-3">
+      <input type="number" id="item-cost" class="form-control" placeholder="Cost (₱)" required>
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary w-100">Add</button>
+    </div>
+  </form>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Quantity</th>
+        <th>Cost (₱)</th>
+      </tr>
+    </thead>
+    <tbody id="inventory-tbody">
+      <!-- Inventory items will be populated here via JS -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+// --- Load inventory from API ---
+async function loadInventory() {
+  const res = await fetch("/api/inventory");
+  const inv = await res.json();
+  const tbody = document.getElementById("inventory-tbody");
+  tbody.innerHTML = inv.map(i => `
+    <tr>
+      <td>${i.item}</td>
+      <td>${i.quantity}</td>
+      <td>${i.cost}</td>
+    </tr>
+  `).join("");
+}
+
+// --- Add new inventory item ---
+document.getElementById("inventory-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const item = document.getElementById("item-name").value;
+  const quantity = parseInt(document.getElementById("item-qty").value);
+  const cost = parseFloat(document.getElementById("item-cost").value);
+
+  await fetch("/api/inventory", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ item, quantity, cost })
+  });
+
+  document.getElementById("inventory-form").reset();
+  loadInventory();
+});
+
+// Load inventory on page load
+window.onload = loadInventory;
+</script>
+
+</body>
+</html>
