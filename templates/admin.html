@@ -8,10 +8,52 @@
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-
 <body class="bg-light">
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <span class="navbar-brand">🧁 Ms. Brave Cake Shop</span>
+    <div class="ms-auto">
+      <a href="/admin_dashboard" class="btn btn-outline-light btn-sm me-2">
+        Admin Dashboard
+      </a>
+      <a href="/admin_panel" class="btn btn-warning btn-sm">
+        Admin Panel
+      </a>
+    </div>
+  </div>
+</nav>
+  
 <div class="container my-5">
   <h1 class="mb-4">📊 Admin Dashboard</h1>
+
+  <!-- ================= SUMMARY CARDS (#3) ================= -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card text-white bg-success mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Sales</h5>
+          <p class="card-text fs-4">₱ {{ total_sales }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-danger mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Total Expenses</h5>
+          <p class="card-text fs-4">₱ {{ total_expenses }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card text-white bg-primary mb-3">
+        <div class="card-body">
+          <h5 class="card-title">Profit</h5>
+          <p class="card-text fs-4">₱ {{ total_profit }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ================= SALES ================= -->
   <h4>Sales Record</h4>
@@ -24,11 +66,17 @@
       </tr>
     </thead>
     <tbody>
+      {% for s in sales %}
       <tr>
-        <td>2026-02-01</td>
-        <td>Birthday Cake</td>
-        <td>1500</td>
+        <td>{{ s.date }}</td>
+        <td>{{ s.item }}</td>
+        <td>{{ "%.2f"|format(s.amount) }}</td>
       </tr>
+      {% else %}
+      <tr>
+        <td colspan="3" class="text-center text-muted">No sales yet</td>
+      </tr>
+      {% endfor %}
     </tbody>
   </table>
 
@@ -59,8 +107,6 @@
 
   <!-- ================= INVENTORY ================= -->
   <h4 class="mt-4">Inventory</h4>
-
-  <!-- Add Inventory Form -->
   <form method="POST" action="/inventory/add" class="row g-3 mb-3">
     <div class="col-md-4">
       <input name="item" class="form-control" placeholder="Item Name" required>
@@ -76,7 +122,6 @@
     </div>
   </form>
 
-  <!-- Inventory Table -->
   <table class="table table-striped table-hover">
     <thead class="table-dark">
       <tr>
@@ -138,6 +183,7 @@
       {% endfor %}
     </tbody>
   </table>
+
 </div>
 
 <!-- Bootstrap JS -->

@@ -1,0 +1,32 @@
+body {
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.navbar {
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+
+.container {
+  margin-top: 80px; /* To avoid overlap with fixed navbar */
+}
+
+h2 {
+  color: #d63384;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+}
+
+.modal-title {
+  color: #d63384;
+}
