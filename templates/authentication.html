@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login / Sign Up - Ms. Brave Cake Shop</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='authentication.css') }}">
+  <title>Login / Sign Up </title>
+  <link href="../static/authentication.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
@@ -12,8 +12,10 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-light bg-light fixed-top">
   <div class="container-fluid">
-    <a class="navbar-brand fw-bold">🎂 Ms. Brave Cake Shop</a>
-  </div>
+    <a class="navbar-brand" href="#">
+      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
+    </a>
+    </div>
 </nav>
 
 <!-- Spacer so content starts below navbar -->
@@ -22,7 +24,6 @@
 <!-- FORM CONTAINER -->
 <div class="container">
   <div class="form-container">
-    
     <!-- Login Form -->
     <form id="loginForm" class="form active" method="POST" action="/authentication">
       <h2>Login</h2>
@@ -34,7 +35,7 @@
       <input type="hidden" name="action" value="login">
       <button type="submit">Login</button>
       <p class="toggle-msg">Don't have an account? 
-        <span class="toggle-btn" onclick="toggleForms()">Sign in Here</span>
+        <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
       </p>
     </form>
 
@@ -43,8 +44,8 @@
       <h2>Sign Up</h2>
       <input type="text" name="username" placeholder="Username" required>
       <input type="text" name="fname" placeholder="Full Name" required>
+      <input type="number" name="number" placeholder="Phone Number" required>
       <input type="text" name="address" placeholder="Address" required>
-      <input type="number" name="number" placeholder="Number" required>
       <div class="password-wrapper">
         <input type="password" name="password" placeholder="Password" required id="signupPassword">
         <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
@@ -59,7 +60,6 @@
         <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
       </p>
     </form>
-
   </div>
 </div>
 
@@ -68,21 +68,20 @@ function toggleForms() {
   document.getElementById("loginForm").classList.toggle("active");
   document.getElementById("signupForm").classList.toggle("active");
 }
+
 function togglePassword(id) {
   const input = document.getElementById(id);
-  const icon = input.nextElementSibling; // the eye icon
+  const icon = input.nextElementSibling;
   if (input.type === "password") {
     input.type = "text";
-    icon.classList.remove("fa-eye-slash");
-    icon.classList.add("fa-eye");
-  } else {
-    input.type = "password";
     icon.classList.remove("fa-eye");
     icon.classList.add("fa-eye-slash");
+  } else {
+    input.type = "password";
+    icon.classList.remove("fa-eye-slash");
+    icon.classList.add("fa-eye");
   }
 }
-
-
 </script>
 
 </body>
