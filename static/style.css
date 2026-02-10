@@ -1,21 +1,185 @@
-.cake-carousel {
-  max-width: 1100px;
-  margin: auto;
+/* ====== GENERAL STYLES ====== */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #fff0f5; /* light lavender/pink background */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
 }
 
-.cake-carousel .carousel-item {
-  height: 500px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: #f8f9fa;
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 0 15px;
 }
 
+/* ====== NAVBAR ====== */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px; /* fixed navbar height */
+    background-color: #000000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 999;
+    padding: 2px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-logo {
+    margin-top: 55px;
+    height: 200px;
+    width: 250px;
+    object-fit: contain; /* keeps image aspect ratio */
+    display: block;
+}
+
+
+.navbar .btn {
+    margin-left: 1400px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    color: #d63384;
+    border-color: #d63384;
+    transition: all 0.3s ease;
+}
+
+.navbar .btn:hover {
+    background-color: #d63384;
+    color: #fff;
+}
+
+/* ====== OFFCANVAS MENU ====== */
+.offcanvas {
+    background-color: #fff0f5;
+}
+
+.offcanvas a {
+    text-decoration: none;
+    color: #d63384;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.offcanvas a:hover {
+    color: #a71d65;
+}
+
+/* ====== HERO / CAROUSEL ====== */
 .cake-carousel img {
-  max-width: 80%;
-  max-height: 80%;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-   object-position: center;
+    border-radius: 15px;
+    max-height: 500px;
+    object-fit: cover;
+}
+
+.carousel-inner {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+/* ====== HEADINGS ====== */
+h2 {
+    font-weight: 700;
+    color: #d63384;
+}
+
+/* ====== SERVICES CARDS ====== */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card-body h5 {
+    color: #d63384;
+    font-weight: 600;
+}
+
+.card-body p {
+    color: #555;
+}
+
+/* ====== FORM & CUSTOMIZATION ====== */
+.form-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.form-select, .form-control {
+    border-radius: 8px;
+    border: 1px solid #d63384;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+}
+
+.form-check-input:checked {
+    background-color: #d63384;
+    border-color: #d63384;
+}
+
+.price-box {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #d63384;
+    margin: 15px 0;
+}
+
+/* ====== BUTTONS ====== */
+.btn-success {
+    background-color: #d63384;
+    border-color: #d63384;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-success:hover {
+    background-color: #a71d65;
+    transform: scale(1.05);
+}
+
+.btn-primary {
+    background-color: #d63384;
+    border-color: #d63384;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background-color: #a71d65;
+}
+
+/* ====== MODAL ====== */
+.modal-content {
+    border-radius: 15px;
+    padding: 15px;
+}
+
+.modal-header h5 {
+    color: #d63384;
+    font-weight: 700;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+    .navbar-logo {
+        height: 40px;
+    }
+
+    .cake-carousel img {
+        max-height: 300px;
+    }
+
+    .btn {
+        font-size: 1rem;
+    }
 }

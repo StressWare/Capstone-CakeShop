@@ -1,126 +1,273 @@
-/* Navbar Styling */
-.navbar {
-  width: 100%;
-  background: #f8f9fa;
-  padding: 15px 0;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 999;
-}
+/* authentication.css - For Ms. Brave Cake Shop Authentication Page */
 
-.navbar .navbar-brand {
-  font-size: 1.5rem;
-}
-/* Basic Reset */
+/* RESET AND BASE STYLES */
 * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Full screen container */
-body, html {
-  height: 100%;
-  background: #f8f9fa;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+body {
+    background-color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: #333;
 }
 
+/* NAVBAR STYLES */
+.navbar {
+    background-color: black;
+    box-shadow: 0 4px 15px rgba(255, 133, 162, 0.2);
+    min-height: 70px; /* Fixed height */
+    max-height: 70px; /* Fixed height */
+    padding: 0 !important; /* Remove default padding */
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-size: 1.8rem;
+    color: #fff !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+    padding-left: 20px;
+    letter-spacing: 0.5px;
+}
+
+.navbar-logo {
+    margin-top: 18px;
+    height: 200px;
+    width: 230px;
+    object-fit: contain; /* keeps image aspect ratio */
+    display: block;
+}
+
+.container-fluid {
+    padding: 0 30px;
+    height: 70px; /* Match navbar height */
+    display: flex;
+    align-items: center;
+}
+/* MAIN CONTAINER */
 .container {
-  width: 350px;
-  position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
 }
 
-/* Form container with sliding effect */
+/* FORM CONTAINER - Fixed for your nested structure */
 .form-container {
-  position: relative;
-  overflow: hidden;
-  width: 100%;
-  background: white;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
 }
 
-/* Common form style */
+/* Only show one form at a time */
 .form {
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.5s ease;
-  position: absolute;
-  width: 100%;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  pointer-events: none;
+    display: none;
+    width: 100%;
 }
 
+/* Show active form */
 .form.active {
-  opacity: 1;
-  pointer-events: auto;
-  position: relative;
+    display: block;
+    animation: fadeIn 0.5s ease-out;
 }
 
-/* Form elements */
-.form h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #d63384;
+/* Initially show login form */
+#loginForm.active {
+    display: block;
 }
 
-.form input {
-  padding: 10px;
-  margin: 8px 0;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+/* HEADINGS */
+h2 {
+    font-size: 2.2rem;
+    margin-bottom: 30px;
+    color: #ff6b9d;
+    text-align: center;
+    font-weight: 700;
+    position: relative;
+    padding-bottom: 15px;
 }
 
-.form button {
-  padding: 10px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 5px;
-  background: #d63384;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
+h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(to right, #ff85a2, #ffb6c1);
+    border-radius: 2px;
 }
 
-.form button:hover {
-  background: #b82f73;
+/* FORM INPUTS */
+input[type="text"],
+input[type="password"],
+input[type="number"] {
+    width: 100%;
+    padding: 16px 20px;
+    margin: 12px 0;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
 }
 
-.toggle-msg {
-  text-align: center;
-  margin-top: 15px;
-  font-size: 0.9rem;
-  color: #555;
+input:focus {
+    outline: none;
+    border-color: #ff85a2;
+    background: white;
+    box-shadow: 0 5px 15px rgba(255, 133, 162, 0.1);
 }
 
-.toggle-btn {
-  color: #d63384;
-  cursor: pointer;
-  font-weight: bold;
+input::placeholder {
+    color: #aaa;
 }
 
+/* PASSWORD WRAPPER */
 .password-wrapper {
-  position: relative;
+    position: relative;
+    width: 100%;
+    margin: 12px 0;
 }
 
 .password-wrapper input {
-  width: 100%;
-  padding-right: 40px; /* space for eye icon */
+    padding-right: 50px;
+    margin: 0;
 }
 
 .toggle-eye {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  font-size: 1.1rem;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: color 0.3s;
+}
+
+.toggle-eye:hover {
+    color: #ff6b9d;
+}
+
+/* BUTTONS */
+button[type="submit"] {
+    width: 100%;
+    background: linear-gradient(90deg, #ff85a2 0%, #ffb6c1 100%);
+    color: white;
+    border: none;
+    padding: 18px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 5px 15px rgba(255, 133, 162, 0.3);
+}
+
+button[type="submit"]:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 133, 162, 0.4);
+}
+
+button[type="submit"]:active {
+    transform: translateY(0);
+}
+
+/* TOGGLE LINKS */
+.signup-link,
+.toggle-msg {
+    text-align: center;
+    margin-top: 25px;
+    color: #666;
+    font-size: 1rem;
+}
+
+.signup-link a,
+.toggle-btn {
+    color: #ff6b9d;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.signup-link a:hover,
+.toggle-btn:hover {
+    background: rgba(255, 133, 162, 0.1);
+    text-decoration: underline;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 15px;
+    }
+    
+    .form-container {
+        padding: 30px 25px;
+    }
+    
+    h2 {
+        font-size: 1.8rem;
+    }
+    
+    .navbar-brand {
+        font-size: 1.4rem;
+        padding-left: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .form-container {
+        padding: 25px 20px;
+    }
+    
+    h2 {
+        font-size: 1.6rem;
+    }
+    
+    input[type="text"],
+    input[type="password"],
+    input[type="number"] {
+        padding: 14px 16px;
+    }
+    
+    button[type="submit"] {
+        padding: 16px;
+    }
+}
+
+/* ANIMATIONS */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* NUMBER INPUT SPINNER REMOVAL */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
 }
