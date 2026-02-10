@@ -5,53 +5,94 @@
   <title>Admin – Ms. Brave Cake Shop</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    .small-pie {
+      width: 250px;
+      height: 250px;
+      margin: auto;
+    }
+    .chart-card {
+      text-align: center;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+  </style>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  google.charts.load('current', {'packages':['corechart']});
+  google.charts.setOnLoadCallback(drawCharts);
+
+  function drawCharts() {
+    // --- Sales Chart ---
+    var salesData = google.visualization.arrayToDataTable([
+      ['Day', 'Sales'],
+      {% for day, val in weekly_sales.items() %}
+      ['{{ day }}', {{ val }}],
+      {% endfor %}
+    ]);
+    new google.visualization.PieChart(document.getElementById('weeklySalesChart'))
+      .draw(salesData, {pieHole:0.4, width:250, height:250});
+
+    // --- Expenses Chart ---
+    var expensesData = google.visualization.arrayToDataTable([
+      ['Day', 'Expenses'],
+      {% for day, val in weekly_expenses.items() %}
+      ['{{ day }}', {{ val }}],
+      {% endfor %}
+    ]);
+    new google.visualization.PieChart(document.getElementById('weeklyExpensesChart'))
+      .draw(expensesData, {pieHole:0.4, width:250, height:250});
+
+    // --- Profit Chart ---
+    var profitData = google.visualization.arrayToDataTable([
+      ['Day', 'Profit'],
+      {% for day, val in weekly_profit.items() %}
+      ['{{ day }}', {{ val }}],
+      {% endfor %}
+    ]);
+    new google.visualization.PieChart(document.getElementById('weeklyProfitChart'))
+      .draw(profitData, {pieHole:0.4, width:250, height:250});
+  }
+</script>
+
 </head>
 <body class="bg-light">
+
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
     <span class="navbar-brand">🧁 Ms. Brave Cake Shop</span>
     <div class="ms-auto">
-      <a href="/admin_dashboard" class="btn btn-outline-light btn-sm me-2">
-        Admin Dashboard
-      </a>
-      <a href="/admin_panel" class="btn btn-warning btn-sm">
-        Admin Panel
-      </a>
+      <a href="/admin_dashboard" class="btn btn-outline-light btn-sm me-2">Admin Dashboard</a>
+      <a href="/admin_panel" class="btn btn-warning btn-sm">Admin Panel</a>
     </div>
   </div>
 </nav>
-  
+
 <div class="container my-5">
   <h1 class="mb-4">📊 Admin Dashboard</h1>
 
-  <!-- ================= SUMMARY CARDS (#3) ================= -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <div class="card text-white bg-success mb-3">
-        <div class="card-body">
-          <h5 class="card-title">Total Sales</h5>
-          <p class="card-text fs-4">₱ {{ total_sales }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-white bg-danger mb-3">
-        <div class="card-body">
-          <h5 class="card-title">Total Expenses</h5>
-          <p class="card-text fs-4">₱ {{ total_expenses }}</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card text-white bg-primary mb-3">
-        <div class="card-body">
-          <h5 class="card-title">Profit</h5>
-          <p class="card-text fs-4">₱ {{ total_profit }}</p>
-        </div>
-      </div>
-    </div>
+ <!-- ================= CHARTS ================= -->
+<div class="row mb-4 text-center">
+  <div class="col-md-4">
+    <h6>Weekly Sales</h6>
+    <div id="weeklySalesChart" class="small-pie"></div>
   </div>
+  <div class="col-md-4">
+    <h6>Weekly Expenses</h6>
+    <div id="weeklyExpensesChart" class="small-pie"></div>
+  </div>
+  <div class="col-md-4">
+    <h6>Weekly Profit</h6>
+    <div id="weeklyProfitChart" class="small-pie"></div>
+  </div>
+</div>
+
+
 
   <!-- ================= SALES ================= -->
   <h4>Sales Record</h4>

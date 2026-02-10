@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from collections import defaultdict
 import firebase #connection
 from db import sales, expenses, inventory, users  # Firestore collections
 
@@ -66,34 +67,62 @@ def logout():
     return redirect(url_for("auth"))
 
 # ---------------- ADMIN DASHBOARD ----------------
+
+from collections import defaultdict
+from datetime import datetime, timedelta
+
 @app.route("/admin_dashboard")
 def admin_page():
-    # Fetch inventory & expenses
+    # Fetch data
     inv_items = [doc.to_dict() for doc in inventory.stream()]
     exp_items = [doc.to_dict() for doc in expenses.stream()]
-    # Fetch all orders from all users
     sales_items = []
     for user_doc in users.stream():
         orders_ref = users.document(user_doc.id).collection("orders").stream()
         for order_doc in orders_ref:
             order = order_doc.to_dict()
-            order["id"] = order_doc.id
             order["customer_username"] = user_doc.to_dict().get("username", "")
             sales_items.append(order)
-    # --- Calculate totals for summary cards ---
-    total_sales = sum(item.get("amount", 0) for item in sales_items)
-    total_expenses = sum(item.get("cost", 0) for item in exp_items)
-    total_profit = total_sales - total_expenses
+
+    # --- Weekly filter ---
+    today = datetime.today()
+    week_ago = today - timedelta(days=7)
+
+    weekly_sales = defaultdict(float)
+    weekly_expenses = defaultdict(float)
+    weekly_profit = defaultdict(float)
+
+    # Populate weekly sales
+    for s in sales_items:
+        if "date" in s:
+            s_date = datetime.strptime(s["date"], "%Y-%m-%d")
+            if s_date >= week_ago:
+                day = s_date.strftime("%a")  # Mon, Tue...
+                weekly_sales[day] += s.get("amount", 0)
+
+    # Populate weekly expenses
+    for e in exp_items:
+        if "date" in e:
+            e_date = datetime.strptime(e["date"], "%Y-%m-%d")
+            if e_date >= week_ago:
+                day = e_date.strftime("%a")
+                weekly_expenses[day] += e.get("cost", 0)
+
+    # Calculate weekly profit
+    for day in weekly_sales:
+        weekly_profit[day] = weekly_sales[day] - weekly_expenses.get(day, 0)
 
     return render_template(
         "admin.html",
         inventory=inv_items,
         expenses=exp_items,
         sales=sales_items,
-        total_sales=total_sales,
-        total_expenses=total_expenses,
-        total_profit=total_profit
+        weekly_sales=dict(weekly_sales),
+        weekly_expenses=dict(weekly_expenses),
+        weekly_profit=dict(weekly_profit)
     )
+
+
 
 
 # ---------------- ADMIN PANEL ----------------
