@@ -1,3 +1,4 @@
+<!-- admin.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,39 +24,58 @@
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <script type="text/javascript">
-  google.charts.load('current', {'packages':['corechart']});
+  google.charts.load("current", {packages:["corechart"]});
   google.charts.setOnLoadCallback(drawCharts);
 
   function drawCharts() {
-    // --- Sales Chart ---
+
+    // Weekly Sales
     var salesData = google.visualization.arrayToDataTable([
       ['Day', 'Sales'],
       {% for day, val in weekly_sales.items() %}
-      ['{{ day }}', {{ val }}],
+      ['{{ day }}', {{ val|float }}],
       {% endfor %}
     ]);
-    new google.visualization.PieChart(document.getElementById('weeklySalesChart'))
-      .draw(salesData, {pieHole:0.4, width:250, height:250});
+    var salesChart = new google.visualization.PieChart(document.getElementById('weeklySalesChart'));
+    salesChart.draw(salesData, {
+      title: 'Weekly Sales',
+      is3D: true,
+      width: 250,
+      height: 250
+    });
 
-    // --- Expenses Chart ---
+    // Weekly Expenses
     var expensesData = google.visualization.arrayToDataTable([
       ['Day', 'Expenses'],
       {% for day, val in weekly_expenses.items() %}
-      ['{{ day }}', {{ val }}],
+      ['{{ day }}', {{ val|float }}],
       {% endfor %}
     ]);
-    new google.visualization.PieChart(document.getElementById('weeklyExpensesChart'))
-      .draw(expensesData, {pieHole:0.4, width:250, height:250});
+    var expensesChart = new google.visualization.PieChart(document.getElementById('weeklyExpensesChart'));
+    expensesChart.draw(expensesData, {
+      title: 'Weekly Expenses',
+      is3D: true,
+      width: 250,
+      height: 250
+    });
 
-    // --- Profit Chart ---
+    // Weekly Profit (BAR CHART)
     var profitData = google.visualization.arrayToDataTable([
       ['Day', 'Profit'],
       {% for day, val in weekly_profit.items() %}
-      ['{{ day }}', {{ val }}],
+      ['{{ day }}', {{ val|float }}],
       {% endfor %}
     ]);
-    new google.visualization.PieChart(document.getElementById('weeklyProfitChart'))
-      .draw(profitData, {pieHole:0.4, width:250, height:250});
+    var profitChart = new google.visualization.ColumnChart(
+      document.getElementById('weeklyProfitChart')
+    );
+    profitChart.draw(profitData, {
+      title: 'Weekly Profit',
+      width: 250,
+      height: 250,
+      legend: { position: 'none' },
+      colors: ['#28a745']
+    });
   }
 </script>
 
@@ -75,24 +95,21 @@
 
 <div class="container my-5">
   <h1 class="mb-4">📊 Admin Dashboard</h1>
-
- <!-- ================= CHARTS ================= -->
-<div class="row mb-4 text-center">
-  <div class="col-md-4">
-    <h6>Weekly Sales</h6>
-    <div id="weeklySalesChart" class="small-pie"></div>
+  <!-- ================= CHARTS ================= -->
+  <div class="row mb-4 text-center">
+    <div class="col-md-4">
+      <h6>Weekly Sales</h6>
+      <div id="weeklySalesChart" class="small-pie"></div>
+    </div>
+    <div class="col-md-4">
+      <h6>Weekly Expenses</h6>
+      <div id="weeklyExpensesChart" class="small-pie"></div>
+    </div>
+    <div class="col-md-4">
+      <h6>Weekly Profit</h6>
+      <div id="weeklyProfitChart" class="small-pie"></div>
+    </div>
   </div>
-  <div class="col-md-4">
-    <h6>Weekly Expenses</h6>
-    <div id="weeklyExpensesChart" class="small-pie"></div>
-  </div>
-  <div class="col-md-4">
-    <h6>Weekly Profit</h6>
-    <div id="weeklyProfitChart" class="small-pie"></div>
-  </div>
-</div>
-
-
 
   <!-- ================= SALES ================= -->
   <h4>Sales Record</h4>
@@ -107,7 +124,7 @@
     <tbody>
       {% for s in sales %}
       <tr>
-        <td>{{ s.date }}</td>
+        <td>{{ s.created_at.strftime('%b %d, %Y - %I:%M %p') }}</td>
         <td>{{ s.item }}</td>
         <td>{{ "%.2f"|format(s.amount) }}</td>
       </tr>
@@ -132,9 +149,9 @@
     <tbody>
       {% for e in expenses %}
       <tr>
-        <td>{{ e.date }}</td>
+        <td>{{ e.date.strftime("%b %d, %Y - %I:%M %p") }}</td>
         <td>{{ e.description }}</td>
-        <td>{{ e.cost }}</td>
+        <td>{{ "%.2f"|format(e.cost) }}</td>
       </tr>
       {% else %}
       <tr>
@@ -177,17 +194,17 @@
         <td>{{ i.quantity }}</td>
         <td>{{ i.cost }}</td>
         <td>
-          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ i._id }}">
+          <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
             Edit
           </button>
         </td>
       </tr>
 
       <!-- Edit Modal -->
-      <div class="modal fade" id="editModal{{ i._id }}" tabindex="-1">
+      <div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
         <div class="modal-dialog">
           <div class="modal-content">
-            <form method="POST" action="/inventory/edit/{{ i._id }}">
+            <form method="POST" action="/inventory/edit/{{ i.id }}">
               <div class="modal-header">
                 <h5 class="modal-title">Edit Inventory</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -214,7 +231,6 @@
           </div>
         </div>
       </div>
-
       {% else %}
       <tr>
         <td colspan="4" class="text-center text-muted">No inventory items yet</td>
@@ -222,7 +238,6 @@
       {% endfor %}
     </tbody>
   </table>
-
 </div>
 
 <!-- Bootstrap JS -->

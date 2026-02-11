@@ -1,16 +1,28 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from datetime import datetime, date, timedelta
-from collections import defaultdict
-import firebase #connection
+from datetime import datetime, timedelta, timezone
+import firebase
 from db import sales, expenses, inventory, users  # Firestore collections
 
 app = Flask(__name__)
 app.secret_key = "secretngani"
 
+# Define Philippine Timezone (GMT+8)
+PH_TZ = timezone(timedelta(hours=8))
+
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
-    return render_template("home.html")
+    # Check if user is logged in
+    user_id = session.get("user_id")
+    customer = None
+    
+    if user_id:
+        # Get customer data from Firestore
+        doc = users.document(user_id).get()
+        if doc.exists:
+            customer = doc.to_dict()
+    
+    return render_template("home.html", customer=customer)
 
 # ---------------- LOGIN / SIGNUP ----------------
 @app.route("/authentication", methods=["GET", "POST"])
@@ -23,17 +35,17 @@ def auth():
         password = request.form.get("password")
         number = request.form.get("number")
         address = request.form.get("address")
-        fname = request.form.get("fname") 
+        fname = request.form.get("fname")
 
         if action == "login":
             user_query = users.where("username", "==", username)\
                               .where("password", "==", password)\
                               .limit(1).stream()
-            
+
             user = None
             for doc in user_query:
                 user = doc.to_dict()
-                session["user_id"] = doc.id  # store document ID
+                session["user_id"] = doc.id
                 session["username"] = username
 
             if user:
@@ -54,11 +66,12 @@ def auth():
                     "address": address,
                     "fname": fname
                 })
-                session["user_id"] = doc_ref.id
+                session["user_id"] = doc_ref[1].id
                 session["username"] = username
                 return redirect(url_for("customer_dashboard"))
 
     return render_template("authentication.html", message=message)
+
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -66,95 +79,246 @@ def logout():
     session.clear()
     return redirect(url_for("auth"))
 
+
 # ---------------- ADMIN DASHBOARD ----------------
-
-from collections import defaultdict
-from datetime import datetime, timedelta
-
 @app.route("/admin_dashboard")
 def admin_page():
-    # Fetch data
-    inv_items = [doc.to_dict() for doc in inventory.stream()]
-    exp_items = [doc.to_dict() for doc in expenses.stream()]
+    # Fetch inventory
+    inv_items = []
+    for doc in inventory.stream():
+        item = doc.to_dict()
+        item["id"] = doc.id
+        inv_items.append(item)
+
+    # Fetch expenses - FIXED: Proper UTC to PH conversion
+    exp_items = []
+    for doc in expenses.stream():
+        e = doc.to_dict()
+        e["id"] = doc.id
+        
+        # Handle date - could be string OR datetime from Firestore
+        date_val = e.get("date")
+        if isinstance(date_val, str):
+            date_val = datetime.fromisoformat(date_val)
+        
+        # CORRECT: Convert from UTC to PH time
+        if isinstance(date_val, datetime):
+            if date_val.tzinfo is None:
+                # Firestore returns naive UTC - mark as UTC then convert to PH
+                date_val = date_val.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                # Convert any timezone to PH time
+                date_val = date_val.astimezone(PH_TZ)
+        
+        e["date"] = date_val
+        exp_items.append(e)
+
+    # Fetch sales (Completed/Pickup orders only) - FIXED
     sales_items = []
     for user_doc in users.stream():
+        user_data = user_doc.to_dict()
         orders_ref = users.document(user_doc.id).collection("orders").stream()
         for order_doc in orders_ref:
             order = order_doc.to_dict()
-            order["customer_username"] = user_doc.to_dict().get("username", "")
-            sales_items.append(order)
+            if order.get("status") in ["Completed", "Pickup"]:
+                order["customer_username"] = user_data.get("username", "")
+                order["id"] = order_doc.id
+                
+                # Handle created_at - could be string OR datetime
+                created_at = order.get("created_at")
+                if isinstance(created_at, str):
+                    created_at = datetime.fromisoformat(created_at)
+                
+                # CORRECT: Convert from UTC to PH time
+                if isinstance(created_at, datetime):
+                    if created_at.tzinfo is None:
+                        # Firestore returns naive UTC - mark as UTC then convert to PH
+                        created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                    else:
+                        # Convert any timezone to PH time
+                        created_at = created_at.astimezone(PH_TZ)
+                
+                order["created_at"] = created_at
+                sales_items.append(order)
 
-    # --- Weekly filter ---
-    today = datetime.today()
+    # ---------------- WEEKLY CALCULATION ----------------
+    today = datetime.now(PH_TZ)
     week_ago = today - timedelta(days=7)
 
-    weekly_sales = defaultdict(float)
-    weekly_expenses = defaultdict(float)
-    weekly_profit = defaultdict(float)
-
-    # Populate weekly sales
-    for s in sales_items:
-        if "date" in s:
-            s_date = datetime.strptime(s["date"], "%Y-%m-%d")
-            if s_date >= week_ago:
-                day = s_date.strftime("%a")  # Mon, Tue...
-                weekly_sales[day] += s.get("amount", 0)
+    days_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    weekly_sales = {day: 0 for day in days_order}
+    weekly_expenses = {day: 0 for day in days_order}
+    weekly_profit = {day: 0 for day in days_order}
 
     # Populate weekly expenses
     for e in exp_items:
-        if "date" in e:
-            e_date = datetime.strptime(e["date"], "%Y-%m-%d")
-            if e_date >= week_ago:
-                day = e_date.strftime("%a")
-                weekly_expenses[day] += e.get("cost", 0)
+        try:
+            e_date = e.get("date")
+            if isinstance(e_date, datetime):
+                # Already in PH time
+                if e_date >= week_ago:
+                    day = e_date.strftime("%a")
+                    weekly_expenses[day] += float(e.get("cost", 0))
+        except Exception:
+            continue
+
+    # Populate weekly sales
+    for s in sales_items:
+        try:
+            s_date = s.get("created_at")
+            if isinstance(s_date, datetime):
+                # Already in PH time
+                if s_date >= week_ago:
+                    day = s_date.strftime("%a")
+                    weekly_sales[day] += float(s.get("amount", 0))
+        except Exception:
+            continue
 
     # Calculate weekly profit
-    for day in weekly_sales:
-        weekly_profit[day] = weekly_sales[day] - weekly_expenses.get(day, 0)
+    for day in days_order:
+        weekly_profit[day] = weekly_sales[day] - weekly_expenses[day]
 
     return render_template(
         "admin.html",
         inventory=inv_items,
         expenses=exp_items,
         sales=sales_items,
-        weekly_sales=dict(weekly_sales),
-        weekly_expenses=dict(weekly_expenses),
-        weekly_profit=dict(weekly_profit)
+        weekly_sales=weekly_sales,
+        weekly_expenses=weekly_expenses,
+        weekly_profit=weekly_profit,
+        today=today,
+        week_ago=week_ago
     )
-
-
-
 
 # ---------------- ADMIN PANEL ----------------
 @app.route("/admin_panel")
 def panel_page():
-    today = date.today().strftime("%d/%m/%Y")  # dd/mm/yyyy
+    today_str = datetime.now(PH_TZ).strftime("%d/%m/%Y")
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
 
-    # Fetch all orders from all users
+    # Fetch all orders
     orders = []
     for user_doc in users.stream():
+        user_data = user_doc.to_dict()
         orders_ref = users.document(user_doc.id).collection("orders").order_by("delivery_date").stream()
         for order_doc in orders_ref:
             order = order_doc.to_dict()
             order["id"] = order_doc.id
-            order["customer_username"] = user_doc.to_dict().get("username", "")
+            order["user_id"] = user_doc.id
+            order["notes"] = order.get("notes", "")
+            order["customer_username"] = user_data.get("username", "")
+
+            # Convert delivery_date
+            if isinstance(order.get("delivery_date"), str):
+                order["delivery_date"] = datetime.fromisoformat(order["delivery_date"])
+            if isinstance(order.get("delivery_date"), datetime):
+                if order["delivery_date"].tzinfo is None:
+                    order["delivery_date"] = order["delivery_date"].replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    order["delivery_date"] = order["delivery_date"].astimezone(PH_TZ)
+            
+            # Convert created_at
+            if isinstance(order.get("created_at"), str):
+                order["created_at"] = datetime.fromisoformat(order["created_at"])
+            if isinstance(order.get("created_at"), datetime):
+                if order["created_at"].tzinfo is None:
+                    order["created_at"] = order["created_at"].replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    order["created_at"] = order["created_at"].astimezone(PH_TZ)
+
             orders.append(order)
+
+    # =============== STATS FOR CARDS ===============
+    total_new = 0
+    total_accepted = 0
+    total_pending = 0
+    total_ready = 0
+    total_out = 0
+    total_completed = 0
+    total_cancelled = 0
+    total_rush = 0
+    today_count = 0
+    today_deliveries = []
+    today_date = datetime.now(PH_TZ).date()
+
+    for order in orders:
+        status = order.get("status", "")
+        
+        # Count by status
+        if status == "New":
+            total_new += 1
+        elif status == "Accepted":
+            total_accepted += 1
+        elif status == "Pending":
+            total_pending += 1
+        elif status == "Ready":
+            total_ready += 1
+        elif status == "Out for Delivery":
+            total_out += 1
+        elif status == "Completed":
+            total_completed += 1
+        elif status == "Cancelled":
+            total_cancelled += 1
+        
+        # Count rush orders
+        if order.get("rush"):
+            total_rush += 1
+        
+        # Today's deliveries (only active orders)
+        delivery_date = order.get("delivery_date")
+        if isinstance(delivery_date, datetime):
+            if delivery_date.date() == today_date:
+                if status not in ["Completed", "Cancelled"]:
+                    today_count += 1
+                    today_deliveries.append({
+                        "time": delivery_date.strftime("%I:%M %p"),
+                        "customer": order.get("customer", {}).get("name", "N/A"),
+                        "cake": order.get("item", "N/A"),
+                        "status": status,
+                        "rush": order.get("rush", False)
+                    })
+
+    # Sort today's deliveries by time
+    today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
+
+    # 👇 PASTE THE DEBUG CODE HERE 👇
+    # ========== STATUS DEBUG ==========
+    unique_statuses = set()
+    for order in orders:
+        unique_statuses.add(order.get("status", ""))
+
+
 
     return render_template(
         "panel.html",
         orders=orders,
         low_stock=low_stock,
-        today=today
+        today=today_str,
+        # STATS CARDS
+        total_new=total_new,
+        total_accepted=total_accepted,
+        total_pending=total_pending,
+        total_ready=total_ready,
+        total_out=total_out,
+        total_completed=total_completed,
+        total_cancelled=total_cancelled,
+        total_rush=total_rush,
+        # TODAY'S DELIVERY
+        today_count=today_count,
+        today_deliveries=today_deliveries
     )
+    
+
+
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<user_id>/<order_id>", methods=["POST"])
 def update_order_status(user_id, order_id):
-    # Update order in the user's subcollection
+    new_status = request.form["status"]
     users.document(user_id).collection("orders").document(order_id).update({
-        "status": request.form["status"]
+        "status": new_status
     })
     return redirect(url_for("panel_page"))
+
 
 # ---------------- ADD INVENTORY ----------------
 @app.route("/inventory/add", methods=["POST"])
@@ -170,12 +334,13 @@ def add_inventory():
     })
 
     expenses.add({
-        "date": datetime.now().strftime("%Y-%m-%d"),
         "description": item,
-        "cost": cost
+        "cost": cost,
+        "date": datetime.now(PH_TZ)  # This is correct - PH time
     })
 
     return redirect(url_for("admin_page"))
+
 
 # ---------------- EDIT INVENTORY ----------------
 @app.route("/inventory/edit/<id>", methods=["POST"])
@@ -185,8 +350,8 @@ def edit_inventory(id):
         "quantity": int(request.form["quantity"]),
         "cost": float(request.form["cost"])
     })
-
     return redirect(url_for("admin_page"))
+
 
 # ---------------- PLACE ORDER ----------------
 @app.route("/order", methods=["POST"])
@@ -195,15 +360,23 @@ def place_order():
     if not user_id:
         return redirect(url_for("auth"))
 
-    now = datetime.now()
-    formatted_time = now.strftime("%d/%m/%Y:%H/%M/%S")  # dd/mm/yyyy:hh/mm/ss
+    now = datetime.now(PH_TZ)
+
+    # Get date and time from form
+    date_str = request.form["delivery_date"]
+    time_str = request.form["delivery_time"]
+    datetime_str = f"{date_str} {time_str}"
+    
+    delivery_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
+    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
 
     order_data = {
-        "delivery_date": request.form["delivery_date"],
+        "delivery_date": delivery_datetime,
         "item": request.form["order_item"],
         "amount": float(request.form["amount"]),
         "status": "New",
-        "rush": True if request.form.get("rush") else False,
+        "rush": bool(request.form.get("rush")),
+        "notes": request.form.get("notes", ""),  # ✅ NEW - Special instructions
         "customer": {
             "name": request.form["customer_name"],
             "contact": request.form["contact"],
@@ -212,8 +385,7 @@ def place_order():
             "celebrant": request.form.get("celebrant"),
             "age": request.form.get("age")
         },
-        "created_at": formatted_time,
-        "created_at_ts": now
+        "created_at": now
     }
 
     users.document(user_id).collection("orders").add(order_data)
@@ -236,10 +408,37 @@ def customer_dashboard():
     for order_doc in orders_ref:
         order = order_doc.to_dict()
         order["id"] = order_doc.id
+        order["notes"] = order.get("notes", "")  
+        # Convert created_at
+        created_at = order.get("created_at")
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        
+        # Convert to PH time
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                created_at = created_at.astimezone(PH_TZ)
+        order["created_at"] = created_at
+        
+        # Convert delivery_date
+        delivery_date = order.get("delivery_date")
+        if isinstance(delivery_date, str):
+            delivery_date = datetime.fromisoformat(delivery_date)
+        
+        # Convert to PH time
+        if isinstance(delivery_date, datetime):
+            if delivery_date.tzinfo is None:
+                delivery_date = delivery_date.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                delivery_date = delivery_date.astimezone(PH_TZ)
+        order["delivery_date"] = delivery_date
+        
         orders.append(order)
 
-    # Sort by timestamp descending
-    orders.sort(key=lambda x: x.get("created_at_ts", datetime.min), reverse=True)
+    # Sort descending by timestamp - SIMPLIFIED!
+    orders.sort(key=lambda x: x["created_at"], reverse=True)
 
     return render_template(
         "customer_dashboard.html",
@@ -247,7 +446,8 @@ def customer_dashboard():
         orders=orders
     )
 
-# ---------------- CUSTOMER PROFILE EDIT ROUTE ----------------
+
+# ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
 def edit_customer_profile():
     user_id = session.get("user_id")
@@ -258,7 +458,7 @@ def edit_customer_profile():
         "username": request.form.get("username"),
         "number": request.form.get("contact"),
         "address": request.form.get("address"),
-        "full_name": request.form.get("full_name")
+        "fname": request.form.get("full_name")
     }
 
     users.document(user_id).update(updated_data)

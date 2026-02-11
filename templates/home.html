@@ -27,7 +27,6 @@
   </div>
 </nav>
 
-
 <!-- OFFCANVAS MENU -->
 <div class="offcanvas offcanvas-end" id="menu">
   <div class="offcanvas-header">
@@ -113,6 +112,21 @@
           <option value="500">Luxury (₱500)</option>
         </select>
 
+        <label class="form-label">Cake Size</label>
+        <select class="form-select mb-3" id="cakeSize">
+          <option value="0">6 inches (₱0)</option>
+          <option value="200">8 inches (+₱200)</option>
+          <option value="400">10 inches (+₱400)</option>
+          <option value="600">12 inches (+₱600)</option>
+        </select>
+
+        <label class="form-label">Layers</label>
+        <select class="form-select mb-3" id="layers">
+          <option value="0">Single Layer (₱0)</option>
+          <option value="300">Double Layer (+₱300)</option>
+          <option value="600">Triple Layer (+₱600)</option>
+        </select>
+        
         <label class="form-label">Toppings</label>
         <div class="form-check">
           <input class="form-check-input topping" type="checkbox" value="100"> Sprinkles (₱100)
@@ -123,6 +137,12 @@
         <div class="form-check mb-3">
           <input class="form-check-input topping" type="checkbox" value="200"> Chocolate Drip (₱200)
         </div>
+
+        <label class="form-label">Special Instructions</label>
+        <textarea name="notes" id="notes" class="form-control" 
+                  placeholder="e.g., Write Allergy Warning, no nuts, specific design details..." 
+                  rows="2"></textarea>
+        <small class="text-muted">Additional charges may apply for special requests</small>
 
         <div class="price-box">
           Total: ₱<span id="totalPrice">0</span>
@@ -138,6 +158,7 @@
     </div>
   </div>
 </section>
+
 <!-- ORDER MODAL -->
 <div class="modal fade" id="orderModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
@@ -148,59 +169,67 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
 
-        <div class="modal-body row g-3">
+        <div class="modal-body">
+          <div class="row g-3">
+            <!-- Customer Info - AUTO-FILL IF LOGGED IN -->
+            <div class="col-md-6">
+              <label class="form-label">Customer Name</label>
+              <input name="customer_name" class="form-control" 
+                     value="{{ customer.fname if customer else '' }}" required>
+            </div>
 
-          <!-- Customer Info -->
-          <div class="col-md-6">
-            <label class="form-label">Customer Name</label>
-            <input name="customer_name" class="form-control" required>
+            <div class="col-md-6">
+              <label class="form-label">Contact Number</label>
+              <input name="contact" class="form-control" 
+                     value="{{ customer.number if customer else '' }}" required>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <input name="address" class="form-control" 
+                     value="{{ customer.address if customer else '' }}" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Occasion</label>
+              <input name="occasion" class="form-control" placeholder="Birthday, Wedding..." required>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label">Celebrant / Dedication</label>
+              <input name="celebrant" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+              <label class="form-label">Age</label>
+              <input name="age" type="number" class="form-control" min="0">
+            </div>
+
+            <!-- Rush Order -->
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" name="rush" value="yes">
+              <label class="form-check-label">Rush Order</label>
+            </div>
+
+            <!-- Delivery Date -->
+            <div class="col-md-6 mt-2">
+              <label class="form-label">Schedule Date</label>
+              <input type="date" name="delivery_date" class="form-control" required>
+            </div>
+            <div class="col-md-6 mt-2">
+              <label class="form-label">Delivery Time</label>
+              <input type="time" name="delivery_time" class="form-control" required>
+            </div>
           </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Contact Number</label>
-            <input name="contact" class="form-control" required>
-          </div>
-
-          <div class="col-12">
-            <label class="form-label">Address</label>
-            <input name="address" class="form-control" required>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Occasion</label>
-            <input name="occasion" class="form-control" placeholder="Birthday, Wedding..." required>
-          </div>
-
-          <div class="col-md-4">
-            <label class="form-label">Celebrant / Dedication</label>
-            <input name="celebrant" class="form-control">
-          </div>
-
-          <div class="col-md-2">
-            <label class="form-label">Age</label>
-            <input name="age" type="number" class="form-control" min="0">
-          </div>
-
-          <!-- Rush Order -->
-          <div class="form-check mt-2">
-            <input class="form-check-input" type="checkbox" name="rush" value="yes">
-            <label class="form-check-label">Rush Order</label>
-          </div>
-
-          <!-- Delivery Date -->
-          <div class="col-md-6 mt-2">
-            <label class="form-label">Schedule Date</label>
-            <input type="date" name="delivery_date" class="form-control" required>
-          </div>
-
-          <!-- Hidden fields for item description and total amount -->
+          
+          <!-- HIDDEN FIELDS - Outside row.g-3 but inside modal-body -->
           <input type="hidden" name="order_item" id="orderItem">
           <input type="hidden" name="amount" id="orderAmount">
-
+          <input type="hidden" name="notes" id="orderNotes">  <!-- ✅ NEW: Separate notes field -->
         </div>
-
+        
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary w-100">Confirm Order</button>
+          <button type="submit" class="btn btn-primary w-100" onclick="updateOrderData()">Confirm Order</button>
         </div>
       </form>
     </div>
@@ -212,41 +241,53 @@
 function calculateTotal() {
   const cakePrice = parseFloat(document.getElementById("cakeType").value) || 0;
   const designPrice = parseFloat(document.getElementById("design").value) || 0;
+  const sizePrice = parseFloat(document.getElementById("cakeSize").value) || 0;
+  const layersPrice = parseFloat(document.getElementById("layers").value) || 0; 
 
   let toppingsPrice = 0;
   document.querySelectorAll(".topping:checked").forEach(t => {
     toppingsPrice += parseFloat(t.value) || 0;
   });
 
-  const total = cakePrice + designPrice + toppingsPrice;
-
-  // Update display
+  const total = cakePrice + designPrice + sizePrice + layersPrice + toppingsPrice;
   document.getElementById("totalPrice").innerText = total.toFixed(2);
-
   return total;
 }
 
 /* ====== UPDATE HIDDEN ORDER FIELDS ====== */
 function updateOrderData() {
-  const total = calculateTotal(); // recalc total
+  const total = calculateTotal();
   document.getElementById("orderAmount").value = total.toFixed(2);
 
-  // Build order description
+  // Build order description - NO NOTES HERE!
   const cake = document.getElementById("cakeType").selectedOptions[0].text;
   const design = document.getElementById("design").selectedOptions[0].text;
+  const size = document.getElementById("cakeSize").selectedOptions[0].text; 
+  const layers = document.getElementById("layers").selectedOptions[0].text;
 
   let toppings = [];
   document.querySelectorAll(".topping:checked").forEach(t => {
     toppings.push(t.parentElement.innerText.trim());
   });
 
-  document.getElementById("orderItem").value =
-    `${cake}, ${design}${toppings.length ? ", Toppings: " + toppings.join(", ") : ""}`;
+  let description = `${cake}, ${size}, ${layers}, ${design}`;
+  if (toppings.length > 0) {
+    description += `, Toppings: ${toppings.join(", ")}`;
+  }
+
+  // Set order item description (cake details only)
+  document.getElementById("orderItem").value = description;
+  
+  // ✅ Set notes in SEPARATE hidden field
+  const notes = document.getElementById("notes")?.value || "";
+  document.getElementById("orderNotes").value = notes;
 }
 
-// Recalculate total whenever cake, design, or toppings change
+// Event listeners
 document.getElementById("cakeType").addEventListener("change", calculateTotal);
 document.getElementById("design").addEventListener("change", calculateTotal);
+document.getElementById("cakeSize").addEventListener("change", calculateTotal);
+document.getElementById("layers").addEventListener("change", calculateTotal);
 document.querySelectorAll(".topping").forEach(t => t.addEventListener("change", calculateTotal));
 
 // Update hidden fields when modal opens
@@ -257,12 +298,7 @@ document.getElementById("orderModal")
 calculateTotal();
 </script>
 
-
-
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-
 
 </body>
 </html>

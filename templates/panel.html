@@ -7,6 +7,9 @@
 
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
 <body class="bg-light">
@@ -24,11 +27,166 @@
 
 <div class="container my-5">
 
+  <!-- ================= TOP ROW: STATS CARDS + TODAY'S DELIVERY ================= -->
+  <div class="row mb-4">
+    <!-- LEFT: STATS CARDS (8 cards) -->
+<div class="col-md-7">
+  <div class="row g-2">
+    <!-- NEW Card -->
+    <div class="col-6 col-md-2">  <!-- ✅ BIGGER -->
+      <div class="card text-center p-2">
+        <h4 class="mb-0">🆕</h4>
+        <h6 class="text-muted mb-0">NEW</h6>
+        <h2 class="mb-0">{{ total_new }}</h2>
+      </div>
+    </div>
+    <!-- ACCEPTED Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">✅</h4>
+        <h6 class="text-muted mb-0">ACC</h6>
+        <h2 class="mb-0">{{ total_accepted }}</h2>
+      </div>
+    </div>
+    <!-- PENDING Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">⏳</h4>
+        <h6 class="text-muted mb-0">PEND</h6>
+        <h2 class="mb-0">{{ total_pending }}</h2>
+      </div>
+    </div>
+    <!-- READY Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">🎂</h4>
+        <h6 class="text-muted mb-0">READY</h6>
+        <h2 class="mb-0">{{ total_ready }}</h2>
+      </div>
+    </div>
+    <!-- OUT FOR DELIVERY Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">📦</h4>
+        <h6 class="text-muted mb-0">OUT</h6>
+        <h2 class="mb-0">{{ total_out }}</h2>
+      </div>
+    </div>
+    <!-- COMPLETED Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">🟢</h4>
+        <h6 class="text-muted mb-0">COMP</h6>
+        <h2 class="mb-0">{{ total_completed }}</h2>
+      </div>
+    </div>
+    <!-- CANCELLED Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">❌</h4>
+        <h6 class="text-muted mb-0">CANC</h6>
+        <h2 class="mb-0">{{ total_cancelled }}</h2>
+      </div>
+    </div>
+    <!-- RUSH Card -->
+    <div class="col-6 col-md-2">
+      <div class="card text-center p-2">
+        <h4 class="mb-0">⚠️</h4>
+        <h6 class="text-muted mb-0">RUSH</h6>
+        <h2 class="mb-0">{{ total_rush }}</h2>
+      </div>
+    </div>
+    <!-- TODAY Count - Full width -->
+    <div class="col-12 mt-3">
+      <div class="alert alert-info mb-0 py-3">
+        <h5 class="mb-0"><strong>📦 TODAY:</strong> {{ today_count }} orders</h5>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <!-- RIGHT: TODAY'S DELIVERY CARD -->
+    <div class="col-md-5">
+      <div class="card h-100">
+        <div class="card-header bg-white">
+          <h5 class="mb-0">🚚 Today's Deliveries</h5>
+        </div>
+        <div class="card-body p-2">
+          {% if today_deliveries %}
+            {% for delivery in today_deliveries %}
+            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+              <div>
+                <span class="badge bg-light text-dark me-2">🕑 {{ delivery.time }}</span>
+                <strong>{{ delivery.customer }}</strong>
+                <small class="text-muted d-block">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
+              </div>
+              <span class="badge 
+                {% if delivery.status == 'New' %}bg-secondary
+                {% elif delivery.status == 'Accepted' %}bg-info
+                {% elif delivery.status == 'Pending' %}bg-warning text-dark
+                {% elif delivery.status == 'Ready' %}bg-primary
+                {% elif delivery.status == 'Out for Delivery' %}bg-dark
+                {% elif delivery.status == 'Completed' %}bg-success
+                {% elif delivery.status == 'Cancelled' %}bg-danger
+                {% endif %}">
+                {{ delivery.status }}
+              </span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center py-3 text-muted">
+              No deliveries today
+            </div>
+          {% endif %}
+        </div>
+        <div class="card-footer bg-white text-end">
+          <small class="text-muted">Total: {{ today_count }} deliveries today</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= ORDERS SECTION ================= -->
   <h2 class="mb-3">🧾 Orders Management</h2>
+  
+  <!-- SEARCH & FILTERS -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <div class="input-group">
+        <span class="input-group-text bg-white">🔍</span>
+        <input type="text" class="form-control" placeholder="Search orders, customers, contact..." id="searchOrders">
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex gap-2">
+        <select class="form-select" id="statusFilter">
+          <option value="">All Status</option>
+          <option value="New">🆕 New</option>
+          <option value="Accepted">✅ Accepted</option>
+          <option value="Pending">⏳ Pending</option>
+          <option value="Ready">🎂 Ready</option>
+          <option value="Out for Delivery">📦 Out for Delivery</option>
+          <option value="Completed">🟢 Completed</option>
+          <option value="Cancelled">❌ Cancelled</option>
+        </select>
+        <select class="form-select" id="dateFilter">
+          <option value="">All Dates</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+        </select>
+        <select class="form-select" id="rushFilter">
+          <option value="">All Orders</option>
+          <option value="yes">⚠️ Rush Only</option>
+          <option value="no">Non-Rush</option>
+        </select>
+      </div>
+    </div>
+  </div>
 
+  <!-- ORDERS TABLE -->
   <div class="table-responsive">
-    <table class="table table-bordered align-middle">
+    <table class="table table-bordered align-middle" id="ordersTable">
       <thead class="table-dark">
         <tr>
           <th>Date Ordered</th>
@@ -44,74 +202,47 @@
         {% for o in orders %}
         <tr class="
           {% if o.rush %}table-danger{% endif %}
-          {% if o.delivery_date == today %}table-warning{% endif %}
         ">
-          <td>{{ o.date }}</td>
+          <td>{{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}</td>
           <td>
             <strong>{{ o.customer.name }}</strong><br>
             <small class="text-muted">{{ o.customer.contact }}</small>
           </td>
           <td>
-            {{ o.item }}<br>
-            <small class="text-muted">{{ o.customer.occasion }}</small>
+            {{ o.item }}
           </td>
-          <td>{{ o.delivery_date }}</td>
+          <td>{{ o.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</td>
           <td>
             <span class="badge
               {% if o.status == 'New' %}bg-secondary
               {% elif o.status == 'Accepted' %}bg-info
               {% elif o.status == 'Pending' %}bg-warning text-dark
+              {% elif o.status == 'Ready' %}bg-primary
+              {% elif o.status == 'Out for Delivery' %}bg-dark
               {% elif o.status == 'Completed' %}bg-success
               {% elif o.status == 'Cancelled' %}bg-danger
               {% endif %}">
               {{ o.status }}
             </span>
           </td>
-          <!-- VIEW DETAILS BUTTON -->
           <td>
-            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o._id }}">View</button>
+            <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">View</button>
           </td>
-          <!-- UPDATE STATUS -->
           <td>
-            <form method="POST" action="/order/status/{{ o._id }}" onsubmit="return confirmStatus('{{ o.status }}')">
+            <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}" onsubmit="return confirmStatus('{{ o.status }}')">
               <select name="status" class="form-select form-select-sm mb-1">
-                <option {{ 'selected' if o.status=='New' }}>New</option>
-                <option {{ 'selected' if o.status=='Accepted' }}>Accepted</option>
-                <option {{ 'selected' if o.status=='Pending' }}>Pending</option>
-                <option {{ 'selected' if o.status=='Completed' }}>Completed</option>
-                <option {{ 'selected' if o.status=='Cancelled' }}>Cancelled</option>
+                <option value="New" {{ 'selected' if o.status=='New' }}>🆕 New</option>
+                <option value="Accepted" {{ 'selected' if o.status=='Accepted' }}>✅ Accepted</option>
+                <option value="Pending" {{ 'selected' if o.status=='Pending' }}>⏳ Pending</option>
+                <option value="Ready" {{ 'selected' if o.status=='Ready' }}>🎂 Ready</option>
+                <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>📦 Out for Delivery</option>
+                <option value="Completed" {{ 'selected' if o.status=='Completed' }}>🟢 Completed</option>
+                <option value="Cancelled" {{ 'selected' if o.status=='Cancelled' }}>❌ Cancelled</option>
               </select>
               <button class="btn btn-primary btn-sm w-100">Update</button>
             </form>
           </td>
         </tr>
-
-        <!-- DETAILS MODAL -->
-        <div class="modal fade" id="details{{ o._id }}" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Order Details</h5>
-                <button class="btn-close" data-bs-dismiss="modal"></button>
-              </div>
-              <div class="modal-body">
-                <p><strong>Name:</strong> {{ o.customer.name }}</p>
-                <p><strong>Contact:</strong> {{ o.customer.contact }}</p>
-                <p><strong>Address:</strong> {{ o.customer.address }}</p>
-                <p><strong>Occasion:</strong> {{ o.customer.occasion }}</p>
-                <p><strong>Celebrant:</strong> {{ o.customer.celebrant or 'N/A' }}</p>
-                <p><strong>Age:</strong> {{ o.customer.age or 'N/A' }}</p>
-                <p><strong>Rush:</strong>
-                  {% if o.rush %}
-                    <span class="badge bg-danger">YES</span>
-                  {% else %}
-                    No
-                  {% endif %}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
         {% else %}
         <tr>
           <td colspan="7" class="text-center text-muted">No orders yet</td>
@@ -122,40 +253,74 @@
   </div>
 
   <!-- ================= LOW STOCK ALERTS ================= -->
-{% if low_stock %}
-<h2 class="mt-5 mb-3">⚠️ Low Stock Alerts</h2>
+  {% if low_stock %}
+  <h2 class="mt-5 mb-3">⚠️ Low Stock Alerts</h2>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead class="table-light">
+        <tr>
+          <th>Item</th>
+          <th>Quantity</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in low_stock %}
+        <tr class="{% if i.quantity < 5 %}table-danger{% else %}table-warning{% endif %}">
+          <td>{{ i.item }}</td>
+          <td>{{ i.quantity }}</td>
+          <td>
+            {% if i.quantity < 5 %}
+            <span class="badge bg-danger">Critical</span>
+            {% else %}
+            <span class="badge bg-warning text-dark">Low</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
 
-<div class="table-responsive">
-  <table class="table table-striped">
-    <thead class="table-light">
-      <tr>
-        <th>Item</th>
-        <th>Quantity</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for i in low_stock %}
-      <tr class="{% if i.quantity < 5 %}table-danger{% else %}table-warning{% endif %}">
-        <td>{{ i.item }}</td>
-        <td>{{ i.quantity }}</td>
-        <td>
-          {% if i.quantity < 5 %}
-          <span class="badge bg-danger">Critical</span>
+</div>
+
+<!-- DETAILS MODALS -->
+{% for o in orders %}
+<div class="modal fade" id="details{{ o.id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Order Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Order:</strong> {{ o.item }}</p>
+        <p><strong>Name:</strong> {{ o.customer.name }}</p>
+        <p><strong>Contact:</strong> {{ o.customer.contact }}</p>
+        <p><strong>Address:</strong> {{ o.customer.address }}</p>
+        <p><strong>Occasion:</strong> {{ o.customer.occasion }}</p>
+        <p><strong>Celebrant:</strong> {{ o.customer.celebrant or 'N/A' }}</p>
+        <p><strong>Age:</strong> {{ o.customer.age or 'N/A' }}</p>
+        <p><strong>Rush:</strong>
+          {% if o.rush %}
+            <span class="badge bg-danger">YES</span>
           {% else %}
-          <span class="badge bg-warning text-dark">Low</span>
+            No
           {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        </p>
+        {% if o.notes %}
+        <div class="mt-3">
+          <strong>📝 Special Instructions:</strong>
+          <p class="mb-0">{{ o.notes }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
 </div>
-{% endif %}
+{% endfor %}
 
-</div>
-
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -165,6 +330,54 @@ function confirmStatus(currentStatus) {
     "\nAre you sure you want to update this order?"
   );
 }
+
+// Live Search Function
+document.getElementById('searchOrders').addEventListener('keyup', function() {
+  let searchValue = this.value.toLowerCase();
+  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
+  
+  tableRows.forEach(row => {
+    let text = row.textContent.toLowerCase();
+    row.style.display = text.includes(searchValue) ? '' : 'none';
+  });
+});
+
+// Filter Functions
+document.getElementById('statusFilter').addEventListener('change', function() {
+  let status = this.value;
+  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
+  
+  tableRows.forEach(row => {
+    if (!status) {
+      row.style.display = '';
+      return;
+    }
+    let statusBadge = row.querySelector('.badge');
+    row.style.display = statusBadge && statusBadge.textContent.trim() === status ? '' : 'none';
+  });
+});
+
+document.getElementById('rushFilter').addEventListener('change', function() {
+  let rush = this.value;
+  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
+  
+  tableRows.forEach(row => {
+    if (!rush) {
+      row.style.display = '';
+      return;
+    }
+    let isRush = row.classList.contains('table-danger');
+    if (rush === 'yes') {
+      row.style.display = isRush ? '' : 'none';
+    } else {
+      row.style.display = !isRush ? '' : 'none';
+    }
+  });
+});
+
+document.getElementById('dateFilter').addEventListener('change', function() {
+  console.log('Date filter:', this.value);
+});
 </script>
 
 </body>
