@@ -1,0 +1,96 @@
+
+    /* Smooth scrolling */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Off-canvas styling */
+    .offcanvas-body {
+      padding: 0;
+    }
+
+    .list-group-item {
+      border: none;
+      border-radius: 0;
+      transition: all 0.2s ease;
+    }
+
+    .list-group-item:hover {
+      background-color: #f8f9fa;
+      padding-left: 1.5rem !important;
+    }
+
+    .list-group-item.active {
+      background-color: #0d6efd;
+      color: white;
+      border-left: 4px solid #0a58ca;
+    }
+
+    .section-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .section-divider {
+      margin: 3rem 0 2rem 0;
+      border-top: 3px solid #e9ecef;
+      position: relative;
+    }
+
+    .section-divider-text {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f8f9fa;
+      padding: 0 20px;
+      font-weight: 600;
+      color: #495057;
+      font-size: 1.1rem;
+    }
+
+    /* Card improvements */
+    .stat-card {
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      border: 1px solid #dee2e6;
+      height: 100%;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    /* Table improvements */
+    .table-responsive {
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+
+    /* Badge improvements */
+    .badge {
+      padding: 0.35em 0.65em;
+      font-weight: 500;
+    }
+
+    /* Rush order highlight */
+    .table-danger {
+      background-color: #fff3cd !important;
+      border-left: 4px solid #dc3545;
+    }
+
+    .card-header-custom {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: 600;
+    }
+
+    .urgent-alert-card {
+      border-left: 4px solid #ffc107;
+      background: #fffbf0;
+    }

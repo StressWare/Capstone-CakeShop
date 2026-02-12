@@ -14,26 +14,76 @@
 
 <body class="bg-light">
 
-<!-- NAVBAR -->
+<!-- OFF CANVAS SIDEBAR MENU (Sliding panel) -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="adminMenu">
+  <div class="offcanvas-header bg-dark text-white">
+    <h5 class="offcanvas-title">🧁 Ms. Brave Admin</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    <div class="list-group list-group-flush w-100">
+      
+      <!-- === DASHBOARD SECTION === -->
+      <div class="list-group-item bg-light fw-bold">📊 DASHBOARD</div>
+      
+      <a href="/admin_dashboard" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4
+        {% if request.path == '/admin_dashboard' %}active bg-primary text-white{% endif %}">
+        <span class="me-3">📈</span> Charts
+      </a>
+      <a href="/admin_dashboard#sales" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4">
+        <span class="me-3">💵</span> Sales
+      </a>
+      <a href="/admin_dashboard#expenses" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4">
+        <span class="me-3">💰</span> Expenses
+      </a>
+      <a href="/admin_dashboard#inventory" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4">
+        <span class="me-3">📦</span> Inventory
+      </a>
+      
+      <div class="dropdown-divider"></div>
+      
+      <!-- === ORDER MANAGEMENT SECTION === -->
+      <div class="list-group-item bg-light fw-bold">🎛️ ORDER MANAGEMENT</div>
+      
+      <a href="/admin_panel" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4
+        {% if request.path == '/admin_panel' %}active bg-primary text-white{% endif %}">
+        <span class="me-3">🎯</span> Stat Cards
+      </a>
+      <a href="/admin_panel#orders" class="list-group-item list-group-item-action d-flex align-items-center py-2 ps-4">
+        <span class="me-3">📋</span> Order Management
+      </a>
+      
+      <div class="dropdown-divider"></div>
+      
+      <!-- === LOGOUT === -->
+      <a href="/logout" class="list-group-item list-group-item-action d-flex align-items-center py-3 text-danger">
+        <span class="fs-5 me-3">🚪</span> Logout
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- NAVBAR (Top bar with menu button) -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
   <div class="container">
+    <button class="btn btn-outline-light me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminMenu">
+      ☰ Menu
+    </button>
     <span class="navbar-brand">🧁 Ms. Brave Cake Shop</span>
     <div class="ms-auto">
-      <a href="/admin_dashboard" class="btn btn-outline-light btn-sm me-2">Admin Dashboard</a>
-      <a href="/admin_panel" class="btn btn-warning btn-sm">Admin Panel</a>
+      <!-- Optional: Add admin name here later -->
     </div>
   </div>
 </nav>
-
 <div class="container my-5">
 
   <!-- ================= TOP ROW: STATS CARDS + TODAY'S DELIVERY ================= -->
-  <div class="row mb-4">
+  <div class="row mb-4" id="stats">
     <!-- LEFT: STATS CARDS (8 cards) -->
 <div class="col-md-7">
   <div class="row g-2">
     <!-- NEW Card -->
-    <div class="col-6 col-md-2">  <!-- ✅ BIGGER -->
+    <div class="col-6 col-md-3">  <!-- ✅ BIGGER -->
       <div class="card text-center p-2">
         <h4 class="mb-0">🆕</h4>
         <h6 class="text-muted mb-0">NEW</h6>
@@ -41,23 +91,23 @@
       </div>
     </div>
     <!-- ACCEPTED Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">✅</h4>
-        <h6 class="text-muted mb-0">ACC</h6>
+        <h6 class="text-muted mb-0">ACCEPTED</h6>
         <h2 class="mb-0">{{ total_accepted }}</h2>
       </div>
     </div>
     <!-- PENDING Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">⏳</h4>
-        <h6 class="text-muted mb-0">PEND</h6>
+        <h6 class="text-muted mb-0">PENDING</h6>
         <h2 class="mb-0">{{ total_pending }}</h2>
       </div>
     </div>
     <!-- READY Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">🎂</h4>
         <h6 class="text-muted mb-0">READY</h6>
@@ -65,7 +115,7 @@
       </div>
     </div>
     <!-- OUT FOR DELIVERY Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">📦</h4>
         <h6 class="text-muted mb-0">OUT</h6>
@@ -73,33 +123,48 @@
       </div>
     </div>
     <!-- COMPLETED Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">🟢</h4>
-        <h6 class="text-muted mb-0">COMP</h6>
+        <h6 class="text-muted mb-0">COMPLETED</h6>
         <h2 class="mb-0">{{ total_completed }}</h2>
       </div>
     </div>
     <!-- CANCELLED Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">❌</h4>
-        <h6 class="text-muted mb-0">CANC</h6>
+        <h6 class="text-muted mb-0">CANCEL</h6>
         <h2 class="mb-0">{{ total_cancelled }}</h2>
       </div>
     </div>
     <!-- RUSH Card -->
-    <div class="col-6 col-md-2">
+    <div class="col-6 col-md-3">
       <div class="card text-center p-2">
         <h4 class="mb-0">⚠️</h4>
         <h6 class="text-muted mb-0">RUSH</h6>
         <h2 class="mb-0">{{ total_rush }}</h2>
       </div>
     </div>
-    <!-- TODAY Count - Full width -->
+    <!-- LOW STOCK Card - REPLACES TODAY count -->
     <div class="col-12 mt-3">
-      <div class="alert alert-info mb-0 py-3">
-        <h5 class="mb-0"><strong>📦 TODAY:</strong> {{ today_count }} orders</h5>
+      <div class="card">
+        <div class="card-body py-2">
+          <div class="d-flex align-items-center">
+            <h5 class="mb-0 me-3">⚠️ <strong>LOW STOCK:</strong></h5>
+            {% if low_stock %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for i in low_stock %}
+                  <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">
+                    {{ i.item }}: {{ i.quantity }} left
+                  </span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="text-muted">All items stocked</span>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -147,7 +212,7 @@
   </div>
 
   <!-- ================= ORDERS SECTION ================= -->
-  <h2 class="mb-3">🧾 Orders Management</h2>
+  <h2 class="mb-3 "id="orders">🧾 Orders Management</h2>
   
   <!-- SEARCH & FILTERS -->
   <div class="row mb-3">
@@ -251,38 +316,6 @@
       </tbody>
     </table>
   </div>
-
-  <!-- ================= LOW STOCK ALERTS ================= -->
-  {% if low_stock %}
-  <h2 class="mt-5 mb-3">⚠️ Low Stock Alerts</h2>
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <thead class="table-light">
-        <tr>
-          <th>Item</th>
-          <th>Quantity</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for i in low_stock %}
-        <tr class="{% if i.quantity < 5 %}table-danger{% else %}table-warning{% endif %}">
-          <td>{{ i.item }}</td>
-          <td>{{ i.quantity }}</td>
-          <td>
-            {% if i.quantity < 5 %}
-            <span class="badge bg-danger">Critical</span>
-            {% else %}
-            <span class="badge bg-warning text-dark">Low</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
-
 </div>
 
 <!-- DETAILS MODALS -->

@@ -48,24 +48,18 @@ body {
     display: flex;
     align-items: center;
 }
-/* MAIN CONTAINER */
-.container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 40px 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-}
+
 
 /* FORM CONTAINER - Fixed for your nested structure */
 .form-container {
-    width: 100%;
+    margin-right: 15%;
+    margin-top: 5%;
+    margin-bottom: 5%;
+    width: 20%;
     background: white;
     border-radius: 20px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    padding: 40px;
+    padding: 20px;
     position: relative;
     overflow: hidden;
 }
@@ -73,7 +67,7 @@ body {
 /* Only show one form at a time */
 .form {
     display: none;
-    width: 100%;
+    width: 50%;
 }
 
 /* Show active form */
@@ -111,6 +105,7 @@ h2::after {
 }
 
 /* FORM INPUTS */
+input[type="email"],
 input[type="text"],
 input[type="password"],
 input[type="number"] {
@@ -214,26 +209,51 @@ button[type="submit"]:active {
     background: rgba(255, 133, 162, 0.1);
     text-decoration: underline;
 }
-
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-    .container {
-        padding: 20px 15px;
-    }
-    
-    .form-container {
-        padding: 30px 25px;
-    }
-    
-    h2 {
-        font-size: 1.8rem;
-    }
-    
-    .navbar-brand {
-        font-size: 1.4rem;
-        padding-left: 10px;
-    }
+/* FLEX WRAPPER */
+.auth-layout {
+  display: flex;
+  align-items: center;         /* vertical center */
+  justify-content: center;     /* horizontal center */
+  gap: 50px;                   /* space between logo and form */
+  flex-wrap: wrap;             /* allows wrapping on smaller screens */
 }
+
+/* LEFT LOGO */
+.auth-left {
+  flex: 1 1 300px;            /* grow/shrink with min width */
+  display: flex;
+  justify-content: center;
+}
+
+.auth-left .auth-logo {
+  max-width: 300px;           /* keeps logo from being too big */
+  width: 100%;
+  height: auto;
+}
+
+/* FORM CONTAINER */
+.form-container {
+  flex: 1 1 350px;            /* grow/shrink with min width */
+  display: flex;
+  justify-content: center;
+}
+
+/* RESPONSIVE STACKING (Optional) */
+@media (max-width: 768px) {
+  .auth-layout {
+    flex-direction: column;
+    gap: 30px;
+  }
+
+  .auth-left .auth-logo {
+    max-width: 200px;
+  }
+
+  .form-container {
+    width: 100%;
+  }
+}
+
 
 @media (max-width: 576px) {
     .form-container {
@@ -258,16 +278,32 @@ button[type="submit"]:active {
 /* ANIMATIONS */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    to { opacity: 1; }}
+        /* FLEX WRAPPER */
+.auth-layout {
+  display: flex;
+  align-items: center;         /* vertical center */
+  justify-content: center;     /* horizontal center */
+  gap: 50px;                   /* space between logo and form */
+  flex-wrap: wrap;             /* allows wrapping on smaller screens */
 }
 
-/* NUMBER INPUT SPINNER REMOVAL */
-input[type=number]::-webkit-inner-spin-button,
-input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+/* LEFT LOGO */
+.auth-left {
+  flex: 1 1 300px;            /* grow/shrink with min width */
+  display: flex;
+  justify-content: center;
 }
 
-input[type=number] {
-    -moz-appearance: textfield;
+.auth-left .auth-logo {
+  max-width: 300px;           /* keeps logo from being too big */
+  width: 100%;
+  height: auto;
+}
+
+/* FORM CONTAINER */
+.form-container {
+  flex: 1 1 350px;            /* grow/shrink with min width */
+  display: flex;
+  justify-content: center;
 }

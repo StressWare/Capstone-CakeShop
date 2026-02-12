@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <title>MRS. Brave's Cake Iloilo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- TEAMMATE'S DESIGN - pure custom CSS -->
   <link href="../static/style.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <style>
+    /* TEAMMATE'S STYLES - keep exactly as is */
     body { scroll-behavior: smooth; }
     .hero-title { font-weight: 700; }
     .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
@@ -15,234 +17,240 @@
 </head>
 <body>
 
-<!-- NAVBAR -->
+<!-- ================ TEAMMATE'S NAVBAR (DESIGN ONLY) ================ -->
 <nav class="navbar">
-  <div class="container-fluid">
+  <div class="navbar-container">
     <a class="navbar-brand" href="#">
       <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
     </a>
-    <button class="btn btn-outline-dark" data-bs-toggle="offcanvas" data-bs-target="#menu">
-      ☰ Menu
-    </button>
+    <button class="menu-btn" id="menuToggle">☰ Menu</button>
   </div>
 </nav>
 
-<!-- OFFCANVAS MENU -->
-<div class="offcanvas offcanvas-end" id="menu">
+<!-- ================ TEAMMATE'S OFFCANVAS (DESIGN ONLY) ================ -->
+<div class="offcanvas" id="offcanvasMenu">
   <div class="offcanvas-header">
     <h5>Navigate</h5>
-    <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+    <button class="close-btn" id="menuClose">&times;</button>
   </div>
   <div class="offcanvas-body">
-    <a class="d-block mb-2" href="/customer_dashboard">Profile</a>
-    <a class="d-block mb-2" href="#cakes">Cake Showcase</a>
-    <a class="d-block mb-2" href="#services">Services</a>
-    <a class="d-block mb-2" href="#customize">Customize Your Cake</a>
+    <a href="/customer_dashboard">Profile</a>
+    <a href="#cakes">Cake Showcase</a>
+    <a href="#services">Services</a>
+    <a href="#customize">Customize Your Cake</a>
   </div>
 </div>
 
 <div style="margin-top: 70px;"></div>
 
-<!-- CAROUSEL -->
-<section id="cakes" class="container mb-5">
-  <div id="cakeCarousel" class="carousel slide cake-carousel" data-bs-ride="carousel">
-    <div class="carousel-inner rounded">
-      <div class="carousel-item active">
-        <img src="../static/img/" class="d-block w-100">
-      </div>
-      <div class="carousel-item">
-        <img src="../assets/img/1.png" class="d-block w-100">
-      </div>
-      <div class="carousel-item">
-        <img src="../assets/img/1.png" class="d-block w-100">
-      </div>
+<!-- ================ TEAMMATE'S CAROUSEL (DESIGN ONLY) ================ -->
+<section id="cakes" class="carousel-container">
+  <div class="carousel" id="cakeCarousel">
+    <div class="carousel-item active">
+      <img src="../static/img/1.jpg" alt="Cake 1">
+    </div>
+    <div class="carousel-item">
+      <img src="../static/img/2.jpg" alt="Cake 2">
+    </div>
+    <div class="carousel-item">
+      <img src="../static/img/3.jpg" alt="Cake 3">
+    </div>
+    <button class="carousel-prev" id="prevBtn">&#10094;</button>
+    <button class="carousel-next" id="nextBtn">&#10095;</button>
+  </div>
+</section>
+
+<!-- ================ TEAMMATE'S SERVICES (DESIGN ONLY) ================ -->
+<section id="services" class="services-section">
+  <h2>Our Services</h2>
+  <div class="services-row">
+    <div class="service-card">
+      <h5>Cake Customization</h5>
+      <p>Create cakes based on flavor, design, and toppings.</p>
+    </div>
+    <div class="service-card">
+      <h5>Event Orders</h5>
+      <p>Birthday, wedding, anniversary & more.</p>
+    </div>
+    <div class="service-card">
+      <h5>Scheduled Delivery</h5>
+      <p>Pick your preferred date and time.</p>
     </div>
   </div>
 </section>
 
-<!-- SERVICES -->
-<section id="services" class="container mb-5">
-  <h2 class="text-center mb-4">Our Services</h2>
-  <div class="row g-4">
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5>Cake Customization</h5>
-          <p>Create cakes based on flavor, design, and toppings.</p>
-        </div>
-      </div>
+<!-- ================ YOUR FUNCTIONALITY - INJECTED INTO TEAMMATE'S DESIGN ================ -->
+<section id="customize" class="customize-section">
+  <h2>Customize Your Cake</h2>
+
+  <form id="cakeForm">
+    <!-- Cake Type -->
+    <label for="cakeType">Cake Type</label>
+    <select id="cakeType">
+      <option value="800">Chocolate (₱800)</option>
+      <option value="850">Vanilla (₱850)</option>
+      <option value="900">Red Velvet (₱900)</option>
+    </select>
+
+    <!-- Design -->
+    <label for="design">Design</label>
+    <select id="design">
+      <option value="0">Simple (₱0)</option>
+      <option value="300">Themed (₱300)</option>
+      <option value="500">Luxury (₱500)</option>
+    </select>
+
+    <!-- YOUR FEATURE 1: Cake Size -->
+    <label for="cakeSize">Cake Size</label>
+    <select id="cakeSize">
+      <option value="0">6 inches (₱0)</option>
+      <option value="200">8 inches (+₱200)</option>
+      <option value="400">10 inches (+₱400)</option>
+      <option value="600">12 inches (+₱600)</option>
+    </select>
+
+    <!-- YOUR FEATURE 2: Layers -->
+    <label for="layers">Layers</label>
+    <select id="layers">
+      <option value="0">Single Layer (₱0)</option>
+      <option value="300">Double Layer (+₱300)</option>
+      <option value="600">Triple Layer (+₱600)</option>
+    </select>
+
+    <!-- Toppings -->
+    <label>Toppings</label>
+    <div>
+      <input type="checkbox" class="topping" value="100" id="sprinkles">
+      <label for="sprinkles">Sprinkles (₱100)</label>
     </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5>Event Orders</h5>
-          <p>Birthday, wedding, anniversary & more.</p>
-        </div>
-      </div>
+    <div>
+      <input type="checkbox" class="topping" value="150" id="fruits">
+      <label for="fruits">Fruits (₱150)</label>
     </div>
-    <div class="col-md-4">
-      <div class="card h-100">
-        <div class="card-body">
-          <h5>Scheduled Delivery</h5>
-          <p>Pick your preferred date and time.</p>
-        </div>
-      </div>
+    <div>
+      <input type="checkbox" class="topping" value="200" id="chocoDrip">
+      <label for="chocoDrip">Chocolate Drip (₱200)</label>
     </div>
-  </div>
+
+    <!-- YOUR FEATURE 3: Special Instructions -->
+    <label for="notes">Special Instructions</label>
+    <textarea name="notes" id="notes" rows="2" placeholder="e.g., Write Allergy Warning, no nuts, specific design details..."></textarea>
+    <small>Additional charges may apply for special requests</small>
+
+    <div class="price-box">
+      Total: ₱<span id="totalPrice">0</span>
+    </div>
+    <button type="button" id="orderNowBtn">Order Now</button>
+  </form>
 </section>
 
-<!-- CUSTOMIZATION -->
-<section id="customize" class="container mb-5">
-  <h2 class="text-center mb-4">Customize Your Cake</h2>
+<!-- ================ YOUR MODAL - INJECTED INTO TEAMMATE'S DESIGN ================ -->
+<div class="modal" id="orderModal">
+  <div class="modal-content">
+    <span class="modal-close" id="modalClose">&times;</span>
+    <h5>Customer Order Details</h5>
+    <form method="POST" action="/order">
+      <!-- YOUR JINJA AUTO-FILL -->
+      <label>Customer Name</label>
+      <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
 
-  <div class="row">
-    <div class="col-md-6">
-      <form id="cakeForm">
-        <label class="form-label">Cake Type</label>
-        <select class="form-select mb-3" id="cakeType">
-          <option value="800">Chocolate (₱800)</option>
-          <option value="850">Vanilla (₱850)</option>
-          <option value="900">Red Velvet (₱900)</option>
-        </select>
+      <label>Contact Number</label>
+      <input name="contact" value="{{ customer.number if customer else '' }}" required>
 
-        <label class="form-label">Design</label>
-        <select class="form-select mb-3" id="design">
-          <option value="0">Simple (₱0)</option>
-          <option value="300">Themed (₱300)</option>
-          <option value="500">Luxury (₱500)</option>
-        </select>
+      <label>Address</label>
+      <input name="address" value="{{ customer.address if customer else '' }}" required>
 
-        <label class="form-label">Cake Size</label>
-        <select class="form-select mb-3" id="cakeSize">
-          <option value="0">6 inches (₱0)</option>
-          <option value="200">8 inches (+₱200)</option>
-          <option value="400">10 inches (+₱400)</option>
-          <option value="600">12 inches (+₱600)</option>
-        </select>
+      <label>Occasion</label>
+      <input name="occasion" placeholder="Birthday, Wedding..." required>
 
-        <label class="form-label">Layers</label>
-        <select class="form-select mb-3" id="layers">
-          <option value="0">Single Layer (₱0)</option>
-          <option value="300">Double Layer (+₱300)</option>
-          <option value="600">Triple Layer (+₱600)</option>
-        </select>
-        
-        <label class="form-label">Toppings</label>
-        <div class="form-check">
-          <input class="form-check-input topping" type="checkbox" value="100"> Sprinkles (₱100)
-        </div>
-        <div class="form-check">
-          <input class="form-check-input topping" type="checkbox" value="150"> Fruits (₱150)
-        </div>
-        <div class="form-check mb-3">
-          <input class="form-check-input topping" type="checkbox" value="200"> Chocolate Drip (₱200)
-        </div>
+      <label>Celebrant / Dedication</label>
+      <input name="celebrant">
 
-        <label class="form-label">Special Instructions</label>
-        <textarea name="notes" id="notes" class="form-control" 
-                  placeholder="e.g., Write Allergy Warning, no nuts, specific design details..." 
-                  rows="2"></textarea>
-        <small class="text-muted">Additional charges may apply for special requests</small>
+      <label>Age</label>
+      <input name="age" type="number" min="0">
 
-        <div class="price-box">
-          Total: ₱<span id="totalPrice">0</span>
-        </div>
-        <button 
-          type="button" 
-          class="btn btn-success w-100"
-          data-bs-toggle="modal"
-          data-bs-target="#orderModal">
-          Order Now
-        </button>
-      </form>
-    </div>
-  </div>
-</section>
+      <label>
+        <input type="checkbox" name="rush" value="yes"> Rush Order
+      </label>
 
-<!-- ORDER MODAL -->
-<div class="modal fade" id="orderModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="POST" action="/order">
-        <div class="modal-header">
-          <h5 class="modal-title">Customer Order Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
+      <!-- YOUR FEATURE 4: Delivery Date -->
+      <label>Schedule Date</label>
+      <input type="date" name="delivery_date" required>
 
-        <div class="modal-body">
-          <div class="row g-3">
-            <!-- Customer Info - AUTO-FILL IF LOGGED IN -->
-            <div class="col-md-6">
-              <label class="form-label">Customer Name</label>
-              <input name="customer_name" class="form-control" 
-                     value="{{ customer.fname if customer else '' }}" required>
-            </div>
+      <!-- YOUR FEATURE 5: Delivery Time -->
+      <label>Delivery Time</label>
+      <input type="time" name="delivery_time" required>
 
-            <div class="col-md-6">
-              <label class="form-label">Contact Number</label>
-              <input name="contact" class="form-control" 
-                     value="{{ customer.number if customer else '' }}" required>
-            </div>
+      <!-- Hidden fields -->
+      <input type="hidden" name="order_item" id="orderItem">
+      <input type="hidden" name="amount" id="orderAmount">
+      <input type="hidden" name="notes" id="orderNotes">
 
-            <div class="col-12">
-              <label class="form-label">Address</label>
-              <input name="address" class="form-control" 
-                     value="{{ customer.address if customer else '' }}" required>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label">Occasion</label>
-              <input name="occasion" class="form-control" placeholder="Birthday, Wedding..." required>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label">Celebrant / Dedication</label>
-              <input name="celebrant" class="form-control">
-            </div>
-
-            <div class="col-md-2">
-              <label class="form-label">Age</label>
-              <input name="age" type="number" class="form-control" min="0">
-            </div>
-
-            <!-- Rush Order -->
-            <div class="form-check mt-2">
-              <input class="form-check-input" type="checkbox" name="rush" value="yes">
-              <label class="form-check-label">Rush Order</label>
-            </div>
-
-            <!-- Delivery Date -->
-            <div class="col-md-6 mt-2">
-              <label class="form-label">Schedule Date</label>
-              <input type="date" name="delivery_date" class="form-control" required>
-            </div>
-            <div class="col-md-6 mt-2">
-              <label class="form-label">Delivery Time</label>
-              <input type="time" name="delivery_time" class="form-control" required>
-            </div>
-          </div>
-          
-          <!-- HIDDEN FIELDS - Outside row.g-3 but inside modal-body -->
-          <input type="hidden" name="order_item" id="orderItem">
-          <input type="hidden" name="amount" id="orderAmount">
-          <input type="hidden" name="notes" id="orderNotes">  <!-- ✅ NEW: Separate notes field -->
-        </div>
-        
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary w-100" onclick="updateOrderData()">Confirm Order</button>
-        </div>
-      </form>
-    </div>
+      <button type="submit" onclick="updateOrderData()">Confirm Order</button>
+    </form>
   </div>
 </div>
 
+<!-- Bootstrap JS (keep for modal functionality - your team might not have this) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
-/* ====== UPDATE TOTAL PRICE ====== */
+// ================ TEAMMATE'S OFFCANVAS (FUNCTIONALITY) ================
+const menuBtn = document.getElementById("menuToggle");
+const offcanvas = document.getElementById("offcanvasMenu");
+const menuClose = document.getElementById("menuClose");
+
+menuBtn.addEventListener("click", () => {
+    offcanvas.classList.add("active");
+});
+
+menuClose.addEventListener("click", () => {
+    offcanvas.classList.remove("active");
+});
+
+document.addEventListener("click", (e) => {
+    if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
+        offcanvas.classList.remove("active");
+    }
+});
+
+// ================ TEAMMATE'S CAROUSEL (FUNCTIONALITY) ================
+const carousel = document.getElementById("cakeCarousel");
+const items = carousel.querySelectorAll(".carousel-item");
+let currentIndex = 0;
+
+document.getElementById("prevBtn").addEventListener("click", () => {
+  items[currentIndex].classList.remove("active");
+  currentIndex = (currentIndex - 1 + items.length) % items.length;
+  items[currentIndex].classList.add("active");
+});
+
+document.getElementById("nextBtn").addEventListener("click", () => {
+  items[currentIndex].classList.remove("active");
+  currentIndex = (currentIndex + 1) % items.length;
+  items[currentIndex].classList.add("active");
+});
+
+setInterval(() => {
+  items[currentIndex].classList.remove("active");
+  currentIndex = (currentIndex + 1) % items.length;
+  items[currentIndex].classList.add("active");
+}, 5000);
+
+// ================ TEAMMATE'S MODAL TOGGLE (FUNCTIONALITY) ================
+const orderBtn = document.getElementById("orderNowBtn");
+const orderModal = document.getElementById("orderModal");
+const modalClose = document.getElementById("modalClose");
+
+orderBtn.addEventListener("click", () => orderModal.classList.add("active"));
+modalClose.addEventListener("click", () => orderModal.classList.remove("active"));
+
+// ================ YOUR CALCULATIONS (FUNCTIONALITY) ================
 function calculateTotal() {
   const cakePrice = parseFloat(document.getElementById("cakeType").value) || 0;
   const designPrice = parseFloat(document.getElementById("design").value) || 0;
   const sizePrice = parseFloat(document.getElementById("cakeSize").value) || 0;
-  const layersPrice = parseFloat(document.getElementById("layers").value) || 0; 
+  const layersPrice = parseFloat(document.getElementById("layers").value) || 0;
 
   let toppingsPrice = 0;
   document.querySelectorAll(".topping:checked").forEach(t => {
@@ -254,15 +262,13 @@ function calculateTotal() {
   return total;
 }
 
-/* ====== UPDATE HIDDEN ORDER FIELDS ====== */
 function updateOrderData() {
   const total = calculateTotal();
   document.getElementById("orderAmount").value = total.toFixed(2);
 
-  // Build order description - NO NOTES HERE!
   const cake = document.getElementById("cakeType").selectedOptions[0].text;
   const design = document.getElementById("design").selectedOptions[0].text;
-  const size = document.getElementById("cakeSize").selectedOptions[0].text; 
+  const size = document.getElementById("cakeSize").selectedOptions[0].text;
   const layers = document.getElementById("layers").selectedOptions[0].text;
 
   let toppings = [];
@@ -275,10 +281,8 @@ function updateOrderData() {
     description += `, Toppings: ${toppings.join(", ")}`;
   }
 
-  // Set order item description (cake details only)
   document.getElementById("orderItem").value = description;
   
-  // ✅ Set notes in SEPARATE hidden field
   const notes = document.getElementById("notes")?.value || "";
   document.getElementById("orderNotes").value = notes;
 }
@@ -290,15 +294,9 @@ document.getElementById("cakeSize").addEventListener("change", calculateTotal);
 document.getElementById("layers").addEventListener("change", calculateTotal);
 document.querySelectorAll(".topping").forEach(t => t.addEventListener("change", calculateTotal));
 
-// Update hidden fields when modal opens
-document.getElementById("orderModal")
-  .addEventListener("show.bs.modal", updateOrderData);
-
 // Initial calculation
 calculateTotal();
 </script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

@@ -80,9 +80,10 @@ def logout():
     return redirect(url_for("auth"))
 
 
-# ---------------- ADMIN DASHBOARD ----------------
+# ---------------- COMBINED ADMIN (DASHBOARD + PANEL) ----------------
 @app.route("/admin_dashboard")
 def admin_page():
+    # =============== DASHBOARD DATA ===============
     # Fetch inventory
     inv_items = []
     for doc in inventory.stream():
@@ -90,30 +91,23 @@ def admin_page():
         item["id"] = doc.id
         inv_items.append(item)
 
-    # Fetch expenses - FIXED: Proper UTC to PH conversion
+    # Fetch expenses
     exp_items = []
     for doc in expenses.stream():
         e = doc.to_dict()
         e["id"] = doc.id
-        
-        # Handle date - could be string OR datetime from Firestore
         date_val = e.get("date")
         if isinstance(date_val, str):
             date_val = datetime.fromisoformat(date_val)
-        
-        # CORRECT: Convert from UTC to PH time
         if isinstance(date_val, datetime):
             if date_val.tzinfo is None:
-                # Firestore returns naive UTC - mark as UTC then convert to PH
                 date_val = date_val.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
-                # Convert any timezone to PH time
                 date_val = date_val.astimezone(PH_TZ)
-        
         e["date"] = date_val
         exp_items.append(e)
 
-    # Fetch sales (Completed/Pickup orders only) - FIXED
+    # Fetch sales (Completed/Pickup orders only)
     sales_items = []
     for user_doc in users.stream():
         user_data = user_doc.to_dict()
@@ -123,80 +117,41 @@ def admin_page():
             if order.get("status") in ["Completed", "Pickup"]:
                 order["customer_username"] = user_data.get("username", "")
                 order["id"] = order_doc.id
-                
-                # Handle created_at - could be string OR datetime
                 created_at = order.get("created_at")
                 if isinstance(created_at, str):
                     created_at = datetime.fromisoformat(created_at)
-                
-                # CORRECT: Convert from UTC to PH time
                 if isinstance(created_at, datetime):
                     if created_at.tzinfo is None:
-                        # Firestore returns naive UTC - mark as UTC then convert to PH
                         created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
                     else:
-                        # Convert any timezone to PH time
                         created_at = created_at.astimezone(PH_TZ)
-                
                 order["created_at"] = created_at
                 sales_items.append(order)
 
-    # ---------------- WEEKLY CALCULATION ----------------
-    today = datetime.now(PH_TZ)
-    week_ago = today - timedelta(days=7)
-
+    # Weekly calculations
+    now = datetime.now(PH_TZ)
+    week_ago = now - timedelta(days=7)
     days_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     weekly_sales = {day: 0 for day in days_order}
     weekly_expenses = {day: 0 for day in days_order}
     weekly_profit = {day: 0 for day in days_order}
 
-    # Populate weekly expenses
     for e in exp_items:
-        try:
-            e_date = e.get("date")
-            if isinstance(e_date, datetime):
-                # Already in PH time
-                if e_date >= week_ago:
-                    day = e_date.strftime("%a")
-                    weekly_expenses[day] += float(e.get("cost", 0))
-        except Exception:
-            continue
+        e_date = e.get("date")
+        if isinstance(e_date, datetime) and e_date >= week_ago:
+            weekly_expenses[e_date.strftime("%a")] += float(e.get("cost", 0))
 
-    # Populate weekly sales
     for s in sales_items:
-        try:
-            s_date = s.get("created_at")
-            if isinstance(s_date, datetime):
-                # Already in PH time
-                if s_date >= week_ago:
-                    day = s_date.strftime("%a")
-                    weekly_sales[day] += float(s.get("amount", 0))
-        except Exception:
-            continue
+        s_date = s.get("created_at")
+        if isinstance(s_date, datetime) and s_date >= week_ago:
+            weekly_sales[s_date.strftime("%a")] += float(s.get("amount", 0))
 
-    # Calculate weekly profit
     for day in days_order:
         weekly_profit[day] = weekly_sales[day] - weekly_expenses[day]
 
-    return render_template(
-        "admin.html",
-        inventory=inv_items,
-        expenses=exp_items,
-        sales=sales_items,
-        weekly_sales=weekly_sales,
-        weekly_expenses=weekly_expenses,
-        weekly_profit=weekly_profit,
-        today=today,
-        week_ago=week_ago
-    )
-
-# ---------------- ADMIN PANEL ----------------
-@app.route("/admin_panel")
-def panel_page():
-    today_str = datetime.now(PH_TZ).strftime("%d/%m/%Y")
+    # =============== PANEL DATA ===============
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
 
-    # Fetch all orders
     orders = []
     for user_doc in users.stream():
         user_data = user_doc.to_dict()
@@ -208,7 +163,6 @@ def panel_page():
             order["notes"] = order.get("notes", "")
             order["customer_username"] = user_data.get("username", "")
 
-            # Convert delivery_date
             if isinstance(order.get("delivery_date"), str):
                 order["delivery_date"] = datetime.fromisoformat(order["delivery_date"])
             if isinstance(order.get("delivery_date"), datetime):
@@ -217,7 +171,6 @@ def panel_page():
                 else:
                     order["delivery_date"] = order["delivery_date"].astimezone(PH_TZ)
             
-            # Convert created_at
             if isinstance(order.get("created_at"), str):
                 order["created_at"] = datetime.fromisoformat(order["created_at"])
             if isinstance(order.get("created_at"), datetime):
@@ -228,7 +181,7 @@ def panel_page():
 
             orders.append(order)
 
-    # =============== STATS FOR CARDS ===============
+    # Order statistics
     total_new = 0
     total_accepted = 0
     total_pending = 0
@@ -244,7 +197,6 @@ def panel_page():
     for order in orders:
         status = order.get("status", "")
         
-        # Count by status
         if status == "New":
             total_new += 1
         elif status == "Accepted":
@@ -260,11 +212,9 @@ def panel_page():
         elif status == "Cancelled":
             total_cancelled += 1
         
-        # Count rush orders
         if order.get("rush"):
             total_rush += 1
         
-        # Today's deliveries (only active orders)
         delivery_date = order.get("delivery_date")
         if isinstance(delivery_date, datetime):
             if delivery_date.date() == today_date:
@@ -278,23 +228,23 @@ def panel_page():
                         "rush": order.get("rush", False)
                     })
 
-    # Sort today's deliveries by time
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
-    # 👇 PASTE THE DEBUG CODE HERE 👇
-    # ========== STATUS DEBUG ==========
-    unique_statuses = set()
-    for order in orders:
-        unique_statuses.add(order.get("status", ""))
-
-
-
+    # =============== RENDER ===============
     return render_template(
-        "panel.html",
+        "admin_dashboard.html",
+        # DASHBOARD data
+        inventory=inv_items,
+        expenses=exp_items,
+        sales=sales_items,
+        weekly_sales=weekly_sales,
+        weekly_expenses=weekly_expenses,
+        weekly_profit=weekly_profit,
+        week_ago=week_ago,
+        
+        # PANEL data
         orders=orders,
         low_stock=low_stock,
-        today=today_str,
-        # STATS CARDS
         total_new=total_new,
         total_accepted=total_accepted,
         total_pending=total_pending,
@@ -303,12 +253,9 @@ def panel_page():
         total_completed=total_completed,
         total_cancelled=total_cancelled,
         total_rush=total_rush,
-        # TODAY'S DELIVERY
         today_count=today_count,
         today_deliveries=today_deliveries
     )
-    
-
 
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<user_id>/<order_id>", methods=["POST"])
