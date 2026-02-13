@@ -1,14 +1,73 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash,jsonify
 from datetime import datetime, timedelta, timezone
+from werkzeug.utils import secure_filename
+import uuid
+import os
 import firebase
-from db import sales, expenses, inventory, users  # Firestore collections
+from db import sales, expenses, inventory, users, cakes  # Firestore collections
 
 app = Flask(__name__)
 app.secret_key = "secretngani"
 
+UPLOAD_FOLDER = 'static/uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
 # Define Philippine Timezone (GMT+8)
 PH_TZ = timezone(timedelta(hours=8))
+#JSON
+FAQ = {
+    "how to order": "📝 To place an order with Ms. Brave Cake Shop:\n\n1. Click 'Order Now' on our homepage\n2. Select your cake design and flavor\n3. Choose delivery date and time\n4. Fill in recipient details\n5. Review and confirm your order\n6. Choose payment method\n\nThat's it! We'll confirm your order shortly.",
+    
+    "delivery time": "🚚 Our delivery times:\n\n⏱️ Standard Delivery: 2-3 business days\n⚡ Rush Delivery: 24 hours (available for ₱150 extra)\n\n📍 Delivery areas: Metro and nearby provinces\n🎁 Free delivery for orders ₱2000 and above\n\nDelivery is available 10 AM - 6 PM daily.",
+    
+    "customization": "🎨 Yes! We offer full customization:\n\n🍰 Flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry, and more\n🧁 Frosting: Buttercream, Cream Cheese, Chocolate Ganache\n🎂 Design: Custom designs, personalized messages, themed decorations\n👶 Special requests: Sugar-free, dairy-free, vegan options available\n\nPlease mention your preferences in the order notes!",
+    
+    "payment methods": "💳 We accept multiple payment methods:\n\n💵 Cash on Delivery (COD)\n📱 GCash & PayMaya\n🏦 Bank Transfer (BPI, BDO, Metrobank)\n💰 Online Payment (Debit/Credit Card)\n\nPayment must be settled before delivery. We send a QR code or bank details after confirmation.",
+    
+    "return policy": "🔄 Return & Refund Policy:\n\n❌ Non-returnable items: Baked goods due to perishability\n✅ Refund eligibility: Only if cake is damaged or incorrect upon delivery\n🕐 Timeline: Report issues within 24 hours of delivery\n💰 Refund process: Full refund or replacement (customer's choice)\n\nPlease message us immediately with photos if there's an issue!",
+    
+    "default": "😊 I'm not sure about that question. Please click one of the FAQ buttons above or contact the owner directly using the 'Chat with Owner' button. Thank you!"
+}
+#bot function
+def get_faq_response(user_message):
+    """
+    Match user message to FAQ and return response
+    Uses simple keyword matching
+    """
+    user_message_lower = user_message.lower()
+    
+    # Check each FAQ keyword
+    for faq_key, faq_answer in FAQ.items():
+        if faq_key != "default":
+            # Split key into keywords
+            keywords = faq_key.split()
+            # Check if any keyword matches
+            if any(keyword in user_message_lower for keyword in keywords):
+                return faq_answer
+    
+    # If no match found, return default response
+    return FAQ.get("default", "I'm not sure. Please contact us directly!")
 
+# ------ SECURED FILE HANDLING FUNC-----
+def save_uploaded_image(file):
+    """Helper function to save image with secure unique filename"""
+    # Get file extension (jpg, png, etc)
+    ext = file.filename.rsplit('.', 1)[1].lower()
+        # Check if extension is allowed
+    if ext not in ALLOWED_EXTENSIONS:
+        return None  # Not an image, reject it
+    
+    # Make filename safe and unique
+    safe_name = secure_filename(file.filename.rsplit('.', 1)[0])
+    unique_id = uuid.uuid4().hex[:8]
+    final_filename = f"{safe_name}-{unique_id}.{ext}"
+    
+    # Save the file
+    file.save(os.path.join(app.config['UPLOAD_FOLDER'], final_filename))
+    
+    # Return the filename to save in database
+    return final_filename
+#ROUTE START
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
@@ -230,6 +289,13 @@ def admin_page():
 
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
+    all_cakes = cakes.stream()
+    cakes_list = []
+    for cake in all_cakes:
+        cake_data = cake.to_dict()
+        cake_data['id'] = cake.id
+        cakes_list.append(cake_data)
+
     # =============== RENDER ===============
     return render_template(
         "admin_dashboard.html",
@@ -254,7 +320,9 @@ def admin_page():
         total_cancelled=total_cancelled,
         total_rush=total_rush,
         today_count=today_count,
-        today_deliveries=today_deliveries
+        today_deliveries=today_deliveries,
+
+        cakes=cakes_list
     )
 
 # ---------------- UPDATE ORDER STATUS ----------------
@@ -390,7 +458,8 @@ def customer_dashboard():
     return render_template(
         "customer_dashboard.html",
         customer=customer,
-        orders=orders
+        orders=orders,
+        user_id=user_id
     )
 
 
@@ -410,6 +479,234 @@ def edit_customer_profile():
 
     users.document(user_id).update(updated_data)
     return redirect(url_for("customer_dashboard"))
+
+@app.route('/cake/add', methods=['POST'])
+def add_cake():
+    try:
+        name = request.form.get('name')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        price = float(request.form.get('price'))
+        quantity = int(request.form.get('quantity'))
+        status = request.form.get('status') == 'on'
+        
+        # Handle image
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename:
+                image_filename = save_uploaded_image(file)
+        
+        # Save to Firestore
+        cakes.add({
+            'name': name,
+            'description': description,
+            'category': category,
+            'price': price,
+            'quantity': quantity,
+            'status': status,
+            'image': image_filename,
+            'created_at': datetime.now()
+        })
+        
+        flash('Cake added!', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect('/admin_dashboard#cake-availability')
+
+
+@app.route('/cake/edit/<cake_id>', methods=['POST'])
+def edit_cake(cake_id):
+    try:
+        cake_ref = cakes.document(cake_id)
+        cake_doc = cake_ref.get()
+        
+        if not cake_doc.exists:
+            flash('Cake not found!', 'danger')
+            return redirect('/admin_panel#cake-availability')
+        
+        current_data = cake_doc.to_dict()
+        
+        name = request.form.get('name')
+        description = request.form.get('description')
+        category = request.form.get('category')
+        price = float(request.form.get('price'))
+        quantity = int(request.form.get('quantity'))
+        status = request.form.get('status') == 'on'
+        
+        # Handle image
+        image_filename = current_data.get('image')
+        
+        # Update Firestore
+        cake_ref.update({
+            'name': name,
+            'description': description,
+            'category': category,
+            'price': price,
+            'quantity': quantity,
+            'status': status,
+            'image': image_filename
+        })
+        
+        flash('Cake updated!', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect('/admin_dashboard#cake-availability')
+
+
+@app.route('/cake/delete/<cake_id>', methods=['POST'])
+def delete_cake(cake_id):
+    try:
+        cake_ref = cakes.document(cake_id)
+        cake_doc = cake_ref.get()
+        
+        if not cake_doc.exists:
+            flash('Cake not found!', 'danger')
+            return redirect('/admin_panel#cake-availability')
+        
+        cake_data = cake_doc.to_dict()
+        image_filename = cake_data.get('image')
+        
+        # Delete image
+        if image_filename:
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        
+        # Delete from Firestore
+        cake_ref.delete()
+        
+        flash('Cake deleted!', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    
+    return redirect('/admin_dashboard#cake-availability')
+
+
+@app.route("/cakes")
+def cakes_page():
+    """Display all available cakes"""
+    # Get available cakes (status = True only)
+    available_cakes = []
+    for cake_doc in cakes.where("status", "==", True).stream():
+        cake_data = cake_doc.to_dict()
+        cake_data['id'] = cake_doc.id
+        available_cakes.append(cake_data)
+    
+    # Check if user is logged in
+    user_id = session.get("user_id")
+    
+    return render_template("cakes.html", cakes=available_cakes, user_id=user_id)
+
+@app.route('/api/send-message', methods=['POST'])
+def api_send_message():
+    """
+    Handle incoming message from chatbot widget
+    Saves message to Firestore and returns bot response
+    """
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message = data.get('message', '').strip()
+        conversation_id = data.get('conversation_id')
+
+        if not user_id or not message:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+        # Get current time in PH timezone
+        now = datetime.now(PH_TZ)
+
+        # Save customer message to Firestore
+        users.document(user_id).collection("conversations").document(conversation_id).collection("messages").add({
+            "text": message,
+            "sender": "customer",
+            "timestamp": now,
+            "created_at": now
+        })
+
+        # Get bot response (match FAQ keywords)
+        bot_response = get_faq_response(message)
+
+        # Save bot response to Firestore
+        users.document(user_id).collection("conversations").document(conversation_id).collection("messages").add({
+            "text": bot_response,
+            "sender": "bot",
+            "timestamp": now,
+            "created_at": now
+        })
+
+        # Return response to frontend
+        return jsonify({
+            'success': True,
+            'response': bot_response,
+            'timestamp': now.isoformat()
+        })
+
+    except Exception as e:
+        print(f"Error in send_message: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/messages/<user_id>/<conversation_id>', methods=['GET'])
+def api_get_messages(user_id, conversation_id):
+    """
+    Retrieve all messages for a conversation
+    """
+    try:
+        messages = []
+        
+        # Query all messages from the conversation
+        messages_ref = users.document(user_id).collection("conversations").document(conversation_id).collection("messages").order_by("timestamp").stream()
+
+        for msg_doc in messages_ref:
+            msg = msg_doc.to_dict()
+            # Convert timestamp to ISO format if it's a datetime object
+            if isinstance(msg.get('timestamp'), datetime):
+                timestamp = msg['timestamp']
+                if timestamp.tzinfo is None:
+                    timestamp = timestamp.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    timestamp = timestamp.astimezone(PH_TZ)
+                msg['timestamp'] = timestamp.isoformat()
+            
+            messages.append({
+                'text': msg.get('text', ''),
+                'sender': msg.get('sender', 'unknown'),
+                'timestamp': msg.get('timestamp', '')
+            })
+
+        return jsonify({
+            'success': True,
+            'messages': messages
+        })
+
+    except Exception as e:
+        print(f"Error in get_messages: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def get_faq_response(user_message):
+    """
+    Match user message to FAQ and return response
+    Uses simple keyword matching
+    """
+    user_message_lower = user_message.lower()
+    
+    # Check each FAQ keyword
+    for faq_key, faq_answer in FAQ.items():
+        if faq_key != "default":
+            # Split key into keywords
+            keywords = faq_key.split()
+            # Check if any keyword matches
+            if any(keyword in user_message_lower for keyword in keywords):
+                return faq_answer
+    
+    # If no match found, return default response
+    return FAQ.get("default", "I'm not sure. Please contact us directly!")
+
+
 
 
 # ---------------- RUN SERVER ----------------

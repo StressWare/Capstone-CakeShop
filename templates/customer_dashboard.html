@@ -7,6 +7,8 @@
   <title>Customer Dashboard - Ms. Brave Cake Shop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='customer_dashboard.css') }}">
+   <link href="../static/chatbot.css" rel="stylesheet">
+  
 </head>
 <body>
 
@@ -150,6 +152,229 @@
       </div>
     </div>
   </div>
+
+  <!-- CHATBOT FLOATING WIDGET -->
+<div id="chatbot-widget" class="chatbot-container">
+  <!-- Floating Button -->
+  <button class="chatbot-toggle-btn" id="chatbotToggle" title="Open Chat">
+    <span class="chat-icon">💬</span>
+  </button>
+
+  <!-- Chat Window -->
+  <div class="chatbot-window" id="chatbotWindow" style="display: none;">
+    <!-- Header -->
+    <div class="chatbot-header">
+      <div class="header-content">
+        <h5>🎂 Ms. Brave Support</h5>
+        <p class="status-text">Online - Instant replies</p>
+      </div>
+      <button class="close-btn" id="chatbotClose">✕</button>
+    </div>
+
+    <!-- Messages Container -->
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="message bot-message">
+        <p>👋 Hey there! Welcome to Ms. Brave Cake Shop support. How can we help you today?</p>
+      </div>
+    </div>
+
+    <!-- FAQ Buttons Section -->
+    <div class="faq-buttons" id="faqButtonsContainer">
+      <button class="faq-btn" data-question="how to order">
+        📝 How to Order?
+      </button>
+      <button class="faq-btn" data-question="delivery time">
+        🚚 Delivery Time?
+      </button>
+      <button class="faq-btn" data-question="customization">
+        🎨 Customization?
+      </button>
+      <button class="faq-btn" data-question="payment methods">
+        💳 Payment Methods?
+      </button>
+      <button class="faq-btn" data-question="return policy">
+        🔄 Return Policy?
+      </button>
+    </div>
+
+    <!-- Support Escalation -->
+    <div class="support-section">
+      <p class="support-text">Can't find what you need?</p>
+      <button class="btn-support" id="escalateBtn">
+        👤 Chat with Owner
+      </button>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chatbot-input-area">
+      <input 
+        type="text" 
+        id="chatbotInput" 
+        class="chatbot-input" 
+        placeholder="Ask a question..."
+        autocomplete="off"
+      >
+      <button class="send-btn" id="chatbotSendBtn">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CHATBOT WIDGET LOGIC =====
+class ChatbotWidget {
+  constructor() {
+    this.userId = this.getUserIdFromSession();
+    this.conversationId = this.getOrCreateConversationId();
+    this.toggleBtn = document.getElementById('chatbotToggle');
+    this.window = document.getElementById('chatbotWindow');
+    this.closeBtn = document.getElementById('chatbotClose');
+    this.messagesContainer = document.getElementById('chatbotMessages');
+    this.input = document.getElementById('chatbotInput');
+    this.sendBtn = document.getElementById('chatbotSendBtn');
+    this.faqBtns = document.querySelectorAll('.faq-btn');
+    this.escalateBtn = document.getElementById('escalateBtn');
+
+    this.init();
+  }
+
+  init() {
+    // Toggle chat window
+    this.toggleBtn.addEventListener('click', () => this.toggleWindow());
+    this.closeBtn.addEventListener('click', () => this.toggleWindow());
+
+    // Send message events
+    this.sendBtn.addEventListener('click', () => this.sendMessage());
+    this.input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') this.sendMessage();
+    });
+
+    // FAQ buttons
+    this.faqBtns.forEach(btn => {
+      btn.addEventListener('click', () => this.handleFaqClick(btn));
+    });
+
+    // Escalate button (placeholder for now)
+    this.escalateBtn.addEventListener('click', () => {
+      alert('Chat with owner feature coming soon!');
+    });
+
+    // Load message history
+    this.loadMessages();
+  }
+
+  getUserIdFromSession() {
+    // Get user ID from page (you'll need to add this to your template)
+    return document.body.dataset.userId || 'unknown';
+  }
+
+  getOrCreateConversationId() {
+    let convId = localStorage.getItem('chatbot_conversation_id');
+    if (!convId) {
+      convId = 'conv_' + Date.now();
+      localStorage.setItem('chatbot_conversation_id', convId);
+    }
+    return convId;
+  }
+
+  toggleWindow() {
+    if (this.window.style.display === 'none') {
+      this.window.style.display = 'flex';
+      this.input.focus();
+    } else {
+      this.window.style.display = 'none';
+    }
+  }
+
+  handleFaqClick(btn) {
+    const question = btn.dataset.question;
+    this.input.value = question;
+    this.sendMessage();
+  }
+
+  async sendMessage() {
+    const message = this.input.value.trim();
+    if (!message) return;
+
+    // Show customer message
+    this.addMessage(message, 'customer');
+    this.input.value = '';
+
+    // Show loading indicator
+    this.addMessage('...', 'bot-loading');
+
+    try {
+      // Send to backend API
+      const response = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          user_id: this.userId,
+          conversation_id: this.conversationId
+        })
+      });
+
+      const data = await response.json();
+
+      // Remove loading indicator
+      const loadingMsg = this.messagesContainer.lastChild;
+      if (loadingMsg && loadingMsg.textContent.includes('...')) {
+        loadingMsg.remove();
+      }
+
+      if (data.success) {
+        // Show bot response
+        this.addMessage(data.response, 'bot');
+      } else {
+        this.addMessage('Sorry, something went wrong. Please try again.', 'bot');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      const loadingMsg = this.messagesContainer.lastChild;
+      if (loadingMsg) loadingMsg.remove();
+      this.addMessage('Connection error. Please try again.', 'bot');
+    }
+  }
+
+  addMessage(text, sender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${sender}-message`;
+    
+    if (sender === 'bot-loading') {
+      msgDiv.innerHTML = '<p>Thinking<span class="typing-dots">...</span></p>';
+    } else {
+      msgDiv.innerHTML = `<p>${text}</p>`;
+    }
+
+    this.messagesContainer.appendChild(msgDiv);
+    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+  }
+
+  async loadMessages() {
+    try {
+      const response = await fetch(`/api/messages/${this.userId}/${this.conversationId}`);
+      const data = await response.json();
+
+      if (data.success && data.messages) {
+        // Clear initial message and reload
+        this.messagesContainer.innerHTML = '';
+        data.messages.forEach(msg => {
+          this.addMessage(msg.text, msg.sender);
+        });
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  }
+}
+
+// Initialize chatbot when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  new ChatbotWidget();
+});
+</script>
 
 </div>
 

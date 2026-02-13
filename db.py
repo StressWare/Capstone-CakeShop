@@ -21,4 +21,5 @@ sales = db.collection("sales")
 expenses = db.collection("expenses")
 inventory = db.collection("inventory")
 users = db.collection("users")
+cakes = db.collection("cakes")
 

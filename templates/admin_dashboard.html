@@ -732,19 +732,31 @@
         <h4 class="mb-0">
           <i class="fas fa-cake-candles me-2"></i>Cake Availability
         </h4>
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#cakeModal" onclick="resetCakeForm()">
+        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#cakeModal">
           <i class="fas fa-plus me-2"></i>Add New Cake
         </button>
       </div>
       <div class="card-body">
-        <!-- SEARCH & FILTERS -->
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- SEARCH & FILTERS (Frontend only) -->
         <div class="row mb-4">
           <div class="col-md-6 mb-2">
             <div class="input-group">
               <span class="input-group-text bg-white">
                 <i class="fas fa-search"></i>
               </span>
-              <input type="text" class="form-control" placeholder="Search cakes by name..." id="searchCakes">
+              <input type="text" class="form-control" id="searchCakes" placeholder="Search cakes by name...">
             </div>
           </div>
           <div class="col-md-3 mb-2">
@@ -766,8 +778,7 @@
         </div>
 
         <!-- CAKE CARDS GRID -->
-        <div class="row g-3" id="cakeGrid">
-          <!-- Sample Cake Cards - Replace with backend data -->
+        <div class="row g-3">
           {% for cake in cakes %}
           <div class="col-lg-3 col-md-4 col-sm-6 cake-item" 
                data-name="{{ cake.name|lower }}" 
@@ -777,7 +788,7 @@
               <div class="position-relative">
                 <div class="cake-image-placeholder">
                   {% if cake.image %}
-                    <img src="{{ cake.image }}" alt="{{ cake.name }}" style="width:100%; height:200px; object-fit:cover;">
+                    <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" alt="{{ cake.name }}" style="width:100%; height:200px; object-fit:cover;">
                   {% else %}
                     🎂
                   {% endif %}
@@ -789,19 +800,100 @@
               <div class="card-body">
                 <h5 class="card-title mb-2">{{ cake.name }}</h5>
                 <span class="badge bg-warning text-dark mb-2">{{ cake.category }}</span>
-                <p class="card-text small text-muted mb-2">{{ cake.description[:60] }}...</p>
+                <p class="card-text small text-muted mb-2">{{ cake.description[:60] }}{% if cake.description|length > 60 %}...{% endif %}</p>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                   <span class="fw-bold text-success fs-5">₱{{ "%.2f"|format(cake.price) }}</span>
                   <span class="badge bg-secondary">{{ cake.quantity }} left</span>
                 </div>
                 <div class="d-grid gap-2">
-                  <button class="btn btn-sm btn-primary" onclick="editCake({{ cake.id }})">
+                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCakeModal{{ cake.id }}">
                     <i class="fas fa-edit me-1"></i>Edit
                   </button>
-                  <button class="btn btn-sm btn-danger" onclick="deleteCake({{ cake.id }})">
-                    <i class="fas fa-trash me-1"></i>Delete
-                  </button>
+                  <form method="POST" action="{{ url_for('delete_cake', cake_id=cake.id) }}" onsubmit="return confirm('Are you sure you want to delete this cake?');" style="display:inline;">
+                    <button type="submit" class="btn btn-sm btn-danger w-100">
+                      <i class="fas fa-trash me-1"></i>Delete
+                    </button>
+                  </form>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Edit Modal for each cake -->
+          <div class="modal fade" id="editCakeModal{{ cake.id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <form method="POST" action="{{ url_for('edit_cake', cake_id=cake.id) }}" enctype="multipart/form-data">
+                  <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title">
+                      <i class="fas fa-edit me-2"></i>Edit Cake
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="mb-3">
+                      <label class="form-label">Current Image</label>
+                      {% if cake.image %}
+                        <div class="mb-2">
+                          <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" alt="{{ cake.name }}" style="max-width: 200px; height: auto; border-radius: 8px;">
+                          <p class="text-muted small mt-1">Image cannot be changed after upload</p>
+                        </div>
+                      {% else %}
+                        <p class="text-muted">No image uploaded</p>
+                      {% endif %}
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Cake Name *</label>
+                        <input type="text" class="form-control" name="name" value="{{ cake.name }}" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Category *</label>
+                        <select class="form-select" name="category" required>
+                          <option value="Birthday" {{ 'selected' if cake.category == 'Birthday' }}>Birthday</option>
+                          <option value="Wedding" {{ 'selected' if cake.category == 'Wedding' }}>Wedding</option>
+                          <option value="Anniversary" {{ 'selected' if cake.category == 'Anniversary' }}>Anniversary</option>
+                          <option value="Custom" {{ 'selected' if cake.category == 'Custom' }}>Custom</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Description *</label>
+                      <textarea class="form-control" name="description" rows="3" required>{{ cake.description }}</textarea>
+                    </div>
+
+                    <div class="row">
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Price (₱) *</label>
+                        <input type="number" class="form-control" name="price" value="{{ cake.price }}" step="0.01" min="0" required>
+                      </div>
+                      <div class="col-md-6 mb-3">
+                        <label class="form-label">Quantity (Max Orders) *</label>
+                        <input type="number" class="form-control" name="quantity" value="{{ cake.quantity }}" min="0" required>
+                      </div>
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="form-label">Status</label>
+                      <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="status" {{ 'checked' if cake.status }}>
+                        <label class="form-check-label">
+                          Available (Uncheck to mark as unavailable)
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                      <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning text-dark">
+                      <i class="fas fa-save me-2"></i>Update Cake
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
@@ -814,60 +906,38 @@
           </div>
           {% endfor %}
         </div>
-
-        <!-- PAGINATION -->
-        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-          <div class="text-muted" id="cakeCount">
-            Showing 1-8 of {{ cakes|length }} cakes
-          </div>
-          <nav>
-            <ul class="pagination mb-0" id="cakePagination">
-              <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1">Previous</a>
-              </li>
-              <li class="page-item active"><a class="page-link" href="#">1</a></li>
-              <li class="page-item"><a class="page-link" href="#">2</a></li>
-              <li class="page-item"><a class="page-link" href="#">3</a></li>
-              <li class="page-item">
-                <a class="page-link" href="#">Next</a>
-              </li>
-            </ul>
-          </nav>
-        </div>
       </div>
     </div>
   </section>
   
 </div>
 
-<!-- CAKE MODAL FORM -->
+<!-- CAKE MODAL FORM - ADD NEW CAKE -->
 <div class="modal fade" id="cakeModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="/cake/add" enctype="multipart/form-data" id="cakeForm">
+      <form method="POST" action="{{ url_for('add_cake') }}" enctype="multipart/form-data">
         <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title" id="cakeModalTitle">
+          <h5 class="modal-title">
             <i class="fas fa-cake-candles me-2"></i>Add Cake
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" name="cake_id" id="cakeId">
-          
           <div class="mb-3">
             <label class="form-label">Cake Image</label>
             <input type="file" class="form-control" name="image" accept="image/*">
-            <small class="text-muted">Upload an image of the cake (JPG, PNG)</small>
+            <small class="text-muted">Upload an image of the cake (JPG, PNG, max 5MB)</small>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Cake Name *</label>
-              <input type="text" class="form-control" name="name" id="cakeName" required placeholder="e.g., Chocolate Dream">
+              <input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream">
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Category *</label>
-              <select class="form-select" name="category" id="cakeCategory" required>
+              <select class="form-select" name="category" required>
                 <option value="">Select category</option>
                 <option value="Birthday">Birthday</option>
                 <option value="Wedding">Wedding</option>
@@ -879,25 +949,25 @@
 
           <div class="mb-3">
             <label class="form-label">Description *</label>
-            <textarea class="form-control" name="description" id="cakeDescription" rows="3" required placeholder="Describe the cake (flavors, ingredients, size, etc.)"></textarea>
+            <textarea class="form-control" name="description" rows="3" required placeholder="Describe the cake (flavors, ingredients, size, etc.)"></textarea>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Price (₱) *</label>
-              <input type="number" class="form-control" name="price" id="cakePrice" step="0.01" min="0" required placeholder="0.00">
+              <input type="number" class="form-control" name="price" step="0.01" min="0" required placeholder="0.00">
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Quantity (Max Orders) *</label>
-              <input type="number" class="form-control" name="quantity" id="cakeQuantity" min="0" required placeholder="0">
+              <input type="number" class="form-control" name="quantity" min="0" required placeholder="0">
             </div>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Status</label>
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="status" id="cakeStatus" checked>
-              <label class="form-check-label" for="cakeStatus">
+              <input class="form-check-input" type="checkbox" name="status" checked>
+              <label class="form-check-label">
                 Available (Uncheck to mark as unavailable - won't display to customers)
               </label>
             </div>
@@ -1089,22 +1159,10 @@ document.getElementById('dateFilter').addEventListener('change', function() {
   console.log('Date filter:', this.value);
 });
 
-// ============ CAKE AVAILABILITY FUNCTIONS ============
-
-// Search Cakes
-document.getElementById('searchCakes').addEventListener('keyup', function() {
-  filterCakes();
-});
-
-// Category Filter
-document.getElementById('categoryFilter').addEventListener('change', function() {
-  filterCakes();
-});
-
-// Status Filter
-document.getElementById('cakeStatusFilter').addEventListener('change', function() {
-  filterCakes();
-});
+// ============ CAKE SEARCH & FILTER (Frontend) ============
+document.getElementById('searchCakes').addEventListener('keyup', filterCakes);
+document.getElementById('categoryFilter').addEventListener('change', filterCakes);
+document.getElementById('cakeStatusFilter').addEventListener('change', filterCakes);
 
 function filterCakes() {
   let searchValue = document.getElementById('searchCakes').value.toLowerCase();
@@ -1128,52 +1186,6 @@ function filterCakes() {
       item.style.display = 'none';
     }
   });
-}
-
-// Reset Cake Form
-function resetCakeForm() {
-  document.getElementById('cakeForm').reset();
-  document.getElementById('cakeId').value = '';
-  document.getElementById('cakeModalTitle').innerHTML = '<i class="fas fa-cake-candles me-2"></i>Add Cake';
-  document.getElementById('cakeForm').action = '/cake/add';
-}
-
-// Edit Cake
-function editCake(id) {
-  // This would fetch cake data from backend
-  // For now, just change modal title
-  document.getElementById('cakeModalTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Edit Cake';
-  document.getElementById('cakeForm').action = '/cake/edit/' + id;
-  document.getElementById('cakeId').value = id;
-  
-  // Show modal
-  var cakeModal = new bootstrap.Modal(document.getElementById('cakeModal'));
-  cakeModal.show();
-  
-  // You would fetch and populate form data here via AJAX
-  // Example:
-  // fetch('/cake/get/' + id)
-  //   .then(response => response.json())
-  //   .then(data => {
-  //     document.getElementById('cakeName').value = data.name;
-  //     document.getElementById('cakeCategory').value = data.category;
-  //     // ... etc
-  //   });
-}
-
-// Delete Cake
-function deleteCake(id) {
-  if (confirm('Are you sure you want to delete this cake?')) {
-    // Send delete request to backend
-    fetch('/cake/delete/' + id, {
-      method: 'POST'
-    })
-    .then(response => {
-      if (response.ok) {
-        location.reload();
-      }
-    });
-  }
 }
 
 // Current Time Display
@@ -1213,6 +1225,15 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     }
   });
 });
+
+// Auto-dismiss alerts after 5 seconds
+setTimeout(function() {
+  const alerts = document.querySelectorAll('.alert');
+  alerts.forEach(function(alert) {
+    const bsAlert = new bootstrap.Alert(alert);
+    bsAlert.close();
+  });
+}, 5000);
 </script>
 
 </body>
