@@ -1109,55 +1109,44 @@ function confirmStatus(currentStatus) {
   );
 }
 
-// Live Search Function for Orders
-document.getElementById('searchOrders').addEventListener('keyup', function() {
-  let searchValue = this.value.toLowerCase();
+// ============ ORDER LIST SEARCH & FILTER (Combined) ============
+document.getElementById('searchOrders').addEventListener('keyup', filterOrders);
+document.getElementById('statusFilter').addEventListener('change', filterOrders);
+document.getElementById('rushFilter').addEventListener('change', filterOrders);
+document.getElementById('dateFilter').addEventListener('change', filterOrders);
+
+function filterOrders() {
+  let searchValue = document.getElementById('searchOrders').value.toLowerCase();
+  let statusValue = document.getElementById('statusFilter').value;
+  let rushValue = document.getElementById('rushFilter').value;
+  let dateValue = document.getElementById('dateFilter').value;
+  
   let tableRows = document.querySelectorAll('#ordersTable tbody tr');
   
   tableRows.forEach(row => {
+    // Search match (search in all text content)
     let text = row.textContent.toLowerCase();
-    row.style.display = text.includes(searchValue) ? '' : 'none';
-  });
-});
-
-// Status Filter
-document.getElementById('statusFilter').addEventListener('change', function() {
-  let status = this.value;
-  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
-  
-  tableRows.forEach(row => {
-    if (!status) {
-      row.style.display = '';
-      return;
-    }
-    let statusBadge = row.querySelector('.badge');
-    row.style.display = statusBadge && statusBadge.textContent.trim() === status ? '' : 'none';
-  });
-});
-
-// Rush Filter
-document.getElementById('rushFilter').addEventListener('change', function() {
-  let rush = this.value;
-  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
-  
-  tableRows.forEach(row => {
-    if (!rush) {
-      row.style.display = '';
-      return;
-    }
+    let matchSearch = text.includes(searchValue);
+    
+    // Status match
+    let statusBadge = row.querySelector('td:nth-child(5) .badge');
+    let matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
+    
+    // Rush match
     let isRush = row.classList.contains('table-danger');
-    if (rush === 'yes') {
-      row.style.display = isRush ? '' : 'none';
+    let matchRush = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
+    
+    // Date match (placeholder - you can implement date logic later)
+    let matchDate = true; // For now, always true
+    
+    // Show row only if ALL filters match
+    if (matchSearch && matchStatus && matchRush && matchDate) {
+      row.style.display = '';
     } else {
-      row.style.display = !isRush ? '' : 'none';
+      row.style.display = 'none';
     }
   });
-});
-
-// Date Filter (placeholder)
-document.getElementById('dateFilter').addEventListener('change', function() {
-  console.log('Date filter:', this.value);
-});
+}
 
 // ============ CAKE SEARCH & FILTER (Frontend) ============
 document.getElementById('searchCakes').addEventListener('keyup', filterCakes);
