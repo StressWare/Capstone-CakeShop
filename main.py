@@ -687,27 +687,6 @@ def api_get_messages(user_id, conversation_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def get_faq_response(user_message):
-    """
-    Match user message to FAQ and return response
-    Uses simple keyword matching
-    """
-    user_message_lower = user_message.lower()
-    
-    # Check each FAQ keyword
-    for faq_key, faq_answer in FAQ.items():
-        if faq_key != "default":
-            # Split key into keywords
-            keywords = faq_key.split()
-            # Check if any keyword matches
-            if any(keyword in user_message_lower for keyword in keywords):
-                return faq_answer
-    
-    # If no match found, return default response
-    return FAQ.get("default", "I'm not sure. Please contact us directly!")
-
-
-
 
 # ---------------- RUN SERVER ----------------
 if __name__ == "__main__":

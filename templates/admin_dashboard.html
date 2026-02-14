@@ -180,74 +180,142 @@
     <p class="mb-0 opacity-75">Complete overview of your cake shop business</p>
   </div>
   
-  <!-- ============ 1. STATUS OVERVIEW (Stat Cards) ============ -->
+  <!-- ============ 1. STATUS OVERVIEW (Stat Cards + Low Stock + Today's Deliveries) ============ -->
   <section id="status-overview" class="mb-5">
     <h3 class="mb-3">
       <i class="fas fa-tachometer-alt me-2 text-primary"></i>Status Overview
     </h3>
     <div class="row g-3">
-      <!-- NEW Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-secondary">
-          <div class="fs-2 mb-2">🆕</div>
-          <h6 class="text-muted mb-1">NEW</h6>
-          <h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2>
+      <!-- LEFT COLUMN: 8 Stat Cards + Low Stock -->
+      <div class="col-md-7">
+        <div class="row g-2">
+          <!-- NEW Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">🆕</div>
+              <h6 class="text-muted mb-0 small">NEW</h6>
+              <h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2>
+            </div>
+          </div>
+          <!-- ACCEPTED Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">✅</div>
+              <h6 class="text-muted mb-0 small">ACCEPTED</h6>
+              <h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2>
+            </div>
+          </div>
+          <!-- PENDING Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">⏳</div>
+              <h6 class="text-muted mb-0 small">PENDING</h6>
+              <h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2>
+            </div>
+          </div>
+          <!-- READY Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">🎂</div>
+              <h6 class="text-muted mb-0 small">READY</h6>
+              <h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2>
+            </div>
+          </div>
+          <!-- OUT FOR DELIVERY Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">📦</div>
+              <h6 class="text-muted mb-0 small">OUT</h6>
+              <h2 class="mb-0 fw-bold">{{ total_out }}</h2>
+            </div>
+          </div>
+          <!-- COMPLETED Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">🟢</div>
+              <h6 class="text-muted mb-0 small">COMPLETED</h6>
+              <h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2>
+            </div>
+          </div>
+          <!-- CANCELLED Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">❌</div>
+              <h6 class="text-muted mb-0 small">CANCEL</h6>
+              <h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2>
+            </div>
+          </div>
+          <!-- RUSH Card -->
+          <div class="col-6 col-md-3">
+            <div class="card stat-card text-center p-2">
+              <div class="fs-2 mb-1">⚠️</div>
+              <h6 class="text-muted mb-0 small">RUSH</h6>
+              <h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2>
+            </div>
+          </div>
+          
+          <!-- LOW STOCK ALERT (Below stat cards) -->
+          <div class="col-12 mt-3">
+            <div class="card">
+              <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                  <h5 class="mb-0 me-3">⚠️ <strong>LOW STOCK:</strong></h5>
+                  {% if low_stock %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for i in low_stock %}
+                        <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">
+                          {{ i.item }}: {{ i.quantity }} left
+                        </span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <span class="text-muted">All items stocked</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- ACCEPTED Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-info">
-          <div class="fs-2 mb-2">✅</div>
-          <h6 class="text-muted mb-1">ACCEPTED</h6>
-          <h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2>
-        </div>
-      </div>
-      <!-- PENDING Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-warning">
-          <div class="fs-2 mb-2">⏳</div>
-          <h6 class="text-muted mb-1">PENDING</h6>
-          <h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2>
-        </div>
-      </div>
-      <!-- READY Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-primary">
-          <div class="fs-2 mb-2">🎂</div>
-          <h6 class="text-muted mb-1">READY</h6>
-          <h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2>
-        </div>
-      </div>
-      <!-- OUT FOR DELIVERY Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-dark">
-          <div class="fs-2 mb-2">📦</div>
-          <h6 class="text-muted mb-1">OUT FOR DELIVERY</h6>
-          <h2 class="mb-0 fw-bold">{{ total_out }}</h2>
-        </div>
-      </div>
-      <!-- COMPLETED Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-success">
-          <div class="fs-2 mb-2">🟢</div>
-          <h6 class="text-muted mb-1">COMPLETED</h6>
-          <h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2>
-        </div>
-      </div>
-      <!-- CANCELLED Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-danger">
-          <div class="fs-2 mb-2">❌</div>
-          <h6 class="text-muted mb-1">CANCELLED</h6>
-          <h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2>
-        </div>
-      </div>
-      <!-- RUSH Card -->
-      <div class="col-6 col-lg-3">
-        <div class="card stat-card text-center p-3 border-start border-5 border-danger">
-          <div class="fs-2 mb-2">⚠️</div>
-          <h6 class="text-muted mb-1">RUSH ORDERS</h6>
-          <h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2>
+
+      <!-- RIGHT COLUMN: Today's Deliveries -->
+      <div class="col-md-5">
+        <div class="card h-100">
+          <div class="card-header bg-white">
+            <h5 class="mb-0">🚚 Today's Deliveries</h5>
+          </div>
+          <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
+            {% if today_deliveries %}
+              {% for delivery in today_deliveries %}
+              <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                <div>
+                  <span class="badge bg-light text-dark me-2">🕑 {{ delivery.time }}</span>
+                  {% if delivery.rush %}
+                    <span class="badge bg-danger">RUSH</span>
+                  {% endif %}
+                  <strong class="d-block">{{ delivery.customer }}</strong>
+                  <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
+                </div>
+                <span class="badge 
+                  {% if delivery.status == 'New' %}bg-secondary
+                  {% elif delivery.status == 'Accepted' %}bg-info
+                  {% elif delivery.status == 'Pending' %}bg-warning text-dark
+                  {% elif delivery.status == 'Ready' %}bg-primary
+                  {% elif delivery.status == 'Out for Delivery' %}bg-dark
+                  {% endif %}">
+                  {{ delivery.status }}
+                </span>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="text-center py-3 text-muted">
+                No deliveries today
+              </div>
+            {% endif %}
+          </div>
+          <div class="card-footer bg-white text-end">
+            <small class="text-muted">Total: {{ today_count }} deliveries today</small>
+          </div>
         </div>
       </div>
     </div>
@@ -293,93 +361,6 @@
   
   <!-- DIVIDER -->
   <div class="section-divider">
-    <span class="section-divider-text">🚨 URGENT ALERTS</span>
-  </div>
-  
-  <!-- ============ 3. URGENT ALERTS (Low Stock + Today's Deliveries) ============ -->
-  <section id="urgent-alerts" class="mb-5">
-    <div class="row g-3">
-      <!-- LOW STOCK ALERT -->
-      <div class="col-lg-6">
-        <div class="card urgent-alert-card shadow-sm h-100">
-          <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0">
-              <i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alert
-            </h5>
-          </div>
-          <div class="card-body">
-            {% if low_stock %}
-              <div class="d-flex flex-wrap gap-2">
-                {% for i in low_stock %}
-                  <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2 fs-6">
-                    <i class="fas fa-box me-1"></i>{{ i.item }}: <strong>{{ i.quantity }} left</strong>
-                  </span>
-                {% endfor %}
-              </div>
-            {% else %}
-              <div class="text-center py-4 text-muted">
-                <i class="fas fa-check-circle fa-3x text-success mb-3 d-block"></i>
-                <p class="mb-0">All items well stocked!</p>
-              </div>
-            {% endif %}
-          </div>
-        </div>
-      </div>
-      
-      <!-- TODAY'S DELIVERIES -->
-      <div class="col-lg-6">
-        <div class="card shadow-sm h-100">
-          <div class="card-header bg-info text-white">
-            <h5 class="mb-0">
-              <i class="fas fa-truck me-2"></i>Today's Deliveries
-            </h5>
-          </div>
-          <div class="card-body p-2" style="max-height: 350px; overflow-y: auto;">
-            {% if today_deliveries %}
-              {% for delivery in today_deliveries %}
-              <div class="d-flex justify-content-between align-items-center border-bottom py-2 px-2">
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center mb-1">
-                    <span class="badge bg-light text-dark me-2">
-                      <i class="far fa-clock"></i> {{ delivery.time }}
-                    </span>
-                    {% if delivery.rush %}
-                      <span class="badge bg-danger">RUSH</span>
-                    {% endif %}
-                  </div>
-                  <strong class="d-block">{{ delivery.customer }}</strong>
-                  <small class="text-muted">{{ delivery.cake[:35] }}{% if delivery.cake|length > 35 %}...{% endif %}</small>
-                </div>
-                <span class="badge ms-2
-                  {% if delivery.status == 'New' %}bg-secondary
-                  {% elif delivery.status == 'Accepted' %}bg-info
-                  {% elif delivery.status == 'Pending' %}bg-warning text-dark
-                  {% elif delivery.status == 'Ready' %}bg-primary
-                  {% elif delivery.status == 'Out for Delivery' %}bg-dark
-                  {% endif %}">
-                  {{ delivery.status }}
-                </span>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div class="text-center py-5 text-muted">
-                <i class="fas fa-calendar-check fa-3x mb-3 d-block"></i>
-                <p class="mb-0">No deliveries scheduled for today</p>
-              </div>
-            {% endif %}
-          </div>
-          <div class="card-footer bg-white text-end">
-            <small class="text-muted">
-              <i class="fas fa-list-ol me-1"></i>Total: <strong>{{ today_count }}</strong> deliveries today
-            </small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-  
-  <!-- DIVIDER -->
-  <div class="section-divider">
     <span class="section-divider-text">📋 DETAILED RECORDS</span>
   </div>
   
@@ -391,9 +372,29 @@
           <i class="fas fa-money-bill-wave me-2"></i>Sales Records
         </h4>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body">
+        <!-- SEARCH & FILTERS FOR SALES -->
+        <div class="row mb-3">
+          <div class="col-md-9 mb-2">
+            <div class="input-group">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Search by order name..." id="searchSales">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select class="form-select" id="dateFilterSales">
+              <option value="">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+        </div>
+
         <div class="table-responsive">
-          <table class="table table-hover mb-0">
+          <table class="table table-hover mb-0" id="salesTable">
             <thead class="table-light">
               <tr>
                 <th>Date</th>
@@ -419,6 +420,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINATION FOR SALES -->
+        <nav aria-label="Sales pagination" class="mt-3">
+          <ul class="pagination justify-content-end mb-0" id="salesPagination">
+            <!-- Pagination buttons generated by JavaScript -->
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
@@ -431,9 +439,29 @@
           <i class="fas fa-receipt me-2"></i>Expenses
         </h4>
       </div>
-      <div class="card-body p-0">
+      <div class="card-body">
+        <!-- SEARCH & FILTERS FOR EXPENSES -->
+        <div class="row mb-3">
+          <div class="col-md-9 mb-2">
+            <div class="input-group">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select class="form-select" id="dateFilterExpenses">
+              <option value="">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+        </div>
+
         <div class="table-responsive">
-          <table class="table table-hover mb-0">
+          <table class="table table-hover mb-0" id="expensesTable">
             <thead class="table-light">
               <tr>
                 <th>Date</th>
@@ -459,6 +487,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINATION FOR EXPENSES -->
+        <nav aria-label="Expenses pagination" class="mt-3">
+          <ul class="pagination justify-content-end mb-0" id="expensesPagination">
+            <!-- Pagination buttons generated by JavaScript -->
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
@@ -491,9 +526,29 @@
             </button>
           </div>
         </form>
+
+        <!-- SEARCH & FILTERS FOR INVENTORY -->
+        <div class="row mb-3">
+          <div class="col-md-9 mb-2">
+            <div class="input-group">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select class="form-select" id="statusFilterInventory">
+              <option value="">All Status</option>
+              <option value="critical">Critical (< 5)</option>
+              <option value="low">Low Stock (< 10)</option>
+              <option value="good">Good Stock</option>
+            </select>
+          </div>
+        </div>
         
         <div class="table-responsive">
-          <table class="table table-hover">
+          <table class="table table-hover" id="inventoryTable">
             <thead class="table-dark">
               <tr>
                 <th>Item</th>
@@ -579,6 +634,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINATION FOR INVENTORY -->
+        <nav aria-label="Inventory pagination" class="mt-3">
+          <ul class="pagination justify-content-end mb-0" id="inventoryPagination">
+            <!-- Pagination buttons generated by JavaScript -->
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
@@ -721,6 +783,13 @@
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINATION FOR ORDERS -->
+        <nav aria-label="Orders pagination" class="mt-3">
+          <ul class="pagination justify-content-end mb-0" id="ordersPagination">
+            <!-- Pagination buttons generated by JavaScript -->
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
@@ -778,7 +847,7 @@
         </div>
 
         <!-- CAKE CARDS GRID -->
-        <div class="row g-3">
+        <div class="row g-3" id="cakesGrid">
           {% for cake in cakes %}
           <div class="col-lg-3 col-md-4 col-sm-6 cake-item" 
                data-name="{{ cake.name|lower }}" 
@@ -906,6 +975,13 @@
           </div>
           {% endfor %}
         </div>
+
+        <!-- PAGINATION FOR CAKES -->
+        <nav aria-label="Cakes pagination" class="mt-4">
+          <ul class="pagination justify-content-end mb-0" id="cakesPagination">
+            <!-- Pagination buttons generated by JavaScript -->
+          </ul>
+        </nav>
       </div>
     </div>
   </section>
@@ -1110,10 +1186,10 @@ function confirmStatus(currentStatus) {
 }
 
 // ============ ORDER LIST SEARCH & FILTER (Combined) ============
-document.getElementById('searchOrders').addEventListener('keyup', filterOrders);
-document.getElementById('statusFilter').addEventListener('change', filterOrders);
-document.getElementById('rushFilter').addEventListener('change', filterOrders);
-document.getElementById('dateFilter').addEventListener('change', filterOrders);
+document.getElementById('searchOrders').addEventListener('keyup', filterAndPaginateOrders);
+document.getElementById('statusFilter').addEventListener('change', filterAndPaginateOrders);
+document.getElementById('rushFilter').addEventListener('change', filterAndPaginateOrders);
+document.getElementById('dateFilter').addEventListener('change', filterAndPaginateOrders);
 
 function filterOrders() {
   let searchValue = document.getElementById('searchOrders').value.toLowerCase();
@@ -1149,9 +1225,9 @@ function filterOrders() {
 }
 
 // ============ CAKE SEARCH & FILTER (Frontend) ============
-document.getElementById('searchCakes').addEventListener('keyup', filterCakes);
-document.getElementById('categoryFilter').addEventListener('change', filterCakes);
-document.getElementById('cakeStatusFilter').addEventListener('change', filterCakes);
+document.getElementById('searchCakes').addEventListener('keyup', filterAndPaginateCakes);
+document.getElementById('categoryFilter').addEventListener('change', filterAndPaginateCakes);
+document.getElementById('cakeStatusFilter').addEventListener('change', filterAndPaginateCakes);
 
 function filterCakes() {
   let searchValue = document.getElementById('searchCakes').value.toLowerCase();
@@ -1176,6 +1252,264 @@ function filterCakes() {
     }
   });
 }
+
+// ============ PAGINATION & FILTER FUNCTIONS ============
+
+// Sales Search & Filter & Pagination
+let currentSalesPage = 1;
+const salesPerPage = 10;
+
+document.getElementById('searchSales').addEventListener('keyup', filterAndPaginateSales);
+document.getElementById('dateFilterSales').addEventListener('change', filterAndPaginateSales);
+
+function filterAndPaginateSales() {
+  currentSalesPage = 1;
+  updateSalesDisplay();
+}
+
+function updateSalesDisplay() {
+  let searchValue = document.getElementById('searchSales').value.toLowerCase();
+  let dateValue = document.getElementById('dateFilterSales').value;
+  
+  let allRows = document.querySelectorAll('#salesTable tbody tr');
+  let visibleRows = [];
+  
+  allRows.forEach(row => {
+    let text = row.textContent.toLowerCase();
+    let matchSearch = text.includes(searchValue);
+    let matchDate = true; // Implement date logic if needed
+    
+    if (matchSearch && matchDate) {
+      visibleRows.push(row);
+    }
+  });
+  
+  // Pagination
+  let totalPages = Math.ceil(visibleRows.length / salesPerPage);
+  let start = (currentSalesPage - 1) * salesPerPage;
+  let end = start + salesPerPage;
+  
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, index) => {
+    row.style.display = (index >= start && index < end) ? '' : 'none';
+  });
+  
+  updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
+    currentSalesPage = page;
+    updateSalesDisplay();
+  });
+}
+
+// Expenses Search & Filter & Pagination
+let currentExpensesPage = 1;
+const expensesPerPage = 10;
+
+document.getElementById('searchExpenses').addEventListener('keyup', filterAndPaginateExpenses);
+document.getElementById('dateFilterExpenses').addEventListener('change', filterAndPaginateExpenses);
+
+function filterAndPaginateExpenses() {
+  currentExpensesPage = 1;
+  updateExpensesDisplay();
+}
+
+function updateExpensesDisplay() {
+  let searchValue = document.getElementById('searchExpenses').value.toLowerCase();
+  let dateValue = document.getElementById('dateFilterExpenses').value;
+  
+  let allRows = document.querySelectorAll('#expensesTable tbody tr');
+  let visibleRows = [];
+  
+  allRows.forEach(row => {
+    let text = row.textContent.toLowerCase();
+    let matchSearch = text.includes(searchValue);
+    let matchDate = true;
+    
+    if (matchSearch && matchDate) {
+      visibleRows.push(row);
+    }
+  });
+  
+  let totalPages = Math.ceil(visibleRows.length / expensesPerPage);
+  let start = (currentExpensesPage - 1) * expensesPerPage;
+  let end = start + expensesPerPage;
+  
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, index) => {
+    row.style.display = (index >= start && index < end) ? '' : 'none';
+  });
+  
+  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => {
+    currentExpensesPage = page;
+    updateExpensesDisplay();
+  });
+}
+
+// Inventory Search & Filter & Pagination
+let currentInventoryPage = 1;
+const inventoryPerPage = 10;
+
+document.getElementById('searchInventory').addEventListener('keyup', filterAndPaginateInventory);
+document.getElementById('statusFilterInventory').addEventListener('change', filterAndPaginateInventory);
+
+function filterAndPaginateInventory() {
+  currentInventoryPage = 1;
+  updateInventoryDisplay();
+}
+
+function updateInventoryDisplay() {
+  let searchValue = document.getElementById('searchInventory').value.toLowerCase();
+  let statusValue = document.getElementById('statusFilterInventory').value;
+  
+  let allRows = document.querySelectorAll('#inventoryTable tbody tr');
+  let visibleRows = [];
+  
+  allRows.forEach(row => {
+    let text = row.textContent.toLowerCase();
+    let matchSearch = text.includes(searchValue);
+    
+    let matchStatus = true;
+    if (statusValue === 'critical') {
+      matchStatus = row.classList.contains('table-danger');
+    } else if (statusValue === 'low') {
+      matchStatus = row.classList.contains('table-warning');
+    } else if (statusValue === 'good') {
+      matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
+    }
+    
+    if (matchSearch && matchStatus) {
+      visibleRows.push(row);
+    }
+  });
+  
+  let totalPages = Math.ceil(visibleRows.length / inventoryPerPage);
+  let start = (currentInventoryPage - 1) * inventoryPerPage;
+  let end = start + inventoryPerPage;
+  
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, index) => {
+    row.style.display = (index >= start && index < end) ? '' : 'none';
+  });
+  
+  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => {
+    currentInventoryPage = page;
+    updateInventoryDisplay();
+  });
+}
+
+// Orders Pagination
+let currentOrdersPage = 1;
+const ordersPerPage = 10;
+
+function filterAndPaginateOrders() {
+  currentOrdersPage = 1;
+  updateOrdersDisplay();
+}
+
+function updateOrdersDisplay() {
+  filterOrders();
+  
+  let allRows = document.querySelectorAll('#ordersTable tbody tr');
+  let visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none');
+  
+  let totalPages = Math.ceil(visibleRows.length / ordersPerPage);
+  let start = (currentOrdersPage - 1) * ordersPerPage;
+  let end = start + ordersPerPage;
+  
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, index) => {
+    if (index >= start && index < end) {
+      row.style.display = '';
+    }
+  });
+  
+  updatePaginationButtons('ordersPagination', currentOrdersPage, totalPages, (page) => {
+    currentOrdersPage = page;
+    updateOrdersDisplay();
+  });
+}
+
+// Cakes Pagination
+let currentCakesPage = 1;
+const cakesPerPage = 8;
+
+function filterAndPaginateCakes() {
+  currentCakesPage = 1;
+  updateCakesDisplay();
+}
+
+function updateCakesDisplay() {
+  filterCakes();
+  
+  let allItems = document.querySelectorAll('.cake-item');
+  let visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+  
+  let totalPages = Math.ceil(visibleItems.length / cakesPerPage);
+  let start = (currentCakesPage - 1) * cakesPerPage;
+  let end = start + cakesPerPage;
+  
+  allItems.forEach(item => item.style.display = 'none');
+  visibleItems.forEach((item, index) => {
+    if (index >= start && index < end) {
+      item.style.display = '';
+    }
+  });
+  
+  updatePaginationButtons('cakesPagination', currentCakesPage, totalPages, (page) => {
+    currentCakesPage = page;
+    updateCakesDisplay();
+  });
+}
+
+// Universal Pagination Button Generator
+function updatePaginationButtons(containerId, currentPage, totalPages, onPageClick) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  let html = '';
+  
+  // Previous button
+  html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
+  </li>`;
+  
+  // Page numbers
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages <= 5 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+        <a class="page-link" href="#" data-page="${i}">${i}</a>
+      </li>`;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      html += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
+    }
+  }
+  
+  // Next button
+  html += `<li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
+    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
+  </li>`;
+  
+  container.innerHTML = html;
+  
+  // Attach click events
+  container.querySelectorAll('a.page-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const page = parseInt(link.getAttribute('data-page'));
+      if (page && page !== currentPage && page >= 1 && page <= totalPages) {
+        onPageClick(page);
+      }
+    });
+  });
+}
+
+// Initialize all displays on page load
+window.addEventListener('load', function() {
+  updateSalesDisplay();
+  updateExpensesDisplay();
+  updateInventoryDisplay();
+  updateOrdersDisplay();
+  updateCakesDisplay();
+});
 
 // Current Time Display
 function updateTime() {
