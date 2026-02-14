@@ -4,14 +4,12 @@
   <meta charset="UTF-8">
   <title>Admin – Ms. Brave Cake Shop</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
   <!-- Google Charts -->
+   <link href="../static/admin_dashboard.css" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <script type="text/javascript">
     google.charts.load("current", {packages:["corechart"]});
@@ -68,110 +66,33 @@
     }
   </script>
 
-  <style>
-    /* Custom Styles for Cake Availability Section */
-    .cake-card {
-      transition: all 0.3s ease;
-      border: 1px solid #dee2e6;
-    }
-    .cake-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-    .cake-image-placeholder {
-      width: 100%;
-      height: 200px;
-      background: linear-gradient(135deg, #ffecd1 0%, #f5dac0 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 60px;
-      border-radius: 8px 8px 0 0;
-    }
-    .cake-status-badge {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1;
-    }
-  </style>
-
 </head>
 <body class="bg-light">
-
-<!-- OFF CANVAS SIDEBAR MENU -->
-<div class="offcanvas offcanvas-start" tabindex="-1" id="adminMenu">
-  <div class="offcanvas-header bg-dark text-white">
-    <h5 class="offcanvas-title">
-      <i class="fas fa-cake-candles me-2"></i>Ms. Brave Admin
-    </h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  <!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <i class="fas fa-cake-candles me-2"></i>Ms. Brave Admin
   </div>
-  <div class="offcanvas-body">
-    <div class="list-group list-group-flush w-100">
-      
-      <!-- DASHBOARD -->
-      <a href="#dashboard" class="list-group-item list-group-item-action active ps-4" onclick="closeOffcanvas()">
-        <i class="fas fa-home me-3"></i><strong>Dashboard</strong>
-      </a>
-      
-      <div class="dropdown-divider my-2"></div>
-      
-      
-      <a href="#status-overview" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-tachometer-alt me-3 text-primary"></i>Status Overview
-      </a>
-      <a href="#analytics" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-chart-line me-3 text-success"></i>Analytics
-      </a>
-      <a href="#urgent-alerts" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-exclamation-triangle me-3 text-warning"></i>Urgent Alerts
-      </a>
-      <a href="#sales" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-money-bill-wave me-3 text-success"></i>Sales
-      </a>
-      <a href="#expenses" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-receipt me-3 text-danger"></i>Expenses
-      </a>
-      <a href="#inventory" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-boxes me-3 text-info"></i>Inventory
-      </a>
-      <a href="#orders" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-list-check me-3 text-primary"></i>Order List
-      </a>
-      <a href="#cake-availability" class="list-group-item list-group-item-action ps-4 py-2" onclick="closeOffcanvas()">
-        <i class="fas fa-cake-candles me-3 text-warning"></i>Cake Availability
-      </a>
-      
-      <div class="dropdown-divider my-3"></div>
-      
-      <!-- LOGOUT -->
-      <a href="/logout" class="list-group-item list-group-item-action d-flex align-items-center py-3 text-danger">
-        <i class="fas fa-sign-out-alt fs-5 me-3"></i>
-        <strong>Logout</strong>
-      </a>
-    </div>
+
+  <ul class="sidebar-menu">
+    <li><a href="#dashboard" class="active"><i class="fas fa-home me-2"></i>Dashboard</a></li>
+    <li><a href="#status-overview"><i class="fas fa-tachometer-alt me-2"></i>Status Overview</a></li>
+    <li><a href="#analytics"><i class="fas fa-chart-line me-2"></i>Analytics</a></li>
+    <li><a href="#sales"><i class="fas fa-money-bill-wave me-2"></i>Sales</a></li>
+    <li><a href="#expenses"><i class="fas fa-receipt me-2"></i>Expenses</a></li>
+    <li><a href="#inventory"><i class="fas fa-boxes me-2"></i>Inventory</a></li>
+    <li><a href="#orders"><i class="fas fa-list-check me-2"></i>Order List</a></li>
+    <li><a href="#cake-availability"><i class="fas fa-cake-candles me-2"></i>Cake Availability</a></li>
+  </ul>
+
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
+    <a href="/logout" style="color: #e74c3c; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
+      <i class="fas fa-sign-out-alt me-2"></i>Logout
+    </a>
   </div>
 </div>
-
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top shadow-sm">
-  <div class="container-fluid">
-    <button class="btn btn-outline-light me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#adminMenu">
-      <i class="fas fa-bars"></i> Menu
-    </button>
-    <span class="navbar-brand mb-0 h1">
-      <i class="fas fa-cake-candles me-2"></i>Ms. Brave Cake Shop - Admin Dashboard
-    </span>
-    <span class="navbar-text text-white ms-auto d-none d-md-block">
-      <i class="far fa-clock me-2"></i>
-      <span id="currentTime"></span>
-    </span>
-  </div>
-</nav>
-
+<div class="main-content">
 <div class="container-fluid my-4 px-4" id="dashboard">
-  
   <!-- DASHBOARD HEADER -->
   <div class="section-header">
     <h1 class="mb-2">
@@ -384,18 +305,19 @@
             </div>
           </div>
           <div class="col-md-3 mb-2">
-            <select class="form-select" id="dateFilterSales">
-              <option value="">All Dates</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
+            <select class="form-select" id="orderFilterSales">
+              <option value="">All Orders</option>
+              <option value="Chocolate">Chocolate Cake</option>
+              <option value="Vanilla">Vanilla Cake</option>
+              <option value="Ube">Ube Cake</option>
+              <!-- Add more cake types from your sales -->
             </select>
           </div>
         </div>
 
         <div class="table-responsive">
-          <table class="table table-hover mb-0" id="salesTable">
-            <thead class="table-light">
+          <table class="table table-hover align-middle" id="salesTable">
+            <thead class="table-dark">
               <tr>
                 <th>Date</th>
                 <th>Order</th>
@@ -405,7 +327,10 @@
             <tbody>
               {% for s in sales %}
               <tr>
-                <td>{{ s.created_at.strftime('%b %d, %Y - %I:%M %p') }}</td>
+                <td>
+                  <small>{{ s.created_at.strftime('%b %d, %Y') }}</small><br>
+                  <small class="text-muted">{{ s.created_at.strftime('%I:%M %p') }}</small>
+                </td>
                 <td>{{ s.item }}</td>
                 <td class="fw-bold text-success">₱{{ "%.2f"|format(s.amount) }}</td>
               </tr>
@@ -442,7 +367,7 @@
       <div class="card-body">
         <!-- SEARCH & FILTERS FOR EXPENSES -->
         <div class="row mb-3">
-          <div class="col-md-9 mb-2">
+          <div class="col-md-12 mb-2">
             <div class="input-group">
               <span class="input-group-text bg-white">
                 <i class="fas fa-search"></i>
@@ -450,16 +375,7 @@
               <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
             </div>
           </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="dateFilterExpenses">
-              <option value="">All Dates</option>
-              <option value="today">Today</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-            </select>
-          </div>
         </div>
-
         <div class="table-responsive">
           <table class="table table-hover mb-0" id="expensesTable">
             <thead class="table-light">
@@ -472,8 +388,11 @@
             <tbody>
               {% for e in expenses %}
               <tr>
-                <td>{{ e.date.strftime("%b %d, %Y - %I:%M %p") }}</td>
-                <td>{{ e.description }}</td>
+                <td>
+                  <small>{{ e.date.strftime('%b %d, %Y') }}</small><br>
+                  <small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small>
+                </td>
+                <td><strong>{{ e.description }}</strong></td>
                 <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
               </tr>
               {% else %}
@@ -499,155 +418,125 @@
   </section>
   
   <!-- ============ 6. INVENTORY TABLE ============ -->
-  <section id="inventory" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header card-header-custom">
-        <h4 class="mb-0">
-          <i class="fas fa-boxes me-2"></i>Inventory Management
-        </h4>
-      </div>
-      <div class="card-body">
-        <form method="POST" action="/inventory/add" class="row g-3 mb-4">
-          <div class="col-md-4">
-            <label class="form-label">Item Name</label>
-            <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Quantity</label>
-            <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">Cost (₱)</label>
-            <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">
-              <i class="fas fa-plus me-2"></i>Add Item
-            </button>
-          </div>
-        </form>
-
-        <!-- SEARCH & FILTERS FOR INVENTORY -->
-        <div class="row mb-3">
-          <div class="col-md-9 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
-            </div>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="statusFilterInventory">
-              <option value="">All Status</option>
-              <option value="critical">Critical (< 5)</option>
-              <option value="low">Low Stock (< 10)</option>
-              <option value="good">Good Stock</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="table-responsive">
-          <table class="table table-hover" id="inventoryTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Item</th>
-                <th>Quantity</th>
-                <th>Cost (₱)</th>
-                <th>Status</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for i in inventory %}
-              <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}">
-                <td>{{ i.item }}</td>
-                <td>
-                  <span class="badge 
-                    {% if i.quantity < 5 %}bg-danger
-                    {% elif i.quantity < 10 %}bg-warning text-dark
-                    {% else %}bg-success
-                    {% endif %}">
-                    {{ i.quantity }}
-                  </span>
-                </td>
-                <td>₱{{ i.cost }}</td>
-                <td>
-                  {% if i.quantity < 5 %}
-                    <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Critical</span>
-                  {% elif i.quantity < 10 %}
-                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation"></i> Low Stock</span>
-                  {% else %}
-                    <span class="badge bg-success"><i class="fas fa-check"></i> Good</span>
-                  {% endif %}
-                </td>
-                <td>
-                  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
-                    <i class="fas fa-edit"></i> Edit
-                  </button>
-                </td>
-              </tr>
-              
-              <!-- Edit Modal -->
-              <div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <form method="POST" action="/inventory/edit/{{ i.id }}">
-                      <div class="modal-header">
-                        <h5 class="modal-title">
-                          <i class="fas fa-edit me-2"></i>Edit Inventory Item
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                      </div>
-                      <div class="modal-body">
-                        <div class="mb-3">
-                          <label class="form-label">Item Name</label>
-                          <input name="item" value="{{ i.item }}" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                          <label class="form-label">Quantity</label>
-                          <input name="quantity" type="number" value="{{ i.quantity }}" class="form-control" min="1" required>
-                        </div>
-                        <div class="mb-3">
-                          <label class="form-label">Cost (₱)</label>
-                          <input name="cost" type="number" value="{{ i.cost }}" class="form-control" step="0.01" min="0" required>
-                        </div>
-                      </div>
-                      <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
-                          <i class="fas fa-save me-2"></i>Save Changes
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-              {% else %}
-              <tr>
-                <td colspan="5" class="text-center text-muted py-4">
-                  <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                  No inventory items yet
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGINATION FOR INVENTORY -->
-        <nav aria-label="Inventory pagination" class="mt-3">
-          <ul class="pagination justify-content-end mb-0" id="inventoryPagination">
-            <!-- Pagination buttons generated by JavaScript -->
-          </ul>
-        </nav>
-      </div>
+<section id="inventory" class="mb-5">
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom">
+      <h4 class="mb-0">
+        <i class="fas fa-boxes me-2"></i>Inventory Management
+      </h4>
     </div>
-  </section>
+    <div class="card-body">
+      <form method="POST" action="/inventory/add" class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Item Name</label>
+          <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Quantity</label>
+          <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Cost (₱)</label>
+          <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-plus me-2"></i>Add Item
+          </button>
+        </div>
+      </form>
+
+      <!-- SEARCH & FILTERS FOR INVENTORY -->
+      <div class="row mb-3">
+        <div class="col-md-9 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="fas fa-search"></i>
+            </span>
+            <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="statusFilterInventory">
+            <option value="">All Status</option>
+            <option value="critical">Critical (< 5)</option>
+            <option value="low">Low Stock (< 10)</option>
+            <option value="good">Good Stock</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- INVENTORY TABLE (WITH ORDERS TABLE DESIGN) -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="inventoryTable">
+          <thead class="table-light">
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Cost (₱)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for i in inventory %}
+            <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}">
+              <td>
+                <strong>{{ i.item }}</strong>
+              </td>
+              <td>
+                <small>Qty:</small><br>
+                <span class="badge 
+                  {% if i.quantity < 5 %}bg-danger
+                  {% elif i.quantity < 10 %}bg-warning text-dark
+                  {% else %}bg-success
+                  {% endif %}">
+                  {{ i.quantity }}
+                </span>
+              </td>
+              <td>
+                <small>Cost:</small><br>
+                <strong>₱{{ i.cost }}</strong>
+              </td>
+              <td>
+                <small>Status:</small><br>
+                {% if i.quantity < 5 %}
+                  <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Critical</span>
+                {% elif i.quantity < 10 %}
+                  <span class="badge bg-warning text-dark"><i class="fas fa-exclamation"></i> Low Stock</span>
+                {% else %}
+                  <span class="badge bg-success"><i class="fas fa-check"></i> Good</span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-5">
+                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                No inventory items yet
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION FOR INVENTORY -->
+      <nav aria-label="Inventory pagination" class="mt-3">
+        <ul class="pagination justify-content-end mb-0" id="inventoryPagination"></ul>
+      </nav>
+    </div>
+  </div>
+</section>
   
   <!-- ============ 7. ORDER LIST ============ -->
   <section id="orders" class="mb-5">
-    <div class="card shadow-sm">
+    <div class="card shadow-sm bg-">
       <div class="card-header card-header-custom">
         <h4 class="mb-0">
           <i class="fas fa-list-check me-2"></i>Order Management
@@ -666,7 +555,7 @@
           </div>
           <div class="col-md-6">
             <div class="row g-2">
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <select class="form-select" id="statusFilter">
                   <option value="">All Status</option>
                   <option value="New">🆕 New</option>
@@ -678,15 +567,7 @@
                   <option value="Cancelled">❌ Cancelled</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <select class="form-select" id="dateFilter">
-                  <option value="">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="week">This Week</option>
-                  <option value="month">This Month</option>
-                </select>
-              </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <select class="form-select" id="rushFilter">
                   <option value="">All Orders</option>
                   <option value="yes">⚠️ Rush Only</option>
@@ -700,7 +581,7 @@
         <!-- ORDERS TABLE -->
         <div class="table-responsive">
           <table class="table table-hover align-middle" id="ordersTable">
-            <thead class="table-dark">
+            <thead class="table-light">
               <tr>
                 <th>Date Ordered</th>
                 <th>Customer</th>
@@ -797,7 +678,7 @@
   <!-- ============ 8. CAKE AVAILABILITY SECTION ============ -->
   <section id="cake-availability" class="mb-5">
     <div class="card shadow-sm">
-      <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+      <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center">
         <h4 class="mb-0">
           <i class="fas fa-cake-candles me-2"></i>Cake Availability
         </h4>
@@ -1163,20 +1044,12 @@
     </div>
   </div>
 </div>
+</div>
 {% endfor %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivjs.com/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// Close offcanvas when clicking a link
-function closeOffcanvas() {
-  const offcanvasElement = document.getElementById('adminMenu');
-  const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
-  if (offcanvas) {
-    offcanvas.hide();
-  }
-}
-
 // Confirmation dialog for status update
 function confirmStatus(currentStatus) {
   return confirm(
@@ -1185,294 +1058,150 @@ function confirmStatus(currentStatus) {
   );
 }
 
-// ============ ORDER LIST SEARCH & FILTER (Combined) ============
-document.getElementById('searchOrders').addEventListener('keyup', filterAndPaginateOrders);
-document.getElementById('statusFilter').addEventListener('change', filterAndPaginateOrders);
-document.getElementById('rushFilter').addEventListener('change', filterAndPaginateOrders);
-document.getElementById('dateFilter').addEventListener('change', filterAndPaginateOrders);
+// ============ ONE GENERIC FUNCTION: Search + Pagination (FOR ALL TABLES/SECTIONS) ============
+function searchAndPagination(tableSelector, searchInputId, paginationId, itemsPerPage) {
+  let currentPage = 1;
+  const searchInput = document.getElementById(searchInputId);
+  
+  function updateDisplay() {
+    const searchValue = searchInput.value.toLowerCase();
+    const allItems = document.querySelectorAll(tableSelector);
+    let visibleItems = [];
+    
+    // Filter by search only (filters already did their job, hidden items stay hidden)
+    allItems.forEach(item => {
+      if (item.style.display !== 'none') {  // Skip already-hidden items
+        const text = item.textContent.toLowerCase();
+        if (text.includes(searchValue)) {
+          visibleItems.push(item);
+        }
+      }
+    });
+    
+    // Calculate pagination
+    const totalPages = Math.ceil(visibleItems.length / itemsPerPage);
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    
+    // Hide all, show only current page
+    allItems.forEach(item => item.style.display = 'none');
+    visibleItems.forEach((item, index) => {
+      if (index >= start && index < end) {
+        item.style.display = '';
+      }
+    });
+    
+    // Create pagination buttons
+    updatePaginationButtons(paginationId, currentPage, totalPages, (page) => {
+      currentPage = page;
+      updateDisplay();
+    });
+  }
+  
+  // Listen for search
+  searchInput.addEventListener('keyup', () => {
+    currentPage = 1;
+    updateDisplay();
+  });
+  
+  updateDisplay();
+}
 
-function filterOrders() {
-  let searchValue = document.getElementById('searchOrders').value.toLowerCase();
-  let statusValue = document.getElementById('statusFilter').value;
-  let rushValue = document.getElementById('rushFilter').value;
-  let dateValue = document.getElementById('dateFilter').value;
+// ============ FILTER FUNCTIONS (Just filter rows, don't touch pagination) ============
+
+// FILTER 1: Order Filter (Sales) - gets value from id="orderFilterSales"
+function orderFilter() {
+  const filterValue = document.getElementById('orderFilterSales').value;
+  const allRows = document.querySelectorAll('#salesTable tbody tr');
   
-  let tableRows = document.querySelectorAll('#ordersTable tbody tr');
-  
-  tableRows.forEach(row => {
-    // Search match (search in all text content)
-    let text = row.textContent.toLowerCase();
-    let matchSearch = text.includes(searchValue);
-    
-    // Status match
-    let statusBadge = row.querySelector('td:nth-child(5) .badge');
-    let matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
-    
-    // Rush match
-    let isRush = row.classList.contains('table-danger');
-    let matchRush = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
-    
-    // Date match (placeholder - you can implement date logic later)
-    let matchDate = true; // For now, always true
-    
-    // Show row only if ALL filters match
-    if (matchSearch && matchStatus && matchRush && matchDate) {
+  allRows.forEach(row => {
+    if (!filterValue || row.textContent.includes(filterValue)) {
       row.style.display = '';
     } else {
       row.style.display = 'none';
     }
   });
+  
+  // Trigger search to recalculate pagination
+  document.getElementById('searchSales').dispatchEvent(new Event('keyup'));
 }
 
-// ============ CAKE SEARCH & FILTER (Frontend) ============
-document.getElementById('searchCakes').addEventListener('keyup', filterAndPaginateCakes);
-document.getElementById('categoryFilter').addEventListener('change', filterAndPaginateCakes);
-document.getElementById('cakeStatusFilter').addEventListener('change', filterAndPaginateCakes);
-
-function filterCakes() {
-  let searchValue = document.getElementById('searchCakes').value.toLowerCase();
-  let categoryValue = document.getElementById('categoryFilter').value;
-  let statusValue = document.getElementById('cakeStatusFilter').value;
-  
-  let cakeItems = document.querySelectorAll('.cake-item');
-  
-  cakeItems.forEach(item => {
-    let name = item.getAttribute('data-name');
-    let category = item.getAttribute('data-category');
-    let status = item.getAttribute('data-status');
-    
-    let matchSearch = name.includes(searchValue);
-    let matchCategory = !categoryValue || category === categoryValue;
-    let matchStatus = !statusValue || status === statusValue;
-    
-    if (matchSearch && matchCategory && matchStatus) {
-      item.style.display = '';
-    } else {
-      item.style.display = 'none';
-    }
-  });
-}
-
-// ============ PAGINATION & FILTER FUNCTIONS ============
-
-// Sales Search & Filter & Pagination
-let currentSalesPage = 1;
-const salesPerPage = 10;
-
-document.getElementById('searchSales').addEventListener('keyup', filterAndPaginateSales);
-document.getElementById('dateFilterSales').addEventListener('change', filterAndPaginateSales);
-
-function filterAndPaginateSales() {
-  currentSalesPage = 1;
-  updateSalesDisplay();
-}
-
-function updateSalesDisplay() {
-  let searchValue = document.getElementById('searchSales').value.toLowerCase();
-  let dateValue = document.getElementById('dateFilterSales').value;
-  
-  let allRows = document.querySelectorAll('#salesTable tbody tr');
-  let visibleRows = [];
+// FILTER 2: Status Filter (Inventory) - gets value from id="statusFilterInventory"
+function statusFilter() {
+  const filterValue = document.getElementById('statusFilterInventory').value;
+  const allRows = document.querySelectorAll('#inventoryTable tbody tr');
   
   allRows.forEach(row => {
-    let text = row.textContent.toLowerCase();
-    let matchSearch = text.includes(searchValue);
-    let matchDate = true; // Implement date logic if needed
-    
-    if (matchSearch && matchDate) {
-      visibleRows.push(row);
-    }
-  });
-  
-  // Pagination
-  let totalPages = Math.ceil(visibleRows.length / salesPerPage);
-  let start = (currentSalesPage - 1) * salesPerPage;
-  let end = start + salesPerPage;
-  
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, index) => {
-    row.style.display = (index >= start && index < end) ? '' : 'none';
-  });
-  
-  updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
-    currentSalesPage = page;
-    updateSalesDisplay();
-  });
-}
-
-// Expenses Search & Filter & Pagination
-let currentExpensesPage = 1;
-const expensesPerPage = 10;
-
-document.getElementById('searchExpenses').addEventListener('keyup', filterAndPaginateExpenses);
-document.getElementById('dateFilterExpenses').addEventListener('change', filterAndPaginateExpenses);
-
-function filterAndPaginateExpenses() {
-  currentExpensesPage = 1;
-  updateExpensesDisplay();
-}
-
-function updateExpensesDisplay() {
-  let searchValue = document.getElementById('searchExpenses').value.toLowerCase();
-  let dateValue = document.getElementById('dateFilterExpenses').value;
-  
-  let allRows = document.querySelectorAll('#expensesTable tbody tr');
-  let visibleRows = [];
-  
-  allRows.forEach(row => {
-    let text = row.textContent.toLowerCase();
-    let matchSearch = text.includes(searchValue);
-    let matchDate = true;
-    
-    if (matchSearch && matchDate) {
-      visibleRows.push(row);
-    }
-  });
-  
-  let totalPages = Math.ceil(visibleRows.length / expensesPerPage);
-  let start = (currentExpensesPage - 1) * expensesPerPage;
-  let end = start + expensesPerPage;
-  
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, index) => {
-    row.style.display = (index >= start && index < end) ? '' : 'none';
-  });
-  
-  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => {
-    currentExpensesPage = page;
-    updateExpensesDisplay();
-  });
-}
-
-// Inventory Search & Filter & Pagination
-let currentInventoryPage = 1;
-const inventoryPerPage = 10;
-
-document.getElementById('searchInventory').addEventListener('keyup', filterAndPaginateInventory);
-document.getElementById('statusFilterInventory').addEventListener('change', filterAndPaginateInventory);
-
-function filterAndPaginateInventory() {
-  currentInventoryPage = 1;
-  updateInventoryDisplay();
-}
-
-function updateInventoryDisplay() {
-  let searchValue = document.getElementById('searchInventory').value.toLowerCase();
-  let statusValue = document.getElementById('statusFilterInventory').value;
-  
-  let allRows = document.querySelectorAll('#inventoryTable tbody tr');
-  let visibleRows = [];
-  
-  allRows.forEach(row => {
-    let text = row.textContent.toLowerCase();
-    let matchSearch = text.includes(searchValue);
-    
     let matchStatus = true;
-    if (statusValue === 'critical') {
+    
+    if (filterValue === 'critical') {
       matchStatus = row.classList.contains('table-danger');
-    } else if (statusValue === 'low') {
+    } else if (filterValue === 'low') {
       matchStatus = row.classList.contains('table-warning');
-    } else if (statusValue === 'good') {
+    } else if (filterValue === 'good') {
       matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
     }
     
-    if (matchSearch && matchStatus) {
-      visibleRows.push(row);
-    }
+    row.style.display = matchStatus ? '' : 'none';
   });
   
-  let totalPages = Math.ceil(visibleRows.length / inventoryPerPage);
-  let start = (currentInventoryPage - 1) * inventoryPerPage;
-  let end = start + inventoryPerPage;
-  
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, index) => {
-    row.style.display = (index >= start && index < end) ? '' : 'none';
-  });
-  
-  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => {
-    currentInventoryPage = page;
-    updateInventoryDisplay();
-  });
+  // Trigger search to recalculate pagination
+  document.getElementById('searchInventory').dispatchEvent(new Event('keyup'));
 }
 
-// Orders Pagination
-let currentOrdersPage = 1;
-const ordersPerPage = 10;
-
-function filterAndPaginateOrders() {
-  currentOrdersPage = 1;
-  updateOrdersDisplay();
-}
-
-function updateOrdersDisplay() {
-  filterOrders();
+// FILTER 3: Orders Filters - gets values from id="statusFilter" and id="rushFilter"
+function ordersFilters() {
+  const statusValue = document.getElementById('statusFilter').value;
+  const rushValue = document.getElementById('rushFilter').value;
+  const allRows = document.querySelectorAll('#ordersTable tbody tr');
   
-  let allRows = document.querySelectorAll('#ordersTable tbody tr');
-  let visibleRows = Array.from(allRows).filter(row => row.style.display !== 'none');
-  
-  let totalPages = Math.ceil(visibleRows.length / ordersPerPage);
-  let start = (currentOrdersPage - 1) * ordersPerPage;
-  let end = start + ordersPerPage;
-  
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, index) => {
-    if (index >= start && index < end) {
-      row.style.display = '';
-    }
+  allRows.forEach(row => {
+    // Status match
+    const statusBadge = row.querySelector('td:nth-child(5) .badge');
+    const matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
+    
+    // Rush match
+    const isRush = row.classList.contains('table-danger');
+    const matchRush = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
+    
+    row.style.display = (matchStatus && matchRush) ? '' : 'none';
   });
   
-  updatePaginationButtons('ordersPagination', currentOrdersPage, totalPages, (page) => {
-    currentOrdersPage = page;
-    updateOrdersDisplay();
-  });
+  // Trigger search to recalculate pagination
+  document.getElementById('searchOrders').dispatchEvent(new Event('keyup'));
 }
 
-// Cakes Pagination
-let currentCakesPage = 1;
-const cakesPerPage = 8;
-
-function filterAndPaginateCakes() {
-  currentCakesPage = 1;
-  updateCakesDisplay();
-}
-
-function updateCakesDisplay() {
-  filterCakes();
+// FILTER 4: Cakes Filters - gets values from id="categoryFilter" and id="cakeStatusFilter"
+function cakesFilters() {
+  const categoryValue = document.getElementById('categoryFilter').value;
+  const statusValue = document.getElementById('cakeStatusFilter').value;
+  const allItems = document.querySelectorAll('.cake-item');
   
-  let allItems = document.querySelectorAll('.cake-item');
-  let visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
-  
-  let totalPages = Math.ceil(visibleItems.length / cakesPerPage);
-  let start = (currentCakesPage - 1) * cakesPerPage;
-  let end = start + cakesPerPage;
-  
-  allItems.forEach(item => item.style.display = 'none');
-  visibleItems.forEach((item, index) => {
-    if (index >= start && index < end) {
-      item.style.display = '';
-    }
+  allItems.forEach(item => {
+    const category = item.getAttribute('data-category');
+    const status = item.getAttribute('data-status');
+    
+    const matchCategory = !categoryValue || category === categoryValue;
+    const matchStatus = !statusValue || status === statusValue;
+    
+    item.style.display = (matchCategory && matchStatus) ? '' : 'none';
   });
   
-  updatePaginationButtons('cakesPagination', currentCakesPage, totalPages, (page) => {
-    currentCakesPage = page;
-    updateCakesDisplay();
-  });
+  // Trigger search to recalculate pagination
+  document.getElementById('searchCakes').dispatchEvent(new Event('keyup'));
 }
 
-// Universal Pagination Button Generator
+// ============ Universal Pagination Button Generator ============
 function updatePaginationButtons(containerId, currentPage, totalPages, onPageClick) {
   const container = document.getElementById(containerId);
   if (!container) return;
   
   let html = '';
   
-  // Previous button
   html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
     <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
   </li>`;
   
-  // Page numbers
   for (let i = 1; i <= totalPages; i++) {
     if (totalPages <= 5 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
       html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
@@ -1483,14 +1212,12 @@ function updatePaginationButtons(containerId, currentPage, totalPages, onPageCli
     }
   }
   
-  // Next button
   html += `<li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
     <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
   </li>`;
   
   container.innerHTML = html;
   
-  // Attach click events
   container.querySelectorAll('a.page-link').forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -1502,37 +1229,29 @@ function updatePaginationButtons(containerId, currentPage, totalPages, onPageCli
   });
 }
 
-// Initialize all displays on page load
+// ============ INITIALIZATION ============
 window.addEventListener('load', function() {
-  updateSalesDisplay();
-  updateExpensesDisplay();
-  updateInventoryDisplay();
-  updateOrdersDisplay();
-  updateCakesDisplay();
+  // 1. SET UP GENERIC SEARCH + PAGINATION FOR ALL TABLES
+  searchAndPagination('#salesTable tbody tr', 'searchSales', 'salesPagination', 10);
+  searchAndPagination('#expensesTable tbody tr', 'searchExpenses', 'expensesPagination', 10);
+  searchAndPagination('#inventoryTable tbody tr', 'searchInventory', 'inventoryPagination', 10);
+  searchAndPagination('#ordersTable tbody tr', 'searchOrders', 'ordersPagination', 6);
+  searchAndPagination('.cake-item', 'searchCakes', 'cakesPagination', 8);
+  
+  // 2. SET UP FILTER EVENT LISTENERS (they trigger when user changes dropdown)
+  document.getElementById('orderFilterSales').addEventListener('change', orderFilter);
+  document.getElementById('statusFilterInventory').addEventListener('change', statusFilter);
+  document.getElementById('statusFilter').addEventListener('change', ordersFilters);
+  document.getElementById('rushFilter').addEventListener('change', ordersFilters);
+  document.getElementById('categoryFilter').addEventListener('change', cakesFilters);
+  document.getElementById('cakeStatusFilter').addEventListener('change', cakesFilters);
+  
+  // 3. RUN FILTERS ONCE on page load
+  orderFilter();
+  statusFilter();
+  ordersFilters();
+  cakesFilters();
 });
-
-// Current Time Display
-function updateTime() {
-  const now = new Date();
-  const options = { 
-    weekday: 'short', 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  };
-  const timeElement = document.getElementById('currentTime');
-  if (timeElement) {
-    timeElement.textContent = now.toLocaleDateString('en-US', options);
-  }
-}
-
-// Update time every minute
-setInterval(updateTime, 60000);
-updateTime(); // Initial call
-
-// Smooth scroll to section when clicking menu links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   anchor.addEventListener('click', function (e) {
     const href = this.getAttribute('href');
@@ -1549,7 +1268,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
   });
 });
 
-// Auto-dismiss alerts after 5 seconds
 setTimeout(function() {
   const alerts = document.querySelectorAll('.alert');
   alerts.forEach(function(alert) {
