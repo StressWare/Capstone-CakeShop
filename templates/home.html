@@ -60,6 +60,62 @@
   </div>
 </section>
 
+<section class="categories-section">
+  <h2>Our Categories</h2>
+  <div class="categories-container">
+    <div class="category-wrapper" onclick="openCategory('Girl')">
+      <div class="category-circle">
+        <img src="../static/img/girl-category.jpg" alt="Girl Cakes">
+      </div>
+      <span class="category-name">Girl</span>
+    </div>
+
+    <div class="category-wrapper" onclick="openCategory('Boy')">
+      <div class="category-circle">
+        <img src="../static/img/boy-category.jpg" alt="Boy Cakes">
+      </div>
+      <span class="category-name">Boy</span>
+    </div>
+
+    <div class="category-wrapper" onclick="openCategory('Birthdays')">
+      <div class="category-circle">
+        <img src="../static/img/birthday-category.jpg" alt="Birthday Cakes">
+      </div>
+      <span class="category-name">Birthdays</span>
+    </div>
+
+    <div class="category-wrapper" onclick="openCategory('Christening')">
+      <div class="category-circle">
+        <img src="../static/img/christening-category.jpg" alt="Christening Cakes">
+      </div>
+      <span class="category-name">Christening</span>
+    </div>
+
+    <div class="category-wrapper" onclick="openCategory('Ordinary')">
+      <div class="category-circle">
+        <img src="../static/img/ordinary-category.jpg" alt="Ordinary Cakes">
+      </div>
+      <span class="category-name">Ordinary Cakes</span>
+    </div>
+  </div>
+</section>
+
+<!-- Modal for showing category cards -->
+<div id="categoryModal" class="category-modal">
+  <div class="category-modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <div id="categoryCards" class="category-cards">
+      <!-- Cards will be dynamically added here -->
+    </div>
+  </div>
+</div>
+
+
+<!-- Available Cakes Button -->
+<div class="available-cakes-btn-container">
+  <a href="cakes.html" class="available-cakes-btn">Available Cakes</a>
+</div>
+
 <!-- ================ TEAMMATE'S SERVICES (DESIGN ONLY) ================ -->
 <section id="services" class="services-section">
   <h2>Our Services</h2>
@@ -236,6 +292,75 @@ setInterval(() => {
   currentIndex = (currentIndex + 1) % items.length;
   items[currentIndex].classList.add("active");
 }, 5000);
+
+// ================ CATEGORIES ==================//
+
+const categories = {
+  Girl: [
+    { name: 'Choco Lava', img: '../static/img/choco.jpg' },
+    { name: 'Dark Chocolate', img: '../static/img/dark-chocolate.jpg' },
+    { name: 'Choco Truffle', img: '../static/img/choco-truffle.jpg' }
+  ],
+  Boy: [
+    { name: 'Strawberry Delight', img: '../static/img/strawberry-delight.jpg' },
+    { name: 'Mango Cake', img: '../static/img/mango-cake.jpg' },
+    { name: 'Mixed Fruit', img: '../static/img/mixed-fruit.jpg' }
+  ],
+  Birthdays: [
+    { name: 'Birthday Cake', img: '../static/img/birthday-cake.jpg' },
+    { name: 'Wedding Cake', img: '../static/img/wedding-cake.jpg' },
+    { name: 'Anniversary Cake', img: '../static/img/anniversary-cake.jpg' }
+  ],
+  Christening: [
+    { name: 'Christening Cake', img: '../static/img/christening-cake.jpg' }
+  ],
+  Ordinary: [
+    { name: 'Ordinary Cake 1', img: '../static/img/ordinary1.jpg' },
+    { name: 'Ordinary Cake 2', img: '../static/img/ordinary2.jpg' }
+  ]
+};
+
+function openCategory(category) {
+  const modal = document.getElementById('categoryModal');
+  const cardsContainer = document.getElementById('categoryCards');
+  
+  cardsContainer.innerHTML = ''; // Clear previous cards
+  
+  categories[category].forEach(item => {
+    const card = document.createElement('div');
+    card.classList.add('category-card');
+    
+    // Create image element
+    const img = document.createElement('img');
+    img.src = item.img;
+    img.alt = item.name;
+    img.classList.add('category-card-img');
+    
+    // Create name element
+    const name = document.createElement('p');
+    name.textContent = item.name;
+    name.classList.add('category-card-name');
+    
+    card.appendChild(img);
+    card.appendChild(name);
+    cardsContainer.appendChild(card);
+  });
+  
+  modal.style.display = 'flex'; // use flex for centering
+}
+ 
+
+function closeModal() {
+  document.getElementById('categoryModal').style.display = 'none';
+}
+
+// Close modal if clicked outside content
+window.onclick = function(event) {
+  const modal = document.getElementById('categoryModal');
+  if (event.target == modal) {
+    modal.style.display = 'none';
+  }
+}
 
 // ================ TEAMMATE'S MODAL TOGGLE (FUNCTIONALITY) ================
 const orderBtn = document.getElementById("orderNowBtn");
