@@ -20,7 +20,7 @@
 <!-- ================ TEAMMATE'S NAVBAR (DESIGN ONLY) ================ -->
 <nav class="navbar">
   <div class="navbar-container">
-    <a class="navbar-brand" href="#">
+    <a class="navbar-brand" href="/">
       <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
     </a>
     <button class="menu-btn" id="menuToggle">☰ Menu</button>
@@ -37,7 +37,7 @@
     <a href="/customer_dashboard">Profile</a>
     <a href="#cakes">Cake Showcase</a>
     <a href="#services">Services</a>
-    <a href="#customize">Customize Your Cake</a>
+    <a href="/customize">Customize Your Cake</a>
   </div>
 </div>
 
@@ -110,7 +110,6 @@
   </div>
 </div>
 
-
 <!-- Available Cakes Button -->
 <div class="available-cakes-btn-container">
   <a href="/cakes" class="available-cakes-btn">Available Cakes</a>
@@ -135,119 +134,7 @@
   </div>
 </section>
 
-<!-- ================ YOUR FUNCTIONALITY - INJECTED INTO TEAMMATE'S DESIGN ================ -->
-<section id="customize" class="customize-section">
-  <h2>Customize Your Cake</h2>
-
-  <form id="cakeForm">
-    <!-- Cake Type -->
-    <label for="cakeType">Cake Type</label>
-    <select id="cakeType">
-      <option value="800">Chocolate (₱800)</option>
-      <option value="850">Vanilla (₱850)</option>
-      <option value="900">Red Velvet (₱900)</option>
-    </select>
-
-    <!-- Design -->
-    <label for="design">Design</label>
-    <select id="design">
-      <option value="0">Simple (₱0)</option>
-      <option value="300">Themed (₱300)</option>
-      <option value="500">Luxury (₱500)</option>
-    </select>
-
-    <!-- YOUR FEATURE 1: Cake Size -->
-    <label for="cakeSize">Cake Size</label>
-    <select id="cakeSize">
-      <option value="0">6 inches (₱0)</option>
-      <option value="200">8 inches (+₱200)</option>
-      <option value="400">10 inches (+₱400)</option>
-      <option value="600">12 inches (+₱600)</option>
-    </select>
-
-    <!-- YOUR FEATURE 2: Layers -->
-    <label for="layers">Layers</label>
-    <select id="layers">
-      <option value="0">Single Layer (₱0)</option>
-      <option value="300">Double Layer (+₱300)</option>
-      <option value="600">Triple Layer (+₱600)</option>
-    </select>
-
-    <!-- Toppings -->
-    <label>Toppings</label>
-    <div>
-      <input type="checkbox" class="topping" value="100" id="sprinkles">
-      <label for="sprinkles">Sprinkles (₱100)</label>
-    </div>
-    <div>
-      <input type="checkbox" class="topping" value="150" id="fruits">
-      <label for="fruits">Fruits (₱150)</label>
-    </div>
-    <div>
-      <input type="checkbox" class="topping" value="200" id="chocoDrip">
-      <label for="chocoDrip">Chocolate Drip (₱200)</label>
-    </div>
-
-    <!-- YOUR FEATURE 3: Special Instructions -->
-    <label for="notes">Special Instructions</label>
-    <textarea name="notes" id="notes" rows="2" placeholder="e.g., Write Allergy Warning, no nuts, specific design details..."></textarea>
-    <small>Additional charges may apply for special requests</small>
-
-    <div class="price-box">
-      Total: ₱<span id="totalPrice">0</span>
-    </div>
-    <button type="button" id="orderNowBtn">Order Now</button>
-  </form>
-</section>
-
-<!-- ================ YOUR MODAL - INJECTED INTO TEAMMATE'S DESIGN ================ -->
-<div class="modal" id="orderModal">
-  <div class="modal-content">
-    <span class="modal-close" id="modalClose">&times;</span>
-    <h5>Customer Order Details</h5>
-    <form method="POST" action="/order">
-      <!-- YOUR JINJA AUTO-FILL -->
-      <label>Customer Name</label>
-      <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
-
-      <label>Contact Number</label>
-      <input name="contact" value="{{ customer.number if customer else '' }}" required>
-
-      <label>Address</label>
-      <input name="address" value="{{ customer.address if customer else '' }}" required>
-
-      <label>Occasion</label>
-      <input name="occasion" placeholder="Birthday, Wedding..." required>
-
-      <label>Celebrant / Dedication</label>
-      <input name="celebrant">
-
-      <label>Age</label>
-      <input name="age" type="number" min="0">
-
-      <label>
-        <input type="checkbox" name="rush" value="yes"> Rush Order
-      </label>
-
-      <!-- YOUR FEATURE 4: Delivery Date -->
-      <label>Schedule Date</label>
-      <input type="date" name="delivery_date" required>
-
-      <!-- YOUR FEATURE 5: Delivery Time -->
-      <label>Delivery Time</label>
-      <input type="time" name="delivery_time" required>
-
-      <!-- Hidden fields -->
-      <input type="hidden" name="order_item" id="orderItem">
-      <input type="hidden" name="amount" id="orderAmount">
-      <input type="hidden" name="notes" id="orderNotes">
-
-      <button type="submit" onclick="updateOrderData()">Confirm Order</button>
-    </form>
-  </div>
-</div>
-
-<!-- Bootstrap JS (keep for modal functionality - your team might not have this) -->
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -376,7 +263,6 @@ function openCategory(category) {
   
   modal.style.display = 'flex'; // use flex for centering
 }
- 
 
 function closeModal() {
   document.getElementById('categoryModal').style.display = 'none';
@@ -389,66 +275,6 @@ window.onclick = function(event) {
     modal.style.display = 'none';
   }
 }
-
-// ================ TEAMMATE'S MODAL TOGGLE (FUNCTIONALITY) ================
-const orderBtn = document.getElementById("orderNowBtn");
-const orderModal = document.getElementById("orderModal");
-const modalClose = document.getElementById("modalClose");
-
-orderBtn.addEventListener("click", () => orderModal.classList.add("active"));
-modalClose.addEventListener("click", () => orderModal.classList.remove("active"));
-
-// ================ YOUR CALCULATIONS (FUNCTIONALITY) ================
-function calculateTotal() {
-  const cakePrice = parseFloat(document.getElementById("cakeType").value) || 0;
-  const designPrice = parseFloat(document.getElementById("design").value) || 0;
-  const sizePrice = parseFloat(document.getElementById("cakeSize").value) || 0;
-  const layersPrice = parseFloat(document.getElementById("layers").value) || 0;
-
-  let toppingsPrice = 0;
-  document.querySelectorAll(".topping:checked").forEach(t => {
-    toppingsPrice += parseFloat(t.value) || 0;
-  });
-
-  const total = cakePrice + designPrice + sizePrice + layersPrice + toppingsPrice;
-  document.getElementById("totalPrice").innerText = total.toFixed(2);
-  return total;
-}
-
-function updateOrderData() {
-  const total = calculateTotal();
-  document.getElementById("orderAmount").value = total.toFixed(2);
-
-  const cake = document.getElementById("cakeType").selectedOptions[0].text;
-  const design = document.getElementById("design").selectedOptions[0].text;
-  const size = document.getElementById("cakeSize").selectedOptions[0].text;
-  const layers = document.getElementById("layers").selectedOptions[0].text;
-
-  let toppings = [];
-  document.querySelectorAll(".topping:checked").forEach(t => {
-    toppings.push(t.parentElement.innerText.trim());
-  });
-
-  let description = `${cake}, ${size}, ${layers}, ${design}`;
-  if (toppings.length > 0) {
-    description += `, Toppings: ${toppings.join(", ")}`;
-  }
-
-  document.getElementById("orderItem").value = description;
-  
-  const notes = document.getElementById("notes")?.value || "";
-  document.getElementById("orderNotes").value = notes;
-}
-
-// Event listeners
-document.getElementById("cakeType").addEventListener("change", calculateTotal);
-document.getElementById("design").addEventListener("change", calculateTotal);
-document.getElementById("cakeSize").addEventListener("change", calculateTotal);
-document.getElementById("layers").addEventListener("change", calculateTotal);
-document.querySelectorAll(".topping").forEach(t => t.addEventListener("change", calculateTotal));
-
-// Initial calculation
-calculateTotal();
 </script>
 
 </body>

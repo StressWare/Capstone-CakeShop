@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout - Ms. Brave Cake Shop</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<!--
+<style>
+    body {
+      background-color: #f8f9fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .checkout-container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .checkout-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .checkout-header h1 {
+      font-size: 2rem;
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .checkout-main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    @media (max-width: 992px) {
+      .checkout-main {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+    }
+
+    /* Left Column */
+    .checkout-form-section {
+      background: white;
+      padding: 0;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .delivery-options {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .delivery-option {
+      flex: 1;
+      padding: 15px 20px;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: white;
+    }
+
+    .delivery-option:hover {
+      border-color: #6c757d;
+    }
+
+    .delivery-option.active {
+      border-color: #000;
+      background: #000;
+      color: white;
+    }
+
+    .delivery-option i {
+      font-size: 1.5rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .address-type-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    .address-type-btn {
+      flex: 1;
+      padding: 12px 20px;
+      border: 1px solid #dee2e6;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+    }
+
+    .address-type-btn:hover {
+      border-color: #000;
+    }
+
+    .address-type-btn.active {
+      border-color: #000;
+      background: #000;
+      color: white;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .form-control {
+      padding: 12px 15px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+      border-color: #000;
+      box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .enter-manual-link {
+      font-size: 0.9rem;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .enter-manual-link a {
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .btn-save {
+      width: 100%;
+      padding: 14px 20px;
+      background: #000;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: background 0.3s ease;
+    }
+
+    .btn-save:hover {
+      background: #333;
+      color: white;
+      text-decoration: none;
+    }
+
+    /* Right Column - Order Summary */
+    .order-summary {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      height: fit-content;
+      position: sticky;
+      top: 20px;
+    }
+
+    .order-summary-title {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .order-items {
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .order-item {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .order-item-image {
+      width: 80px;
+      height: 80px;
+      background: #f0f0f0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .order-item-image i {
+      font-size: 2rem;
+      color: #6c757d;
+    }
+
+    .order-item-details {
+      flex: 1;
+    }
+
+    .order-item-name {
+      font-weight: 500;
+      margin-bottom: 5px;
+    }
+
+    .order-item-spec {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-bottom: 3px;
+    }
+
+    .order-item-price {
+      font-weight: 500;
+      margin-top: 8px;
+    }
+
+    .order-summary-price {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+
+    .order-summary-price.total {
+      font-size: 1.1rem;
+      font-weight: 600;
+      padding-top: 15px;
+      border-top: 1px solid #e9ecef;
+      margin-top: 15px;
+    }
+
+    .arrival-info {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 25px;
+      font-size: 0.9rem;
+    }
+
+    .arrival-info i {
+      color: #28a745;
+      margin-right: 8px;
+    }
+
+    .edit-link {
+      text-align: right;
+      margin-bottom: 15px;
+    }
+
+    .edit-link a {
+      font-size: 0.9rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Payment Section */
+    .payment-section {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .payment-methods {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .payment-method {
+      padding: 20px;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .payment-method:hover {
+      border-color: #000;
+    }
+
+    .payment-method.active {
+      border-color: #000;
+      background: #000;
+      color: white;
+    }
+
+    .payment-method i {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .payment-method-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Order Review */
+    .order-review-section {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+    }
+
+    .breadcrumb-checkout {
+      display: flex;
+      gap: 30px;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .breadcrumb-item {
+      font-size: 0.9rem;
+      color: #6c757d;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .breadcrumb-item.active {
+      color: #000;
+      font-weight: 500;
+    }
+
+    .breadcrumb-item:hover {
+      color: #000;
+    }
+  </style>
+  -->
+</head>
+<body>
+
+<div class="checkout-container">
+  <!-- Header -->
+  <div class="checkout-header">
+    <h1>Checkout</h1>
+  </div>
+
+  <!-- Main Checkout -->
+  <div class="checkout-main">
+    <!-- Left Column - Form -->
+    <div>
+      <!-- Delivery Options -->
+      <div class="checkout-form-section">
+        <div class="section-title">Delivery Options</div>
+        
+        <div class="delivery-options">
+          <div class="delivery-option active" onclick="selectDelivery(this, 'ship')">
+            <i class="fas fa-box"></i>
+            <div>Ship</div>
+          </div>
+          <div class="delivery-option" onclick="selectDelivery(this, 'pickup')">
+            <i class="fas fa-map-marker-alt"></i>
+            <div>Pick Up</div>
+          </div>
+        </div>
+
+        <!-- Address Type -->
+        <div class="address-type-buttons">
+          <button class="address-type-btn active">Home/Office</button>
+          <button class="address-type-btn">APO/FPO</button>
+        </div>
+
+        <!-- Form Fields -->
+        <form id="checkoutForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input type="text" class="form-control" id="firstName" placeholder="First Name" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input type="text" class="form-control" id="lastName" placeholder="Last Name" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Address *</label>
+            <input type="text" class="form-control" id="address" placeholder="Start typing address" required>
+          </div>
+
+          <div class="enter-manual-link">
+            <a href="#">Enter address manually</a>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email *</label>
+              <input type="email" class="form-control" id="email" placeholder="Email" required>
+            </div>
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input type="tel" class="form-control" id="phone" placeholder="Phone Number" required>
+            </div>
+          </div>
+
+          <button type="button" class="btn-save">Save & Continue</button>
+        </form>
+      </div>
+
+      <!-- Payment Section -->
+      <div class="payment-section">
+        <div class="section-title">Payment</div>
+        
+        <div class="payment-methods">
+          <div class="payment-method active" onclick="selectPayment(this)">
+            <i class="fas fa-credit-card"></i>
+            <div class="payment-method-label">Credit Card</div>
+          </div>
+          <div class="payment-method" onclick="selectPayment(this)">
+            <i class="fas fa-wallet"></i>
+            <div class="payment-method-label">Debit Card</div>
+          </div>
+          <div class="payment-method" onclick="selectPayment(this)">
+            <i class="fas fa-mobile-alt"></i>
+            <div class="payment-method-label">E-Wallet</div>
+          </div>
+          <div class="payment-method" onclick="selectPayment(this)">
+            <i class="fas fa-hand-holding-usd"></i>
+            <div class="payment-method-label">Cash on Delivery</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Review Section -->
+      <div class="order-review-section">
+        <div class="section-title">Order Review</div>
+        
+        <div class="breadcrumb-checkout">
+          <div class="breadcrumb-item">Delivery</div>
+          <div class="breadcrumb-item">Payment</div>
+          <div class="breadcrumb-item active">Review</div>
+        </div>
+
+        <div style="text-align: center; padding: 40px 20px; color: #6c757d;">
+          <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #28a745; margin-bottom: 15px; display: block;"></i>
+          <p>Review your order details before placing the order.</p>
+        </div>
+
+        <button class="btn-save" style="background: #28a745;">
+          <i class="fas fa-check me-2"></i>Place Order
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Column - Order Summary -->
+    <div>
+      <div class="order-summary">
+        <div class="edit-link">
+          <a href="#">Edit</a>
+        </div>
+
+        <div class="order-summary-title">In Your Order</div>
+
+        <div class="order-items">
+          <!-- Order Item 1 -->
+          <div class="order-item">
+            <div class="order-item-image">
+              <i class="fas fa-birthday-cake"></i>
+            </div>
+            <div class="order-item-details">
+              <div class="order-item-name">Chocolate Cake</div>
+              <div class="order-item-spec">8 inches, Double Layer</div>
+              <div class="order-item-spec">Simple Design</div>
+              <div class="order-item-price">₱1,200.00</div>
+            </div>
+          </div>
+
+          <!-- Order Item 2 -->
+          <div class="order-item">
+            <div class="order-item-image">
+              <i class="fas fa-birthday-cake"></i>
+            </div>
+            <div class="order-item-details">
+              <div class="order-item-name">Vanilla Cupcake</div>
+              <div class="order-item-spec">Single Layer</div>
+              <div class="order-item-spec">Toppings: Sprinkles, Fruits</div>
+              <div class="order-item-price">₱550.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="order-summary-price">
+          <span>Subtotal</span>
+          <span>₱1,750.00</span>
+        </div>
+        <div class="order-summary-price">
+          <span>Estimated Shipping</span>
+          <span>₱150.00</span>
+        </div>
+        <div class="order-summary-price">
+          <span>Estimated Tax</span>
+          <span>₱0.00</span>
+        </div>
+
+        <div class="order-summary-price total">
+          <span>Total</span>
+          <span>₱1,900.00</span>
+        </div>
+
+        <!-- Arrival Info -->
+        <div class="arrival-info">
+          <i class="fas fa-calendar-check"></i>
+          <strong>Arrives by</strong> Tuesday, Dec 20
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function selectDelivery(element, type) {
+    document.querySelectorAll('.delivery-option').forEach(el => {
+      el.classList.remove('active');
+    });
+    element.classList.add('active');
+    console.log('Selected delivery:', type);
+  }
+
+  function selectPayment(element) {
+    document.querySelectorAll('.payment-method').forEach(el => {
+      el.classList.remove('active');
+    });
+    element.classList.add('active');
+    console.log('Selected payment method');
+  }
+
+  // Address type buttons
+  document.querySelectorAll('.address-type-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.address-type-btn').forEach(b => {
+        b.classList.remove('active');
+      });
+      this.classList.add('active');
+    });
+  });
+
+  // Form submission
+  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    alert('Order submitted! (This is a demo)');
+  });
+</script>
+
+</body>
+</html>

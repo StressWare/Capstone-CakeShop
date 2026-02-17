@@ -83,6 +83,11 @@ def home_page():
     
     return render_template("home.html", customer=customer)
 
+# Customization page
+@app.route('/customize_cake')
+def customize():
+    return render_template('customization.html')
+
 # ---------------- LOGIN / SIGNUP ----------------
 @app.route("/authentication", methods=["GET", "POST"])
 def auth():
@@ -332,7 +337,7 @@ def update_order_status(user_id, order_id):
     users.document(user_id).collection("orders").document(order_id).update({
         "status": new_status
     })
-    return redirect(url_for("panel_page"))
+    return redirect(url_for("admin_page"))
 
 
 # ---------------- ADD INVENTORY ----------------
@@ -406,6 +411,41 @@ def place_order():
     users.document(user_id).collection("orders").add(order_data)
     return redirect(url_for("customer_dashboard"))
 
+# ---------------- EDIT ORDER ORDER FOR ADMIN----------------
+@app.route("/order/edit/<user_id>/<order_id>", methods=["POST"])
+def edit_order(user_id, order_id):
+    """Edit an existing order with new cake customization"""
+    
+    # Get the formatted item description from frontend
+    item = request.form.get("order_item")
+    amount = float(request.form.get("amount"))
+    notes = request.form.get("notes", "")
+    
+    # Get date and time from form
+    date_str = request.form.get("delivery_date")
+    time_str = request.form.get("delivery_time")
+    datetime_str = f"{date_str} {time_str}"
+    
+    # Parse and set timezone (same as your /order route)
+    delivery_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
+    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
+    
+    # Update the order in Firestore
+    try:
+        order_ref = users.document(user_id).collection("orders").document(order_id)
+        order_ref.update({
+            "item": item,
+            "amount": amount,
+            "notes": notes,
+            "delivery_date": delivery_datetime
+        })
+        
+        flash('Order updated successfully!', 'success')
+    except Exception as e:
+        flash(f'Error updating order: {str(e)}', 'error')
+    
+    return redirect('/admin_dashboard#orders')
+
 # ---------------- CUSTOMER DASHBOARD ----------------
 @app.route("/customer_dashboard")
 def customer_dashboard():
@@ -461,6 +501,7 @@ def customer_dashboard():
         orders=orders,
         user_id=user_id
     )
+
 
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
@@ -686,7 +727,10 @@ def api_get_messages(user_id, conversation_id):
         print(f"Error in get_messages: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-
+# Customization page
+@app.route('/checkout')
+def checkout_page():
+    return render_template('checkout.html')
 
 # ---------------- RUN SERVER ----------------
 if __name__ == "__main__":
