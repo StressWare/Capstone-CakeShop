@@ -97,9 +97,18 @@
     </div>
 
     <!-- Special Instructions -->
+     <div>
     <label for="notes">Special Instructions</label>
     <textarea name="notes" id="notes" rows="2" placeholder="e.g., Write Allergy Warning, no nuts, specific design details..."></textarea>
     <small>Additional charges may apply for special requests</small>
+    </div>
+    <div>
+    
+    <label for="image">Cake Image Inspo</label>
+    <input type="file" name="image" id="image" accept="image/*">
+    <small>Upload an image of your desired cake (optional)</small>
+    </div>
+
 
     <div class="price-box">
       Total: ₱<span id="totalPrice">0</span>
@@ -113,7 +122,7 @@
   <div class="modal-content">
     <span class="modal-close" id="modalClose">&times;</span>
     <h5>Customer Order Details</h5>
-    <form method="POST" action="/order">
+    <form method="POST" action="/order" enctype="multipart/form-data">
       <!-- Auto-fill from customer session -->
       <label>Customer Name</label>
       <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
@@ -149,6 +158,7 @@
       <input type="hidden" name="order_item" id="orderItem">
       <input type="hidden" name="amount" id="orderAmount">
       <input type="hidden" name="notes" id="orderNotes">
+      <input type="hidden" name="image" id="imageHidden">
 
       <button type="submit" onclick="updateOrderData()">Confirm Order</button>
     </form>
@@ -226,6 +236,9 @@ function updateOrderData() {
   
   const notes = document.getElementById("notes")?.value || "";
   document.getElementById("orderNotes").value = notes;
+
+  const imageFile = document.getElementById("image").value;
+  document.getElementById("imageHidden").value = imageFile;
 }
 
 // Event listeners

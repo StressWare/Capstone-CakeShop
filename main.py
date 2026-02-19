@@ -8,9 +8,8 @@ from db import sales, expenses, inventory, users, cakes  # Firestore collections
 
 app = Flask(__name__)
 app.secret_key = "secretngani"
-
-UPLOAD_FOLDER = 'static/uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+cus_ups = 'static/c_uploads'
+ad_ups = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
 # Define Philippine Timezone (GMT+8)
 PH_TZ = timezone(timedelta(hours=8))
@@ -49,7 +48,7 @@ def get_faq_response(user_message):
     return FAQ.get("default", "I'm not sure. Please contact us directly!")
 
 # ------ SECURED FILE HANDLING FUNC-----
-def save_uploaded_image(file):
+def save_uploaded_image(file, upload_type):
     """Helper function to save image with secure unique filename"""
     # Get file extension (jpg, png, etc)
     ext = file.filename.rsplit('.', 1)[1].lower()
@@ -57,13 +56,19 @@ def save_uploaded_image(file):
     if ext not in ALLOWED_EXTENSIONS:
         return None  # Not an image, reject it
     
+        # Determine folder ba   sed on upload type (ONE IF/ELSE)
+    if upload_type == 'cake':
+        folder =   ad_ups 
+    else:  # 'order'
+        folder = cus_ups  
+
     # Make filename safe and unique
     safe_name = secure_filename(file.filename.rsplit('.', 1)[0])
     unique_id = uuid.uuid4().hex[:8]
     final_filename = f"{safe_name}-{unique_id}.{ext}"
     
     # Save the file
-    file.save(os.path.join(app.config['UPLOAD_FOLDER'], final_filename))
+    file.save(os.path.join(folder, final_filename))
     
     # Return the filename to save in database
     return final_filename
@@ -390,6 +395,12 @@ def place_order():
     delivery_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
     delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
 
+    file = request.files.get('image')
+    if file and file.filename:
+        inspo_image = save_uploaded_image(file, 'order')
+    else:
+        inspo_image = None
+
     order_data = {
         "delivery_date": delivery_datetime,
         "item": request.form["order_item"],
@@ -397,6 +408,7 @@ def place_order():
         "status": "New",
         "rush": bool(request.form.get("rush")),
         "notes": request.form.get("notes", ""),  # ✅ NEW - Special instructions
+        "inspo_image": inspo_image,
         "customer": {
             "name": request.form["customer_name"],
             "contact": request.form["contact"],
@@ -532,11 +544,12 @@ def add_cake():
         status = request.form.get('status') == 'on'
         
         # Handle image
-        image_filename = None
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename:
-                image_filename = save_uploaded_image(file)
+        file = request.files.get('image')
+        if file and file.filename:
+            image_filename = save_uploaded_image(file, 'cake')
+        else:
+            image_filename = None
+
         
         # Save to Firestore
         cakes.add({
@@ -612,7 +625,7 @@ def delete_cake(cake_id):
         
         # Delete image
         if image_filename:
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            image_path = os.path.join(ad_ups, image_filename)
             if os.path.exists(image_path):
                 os.remove(image_path)
         
