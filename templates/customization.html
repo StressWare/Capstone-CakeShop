@@ -5,19 +5,11 @@
   <title>Customize Your Cake - MRS. Brave's Cake Iloilo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   
-  <!-- TEAMMATE'S DESIGN - pure custom CSS -->
   <link href="../static/style.css" rel="stylesheet">
-
-  <style>
-    /* TEAMMATE'S STYLES - keep exactly as is */
-    body { scroll-behavior: smooth; }
-    .hero-title { font-weight: 700; }
-    .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
-  </style>
 </head>
 <body>
 
-<!-- ================ TEAMMATE'S NAVBAR (DESIGN ONLY) ================ -->
+<!-- NAVBAR -->
 <nav class="navbar">
   <div class="navbar-container">
     <a class="navbar-brand" href="/">
@@ -27,7 +19,7 @@
   </div>
 </nav>
 
-<!-- ================ TEAMMATE'S OFFCANVAS (DESIGN ONLY) ================ -->
+<!-- OFFCANVAS -->
 <div class="offcanvas" id="offcanvasMenu">
   <div class="offcanvas-header">
     <h5>Navigate</h5>
@@ -43,12 +35,16 @@
 
 <div style="margin-top: 70px;"></div>
 
-<!-- ================ CUSTOMIZATION SECTION ================ -->
-<section id="customize" class="customize-section">
-  <h2>Customize Your Cake</h2>
+<!-- ================ ONE FORM - EVERYTHING ================ -->
+<section class="customize-section">
+  <h2>Customize Your Cake & Place Order</h2>
 
-  <form id="cakeForm">
-    <!-- Cake Type -->
+  <form method="POST" action="/order" enctype="multipart/form-data">
+    
+    <!-- SECTION 1: CUSTOMIZE YOUR CAKE -->
+    <h3>Step 1: Customize Your Cake</h3>
+    <hr>
+    
     <label for="cakeType">Cake Type</label>
     <select id="cakeType">
       <option value="800">Chocolate (₱800)</option>
@@ -56,7 +52,6 @@
       <option value="900">Red Velvet (₱900)</option>
     </select>
 
-    <!-- Design -->
     <label for="design">Design</label>
     <select id="design">
       <option value="0">Simple (₱0)</option>
@@ -64,7 +59,6 @@
       <option value="500">Luxury (₱500)</option>
     </select>
 
-    <!-- Cake Size -->
     <label for="cakeSize">Cake Size</label>
     <select id="cakeSize">
       <option value="0">6 inches (₱0)</option>
@@ -73,7 +67,6 @@
       <option value="600">12 inches (+₱600)</option>
     </select>
 
-    <!-- Layers -->
     <label for="layers">Layers</label>
     <select id="layers">
       <option value="0">Single Layer (₱0)</option>
@@ -81,7 +74,6 @@
       <option value="600">Triple Layer (+₱600)</option>
     </select>
 
-    <!-- Toppings -->
     <label>Toppings</label>
     <div>
       <input type="checkbox" class="topping" value="100" id="sprinkles">
@@ -96,107 +88,75 @@
       <label for="chocoDrip">Chocolate Drip (₱200)</label>
     </div>
 
-    <!-- Special Instructions -->
-     <div>
     <label for="notes">Special Instructions</label>
-    <textarea name="notes" id="notes" rows="2" placeholder="e.g., Write Allergy Warning, no nuts, specific design details..."></textarea>
-    <small>Additional charges may apply for special requests</small>
-    </div>
-    <div>
-    
+    <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
+
+    <!-- IMAGE UPLOAD HERE -->
     <label for="image">Cake Image Inspo</label>
     <input type="file" name="image" id="image" accept="image/*">
     <small>Upload an image of your desired cake (optional)</small>
-    </div>
-
 
     <div class="price-box">
       Total: ₱<span id="totalPrice">0</span>
     </div>
-    <button type="button" id="orderNowBtn">Order Now</button>
+
+    <hr>
+
+    <!-- SECTION 2: YOUR DETAILS -->
+    <h3>Step 2: Your Details</h3>
+    <hr>
+
+    <label>Customer Name</label>
+    <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
+
+    <label>Contact Number</label>
+    <input name="contact" value="{{ customer.number if customer else '' }}" required>
+
+    <label>Address</label>
+    <input name="address" value="{{ customer.address if customer else '' }}" required>
+
+    <label>Occasion</label>
+    <input name="occasion" placeholder="Birthday, Wedding..." required>
+
+    <label>Celebrant / Dedication</label>
+    <input name="celebrant">
+
+    <label>Age</label>
+    <input name="age" type="number" min="0">
+
+    <label>
+      <input type="checkbox" name="rush" value="yes"> Rush Order
+    </label>
+
+    <label>Delivery Date</label>
+    <input type="date" name="delivery_date" required>
+
+    <label>Delivery Time</label>
+    <input type="time" name="delivery_time" required>
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="order_item" id="orderItem">
+    <input type="hidden" name="amount" id="orderAmount">
+
+    <button type="submit" onclick="updateOrderData()">Place Order</button>
   </form>
 </section>
 
-<!-- ================ ORDER MODAL ================ -->
-<div class="modal" id="orderModal">
-  <div class="modal-content">
-    <span class="modal-close" id="modalClose">&times;</span>
-    <h5>Customer Order Details</h5>
-    <form method="POST" action="/order" enctype="multipart/form-data">
-      <!-- Auto-fill from customer session -->
-      <label>Customer Name</label>
-      <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
-
-      <label>Contact Number</label>
-      <input name="contact" value="{{ customer.number if customer else '' }}" required>
-
-      <label>Address</label>
-      <input name="address" value="{{ customer.address if customer else '' }}" required>
-
-      <label>Occasion</label>
-      <input name="occasion" placeholder="Birthday, Wedding..." required>
-
-      <label>Celebrant / Dedication</label>
-      <input name="celebrant">
-
-      <label>Age</label>
-      <input name="age" type="number" min="0">
-
-      <label>
-        <input type="checkbox" name="rush" value="yes"> Rush Order
-      </label>
-
-      <!-- Delivery Date -->
-      <label>Schedule Date</label>
-      <input type="date" name="delivery_date" required>
-
-      <!-- Delivery Time -->
-      <label>Delivery Time</label>
-      <input type="time" name="delivery_time" required>
-
-      <!-- Hidden fields -->
-      <input type="hidden" name="order_item" id="orderItem">
-      <input type="hidden" name="amount" id="orderAmount">
-      <input type="hidden" name="notes" id="orderNotes">
-      <input type="hidden" name="image" id="imageHidden">
-
-      <button type="submit" onclick="updateOrderData()">Confirm Order</button>
-    </form>
-  </div>
-</div>
-
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// ================ TEAMMATE'S OFFCANVAS (FUNCTIONALITY) ================
 const menuBtn = document.getElementById("menuToggle");
 const offcanvas = document.getElementById("offcanvasMenu");
 const menuClose = document.getElementById("menuClose");
 
-menuBtn.addEventListener("click", () => {
-    offcanvas.classList.add("active");
-});
-
-menuClose.addEventListener("click", () => {
-    offcanvas.classList.remove("active");
-});
-
+menuBtn.addEventListener("click", () => offcanvas.classList.add("active"));
+menuClose.addEventListener("click", () => offcanvas.classList.remove("active"));
 document.addEventListener("click", (e) => {
     if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
         offcanvas.classList.remove("active");
     }
 });
 
-// ================ MODAL TOGGLE (FUNCTIONALITY) ================
-const orderBtn = document.getElementById("orderNowBtn");
-const orderModal = document.getElementById("orderModal");
-const modalClose = document.getElementById("modalClose");
-
-orderBtn.addEventListener("click", () => orderModal.classList.add("active"));
-modalClose.addEventListener("click", () => orderModal.classList.remove("active"));
-
-// ================ CALCULATIONS (FUNCTIONALITY) ================
 function calculateTotal() {
   const cakePrice = parseFloat(document.getElementById("cakeType").value) || 0;
   const designPrice = parseFloat(document.getElementById("design").value) || 0;
@@ -233,22 +193,14 @@ function updateOrderData() {
   }
 
   document.getElementById("orderItem").value = description;
-  
-  const notes = document.getElementById("notes")?.value || "";
-  document.getElementById("orderNotes").value = notes;
-
-  const imageFile = document.getElementById("image").value;
-  document.getElementById("imageHidden").value = imageFile;
 }
 
-// Event listeners
 document.getElementById("cakeType").addEventListener("change", calculateTotal);
 document.getElementById("design").addEventListener("change", calculateTotal);
 document.getElementById("cakeSize").addEventListener("change", calculateTotal);
 document.getElementById("layers").addEventListener("change", calculateTotal);
 document.querySelectorAll(".topping").forEach(t => t.addEventListener("change", calculateTotal));
 
-// Initial calculation
 calculateTotal();
 </script>
 

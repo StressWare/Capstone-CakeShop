@@ -5,9 +5,11 @@ import uuid
 import os
 import firebase
 from db import sales, expenses, inventory, users, cakes  # Firestore collections
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "secretngani"
+app.secret_key = os.getenv('SECRET_KEY')
 cus_ups = 'static/c_uploads'
 ad_ups = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
@@ -230,6 +232,7 @@ def admin_page():
             order["id"] = order_doc.id
             order["user_id"] = user_doc.id
             order["notes"] = order.get("notes", "")
+            order["inspo_image"] = order.get("inspo_image", None)
             order["customer_username"] = user_data.get("username", "")
 
             if isinstance(order.get("delivery_date"), str):
@@ -305,7 +308,7 @@ def admin_page():
         cake_data = cake.to_dict()
         cake_data['id'] = cake.id
         cakes_list.append(cake_data)
-
+    
     # =============== RENDER ===============
     return render_template(
         "admin_dashboard.html",
