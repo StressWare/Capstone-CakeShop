@@ -1,6 +1,4 @@
-<style>
     body {
-      background-color: #f8f9fa;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
@@ -58,8 +56,8 @@
 
     .delivery-option {
       flex: 1;
-      padding: 8px 8px;
-      border: 2px solid #dee2e6;
+      padding: 7px 7px;
+      border: 1px solid #dee2e6;
       border-radius: 8px;
       text-align: center;
       cursor: pointer;
@@ -106,7 +104,7 @@
 
     .address-type-btn.active {
       border-color: #000;
-      background: #d63384; ;
+      background: #d63384; 
       color: white;
     }
 
@@ -158,7 +156,7 @@
     .btn-save {
       width: 100%;
       padding: 14px 20px;
-      background: #d63384; ;
+      background: #d63384; 
       color: white;
       border: none;
       border-radius: 6px;
@@ -283,20 +281,20 @@
     /* Payment Section */
     .payment-section {
       background: white;
-      padding: 30px;
+      padding: 10px;
       border-radius: 8px;
       margin-bottom: 30px;
     }
 
     .payment-methods {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
       gap: 15px;
       margin-top: 20px;
     }
 
     .payment-method {
-      padding: 20px;
+      padding: 8px;
       border: 2px solid #dee2e6;
       border-radius: 8px;
       text-align: center;
@@ -305,12 +303,12 @@
     }
 
     .payment-method:hover {
-      border-color: #000;
+      border-color: #b8b6b6;
     }
 
     .payment-method.active {
-      border-color: #000;
-      background: #000;
+      border-color: #e4e4e4;
+      background: #d63384; 
       color: white;
     }
 
@@ -355,4 +353,3 @@
     .breadcrumb-item:hover {
       color: #000;
     }
-  </style>

@@ -219,7 +219,7 @@ h2 {
   align-items: center;
   cursor: pointer;
   transition: transform 0.3s;
- margin-top: 0; /* make sure no extra vertical gap */
+  margin-top: 0; /* make sure no extra vertical gap */
 
 }
 
@@ -234,16 +234,17 @@ h2 {
 
 
 .category-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
+  width: 150px;
+  height: 190px;
+  border-radius: 10%;
   overflow: hidden;
-  border: 2px solid #d63384;
   display: flex;
+  box-shadow: 0 5px 8px#c05d90;
   align-items: center;
   justify-content: center;
   margin-top: 0; /* make sure no extra vertical gap */
-
+  background: linear-gradient(135deg, #ffd6e7, #ffb6d9, #d7639b);
+  background-attachment: fixed;
 }
 
 .category-circle img {
@@ -254,7 +255,7 @@ h2 {
 }
 
 .category-card {
-  width: 250px;               /* fixed card width */
+  width: 150px;               /* fixed card width */
   height: 250px;              /* fixed card height */
   text-align: center;
   cursor: pointer;
@@ -265,7 +266,7 @@ h2 {
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  background: #fff;
+  background: #f19ae2;
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   overflow: hidden;           /* ensures image stays inside card */
 }
@@ -278,7 +279,7 @@ h2 {
 }
 
 .category-card-name {
-  margin-top: 5px;
+  margin-top: 1px;
   font-weight: bold;
   font-size: 0.9rem;
   flex-grow: 2; /* pushes name to bottom if needed */
@@ -287,6 +288,12 @@ h2 {
   justify-content: center;
 }
 
+.category-card-description {
+  font-size: 0.7rem;
+  color: #555;
+  margin-top: 5px;
+  text-align: center;
+}
 
 /* ====== MODAL ====== */
 .category-modal {
@@ -306,7 +313,8 @@ h2 {
   margin: 8% auto;
   padding: 30px;
   width: 100%;
-  max-width: 800px;
+  height: 100%;
+  max-width: 1000px;
   border-radius: 15px;
   position: relative;
 }
@@ -326,19 +334,7 @@ h2 {
   justify-content: center;
 }
 
-.category-card {
-  width: 160px;
-  height: 160px;
-  background: #ffe4e1;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: #333;
-  text-align: center;
-  padding: 10px;
-}
+
 
 /* ====== AVAILABLE CAKES BUTTON ====== */
 .available-cakes-btn-container {

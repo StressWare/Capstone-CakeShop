@@ -184,7 +184,7 @@ h2, h3 {
 .customize-section form div {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
 /* Price Box */

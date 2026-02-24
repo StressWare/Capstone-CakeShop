@@ -65,7 +65,7 @@
   <div class="categories-container">
     <div class="category-wrapper" onclick="openCategory('Girl')">
       <div class="category-circle">
-        <img src="../static/categories/girls/girl10-removebg-preview.png" alt="Girl Cakes">
+        <img src="../static/categories/girls/girl7-removebg-preview.png" alt="Girl Cakes">
       </div>
       <span class="category-name">Girl</span>
     </div>
@@ -79,26 +79,42 @@
 
     <div class="category-wrapper" onclick="openCategory('Birthdays')">
       <div class="category-circle">
-        <img src="../static/categories/bdaycakes/b1-removebg-preview.png" alt="Birthday Cakes">
+        <img src="../static/categories/bdaycakes/b2-removebg-preview.png" alt="Birthday Cakes">
       </div>
       <span class="category-name">Birthdays</span>
     </div>
 
     <div class="category-wrapper" onclick="openCategory('Christening')">
       <div class="category-circle">
-        <img src="../static/categories/christening/ch0.5-removebg-preview.png " alt="Christening Cakes">
+        <img src="../static/categories/christening/ch2-removebg-preview.png " alt="Christening Cakes">
       </div>
       <span class="category-name">Christening</span>
     </div>
 
     <div class="category-wrapper" onclick="openCategory('Ordinary')">
       <div class="category-circle">
-        <img src="../static/categories/ordinarycakes/c10-removebg-preview.png" alt="Ordinary Cakes">
+        <img src="../static/categories/ordinarycakes/c5-removebg-preview.png" alt="Ordinary Cakes">
       </div>
       <span class="category-name">Ordinary Cakes</span>
     </div>
+
+    <div class="category-wrapper" onclick="openCategory('Holiday')">
+      <div class="category-circle">
+        <img src="../static/categories/christening/ch0.5-removebg-preview.png " alt="Holiday Cakes">
+      </div>
+      <span class="category-name">Holiday Cakes</span>
+    </div>
+
+        <div class="category-wrapper" onclick="openCategory('Cartoons')">
+      <div class="category-circle">
+        <img src="../static/categories/christening/ch0.5-removebg-preview.png " alt="Cartoons">
+      </div>
+      <span class="category-name">Cartoons</span>
+    </div>
   </div>
 </section>
+  
+   
 
 <!-- Modal for showing category cards -->
 <div id="categoryModal" class="category-modal">
@@ -190,8 +206,7 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/girls/girl5-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/girls/girl6-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/girls/girl7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl8-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl9-removebg-preview.png' }
+    { name: 'Choco Truffle', img: '../static/categories/girls/girl8-removebg-preview.png' }
   ],
   Boy: [
     { name: 'Choco Lava', img: '../static/categories/boys/boy2-removebg-preview.png' },
@@ -204,7 +219,7 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/boys/boy9-removebg-preview.png' }
   ],
   Birthdays: [
-    { name: 'Choco Lava', img: '../static/categories/bdaycakes/b2-removebg-preview.png' },
+    { name: 'Choco Lava', img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
     { name: 'Dark Chocolate', img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
@@ -232,9 +247,28 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c7-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c8-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c9-removebg-preview.png' }
+  ],
+  Holiday: [
+    { name: 'Festive Choco Lava', img: '../static/categories/holiday/H1.png' },
+    { name: 'Holiday Dark Chocolate', img: '../static/categories/holiday/H2.png' },
+    { name: 'Snowy Choco Truffle', img: '../static/categories/holiday/H3.png' },
+    { name: 'Red Velvet Celebration', img: '../static/categories/holiday/H4.png' },
+    { name: 'Winter Delight Cake', img: '../static/categories/holiday/H5.png' },
+    { name: 'Festive Sprinkle Cake', img: '../static/categories/holiday/H6.png' },
+    { name: 'Premium Chocolate Celebration', img: '../static/categories/holiday/H7.png' },
+    { name: 'Golden Glow Cake', img: '../static/categories/holiday/h8-removebg-preview.png' }
+  ],
+  Cartoons: [
+    { name: 'Mickey Choco Delight', img: '../static/categories/cartoons/cartoon1-removebg-preview.png' },
+    { name: 'Minion Truffle', img: '../static/categories/cartoons/cartoon2-removebg-preview.png' },
+    { name: 'SpongeBob Surprise', img: '../static/categories/cartoons/cartoon3-removebg-preview.png' },
+    { name: 'Peppa Pig Chocolate Cake', img: '../static/categories/cartoons/cartoon4-removebg-preview.png' },
+    { name: 'Tom & Jerry Truffle', img: '../static/categories/cartoons/cartoon5-removebg-preview.png' },
+    { name: 'Frozen Fantasy Cake', img: '../static/categories/cartoons/cartoon6-removebg-preview.png' },
+    { name: 'Pokemon Pikachu Cake', img: '../static/categories/cartoons/cartoon7-removebg-preview.png' },
+    { name: 'Looney Tunes Chocolate', img: '../static/categories/cartoons/cartoon8-removebg-preview.png' }
   ]
 };
-
 function openCategory(category) {
   const modal = document.getElementById('categoryModal');
   const cardsContainer = document.getElementById('categoryCards');
@@ -255,9 +289,15 @@ function openCategory(category) {
     const name = document.createElement('p');
     name.textContent = item.name;
     name.classList.add('category-card-name');
+
+    // **Description**
+    const desc = document.createElement('p');
+    desc.textContent = item.description;
+    desc.classList.add('category-card-description'); // new class for styling
     
     card.appendChild(img);
     card.appendChild(name);
+    card.appendChild(desc); 
     cardsContainer.appendChild(card);
   });
   

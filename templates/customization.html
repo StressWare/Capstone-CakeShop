@@ -44,7 +44,7 @@
     <h3>Step 1: Customize Your Cake</h3>
     <hr>
     
-    <label for="cakeType">Cake Type</label>
+    <label for="cakeType">Cake Flacvors</label>
     <select id="cakeType">
       <option value="800">Chocolate (₱800)</option>
       <option value="850">Vanilla (₱850)</option>
@@ -53,16 +53,16 @@
 
     <label for="design">Icing Type</label>
     <select id="design">
-      <option value="3,500">Fondant(₱3,500)</option>
-      <option value="1,800">Icing (₱1,800-2,000)</option>
+      <option value="3500">Fondant(₱3,500)</option>
+      <option value="1800">Icing (₱1,800-2,000)</option>
     </select>
 
     <label for="cakeSize">Cake Size</label>
     <select id="cakeSize">
-      <option value="0">6 inches (₱0)</option>
-      <option value="200">8 inches (+₱200)</option>
-      <option value="400">10 inches (+₱400)</option>
-      <option value="600">12 inches (+₱600)</option>
+      <option value="1600">6 inches (₱1,600)</option>
+      <option value="2300">8 inches (₱2300)</option>
+      <option value="400">10 inches (₱400)</option>
+      <option value="600">12 inches (₱600)</option>
     </select>
 
     <label for="layers">Layers</label>
@@ -72,18 +72,31 @@
       <option value="600">Triple Layer (+₱600)</option>
     </select>
 
-    <label>Toppings</label>
+
+    <label for="layers">Toppers</label>
+    <select id="layers">
+      <option value="150"> 1 set (₱150)</option>
+      <option value="250"> Set of 3 (250)</option>
+    </select>
+
+
+    <label>Add-ons</label>
     <div>
-      <input type="checkbox" class="topping" value="100" id="sprinkles">
-      <label for="sprinkles">Sprinkles (₱100)</label>
+      <input type="checkbox" class="addons" value="100" id="filling">
+      <label for="">Cake Filling (₱100)</label>
     </div>
     <div>
-      <input type="checkbox" class="topping" value="150" id="fruits">
-      <label for="fruits">Fruits (₱150)</label>
+      <input type="checkbox" class="addons" value="150" id="cupcake">
+      <label for="cupcake">Cupcake (dozen) (₱700)</label>
     </div>
     <div>
-      <input type="checkbox" class="topping" value="200" id="chocoDrip">
-      <label for="chocoDrip">Chocolate Drip (₱200)</label>
+      <input type="checkbox" class="addons" value="250" id="chocoDrip">
+      <label for="ediblepaper">Edible Paper(₱250)</label>
+    </div>
+
+    <div>
+      <input type="checkbox" class="addons" value="450" id="chocoDrip">
+      <label for="ediblepaper">Fondant Toppers (per character) (₱450)</label>
     </div>
 
     <label for="notes">Special Instructions</label>
