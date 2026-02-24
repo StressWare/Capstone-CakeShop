@@ -432,6 +432,42 @@ h2 {
     margin: 15px 0;
 }
 
+/* Special Instructions Section */
+label[for="notes"] {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #444;
+    letter-spacing: 0.5px;
+}
+
+#notes {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px 12px;
+    border: 1px solid #d63384;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+/* Focus Effect */
+#notes:focus {
+    border-color: #d48fdc;
+    box-shadow: 0 0 0 3px rgba(212, 143, 220, 0.2);
+}
+
+/* Placeholder Style */
+#notes::placeholder {
+    color: #aaa;
+    font-size: 13px;
+}
+
 /* ====== BUTTONS ====== */
 #orderNowBtn,
 .modal button[type="submit"] {

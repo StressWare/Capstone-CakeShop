@@ -1,0 +1,285 @@
+/* ====== GENERAL STYLES ====== */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #ffffff, #fff7fb);
+    color: #333;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+h2, h3 {
+    color: #d63384;
+    letter-spacing: 0.3px;
+}
+
+/* ====== NAVBAR ====== */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px;
+    background: linear-gradient(90deg, #000, #1a1a1a);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    z-index: 999;
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+}
+
+.navbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.navbar-logo {
+    margin-top: 20px;
+    height: 170px;
+    width: 220px;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+
+.navbar-logo:hover {
+    transform: scale(1.05);
+}
+
+/* ====== MENU BUTTON ====== */
+.menu-btn {
+    font-size: 1.4rem;
+    background: transparent;
+    border: 2px solid #d63384;
+    color: #d63384;
+    border-radius: 10px;
+    padding: 6px 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
+    background: #d63384;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+/* ====== OFFCANVAS MENU ====== */
+.offcanvas {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100%;
+    background: #fff0f5;
+    box-shadow: -6px 0 20px rgba(0,0,0,0.2);
+    transition: 0.5s ease;
+    z-index: 998;
+    padding: 25px;
+}
+
+.offcanvas.active {
+    right: 0;
+}
+
+.offcanvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.offcanvas-body a {
+    display: block;
+    text-decoration: none;
+    color: #d63384;
+    font-weight: 600;
+    margin-bottom: 18px;
+    transition: all 0.3s ease;
+}
+
+.offcanvas-body a:hover {
+    color: #a71d65;
+    padding-left: 8px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+
+/* ====== CUSTOMIZATION FORM ====== */
+.customize-section {
+    padding: 70px 15px;
+    max-width: 700px;
+    margin: auto;
+}
+
+/* Form Card Style */
+.customize-section form {
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.3s ease;
+}
+
+.customize-section form:hover {
+    transform: translateY(-3px);
+}
+
+/* Form Inputs */
+.customize-section label {
+    font-weight: 600;
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+.customize-section select,
+.customize-section input[type="number"],
+.customize-section input[type="text"],
+.customize-section input[type="date"],
+.customize-section input[type="time"],
+.customize-section textarea {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.customize-section select:focus,
+.customize-section input:focus,
+.customize-section textarea:focus {
+    border-color: #d63384;
+    box-shadow: 0 0 0 3px rgba(214,51,132,0.15);
+}
+
+/* Checkbox */
+.customize-section input[type="checkbox"] {
+    accent-color: #d63384;
+    margin-right: 6px;
+}
+
+/* Toppings spacing */
+.customize-section form div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Price Box */
+.price-box {
+    margin: 25px 0;
+    padding: 18px;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, #fff0f5, #ffe6f2);
+    border-radius: 12px;
+    color: #d63384;
+}
+
+/* ====== BUTTONS ====== */
+#orderNowBtn,
+.customize-section button[type="submit"],
+.modal button[type="submit"] {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background-color: #d63384;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#orderNowBtn:hover,
+.customize-section button[type="submit"]:hover,
+.modal button[type="submit"]:hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+}
+
+/* ====== MODAL ====== */
+.modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #fff0f5;
+    padding: 25px;
+    border-radius: 18px;
+    width: 90%;
+    max-width: 600px;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 768px) {
+
+    .navbar-logo {
+        height: 150px;
+    }
+
+    .customize-section {
+        padding: 40px 15px;
+    }
+
+    .menu-btn {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+
+    .menu-btn {
+        font-size: 1rem;
+        padding: 5px 12px;
+    }
+
+    #orderNowBtn,
+    .modal button[type="submit"] {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+}
