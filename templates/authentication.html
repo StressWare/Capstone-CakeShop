@@ -7,6 +7,9 @@
   <title>Login / Sign Up</title>
   <link href="../static/authentication.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Firebase SDK (v9 compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -24,76 +27,213 @@
 
 <!-- FORM CONTAINER -->
 <div class="container">
-    <!-- Spacer so content starts below navbar -->
     <div style="height: 70px;"></div>
     
-    <!-- WRAPPER FOR LOGO + FORM -->
-      <div class="container auth-layout">
-    <!-- LEFT SIDE: LOGO -->
-    <div class="auth-left">
-        <img src="../static/img/logo.jpg" alt="Mrs. Brave's Logo" class="auth-logo">
-    </div>
-    <!-- RIGHT SIDE: FORMS -->
-    <div class="form-container">
-        <!-- Login Form -->
-        <form id="loginForm" class="form active" method="POST" action="/authentication">
-            <h2>Login</h2>
-            <input type="text" name="username" placeholder="Username" required>
-            <div class="password-wrapper">
-                <input type="password" name="password" placeholder="Password" required id="loginPassword">
-                <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
-            </div>
-            <input type="hidden" name="action" value="login">
-            <button type="submit">Login</button>
-            <p class="toggle-msg">
-                Don't have an account? 
-                <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
-            </p>
-        </form>
+    <div class="container auth-layout">
+        <!-- LEFT SIDE: LOGO -->
+        <div class="auth-left">
+            <img src="../static/img/logo.jpg" alt="Mrs. Brave's Logo" class="auth-logo">
+        </div>
+        <!-- RIGHT SIDE: FORMS -->
+        <div class="form-container">
+            <!-- Login Form -->
+            <form id="loginForm" class="form active">
+                <h2>Login</h2>
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
+                </div>
+                <button type="submit">Login</button>
+                <p style="text-align: center; margin-top: 10px;">
+                    <a href="/forgot-password" class="toggle-btn">Forgot Password?</a>
+                </p>
 
-        <!-- Sign Up Form -->
-        <form id="signupForm" class="form" method="POST" action="/authentication">
-            <h2>Sign Up</h2>
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="number" name="number" placeholder="Phone Number" required>
-            <input type="text" name="address" placeholder="Address" required>
-            <div class="password-wrapper">
-                <input type="password" name="password" placeholder="Password" required id="signupPassword">
-                <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
+                <p class="toggle-msg">
+                    Don't have an account? 
+                    <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
+                </p>
+            </form>
+
+            <!-- Sign Up Form (with fname and correct field names) -->
+            <form id="signupForm" class="form">
+                <h2>Sign Up</h2>
+                <input type="email" id="signupEmail" placeholder="Email" required>
+                <input type="text" id="signupFname" placeholder="Full Name" required>   <!-- NEW -->
+                <input type="text" id="signupUsername" placeholder="Username" required>
+                <input type="tel" id="signupNumber" placeholder="Phone Number" required> <!-- ID matches Flask 'number' -->
+                <input type="text" id="signupAddress" placeholder="Address" required>
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" placeholder="Password" required>
+                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
+                </div>
+                <div class="password-wrapper">
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
+                </div>
+                <button type="submit">Sign Up</button>
+                <p class="toggle-msg">
+                    Already have an account? 
+                    <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
+                </p>
+            </form>
+
+            <!-- Google Sign-In Button -->
+            <div class="google-login" style="text-align: center; margin-top: 20px;">
+                <button id="googleSignIn" class="google-btn">
+                    <i class="fab fa-google"></i> Sign in with Google
+                </button>
             </div>
-            <div class="password-wrapper">
-                <input type="password" name="confirmpassword" placeholder="Confirm Password" required id="confirmsignupPassword">
-                <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('confirmsignupPassword')"></i>
-            </div>
-            <input type="hidden" name="action" value="signup">
-            <button type="submit">Sign Up</button>
-            <p class="toggle-msg">
-                Already have an account? 
-                <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
-            </p>
-        </form>
+        </div>
     </div>
 </div>
 
-    <script>
-        function toggleForms() {
-            document.getElementById("loginForm").classList.toggle("active");
-            document.getElementById("signupForm").classList.toggle("active");
+<script>
+    // Your Firebase configuration (from console)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
+        authDomain: "cakeshop-2faf4.firebaseapp.com",
+        projectId: "cakeshop-2faf4",
+        storageBucket: "cakeshop-2faf4.firebasestorage.app",
+        messagingSenderId: "470246706853",
+        appId: "1:470246706853:web:339c4084715b0286b6474c",
+        measurementId: "G-8PLLYZRD9Y"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Helper: send ID token to Flask backend
+    async function sendTokenToBackend(user) {
+    const idToken = await user.getIdToken();
+    const response = await fetch('/verify-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: idToken })
+    });
+    if (response.ok) {
+        const data = await response.json();  // ← READ the response
+        if (data.is_admin) {
+            window.location.href = '/admin_dashboard';  // ← admin goes here
+        } else if (data.needs_profile) {
+            window.location.href = '/complete-profile';  // ← new google user
+        } else {
+            window.location.href = '/customer_dashboard';  // ← existing user
+        }
+    } else {
+        const error = await response.json();
+        alert('Authentication failed: ' + (error.error || 'Unknown error'));
+    }
+}
+
+    // ===== LOGIN =====
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            await sendTokenToBackend(userCredential.user);
+        } catch (error) {
+            alert('Login error: ' + error.message);
+        }
+    });
+
+    // ===== SIGNUP =====
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('signupEmail').value;
+        const fname = document.getElementById('signupFname').value;          // ✅ fname
+        const username = document.getElementById('signupUsername').value;
+        const number = document.getElementById('signupNumber').value;        // ✅ number, not phone
+        const address = document.getElementById('signupAddress').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirm = document.getElementById('signupConfirmPassword').value;
+
+        if (password !== confirm) {
+            alert('Passwords do not match!');
+            return;
         }
 
-        function togglePassword(id) {
-            const input = document.getElementById(id);
-            const icon = input.nextElementSibling;
-            if (input.type === "password") {
-                input.type = "text";
-                icon.classList.remove("fa-eye");
-                icon.classList.add("fa-eye-slash");
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            const idToken = await user.getIdToken();
+
+            const response = await fetch('/save-user-details', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + idToken
+                },
+                body: JSON.stringify({
+                    uid: user.uid,
+                    username: username,
+                    number: number,       
+                    address: address,
+                    fname: fname
+                })
+            });
+
+            if (response.ok) {
+                await sendTokenToBackend(user);
             } else {
-                input.type = "password";
-                icon.classList.remove("fa-eye-slash");
-                icon.classList.add("fa-eye");
+                alert('Failed to save profile data.');
             }
+        } catch (error) {
+            alert('Signup error: ' + error.message);
         }
-    </script>
+    });
+
+    async function forgotPassword() {
+    const email = document.getElementById('loginEmail').value;
+
+    if (!email) {
+        alert('Please enter your email first!');
+        return;
+    }
+
+    try {
+        await auth.sendPasswordResetEmail(email);
+        alert('Password reset email sent! Check your Gmail.');
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+    // ===== GOOGLE SIGN-IN =====
+    document.getElementById('googleSignIn').addEventListener('click', async () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        try {
+            const result = await auth.signInWithPopup(provider);
+            await sendTokenToBackend(result.user);
+        } catch (error) {
+            alert('Google sign-in error: ' + error.message);
+        }
+    });
+
+    // ===== Toggle between login/signup forms =====
+    function toggleForms() {
+        document.getElementById("loginForm").classList.toggle("active");
+        document.getElementById("signupForm").classList.toggle("active");
+    }
+
+    // ===== Toggle password visibility =====
+    function togglePassword(id) {
+        const input = document.getElementById(id);
+        const icon = input.nextElementSibling;
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("fa-eye");
+            icon.classList.add("fa-eye-slash");
+        } else {
+            input.type = "password";
+            icon.classList.remove("fa-eye-slash");
+            icon.classList.add("fa-eye");
+        }
+    }
+</script>
 </body>
 </html>

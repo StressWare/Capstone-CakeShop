@@ -5,6 +5,7 @@ import uuid
 import os
 import firebase
 from db import sales, expenses, inventory, users, cakes  # Firestore collections
+from firebase_admin import auth, firestore
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -96,65 +97,144 @@ def customize():
     return render_template('customization.html')
 
 # ---------------- LOGIN / SIGNUP ----------------
-@app.route("/authentication", methods=["GET", "POST"])
-def auth():
-    message = ""
-
-    if request.method == "POST":
-        action = request.form.get("action")
-        username = request.form.get("username")
-        password = request.form.get("password")
-        number = request.form.get("number")
-        address = request.form.get("address")
-        fname = request.form.get("fname")
-
-        if action == "login":
-            user_query = users.where("username", "==", username)\
-                              .where("password", "==", password)\
-                              .limit(1).stream()
-
-            user = None
-            for doc in user_query:
-                user = doc.to_dict()
-                session["user_id"] = doc.id
-                session["username"] = username
-
-            if user:
-                return redirect(url_for("customer_dashboard"))
-            else:
-                message = "Invalid username or password."
-
-        elif action == "signup":
-            exists_query = users.where("username", "==", username).limit(1).stream()
-            exists = any(exists_query)
-            if exists:
-                message = "Username already exists."
-            else:
-                doc_ref = users.add({
-                    "username": username,
-                    "password": password,
-                    "number": number,
-                    "address": address,
-                    "fname": fname
-                })
-                session["user_id"] = doc_ref[1].id
-                session["username"] = username
-                return redirect(url_for("customer_dashboard"))
-
-    return render_template("authentication.html", message=message)
-
+@app.route("/authentication")
+def auth_page():
+    """Render the login/signup page (GET only)."""
+    return render_template("authentication.html")
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect(url_for("auth"))
+    return redirect(url_for("auth_page"))
 
+@app.route('/forgot-password')
+def forgot_password_page():
+    return render_template('forgot_password.html')
+
+# ------------------- VERIFY TOKEN (called after Firebase login) -------------------
+@app.route('/verify-token', methods=['POST'])
+def verify_token():
+    data = request.get_json()
+    id_token = data.get('idToken')
+
+    if not id_token:
+        return jsonify({'error': 'No token provided'}), 400
+
+    try:
+        decoded_token = auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        email = decoded_token.get('email', '')
+
+        # Create Firestore document if it doesn't exist (for Google Sign-In)
+        user_doc = users.document(uid).get()
+        is_new_user = not user_doc.exists  # ← ADD THIS
+
+        if not user_doc.exists:
+            users.document(uid).set({
+                'email': email,
+                'username': email.split('@')[0] if email else '',
+                'fname': '',
+                'number': '',
+                'address': '',
+                'role': 'customer',
+                'created_at': firestore.SERVER_TIMESTAMP
+            })
+
+        # Check for admin custom claim (optional)
+        is_admin = decoded_token.get('admin', False)
+
+        # Set session
+        session['user'] = {
+            'uid': uid,
+            'email': email,
+            'admin': is_admin
+        }
+        session['user_id'] = uid
+        session['username'] = email
+
+        return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200  # ← MODIFIED
+
+    except auth.InvalidIdTokenError:
+        return jsonify({'error': 'Invalid token'}), 401
+    except auth.ExpiredIdTokenError:
+        return jsonify({'error': 'Token expired'}), 401
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# ------------------- SAVE EXTRA USER DETAILS (after email/password signup) -------------------
+@app.route('/save-user-details', methods=['POST'])
+def save_user_details():
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or not auth_header.startswith('Bearer '):
+        return jsonify({'error': 'Missing or invalid token'}), 401
+
+    id_token = auth_header.split('Bearer ')[1]
+
+    try:
+        # Verify token to ensure it's the same user
+        decoded_token = auth.verify_id_token(id_token)
+        token_uid = decoded_token['uid']
+
+        data = request.get_json()
+        uid = data.get('uid')
+        if uid != token_uid:
+            return jsonify({'error': 'UID mismatch'}), 403
+
+        # Extract fields (must match HTML input IDs)
+        username = data.get('username')
+        number = data.get('number')
+        address = data.get('address')
+        fname = data.get('fname')
+
+        # Update Firestore (use 'number', not 'phone')
+        user_ref = users.document(uid)
+        user_ref.set({
+            'username': username,
+            'number': number,
+            'address': address,
+            'fname': fname,
+            'email': decoded_token.get('email', ''),
+            'role': 'customer',
+            'created_at': firestore.SERVER_TIMESTAMP
+        })
+
+        return jsonify({'success': True}), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/complete-profile', methods=['GET', 'POST'])
+def complete_profile():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth_page'))
+
+    if request.method == 'POST':
+        users.document(user_id).update({
+            'fname': request.form.get('fname'),
+            'username': request.form.get('username'),
+            'number': request.form.get('number'),
+            'address': request.form.get('address'),
+        })
+        return redirect(url_for('customer_dashboard'))
+
+    # GET - just show the form
+    doc = users.document(user_id).get()
+    customer = doc.to_dict()
+    return render_template('complete_profile.html', customer=customer)
 
 # ---------------- COMBINED ADMIN (DASHBOARD + PANEL) ----------------
 @app.route("/admin_dashboard")
 def admin_page():
-    # =============== DASHBOARD DATA ===============
+    current_user = session.get('user')
+     # Not logged in at all
+    if not current_user:
+        return redirect(url_for('auth_page'))  # 401 situation
+    
+    # Logged in but not admin
+    if not current_user.get('admin'):
+        return render_template('403.html'), 403  # 403 situation
     # Fetch inventory
     inv_items = []
     for doc in inventory.stream():
@@ -386,7 +466,7 @@ def edit_inventory(id):
 def place_order():
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("auth"))
+        return redirect(url_for("auth_page"))
 
     now = datetime.now(PH_TZ)
 

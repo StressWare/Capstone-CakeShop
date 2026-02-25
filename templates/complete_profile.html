@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile</title>
+    <link href="../static/authentication.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+            <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
+        </a>
+    </div>
+</nav>
+
+<div style="height: 70px;"></div>
+
+<div class="container">
+    <div style="height: 70px;"></div>
+
+    <div class="container auth-layout">
+        <!-- LEFT SIDE: LOGO -->
+        <div class="auth-left">
+            <img src="../static/img/logo.jpg" alt="Mrs. Brave's Logo" class="auth-logo">
+        </div>
+
+        <!-- RIGHT SIDE: FORM -->
+        <div class="form-container">
+            <form method="POST" action="/complete-profile">
+                <h2>Complete Your Profile</h2>
+                <p style="color: gray; margin-bottom: 20px;">
+                    Please fill in your details to continue.
+                </p>
+
+                <!-- Pre-fill email (read only) -->
+                <input 
+                    type="email" 
+                    value="{{ customer.email }}" 
+                    disabled 
+                    style="background: #f0f0f0; cursor: not-allowed;"
+                >
+
+                <input 
+                    type="text" 
+                    name="fname" 
+                    placeholder="Full Name" 
+                    value="{{ customer.fname or '' }}"
+                    required
+                >
+
+                <input 
+                    type="text" 
+                    name="username" 
+                    placeholder="Username" 
+                    value="{{ customer.username or '' }}"
+                    required
+                >
+
+                <input 
+                    type="tel" 
+                    name="number" 
+                    placeholder="Phone Number" 
+                    value="{{ customer.number or '' }}"
+                    required
+                >
+
+                <input 
+                    type="text" 
+                    name="address" 
+                    placeholder="Address" 
+                    value="{{ customer.address or '' }}"
+                    required
+                >
+
+                <button type="submit">Save & Continue</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

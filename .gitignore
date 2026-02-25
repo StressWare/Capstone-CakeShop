@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 firebase/serviceAccountKey.json
 .env
+set-admin.py
