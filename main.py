@@ -84,7 +84,6 @@ def home_page():
     customer = None
     
     if user_id:
-        # Get customer data from Firestore
         doc = users.document(user_id).get()
         if doc.exists:
             customer = doc.to_dict()
@@ -94,12 +93,17 @@ def home_page():
 # Customization page
 @app.route('/customize_cake')
 def customize():
-    return render_template('customization.html')
+    user_id = session.get('user_id')
+    customer = None
+    if user_id:  
+        doc = users.document(user_id).get()
+        if doc.exists:
+            customer = doc.to_dict()
+    return render_template('customization.html', customer=customer)
 
 # ---------------- LOGIN / SIGNUP ----------------
 @app.route("/authentication")
 def auth_page():
-    """Render the login/signup page (GET only)."""
     return render_template("authentication.html")
 
 # ---------------- LOGOUT ----------------
@@ -153,7 +157,7 @@ def verify_token():
         session['user_id'] = uid
         session['username'] = email
 
-        return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200  # ← MODIFIED
+        return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200  
 
     except auth.InvalidIdTokenError:
         return jsonify({'error': 'Invalid token'}), 401
@@ -421,6 +425,10 @@ def admin_page():
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<user_id>/<order_id>", methods=["POST"])
 def update_order_status(user_id, order_id):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+    
     new_status = request.form["status"]
     users.document(user_id).collection("orders").document(order_id).update({
         "status": new_status
@@ -431,6 +439,10 @@ def update_order_status(user_id, order_id):
 # ---------------- ADD INVENTORY ----------------
 @app.route("/inventory/add", methods=["POST"])
 def add_inventory():
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+    
     item = request.form["item"]
     quantity = int(request.form["quantity"])
     cost = float(request.form["cost"])
@@ -453,6 +465,10 @@ def add_inventory():
 # ---------------- EDIT INVENTORY ----------------
 @app.route("/inventory/edit/<id>", methods=["POST"])
 def edit_inventory(id):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+
     inventory.document(id).update({
         "item": request.form["item"],
         "quantity": int(request.form["quantity"]),
@@ -509,7 +525,9 @@ def place_order():
 # ---------------- EDIT ORDER ORDER FOR ADMIN----------------
 @app.route("/order/edit/<user_id>/<order_id>", methods=["POST"])
 def edit_order(user_id, order_id):
-    """Edit an existing order with new cake customization"""
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
     
     # Get the formatted item description from frontend
     item = request.form.get("order_item")
@@ -546,7 +564,7 @@ def edit_order(user_id, order_id):
 def customer_dashboard():
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("auth"))
+        return redirect(url_for("auth_page"))
 
     doc = users.document(user_id).get()
     if not doc.exists:
@@ -604,7 +622,7 @@ def customer_dashboard():
 def edit_customer_profile():
     user_id = session.get("user_id")
     if not user_id:
-        return redirect(url_for("auth"))
+        return redirect(url_for("auth_page"))
 
     updated_data = {
         "username": request.form.get("username"),
@@ -618,6 +636,10 @@ def edit_customer_profile():
 
 @app.route('/cake/add', methods=['POST'])
 def add_cake():
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+    
     try:
         name = request.form.get('name')
         description = request.form.get('description')
@@ -655,6 +677,10 @@ def add_cake():
 
 @app.route('/cake/edit/<cake_id>', methods=['POST'])
 def edit_cake(cake_id):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+
     try:
         cake_ref = cakes.document(cake_id)
         cake_doc = cake_ref.get()
@@ -695,6 +721,10 @@ def edit_cake(cake_id):
 
 @app.route('/cake/delete/<cake_id>', methods=['POST'])
 def delete_cake(cake_id):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+
     try:
         cake_ref = cakes.document(cake_id)
         cake_doc = cake_ref.get()
@@ -739,10 +769,6 @@ def cakes_page():
 
 @app.route('/api/send-message', methods=['POST'])
 def api_send_message():
-    """
-    Handle incoming message from chatbot widget
-    Saves message to Firestore and returns bot response
-    """
     try:
         data = request.get_json()
         user_id = data.get('user_id')
@@ -826,6 +852,9 @@ def api_get_messages(user_id, conversation_id):
 # Customization page
 @app.route('/checkout')
 def checkout_page():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth_page'))
     return render_template('checkout.html')
 
 # ---------------- RUN SERVER ----------------

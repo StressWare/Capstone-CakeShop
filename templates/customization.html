@@ -148,8 +148,11 @@
     <!-- Hidden fields -->
     <input type="hidden" name="order_item" id="orderItem">
     <input type="hidden" name="amount" id="orderAmount">
-
+    {% if customer %}
     <button type="submit" onclick="updateOrderData()">Place Order</button>
+    {% else %}
+    <a href="/authentication" class="btn">Login to Place Order</a>
+    {% endif %}
   </form>
 </section>
 
