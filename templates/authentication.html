@@ -114,6 +114,11 @@
     });
     if (response.ok) {
         const data = await response.json();  // ← READ the response
+        if (data.needs_verification) {
+            alert('Please verify your email first, check spam folder before logging in')
+            await auth.signOut()
+            return
+        }
         if (data.is_admin) {
             window.location.href = '/admin_dashboard';  // ← admin goes here
         } else if (data.needs_profile) {
@@ -145,9 +150,9 @@
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('signupEmail').value;
-        const fname = document.getElementById('signupFname').value;          // ✅ fname
+        const fname = document.getElementById('signupFname').value;          
         const username = document.getElementById('signupUsername').value;
-        const number = document.getElementById('signupNumber').value;        // ✅ number, not phone
+        const number = document.getElementById('signupNumber').value;        
         const address = document.getElementById('signupAddress').value;
         const password = document.getElementById('signupPassword').value;
         const confirm = document.getElementById('signupConfirmPassword').value;
@@ -160,6 +165,7 @@
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;
+            await user.sendEmailVerification()
             const idToken = await user.getIdToken();
 
             const response = await fetch('/save-user-details', {

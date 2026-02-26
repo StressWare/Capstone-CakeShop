@@ -129,7 +129,12 @@ def verify_token():
         decoded_token = auth.verify_id_token(id_token)
         uid = decoded_token['uid']
         email = decoded_token.get('email', '')
-
+        is_google = decoded_token.get('firebase', {}).get('sign_in_provider') == 'google.com'
+        if not is_google and not decoded_token.get('email_verified', False):
+            return jsonify({
+                'error': 'Please verify your email first!',
+                'needs_verification': True
+            }), 401
         # Create Firestore document if it doesn't exist (for Google Sign-In)
         user_doc = users.document(uid).get()
         is_new_user = not user_doc.exists  # ← ADD THIS
