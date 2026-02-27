@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login / Sign Up</title>
-  <link href="../static/authentication.css" rel="stylesheet">
+  <link href="../static/css/authentication.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- Firebase SDK (v9 compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -184,7 +184,9 @@
             });
 
             if (response.ok) {
-                await sendTokenToBackend(user);
+                await auth.signOut();            // ← sign out first
+                alert('✅ Account created! Please check your email and click the verification link before logging in.');
+                toggleForms();                   // ← switch to login form
             } else {
                 alert('Failed to save profile data.');
             }

@@ -341,7 +341,28 @@ def admin_page():
                     order["created_at"] = order["created_at"].astimezone(PH_TZ)
 
             orders.append(order)
-
+    all_users = []
+    for user_doc in users.stream():
+        user_data = user_doc.to_dict()
+        user_data['uid'] = user_doc.id
+        
+        # count orders
+        order_count = len(list(users.document(user_doc.id).collection('orders').stream()))
+        user_data['order_count'] = order_count
+        
+        # get Firebase Auth info (verified, disabled)
+        try:
+            auth_user = auth.get_user(user_doc.id)
+            user_data['disabled'] = auth_user.disabled
+            user_data['email_verified'] = auth_user.email_verified
+            created_ms = auth_user.user_metadata.creation_timestamp
+            user_data['created_at'] = datetime.fromtimestamp(created_ms / 1000, tz=PH_TZ)
+        except:
+            user_data['disabled'] = False
+            user_data['email_verified'] = False
+            user_data['created_at'] = None
+        
+        all_users.append(user_data)
     # Order statistics
     total_new = 0
     total_accepted = 0
@@ -423,10 +444,26 @@ def admin_page():
         total_rush=total_rush,
         today_count=today_count,
         today_deliveries=today_deliveries,
-
-        cakes=cakes_list
+        cakes=cakes_list,
+        all_users=all_users
     )
+@app.route('/admin/user/disable/<uid>', methods=['POST'])
+def disable_user(uid):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+    auth.update_user(uid, disabled=True)
+    flash('User disabled!', 'warning')
+    return redirect(url_for('admin_page') + '#users')
 
+@app.route('/admin/user/enable/<uid>', methods=['POST'])
+def enable_user(uid):
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return render_template('403.html'), 403
+    auth.update_user(uid, disabled=False)
+    flash('User enabled!', 'success')
+    return redirect(url_for('admin_page') + '#users')
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<user_id>/<order_id>", methods=["POST"])
 def update_order_status(user_id, order_id):

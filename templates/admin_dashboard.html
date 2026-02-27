@@ -9,7 +9,7 @@
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <!-- Google Charts -->
-   <link href="../static/admin_dashboard.css" rel="stylesheet">
+   <link href="../static/css/admin_dashboard.css" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 </head>
 <body class="bg-light">
@@ -28,6 +28,7 @@
     <li><a href="#inventory"><i class="fas fa-boxes me-2"></i>Inventory</a></li>
     <li><a href="#orders"><i class="fas fa-list-check me-2"></i>Order List</a></li>
     <li><a href="#cake-availability"><i class="fas fa-cake-candles me-2"></i>Cake Availability</a></li>
+    <li><a href="#users"><i class="fas fa-users me-2"></i>User Management</a></li>
   </ul>
 
   <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
@@ -797,8 +798,140 @@
       </div>
     </div>
   </section>
-  
+
+  <!-- ============ 9. USER MANAGEMENT ============ -->
+  <section id="users" class="mb-5">
+    <div class="card shadow-sm">
+      <div class="card-header card-header-custom">
+        <h4 class="mb-0">
+          <i class="fas fa-users me-2"></i>User Management
+        </h4>
+      </div>
+      <div class="card-body">
+
+        <!-- SEARCH & FILTERS -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-2">
+            <div class="input-group">
+              <span class="input-group-text bg-white">
+                <i class="fas fa-search"></i>
+              </span>
+              <input type="text" class="form-control" placeholder="Search by name, email, phone..." id="searchUsers">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select class="form-select" id="statusFilterUsers">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="disabled">Disabled</option>
+            </select>
+          </div>
+          <div class="col-md-3 mb-2">
+            <select class="form-select" id="verifiedFilterUsers">
+              <option value="">All Users</option>
+              <option value="verified">Verified</option>
+              <option value="unverified">Unverified</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- USERS TABLE -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="usersTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Orders</th>
+                <th>Verified</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for u in all_users %}
+              <tr class="{% if u.disabled %}table-secondary{% endif %}"
+                  data-status="{{ 'disabled' if u.disabled else 'active' }}"
+                  data-verified="{{ 'verified' if u.email_verified else 'unverified' }}">
+                <td>
+                  <strong>{{ u.fname or 'N/A' }}</strong><br>
+                  <small class="text-muted">@{{ u.username or 'N/A' }}</small>
+                </td>
+                <td>
+                  <small>{{ u.email or 'N/A' }}</small>
+                </td>
+                <td>
+                  <small>{{ u.number or 'N/A' }}</small>
+                </td>
+                <td>
+                  <span class="badge bg-primary">{{ u.order_count }} orders</span>
+                </td>
+                <td>
+                  {% if u.email_verified %}
+                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
+                  {% else %}
+                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>Unverified</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if u.disabled %}
+                    <span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Disabled</span>
+                  {% else %}
+                    <span class="badge bg-success"><i class="fas fa-circle me-1"></i>Active</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <small>
+                    {% if u.created_at %}
+                      {{ u.created_at.strftime('%b %d, %Y') }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </small>
+                </td>
+                <td>
+                  {% if u.disabled %}
+                    <form method="POST" action="/admin/user/enable/{{ u.uid }}" 
+                          onsubmit="return confirm('Enable this user?')">
+                      <button type="submit" class="btn btn-sm btn-success">
+                        <i class="fas fa-check me-1"></i>Enable
+                      </button>
+                    </form>
+                  {% else %}
+                    <form method="POST" action="/admin/user/disable/{{ u.uid }}"
+                          onsubmit="return confirm('Disable this user? They will not be able to login.')">
+                      <button type="submit" class="btn btn-sm btn-danger">
+                        <i class="fas fa-ban me-1"></i>Disable
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                  <i class="fas fa-users fa-3x mb-3 d-block"></i>
+                  No users yet
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION FOR USERS -->
+        <nav aria-label="Users pagination" class="mt-3">
+          <ul class="pagination justify-content-end mb-0" id="usersPagination"></ul>
+        </nav>
+
+      </div>
+    </div>
+  </section>
 </div>
+
+
 </div>
 
 <!-- ============ MODALS ============ -->
@@ -1089,6 +1222,62 @@
     </div>
   </div>
 </div>
+<!-- INVENTORY EDIT MODALS - one for each inventory item -->
+{% for i in inventory %}
+<div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/inventory/edit/{{ i.id }}">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title">
+            <i class="fas fa-edit me-2"></i>Edit Inventory Item
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <!-- Status badge at top -->
+          <div class="mb-3 text-center">
+            {% if i.quantity < 5 %}
+              <span class="badge bg-danger p-2"><i class="fas fa-exclamation-triangle me-1"></i>Critical Stock</span>
+            {% elif i.quantity < 10 %}
+              <span class="badge bg-warning text-dark p-2"><i class="fas fa-exclamation me-1"></i>Low Stock</span>
+            {% else %}
+              <span class="badge bg-success p-2"><i class="fas fa-check me-1"></i>Good Stock</span>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Item Name</label>
+            <input type="text" class="form-control" name="item" value="{{ i.item }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Quantity</label>
+            <input type="number" class="form-control" name="quantity" value="{{ i.quantity }}" min="0" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cost (₱)</label>
+            <input type="number" class="form-control" name="cost" value="{{ i.cost }}" step="0.01" min="0" required>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-info text-white">
+            <i class="fas fa-save me-2"></i>Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script src="../static/javascript/admin_dashboard.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
  <script type="text/javascript">
@@ -1145,486 +1334,5 @@
       });
     }
   </script>
-<script>
-// ============================================================================
-// CONFIRMATION DIALOG
-// ============================================================================
-function confirmStatus(currentStatus) {
-  return confirm(
-    "Current status: " + currentStatus +
-    "\n\nAre you sure you want to update this order?"
-  );
-}
-
-// ============================================================================
-// UNIVERSAL PAGINATION BUTTON GENERATOR
-// ============================================================================
-function updatePaginationButtons(containerId, currentPage, totalPages, onPageClick) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  
-  let html = '';
-  
-  // Previous button
-  html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-    <a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a>
-  </li>`;
-  
-  // Page numbers
-  for (let i = 1; i <= totalPages; i++) {
-    if (totalPages <= 5 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-      html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
-        <a class="page-link" href="#" data-page="${i}">${i}</a>
-      </li>`;
-    } else if (i === currentPage - 2 || i === currentPage + 2) {
-      html += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
-    }
-  }
-  
-  // Next button
-  html += `<li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
-    <a class="page-link" href="#" data-page="${currentPage + 1}">Next</a>
-  </li>`;
-  
-  container.innerHTML = html;
-  
-  // Attach click events
-  container.querySelectorAll('a.page-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const page = parseInt(link.getAttribute('data-page'));
-      if (page && page !== currentPage && page >= 1 && page <= totalPages) {
-        onPageClick(page);
-      }
-    });
-  });
-}
-
-// ============================================================================
-// SECTION 1: SALES - SEARCH + FILTER + PAGINATION (ALL IN ONE)
-// ============================================================================
-let currentSalesPage = 1;
-const salesPerPage = 10;
-
-function updateSalesDisplay() {
-  const searchValue = document.getElementById('searchSales').value.toLowerCase();
-  const filterValue = document.getElementById('orderFilterSales').value;
-  
-  const allRows = document.querySelectorAll('#salesTable tbody tr');
-  let visibleRows = [];
-  
-  // Apply BOTH search AND filter together
-  allRows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    
-    const matchSearch = text.includes(searchValue);
-    const matchFilter = !filterValue || text.includes(filterValue);
-    
-    // BOTH must be true
-    if (matchSearch && matchFilter) {
-      visibleRows.push(row);
-    }
-  });
-  
-  // Pagination
-  const totalPages = Math.ceil(visibleRows.length / salesPerPage);
-  const start = (currentSalesPage - 1) * salesPerPage;
-  const end = start + salesPerPage;
-  
-  // Hide all first
-  allRows.forEach(row => row.style.display = 'none');
-  
-  // Show only current page
-  visibleRows.forEach((row, index) => {
-    if (index >= start && index < end) {
-      row.style.display = '';
-    }
-  });
-  
-  updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
-    currentSalesPage = page;
-    updateSalesDisplay();
-  });
-}
-
-// Event listeners for Sales
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchSales').addEventListener('keyup', () => {
-    currentSalesPage = 1;
-    updateSalesDisplay();
-  });
-  
-  document.getElementById('orderFilterSales').addEventListener('change', () => {
-    currentSalesPage = 1;
-    updateSalesDisplay();
-  });
-  
-  updateSalesDisplay(); // Initial load
-});
-
-let currentExpensesPage = 1;
-const expensesPerPage = 10;
-
-function updateExpensesDisplay() {
-  const searchValue = document.getElementById('searchExpenses').value.toLowerCase();
-  
-  const allRows = document.querySelectorAll('#expensesTable tbody tr');
-  let visibleRows = [];
-  
-  // Apply search
-  allRows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    
-    if (text.includes(searchValue)) {
-      visibleRows.push(row);
-    }
-  });
-  
-  // Pagination
-  const totalPages = Math.ceil(visibleRows.length / expensesPerPage);
-  const start = (currentExpensesPage - 1) * expensesPerPage;
-  const end = start + expensesPerPage;
-  
-  // Hide all first
-  allRows.forEach(row => row.style.display = 'none');
-  
-  // Show only current page
-  visibleRows.forEach((row, index) => {
-    if (index >= start && index < end) {
-      row.style.display = '';
-    }
-  });
-  
-  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => {
-    currentExpensesPage = page;
-    updateExpensesDisplay();
-  });
-}
-
-// Event listeners for Expenses
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchExpenses').addEventListener('keyup', () => {
-    currentExpensesPage = 1;
-    updateExpensesDisplay();
-  });
-  
-  updateExpensesDisplay(); // Initial load
-});
-
-// ============================================================================
-// SECTION 3: INVENTORY - SEARCH + FILTER + PAGINATION (ALL IN ONE)
-// ============================================================================
-let currentInventoryPage = 1;
-const inventoryPerPage = 10;
-
-function updateInventoryDisplay() {
-  const searchValue = document.getElementById('searchInventory').value.toLowerCase();
-  const statusValue = document.getElementById('statusFilterInventory').value;
-  
-  const allRows = document.querySelectorAll('#inventoryTable tbody tr');
-  let visibleRows = [];
-  
-  // Apply BOTH search AND filter together
-  allRows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    
-    const matchSearch = text.includes(searchValue);
-    
-    // Status filter logic
-    let matchStatus = true;
-    if (statusValue === 'critical') {
-      matchStatus = row.classList.contains('table-danger');
-    } else if (statusValue === 'low') {
-      matchStatus = row.classList.contains('table-warning');
-    } else if (statusValue === 'good') {
-      matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
-    }
-    
-    // BOTH must be true
-    if (matchSearch && matchStatus) {
-      visibleRows.push(row);
-    }
-  });
-  
-  // Pagination
-  const totalPages = Math.ceil(visibleRows.length / inventoryPerPage);
-  const start = (currentInventoryPage - 1) * inventoryPerPage;
-  const end = start + inventoryPerPage;
-  
-  // Hide all first
-  allRows.forEach(row => row.style.display = 'none');
-  
-  // Show only current page
-  visibleRows.forEach((row, index) => {
-    if (index >= start && index < end) {
-      row.style.display = '';
-    }
-  });
-  
-  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => {
-    currentInventoryPage = page;
-    updateInventoryDisplay();
-  });
-}
-
-// Event listeners for Inventory
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchInventory').addEventListener('keyup', () => {
-    currentInventoryPage = 1;
-    updateInventoryDisplay();
-  });
-  
-  document.getElementById('statusFilterInventory').addEventListener('change', () => {
-    currentInventoryPage = 1;
-    updateInventoryDisplay();
-  });
-  
-  updateInventoryDisplay(); // Initial load
-});
-
-// ============================================================================
-// SECTION 4: ORDERS - SEARCH + FILTERS + PAGINATION (ALL IN ONE)
-// ============================================================================
-let currentOrdersPage = 1;
-const ordersPerPage = 6;
-
-function updateOrdersDisplay() {
-  const searchValue = document.getElementById('searchOrders').value.toLowerCase();
-  const statusValue = document.getElementById('statusFilter').value;
-  const rushValue = document.getElementById('rushFilter').value;
-  
-  const allRows = document.querySelectorAll('#ordersTable tbody tr');
-  let visibleRows = [];
-  
-  // Apply ALL filters together
-  allRows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    
-    // Search match
-    const matchSearch = text.includes(searchValue);
-    
-    // Status match
-    const statusBadge = row.querySelector('td:nth-child(5) .badge');
-    const matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
-    
-    // Rush match
-    const isRush = row.classList.contains('table-danger');
-    const matchRush = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
-    
-    // ALL must be true
-    if (matchSearch && matchStatus && matchRush) {
-      visibleRows.push(row);
-    }
-  });
-  
-  // Pagination
-  const totalPages = Math.ceil(visibleRows.length / ordersPerPage);
-  const start = (currentOrdersPage - 1) * ordersPerPage;
-  const end = start + ordersPerPage;
-  
-  // Hide all first
-  allRows.forEach(row => row.style.display = 'none');
-  
-  // Show only current page
-  visibleRows.forEach((row, index) => {
-    if (index >= start && index < end) {
-      row.style.display = '';
-    }
-  });
-  
-  updatePaginationButtons('ordersPagination', currentOrdersPage, totalPages, (page) => {
-    currentOrdersPage = page;
-    updateOrdersDisplay();
-  });
-}
-
-// Event listeners for Orders
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchOrders').addEventListener('keyup', () => {
-    currentOrdersPage = 1;
-    updateOrdersDisplay();
-  });
-  
-  document.getElementById('statusFilter').addEventListener('change', () => {
-    currentOrdersPage = 1;
-    updateOrdersDisplay();
-  });
-  
-  document.getElementById('rushFilter').addEventListener('change', () => {
-    currentOrdersPage = 1;
-    updateOrdersDisplay();
-  });
-  
-  updateOrdersDisplay(); // Initial load
-});
-
-// ============================================================================
-// SECTION 5: CAKES - SEARCH + FILTERS + PAGINATION (ALL IN ONE)
-// ============================================================================
-let currentCakesPage = 1;
-const cakesPerPage = 8;
-
-function updateCakesDisplay() {
-  const searchValue = document.getElementById('searchCakes').value.toLowerCase();
-  const categoryValue = document.getElementById('categoryFilter').value;
-  const statusValue = document.getElementById('cakeStatusFilter').value;
-  
-  const allItems = document.querySelectorAll('.cake-item');
-  let visibleItems = [];
-  
-  // Apply ALL filters together
-  allItems.forEach(item => {
-    const name = item.getAttribute('data-name');
-    const category = item.getAttribute('data-category');
-    const status = item.getAttribute('data-status');
-    
-    const matchSearch = name.includes(searchValue);
-    const matchCategory = !categoryValue || category === categoryValue;
-    const matchStatus = !statusValue || status === statusValue;
-    
-    // ALL must be true
-    if (matchSearch && matchCategory && matchStatus) {
-      visibleItems.push(item);
-    }
-  });
-  
-  // Pagination
-  const totalPages = Math.ceil(visibleItems.length / cakesPerPage);
-  const start = (currentCakesPage - 1) * cakesPerPage;
-  const end = start + cakesPerPage;
-  
-  // Hide all first
-  allItems.forEach(item => item.style.display = 'none');
-  
-  // Show only current page
-  visibleItems.forEach((item, index) => {
-    if (index >= start && index < end) {
-      item.style.display = '';
-    }
-  });
-  
-  updatePaginationButtons('cakesPagination', currentCakesPage, totalPages, (page) => {
-    currentCakesPage = page;
-    updateCakesDisplay();
-  });
-}
-
-// Event listeners for Cakes
-document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchCakes').addEventListener('keyup', () => {
-    currentCakesPage = 1;
-    updateCakesDisplay();
-  });
-  
-  document.getElementById('categoryFilter').addEventListener('change', () => {
-    currentCakesPage = 1;
-    updateCakesDisplay();
-  });
-  
-  document.getElementById('cakeStatusFilter').addEventListener('change', () => {
-    currentCakesPage = 1;
-    updateCakesDisplay();
-  });
-  
-  updateCakesDisplay(); // Initial load
-});
-
-// ============================================================================
-// EDIT ORDER MODAL - Calculate total price
-// ============================================================================
-function calculateEditTotal(orderId) {
-  const cakePrice = parseFloat(document.getElementById(`editCakeType${orderId}`).value) || 0;
-  const designPrice = parseFloat(document.getElementById(`editDesign${orderId}`).value) || 0;
-  const sizePrice = parseFloat(document.getElementById(`editSize${orderId}`).value) || 0;
-  const layersPrice = parseFloat(document.getElementById(`editLayers${orderId}`).value) || 0;
-
-  let toppingsPrice = 0;
-  document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
-    toppingsPrice += parseFloat(t.value) || 0;
-  });
-
-  const total = cakePrice + designPrice + sizePrice + layersPrice + toppingsPrice;
-  document.getElementById(`editTotalPrice${orderId}`).innerText = total.toFixed(2);
-  document.getElementById(`editAmount${orderId}`).value = total.toFixed(2);
-  return total;
-}
-
-function updateEditOrderData(orderId) {
-  const cake = document.getElementById(`editCakeType${orderId}`).selectedOptions[0].text;
-  const design = document.getElementById(`editDesign${orderId}`).selectedOptions[0].text;
-  const size = document.getElementById(`editSize${orderId}`).selectedOptions[0].text;
-  const layers = document.getElementById(`editLayers${orderId}`).selectedOptions[0].text;
-
-  let toppings = [];
-  document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
-    const label = document.querySelector(`label[for="${t.id}"]`).innerText.trim();
-    toppings.push(label.split('(')[0].trim());
-  });
-
-  let description = `${cake}, ${size}, ${layers}, ${design}`;
-  if (toppings.length > 0) {
-    description += `, Toppings: ${toppings.join(", ")}`;
-  }
-
-  document.getElementById(`editOrderItem${orderId}`).value = description;
-}
-
-// Event listeners for edit modal changes
-document.addEventListener("change", function(e) {
-  if (e.target.classList.contains("edit-cake-type") ||
-      e.target.classList.contains("edit-design") ||
-      e.target.classList.contains("edit-size") ||
-      e.target.classList.contains("edit-layers") ||
-      e.target.classList.contains("edit-topping")) {
-    
-    const orderId = e.target.getAttribute("data-order-id");
-    if (orderId) {
-      calculateEditTotal(orderId);
-    }
-  }
-});
-
-// Initialize edit modals on page load
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('[id^="editOrderForm"]').forEach(form => {
-    const orderId = form.id.replace('editOrderForm', '');
-    if (orderId) {
-      calculateEditTotal(orderId);
-    }
-  });
-});
-
-// ============================================================================
-// SMOOTH SCROLL
-// ============================================================================
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', function (e) {
-    const href = this.getAttribute('href');
-    if (href !== '#') {
-      e.preventDefault();
-      const target = document.querySelector(href);
-      if (target) {
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    }
-  });
-});
-
-// ============================================================================
-// AUTO-DISMISS ALERTS
-// ============================================================================
-setTimeout(function() {
-  const alerts = document.querySelectorAll('.alert');
-  alerts.forEach(function(alert) {
-    const bsAlert = new bootstrap.Alert(alert);
-    bsAlert.close();
-  });
-}, 5000);
-
-</script>
-
 </body>
 </html>
