@@ -4,117 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Available Cakes - Ms. Brave Cake Shop</title>
-  
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  
-  <!-- Font Awesome -->
+  <link rel="stylesheet" href="static/css/cakes.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-  <div class="container">
+<!-- ============ NAVBAR ============= -->
+<nav class="navbar">
+  <div class="navbar-container">
     <a class="navbar-brand" href="/">
-      <i class="fas fa-cake-candles me-2"></i>Ms. Brave Cake Shop
+      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" href="/cakes">Cakes</a>
-        </li>
-        {% if user_id %}
-          <li class="nav-item">
-            <a class="nav-link" href="/customer_dashboard">My Orders</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="/authentication">Login</a>
-          </li>
-        {% endif %}
-      </ul>
-    </div>
+    <button class="menu-btn" id="menuToggle">☰ Menu</button>
   </div>
 </nav>
 
-<!-- HEADER -->
-<div class="bg-light py-5">
-  <div class="container text-center">
-    <h1 class="display-4">🎂 Available Cakes</h1>
-    <p class="lead text-muted">Fresh and delicious cakes ready for your special occasions</p>
+<!-- ================ OFFCANVAS MENU ================ -->
+<div class="offcanvas" id="offcanvasMenu">
+  <div class="offcanvas-header">
+    <h5>Navigate</h5>
+    <button class="close-btn" id="menuClose">&times;</button>
+  </div>
+  <div class="offcanvas-body">
+    {% if user_id %}
+      <a href="/customer_dashboard">Profile</a>
+      <a href="#cakes">Cake Showcase</a>
+      <a href="#services">Services</a>
+      <a href="/customize">Customize Your Cake</a>
+      <a href="/logout">Logout</a>
+    {% else %}
+      <a href="/authentication">Login</a>
+    {% endif %}
   </div>
 </div>
 
+<div style="margin-top: 70px;"></div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="container text-center">
+    <h1>🎂 Available Cakes</h1>
+    <p>Fresh and delicious cakes ready for your special occasions</p>
+  </div>
+</header>
+
 <!-- CAKES GRID -->
-<div class="container my-5">
-  <div class="row g-4">
-    {% for cake in cakes %}
-    <div class="col-lg-3 col-md-4 col-sm-6">
-      <div class="card h-100 shadow-sm">
-        <!-- Cake Image -->
-        {% if cake.image %}
-          <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" class="card-img-top" alt="{{ cake.name }}" style="height: 200px; object-fit: cover;">
-        {% else %}
-          <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px; font-size: 60px;">
-            🎂
+<main class="cakes-container container">
+  <div class="cakes-grid">
+
+    {% if cakes %}
+      {% for cake in cakes %}
+      <div class="cake-card">
+        <div class="cake-image">
+          {% if cake.image %}
+            <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" alt="{{ cake.name }}">
+          {% else %}
+            <div class="no-image">🎂</div>
+          {% endif %}
+        </div>
+        <div class="cake-info">
+          <h5 class="cake-title">{{ cake.name }}</h5>
+          <span class="badge category">{{ cake.category }}</span>
+          <p class="cake-desc">{{ cake.description[:80] }}{% if cake.description|length > 80 %}...{% endif %}</p>
+          <div class="price-stock">
+            <span class="price">₱{{ "%.2f"|format(cake.price) }}</span>
+            <span class="stock">{{ cake.quantity }} left</span>
           </div>
-        {% endif %}
-        
-        <!-- Cake Info -->
-        <div class="card-body d-flex flex-column">
-          <h5 class="card-title">{{ cake.name }}</h5>
-          <span class="badge bg-warning text-dark mb-2 w-50">{{ cake.category }}</span>
-          <p class="card-text text-muted small">{{ cake.description[:80] }}{% if cake.description|length > 80 %}...{% endif %}</p>
-          
-          <!-- Price & Quantity -->
-          <div class="d-flex justify-content-between align-items-center mb-3 mt-auto">
-            <span class="fw-bold text-success fs-4">₱{{ "%.2f"|format(cake.price) }}</span>
-            <span class="badge bg-secondary">{{ cake.quantity }} left</span>
-          </div>
-          
-          <!-- Order Button -->
           {% if user_id %}
-            <a href="/order?cake={{ cake.name }}" class="btn btn-primary w-100">
-              <i class="fas fa-shopping-cart me-2"></i>Order Now
+            <a href="/order?cake={{ cake.name }}" class="btn order-btn">
+              <i class="fas fa-shopping-cart"></i> Order Now
             </a>
           {% else %}
-            <a href="/authentication" class="btn btn-outline-primary w-100">
-              <i class="fas fa-sign-in-alt me-2"></i>Login to Order
+            <a href="/authentication" class="btn order-btn">
+              <i class="fas fa-sign-in-alt"></i> Login to Order
             </a>
           {% endif %}
         </div>
       </div>
-    </div>
+      {% endfor %}
     {% else %}
-    <!-- Empty State -->
-    <div class="col-12">
-      <div class="text-center py-5">
-        <i class="fas fa-cake-candles fa-4x text-muted mb-3"></i>
-        <h3 class="text-muted">No Cakes Available</h3>
-        <p class="text-muted">Check back soon for fresh cakes!</p>
+      <!-- Empty State -->
+      <div class="empty-state">
+        <i class="fas fa-cake-candles fa-4x"></i>
+        <h3>No Cakes Available</h3>
+        <p>Check back soon for fresh cakes!</p>
       </div>
-    </div>
-    {% endfor %}
+    {% endif %}
+
   </div>
-</div>
+</main>
 
 <!-- FOOTER -->
-<footer class="bg-dark text-white text-center py-4 mt-5">
-  <div class="container">
-    <p class="mb-0">&copy; 2024 Ms. Brave Cake Shop. All rights reserved.</p>
+<footer class="custom-footer">
+  <div class="footer-container">
+    <div class="footer-left">
+      <h2>Mrs. Brave's</h2>
+    </div>
+    <div class="footer-right">
+      <p><i class="fas fa-phone"></i> 0956 350 4486</p>
+      <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
+      <p>
+        <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
+          <i class="fab fa-facebook"></i>
+        </a>
+      </p>
+    </div>
   </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const menuToggle = document.getElementById('menuToggle');
+  const offcanvas = document.getElementById('offcanvasMenu');
+  menuToggle.addEventListener('click', () => {
+    offcanvas.classList.toggle('active');
+  });
+  const menuClose = document.getElementById('menuClose');
+  menuClose.addEventListener('click', () => {
+    offcanvas.classList.remove('active');
+  });
+</script>
+
 </body>
 </html>

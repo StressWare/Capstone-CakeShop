@@ -67,7 +67,7 @@ body {
 /* Only show one form at a time */
 .form {
     display: none;
-    width: 50%;
+    width: 80%;
 }
 
 /* Show active form */
@@ -238,6 +238,50 @@ button[type="submit"]:active {
   justify-content: center;
 }
 
+/* ===== FOOTER ===== */
+.custom-footer {
+  background: linear-gradient(135deg, #ffb6c1, #ff69b4);
+  color: white;
+  padding: 15px 40px; 
+}
+
+.footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-left h2 {
+  color: white;
+  font-size: 20px;
+  margin: 0;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+}
+
+.footer-right p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.footer-right a {
+  color: white;
+  font-size: 18px;
+  transition: 0.3s ease;
+}
+
+.footer-right a:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
+};
+
 /* RESPONSIVE STACKING (Optional) */
 @media (max-width: 768px) {
   .auth-layout {
@@ -254,10 +298,39 @@ button[type="submit"]:active {
   }
 }
 
+.google-login {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.google-btn {
+    color:  #ff7fbf; 
+    border: none;
+    padding: 0px 0px;
+    margin-top: 250%;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.google-btn i {
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
+/* Hover effect */
+.google-btn:hover {
+    background-color: #ffcde7; /* darker pink */
+    transform: scale(1.05);
+}
 
 @media (max-width: 576px) {
     .form-container {
-        padding: 25px 20px;
+        padding: 25px 25px;
     }
     
     h2 {
@@ -306,4 +379,22 @@ button[type="submit"]:active {
   flex: 1 1 350px;            /* grow/shrink with min width */
   display: flex;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+    .google-btn {
+        font-size: 0.9rem;
+        padding: 8px 15px;
+    }
+    .google-btn i {
+        margin-right: 5px;
+        font-size: 1rem;
+    }
 }
