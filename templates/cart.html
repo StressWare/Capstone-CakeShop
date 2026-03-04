@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Cart - Ms. Brave Cake Shop</title>
+  <link rel="stylesheet" href="static/css/cakes.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-container">
+    <a class="navbar-brand" href="/">
+      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
+    </a>
+    <button class="menu-btn" id="menuToggle">☰ Menu</button>
+  </div>
+</nav>
+
+<!-- OFFCANVAS -->
+<div class="offcanvas" id="offcanvasMenu">
+  <div class="offcanvas-header">
+    <h5>Navigate</h5>
+    <button class="close-btn" id="menuClose">&times;</button>
+  </div>
+  <div class="offcanvas-body">
+    <a href="/">Home</a>
+    <a href="/customer_dashboard">Profile</a>
+    <a href="/cakes">Available Cakes</a>
+    <a href="/customize_cake">Customize Your Cake</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
+
+<div class="cart-wrapper">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show mb-3">
+        {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}{% endif %}
+  {% endwith %}
+
+  <div class="cart-title">🛒 My Cart</div>
+  <div class="cart-subtitle">Select items to checkout</div>
+
+  {% if cart_items %}
+
+  <div class="cart-card">
+    <!-- Select All -->
+    <div class="select-all-row">
+      <input type="checkbox" class="item-check" id="selectAll">
+      <label for="selectAll" class="select-all-label">
+        Select All
+        <span class="text-muted fw-normal">({{ cart_items|length }} item{{ 's' if cart_items|length > 1 }})</span>
+      </label>
+    </div>
+
+    <!-- Items -->
+    {% for item in cart_items %}
+    <div class="cart-item-row">
+      <input type="checkbox" class="item-check item-cb"
+             data-id="{{ item.cake_id }}"
+             data-name="{{ item.cake_name }}"
+             data-price="{{ item.price }}">
+
+      <div class="cake-img-box">
+        {% if item.image %}
+          <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.cake_name }}">
+        {% else %}🎂{% endif %}
+      </div>
+
+      <div>
+        <div class="item-name">{{ item.cake_name }}</div>
+        <div class="item-price">₱{{ "%.2f"|format(item.price) }}</div>
+      </div>
+
+      <form method="POST" action="/cart/remove/{{ item.cake_id }}">
+        <button type="submit" class="btn-remove">
+          <i class="fas fa-trash-alt me-1"></i>Remove
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Checkout form — selected_items built by JS -->
+  <form method="POST" action="/order/cake" id="checkoutForm">
+    <input type="hidden" name="selected_items" id="selectedItemsInput" value="[]">
+  </form>
+
+  <!-- Sticky bar -->
+  <div class="checkout-bar">
+    <div>
+      <div class="total-label">Selected Total</div>
+      <div class="total-amount">₱<span id="selTotal">0.00</span></div>
+    </div>
+    <button type="button" id="checkoutBtn" class="btn-checkout disabled"
+            onclick="submitCheckout()">
+      <i class="fas fa-check-circle me-2"></i>Checkout
+    </button>
+  </div>
+
+  {% else %}
+  <div class="cart-card empty-state">
+    <div style="font-size:3.5rem">🛒</div>
+    <h4 class="mt-3 text-muted">Your cart is empty!</h4>
+    <p class="text-muted">Browse our cakes and add some to your cart.</p>
+    <a href="/cakes" class="btn btn-danger mt-2">
+      <i class="fas fa-cake-candles me-2"></i>Browse Cakes
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const cbs         = document.querySelectorAll('.item-cb');
+  const selAll      = document.getElementById('selectAll');
+  const selTotal    = document.getElementById('selTotal');
+  const checkoutBtn = document.getElementById('checkoutBtn');
+
+  const menuToggle = document.getElementById('menuToggle');
+  const offcanvas  = document.getElementById('offcanvasMenu');
+  const menuClose  = document.getElementById('menuClose');
+  menuToggle.addEventListener('click', () => offcanvas.classList.toggle('active'));
+  menuClose.addEventListener('click',  () => offcanvas.classList.remove('active'));
+
+  function update() {
+    let total = 0, any = false;
+    cbs.forEach(cb => {
+      if (cb.checked) { total += parseFloat(cb.dataset.price); any = true; }
+    });
+    selTotal.textContent = total.toFixed(2);
+    checkoutBtn.classList.toggle('disabled', !any);
+    selAll.checked = [...cbs].every(cb => cb.checked);
+    selAll.indeterminate = !selAll.checked && [...cbs].some(cb => cb.checked);
+  }
+
+  cbs.forEach(cb => cb.addEventListener('change', update));
+  selAll.addEventListener('change', function() {
+    cbs.forEach(cb => cb.checked = this.checked);
+    update();
+  });
+
+  function submitCheckout() {
+    var selected = [];
+    cbs.forEach(cb => {
+      if (cb.checked) {
+        selected.push({
+          cake_id:   cb.dataset.id,
+          cake_name: cb.dataset.name,
+          price:     cb.dataset.price
+        });
+      }
+    });
+    document.getElementById('selectedItemsInput').value = JSON.stringify(selected);
+    document.getElementById('checkoutForm').submit();
+  }
+</script>
+
+</body>
+</html>

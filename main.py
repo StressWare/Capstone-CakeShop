@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from werkzeug.utils import secure_filename
 import uuid
 import os
+import json
 import firebase
 from db import sales, expenses, inventory, users, cakes  # Firestore collections
 from firebase_admin import auth, firestore
@@ -52,7 +53,6 @@ def get_faq_response(user_message):
 
 # ------ SECURED FILE HANDLING FUNC-----
 def save_uploaded_image(file, upload_type):
-    """Helper function to save image with secure unique filename"""
     # Get file extension (jpg, png, etc)
     ext = file.filename.rsplit('.', 1)[1].lower()
         # Check if extension is allowed
@@ -519,22 +519,12 @@ def edit_inventory(id):
     return redirect(url_for("admin_page"))
 
 
-# ---------------- PLACE ORDER ----------------
+# ---------------- CUSTOMIZATION ORDER ----------------
 @app.route("/order", methods=["POST"])
 def place_order():
     user_id = session.get("user_id")
     if not user_id:
         return redirect(url_for("auth_page"))
-
-    now = datetime.now(PH_TZ)
-
-    # Get date and time from form
-    date_str = request.form["delivery_date"]
-    time_str = request.form["delivery_time"]
-    datetime_str = f"{date_str} {time_str}"
-    
-    delivery_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
-    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
 
     file = request.files.get('image')
     if file and file.filename:
@@ -542,64 +532,131 @@ def place_order():
     else:
         inspo_image = None
 
+    customer_doc = users.document(user_id).get()
+    customer = customer_doc.to_dict() if customer_doc.exists else {}
+
+    min_date = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    return render_template('checkout.html',
+        order_type  = 'custom',
+        order_item  = request.form.get('order_item'),
+        amount      = request.form.get('amount'),
+        notes       = request.form.get('notes', ''),
+        rush        = request.form.get('rush', ''),
+        inspo_image = inspo_image,
+        selected_items = [],
+        customer    = customer,
+        min_date    = min_date,
+    )
+
+#PREMADE ORDERS
+@app.route("/order/cake", methods=["POST"])
+def order_cake():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("auth_page"))
+
+    customer_doc = users.document(user_id).get()
+    if customer_doc.exists:
+        customer = customer_doc.to_dict()
+    else:
+        customer = {}
+    min_date = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # From cart (multiple items)
+    selected_json  = request.form.get('selected_items', '[]')
+    selected_items = json.loads(selected_json)
+    print("selected_items being passed to template:", selected_items)
+    if selected_items:
+        amount = sum(float(i['price']) for i in selected_items)
+    else:
+        # From Order Now (single cake)
+        selected_items = [{
+            'cake_id':   request.form.get('cake_id'),
+            'cake_name': request.form.get('cake_name'),
+            'price':     request.form.get('price')
+        }]
+        amount = float(request.form.get('price', 0))
+
+    return render_template('checkout.html',
+        order_type     = 'premade',
+        selected_items = selected_items,
+        amount         = amount,
+        customer       = customer,
+        min_date       = min_date,
+    )
+#CHECKOUT PAGE FOR both custom and premade orders
+@app.route('/checkout')
+def checkout_page():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth_page'))
+    return redirect(url_for('cakes_page'))
+
+# ---------------- /place-order - SAVES TO FIRESTORE (from checkout form) ----------------
+@app.route("/place-order", methods=["POST"])
+def finalize_order():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("auth_page"))
+    now = datetime.now(PH_TZ)
+
+    date_str = request.form["delivery_date"]
+    time_str = request.form["delivery_time"]
+    delivery_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
+
+    delivery_type = request.form.get("delivery_type", "Delivery")
+
+    if delivery_type == "Pickup":
+        address = "Pick Up at Shop"
+    else:
+        address = request.form.get("address", "")
+
+    order_type = request.form.get("order_type")
+    selected_json = request.form.get("selected_items", "[]")
+    print("EXACT VALUE:", repr(selected_json))
+    if order_type == "premade":
+        selected_json  = request.form.get("selected_items", "[]")
+        selected_items = json.loads(selected_json)
+        item_names     = ", ".join([f"{i['cake_name']} (₱{float(i['price']):.0f})" for i in selected_items])
+        amount         = sum(float(i["price"]) for i in selected_items)
+        rush           = False
+        inspo_image    = None
+        # Clear ordered items from cart
+        for i in selected_items:
+            users.document(user_id).collection("cart").document(i["cake_id"]).delete()
+
+    else:  # custom
+        item_names  = request.form.get("order_item", "")
+        amount      = float(request.form.get("amount", 0))
+        rush        = request.form.get("rush") == "yes"
+        inspo_image = request.form.get("inspo_image") or None
+
     order_data = {
-        "delivery_date": delivery_datetime,
-        "item": request.form["order_item"],
-        "amount": float(request.form["amount"]),
-        "status": "New",
-        "rush": bool(request.form.get("rush")),
-        "notes": request.form.get("notes", ""),  # ✅ NEW - Special instructions
-        "inspo_image": inspo_image,
+        "delivery_date":  delivery_datetime,
+        "item":           item_names,
+        "amount":         amount,
+        "status":         "New",
+        "rush":           rush,
+        "notes":          request.form.get("notes", ""),
+        "payment_method": request.form.get("payment_method", "Cash on Delivery"),
+        "delivery_type":  delivery_type,
+        "inspo_image":    inspo_image,
         "customer": {
-            "name": request.form["customer_name"],
-            "contact": request.form["contact"],
-            "address": request.form["address"],
-            "occasion": request.form["occasion"],
-            "celebrant": request.form.get("celebrant"),
-            "age": request.form.get("age")
+            "name":      request.form.get("customer_name", ""),
+            "contact":   request.form.get("contact", ""),
+            "address":   address,
+            "occasion":  request.form.get("occasion", ""),
+            "celebrant": request.form.get("celebrant", ""),
+            "age":       request.form.get("age", "")
         },
         "created_at": now
     }
 
     users.document(user_id).collection("orders").add(order_data)
+    flash("Order placed successfully! 🎂", "success")
     return redirect(url_for("customer_dashboard"))
-
-# ---------------- EDIT ORDER ORDER FOR ADMIN----------------
-@app.route("/order/edit/<user_id>/<order_id>", methods=["POST"])
-def edit_order(user_id, order_id):
-    current_user = session.get('user')
-    if not current_user or not current_user.get('admin'):
-        return render_template('403.html'), 403
-    
-    # Get the formatted item description from frontend
-    item = request.form.get("order_item")
-    amount = float(request.form.get("amount"))
-    notes = request.form.get("notes", "")
-    
-    # Get date and time from form
-    date_str = request.form.get("delivery_date")
-    time_str = request.form.get("delivery_time")
-    datetime_str = f"{date_str} {time_str}"
-    
-    # Parse and set timezone (same as your /order route)
-    delivery_datetime = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
-    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
-    
-    # Update the order in Firestore
-    try:
-        order_ref = users.document(user_id).collection("orders").document(order_id)
-        order_ref.update({
-            "item": item,
-            "amount": amount,
-            "notes": notes,
-            "delivery_date": delivery_datetime
-        })
-        
-        flash('Order updated successfully!', 'success')
-    except Exception as e:
-        flash(f'Error updating order: {str(e)}', 'error')
-    
-    return redirect('/admin_dashboard#orders')
 
 # ---------------- CUSTOMER DASHBOARD ----------------
 @app.route("/customer_dashboard")
@@ -618,36 +675,30 @@ def customer_dashboard():
     for order_doc in orders_ref:
         order = order_doc.to_dict()
         order["id"] = order_doc.id
-        order["notes"] = order.get("notes", "")  
-        # Convert created_at
+        order["notes"] = order.get("notes", "")
+
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at)
-        
-        # Convert to PH time
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
         order["created_at"] = created_at
-        
-        # Convert delivery_date
+
         delivery_date = order.get("delivery_date")
         if isinstance(delivery_date, str):
             delivery_date = datetime.fromisoformat(delivery_date)
-        
-        # Convert to PH time
         if isinstance(delivery_date, datetime):
             if delivery_date.tzinfo is None:
                 delivery_date = delivery_date.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 delivery_date = delivery_date.astimezone(PH_TZ)
         order["delivery_date"] = delivery_date
-        
+
         orders.append(order)
 
-    # Sort descending by timestamp - SIMPLIFIED!
     orders.sort(key=lambda x: x["created_at"], reverse=True)
 
     return render_template(
@@ -656,8 +707,6 @@ def customer_dashboard():
         orders=orders,
         user_id=user_id
     )
-
-
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
@@ -803,11 +852,68 @@ def cakes_page():
         cake_data = cake_doc.to_dict()
         cake_data['id'] = cake_doc.id
         available_cakes.append(cake_data)
-    
     # Check if user is logged in
     user_id = session.get("user_id")
     
     return render_template("cakes.html", cakes=available_cakes, user_id=user_id)
+
+# ---------------- CART PAGE ----------------
+@app.route("/cart")
+def cart_page():
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("auth_page"))
+
+    cart_items = []
+    for doc in users.document(user_id).collection("cart").stream():
+        item = doc.to_dict()
+        item["id"] = doc.id
+        cart_items.append(item)
+
+    return render_template("cart.html", cart_items=cart_items)
+
+# ---------------- ADD TO CART ----------------
+@app.route("/cart/add", methods=["POST"])
+def add_to_cart():
+    user_id = session.get("user_id")
+    if not user_id:
+        flash("Please login first!", "warning")
+        return redirect(url_for("auth_page"))
+
+    cake_id   = request.form.get("cake_id")
+    cake_name = request.form.get("cake_name")
+    price     = float(request.form.get("price", 0))
+
+    cart_ref = users.document(user_id).collection("cart").document(cake_id)
+    cart_doc = cart_ref.get()
+
+    if cart_doc.exists:
+        flash(f"{cake_name} is already in your cart!", "info")
+    else:
+        cart_ref.set({
+            "cake_id":   cake_id,
+            "cake_name": cake_name,
+            "price":     price,
+            "added_at":  firestore.SERVER_TIMESTAMP
+        })
+        flash(f"{cake_name} added to cart! 🛒", "success")
+
+    return redirect(url_for("cakes_page"))
+
+
+# ---------------- REMOVE FROM CART ----------------
+@app.route("/cart/remove/<cake_id>", methods=["POST"])
+def remove_from_cart(cake_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("auth_page"))
+
+    users.document(user_id).collection("cart").document(cake_id).delete()
+    flash("Item removed from cart.", "info")
+    return redirect(url_for("cart_page"))
+
+
+
 
 @app.route('/api/send-message', methods=['POST'])
 def api_send_message():
@@ -892,13 +998,17 @@ def api_get_messages(user_id, conversation_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # Customization page
+'''
 @app.route('/checkout')
 def checkout_page():
     user_id = session.get('user_id')
-    if not user_id:
-        return redirect(url_for('auth_page'))
-    return render_template('checkout.html')
-
+    customer = None
+    if user_id:  
+        doc = users.document(user_id).get()
+        if doc.exists:
+            customer = doc.to_dict()
+    return render_template('checkout.html', customer=customer)
+'''
 # ---------------- RUN SERVER ----------------
 if __name__ == "__main__":
     app.run(debug=True)

@@ -9,7 +9,6 @@
 </head>
 <body>
 
-<!-- ============ NAVBAR ============= -->
 <nav class="navbar">
   <div class="navbar-container">
     <a class="navbar-brand" href="/">
@@ -19,7 +18,6 @@
   </div>
 </nav>
 
-<!-- ================ OFFCANVAS MENU ================ -->
 <div class="offcanvas" id="offcanvasMenu">
   <div class="offcanvas-header">
     <h5>Navigate</h5>
@@ -28,9 +26,8 @@
   <div class="offcanvas-body">
     {% if user_id %}
       <a href="/customer_dashboard">Profile</a>
-      <a href="#cakes">Cake Showcase</a>
-      <a href="#services">Services</a>
-      <a href="/customize">Customize Your Cake</a>
+      <a href="/cart">🛒 My Cart</a>
+      <a href="/customize_cake">Customize Your Cake</a>
       <a href="/logout">Logout</a>
     {% else %}
       <a href="/authentication">Login</a>
@@ -40,7 +37,18 @@
 
 <div style="margin-top: 70px;"></div>
 
-<!-- HEADER -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show">
+          {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
 <header class="header">
   <div class="container text-center">
     <h1>🎂 Available Cakes</h1>
@@ -48,10 +56,8 @@
   </div>
 </header>
 
-<!-- CAKES GRID -->
 <main class="cakes-container container">
   <div class="cakes-grid">
-
     {% if cakes %}
       {% for cake in cakes %}
       <div class="cake-card">
@@ -70,36 +76,46 @@
             <span class="price">₱{{ "%.2f"|format(cake.price) }}</span>
             <span class="stock">{{ cake.quantity }} left</span>
           </div>
+
           {% if user_id %}
-            <a href="/order?cake={{ cake.name }}" class="btn order-btn">
-              <i class="fas fa-shopping-cart"></i> Order Now
-            </a>
+          <form method="POST" action="/order/cake">
+            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+            <input type="hidden" name="cake_name" value="{{ cake.name }}">
+            <input type="hidden" name="price"     value="{{ cake.price }}">
+            <button type="submit" class="btn order-btn">
+              <i class="fas fa-bolt"></i> Order Now
+            </button>
+          </form>
+            <form method="POST" action="/cart/add">
+              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+              <input type="hidden" name="price"     value="{{ cake.price }}">
+              <button type="submit" class="btn order-btn" style="background:#fff; color:#d63384; border:2px solid #d63384;">
+                <i class="fas fa-cart-plus"></i> Add to Cart
+              </button>
+            </form>
           {% else %}
             <a href="/authentication" class="btn order-btn">
               <i class="fas fa-sign-in-alt"></i> Login to Order
             </a>
           {% endif %}
+
         </div>
       </div>
       {% endfor %}
     {% else %}
-      <!-- Empty State -->
       <div class="empty-state">
         <i class="fas fa-cake-candles fa-4x"></i>
         <h3>No Cakes Available</h3>
         <p>Check back soon for fresh cakes!</p>
       </div>
     {% endif %}
-
   </div>
 </main>
 
-<!-- FOOTER -->
 <footer class="custom-footer">
   <div class="footer-container">
-    <div class="footer-left">
-      <h2>Mrs. Brave's</h2>
-    </div>
+    <div class="footer-left"><h2>Mrs. Brave's</h2></div>
     <div class="footer-right">
       <p><i class="fas fa-phone"></i> 0956 350 4486</p>
       <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
@@ -112,16 +128,13 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const menuToggle = document.getElementById('menuToggle');
-  const offcanvas = document.getElementById('offcanvasMenu');
-  menuToggle.addEventListener('click', () => {
-    offcanvas.classList.toggle('active');
-  });
-  const menuClose = document.getElementById('menuClose');
-  menuClose.addEventListener('click', () => {
-    offcanvas.classList.remove('active');
-  });
+  const offcanvas  = document.getElementById('offcanvasMenu');
+  const menuClose  = document.getElementById('menuClose');
+  menuToggle.addEventListener('click', () => offcanvas.classList.toggle('active'));
+  menuClose.addEventListener('click',  () => offcanvas.classList.remove('active'));
 </script>
 
 </body>

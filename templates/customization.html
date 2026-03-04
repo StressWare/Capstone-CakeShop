@@ -28,23 +28,16 @@
     <a href="/">Home</a>
     <a href="/customer_dashboard">Profile</a>
     <a href="/#cakes">Cake Showcase</a>
-    <a href="/customize">Customize Your Cake</a>
+    <a href="/customize_cake">Customize Your Cake</a>
   </div>
 </div>
-
-<div style="margin-top: 70px;"></div>
-
-<!-- ================ ONE FORM - EVERYTHING ================ -->
+<div style="margin-top: 50px;"></div>
 <section class="customize-section">
-  <h2>Customize Your Cake & Place Order</h2>
-
   <form method="POST" action="/order" enctype="multipart/form-data">
-    
-    <!-- SECTION 1: CUSTOMIZE YOUR CAKE -->
     <h3>Step 1: Customize Your Cake</h3>
     <hr>
-    
-    <label for="cakeType">Cake Flacvors</label>
+
+    <label for="cakeType">Cake Flavors</label>
     <select id="cakeType">
       <option value="800">Chocolate (₱800)</option>
       <option value="850">Vanilla (₱850)</option>
@@ -53,14 +46,14 @@
 
     <label for="design">Icing Type</label>
     <select id="design">
-      <option value="3500">Fondant(₱3,500)</option>
+      <option value="3500">Fondant (₱3,500)</option>
       <option value="1800">Icing (₱1,800-2,000)</option>
     </select>
 
     <label for="cakeSize">Cake Size</label>
     <select id="cakeSize">
       <option value="1600">6 inches (₱1,600)</option>
-      <option value="2300">8 inches (₱2300)</option>
+      <option value="2300">8 inches (₱2,300)</option>
       <option value="400">10 inches (₱400)</option>
       <option value="600">12 inches (₱600)</option>
     </select>
@@ -72,117 +65,85 @@
       <option value="600">Triple Layer (+₱600)</option>
     </select>
 
-
-    <label for="layers">Toppers</label>
-    <select id="layers">
-      <option value="150"> 1 set (₱150)</option>
-      <option value="250"> Set of 3 (250)</option>
+    <label for="toppers">Toppers</label>
+    <select id="toppers">
+      <option value="150">1 set (₱150)</option>
+      <option value="250">Set of 3 (₱250)</option>
     </select>
-
 
     <label>Add-ons</label>
     <div>
       <input type="checkbox" class="addons" value="100" id="filling">
-      <label for="">Cake Filling (₱100)</label>
+      <label for="filling">Cake Filling (₱100)</label>
     </div>
     <div>
-      <input type="checkbox" class="addons" value="150" id="cupcake">
+      <input type="checkbox" class="addons" value="700" id="cupcake">
       <label for="cupcake">Cupcake (dozen) (₱700)</label>
     </div>
     <div>
-      <input type="checkbox" class="addons" value="250" id="chocoDrip">
-      <label for="ediblepaper">Edible Paper(₱250)</label>
+      <input type="checkbox" class="addons" value="250" id="ediblepaper">
+      <label for="ediblepaper">Edible Paper (₱250)</label>
     </div>
-
     <div>
-      <input type="checkbox" class="addons" value="450" id="chocoDrip">
-      <label for="ediblepaper">Fondant Toppers (per character) (₱450)</label>
+      <input type="checkbox" class="addons" value="450" id="fondanttoppers">
+      <label for="fondanttoppers">Fondant Toppers (per character) (₱450)</label>
     </div>
 
     <label for="notes">Special Instructions</label>
     <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
 
-    <!-- IMAGE UPLOAD HERE -->
     <label for="image">Cake Image Inspo</label>
     <input type="file" name="image" id="image" accept="image/*">
     <small>Upload an image of your desired cake (optional)</small>
-
-    <div class="price-box">
-      Total: ₱<span id="totalPrice">0</span>
-    </div>
-
-    <hr>
-
-    <!-- SECTION 2: YOUR DETAILS -->
-    <h3>Step 2: Your Details</h3>
-    <hr>
-
-    <label>Customer Name</label>
-    <input name="customer_name" value="{{ customer.fname if customer else '' }}" required>
-
-    <label>Contact Number</label>
-    <input name="contact" value="{{ customer.number if customer else '' }}" required>
-
-    <label>Address</label>
-    <input name="address" value="{{ customer.address if customer else '' }}" required>
-
-    <label>Occasion</label>
-    <input name="occasion" placeholder="Birthday, Wedding..." required>
-
-    <label>Celebrant / Dedication</label>
-    <input name="celebrant">
-
-    <label>Age</label>
-    <input name="age" type="number" min="0">
 
     <label>
       <input type="checkbox" name="rush" value="yes"> Rush Order
     </label>
 
-    <label>Delivery Date</label>
-    <input type="date" name="delivery_date" required>
+    <div class="price-box">
+      Total: ₱<span id="totalPrice">0</span>
+    </div>
 
-    <label>Delivery Time</label>
-    <input type="time" name="delivery_time" required>
-
-    <!-- Hidden fields -->
+    <!-- Hidden fields populated by JS before submit -->
     <input type="hidden" name="order_item" id="orderItem">
-    <input type="hidden" name="amount" id="orderAmount">
+    <input type="hidden" name="amount"     id="orderAmount">
+
     {% if customer %}
-    <button type="submit" onclick="updateOrderData()">Place Order</button>
+      <button type="submit" onclick="updateOrderData()">Proceed to Checkout</button>
     {% else %}
-    <a href="/authentication" class="btn">Login to Place Order</a>
+      <a href="/authentication" class="btn">Login to Order</a>
     {% endif %}
+
   </form>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-const menuBtn = document.getElementById("menuToggle");
+const menuBtn  = document.getElementById("menuToggle");
 const offcanvas = document.getElementById("offcanvasMenu");
 const menuClose = document.getElementById("menuClose");
 
-menuBtn.addEventListener("click", () => offcanvas.classList.add("active"));
+menuBtn.addEventListener("click",  () => offcanvas.classList.add("active"));
 menuClose.addEventListener("click", () => offcanvas.classList.remove("active"));
-document.addEventListener("click", (e) => {
-    if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
-        offcanvas.classList.remove("active");
-    }
+document.addEventListener("click",  (e) => {
+  if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
+    offcanvas.classList.remove("active");
+  }
 });
 
 function calculateTotal() {
-  const cakePrice = parseFloat(document.getElementById("cakeType").value) || 0;
-  const designPrice = parseFloat(document.getElementById("design").value) || 0;
-  const sizePrice = parseFloat(document.getElementById("cakeSize").value) || 0;
-  const layersPrice = parseFloat(document.getElementById("layers").value) || 0;
+  const cakePrice    = parseFloat(document.getElementById("cakeType").value) || 0;
+  const designPrice  = parseFloat(document.getElementById("design").value)   || 0;
+  const sizePrice    = parseFloat(document.getElementById("cakeSize").value)  || 0;
+  const layersPrice  = parseFloat(document.getElementById("layers").value)    || 0;
+  const toppersPrice = parseFloat(document.getElementById("toppers").value)   || 0;
 
-  let toppingsPrice = 0;
-  document.querySelectorAll(".topping:checked").forEach(t => {
-    toppingsPrice += parseFloat(t.value) || 0;
+  let addonsTotal = 0;
+  document.querySelectorAll(".addons:checked").forEach(a => {
+    addonsTotal += parseFloat(a.value) || 0;
   });
 
-  const total = cakePrice + designPrice + sizePrice + layersPrice + toppingsPrice;
+  const total = cakePrice + designPrice + sizePrice + layersPrice + toppersPrice + addonsTotal;
   document.getElementById("totalPrice").innerText = total.toFixed(2);
   return total;
 }
@@ -191,29 +152,31 @@ function updateOrderData() {
   const total = calculateTotal();
   document.getElementById("orderAmount").value = total.toFixed(2);
 
-  const cake = document.getElementById("cakeType").selectedOptions[0].text;
-  const design = document.getElementById("design").selectedOptions[0].text;
-  const size = document.getElementById("cakeSize").selectedOptions[0].text;
-  const layers = document.getElementById("layers").selectedOptions[0].text;
+  const cake    = document.getElementById("cakeType").selectedOptions[0].text;
+  const design  = document.getElementById("design").selectedOptions[0].text;
+  const size    = document.getElementById("cakeSize").selectedOptions[0].text;
+  const layers  = document.getElementById("layers").selectedOptions[0].text;
+  const toppers = document.getElementById("toppers").selectedOptions[0].text;
 
-  let toppings = [];
-  document.querySelectorAll(".topping:checked").forEach(t => {
-    toppings.push(t.parentElement.innerText.trim());
+  let addons = [];
+  document.querySelectorAll(".addons:checked").forEach(a => {
+    addons.push(a.nextElementSibling.innerText.trim());
   });
 
-  let description = `${cake}, ${size}, ${layers}, ${design}`;
-  if (toppings.length > 0) {
-    description += `, Toppings: ${toppings.join(", ")}`;
+  let description = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
+  if (addons.length > 0) {
+    description += `, Add-ons: ${addons.join(", ")}`;
   }
 
   document.getElementById("orderItem").value = description;
 }
 
 document.getElementById("cakeType").addEventListener("change", calculateTotal);
-document.getElementById("design").addEventListener("change", calculateTotal);
+document.getElementById("design").addEventListener("change",   calculateTotal);
 document.getElementById("cakeSize").addEventListener("change", calculateTotal);
-document.getElementById("layers").addEventListener("change", calculateTotal);
-document.querySelectorAll(".topping").forEach(t => t.addEventListener("change", calculateTotal));
+document.getElementById("layers").addEventListener("change",   calculateTotal);
+document.getElementById("toppers").addEventListener("change",  calculateTotal);
+document.querySelectorAll(".addons").forEach(a => a.addEventListener("change", calculateTotal));
 
 calculateTotal();
 </script>

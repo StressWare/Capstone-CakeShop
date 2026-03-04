@@ -4,218 +4,269 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Checkout - Ms. Brave Cake Shop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link href="../static/css/checkout.css" rel="stylesheet">
+  <style>
+    #addressSection { transition: all 0.2s ease; }
+    .pickup-info {
+      display: none;
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 0.92rem;
+      color: #664d03;
+    }
+    .pickup-info i { margin-right: 8px; color: #d63384; }
+  </style>
 </head>
 <body>
 
 <div class="checkout-container">
-  <!-- Header -->
+
   <div class="checkout-header">
     <h1>Checkout</h1>
   </div>
 
-  <!-- Main Checkout -->
-  <div class="checkout-main">
-    <!-- Left Column - Form -->
-    <div>
-      <!-- Delivery Options -->
-      <div class="checkout-form-section">
-        <div class="section-title">Delivery Options</div>
-        
-        <div class="delivery-options">
-          <div class="delivery-option active" onclick="selectDelivery(this, 'ship')">
-            <i class="fas fa-box"></i>
-            <div>Ship</div>
-          </div>
-          <div class="delivery-option" onclick="selectDelivery(this, 'pickup')">
-            <i class="fas fa-map-marker-alt"></i>
-            <div>Pick Up</div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/place-order">
+
+    <!-- Hidden fields -->
+    <input type="hidden" name="order_type"     value="{{ order_type }}">
+    <input type="hidden" name="order_item"     value="{{ order_item }}">
+    <input type="hidden" name="amount"         value="{{ amount }}">
+    <input type="hidden" name="price"          value="{{ price }}">
+    <input type="hidden" name="rush"           value="{{ rush }}">
+    <input type="hidden" name="inspo_image"    value="{{ inspo_image or '' }}">
+    <input type="hidden" name="selected_items" value='{{ selected_items | tojson }}'>
+    <input type="hidden" name="delivery_type"  id="deliveryTypeInput" value="Delivery">
+    <input type="hidden" name="payment_method" id="paymentInput"      value="Cash on Delivery">
+
+    <div class="checkout-main">
+
+      <!-- ===== LEFT COLUMN ===== -->
+      <div>
+
+        <!-- 1. Delivery Options -->
+        <div class="checkout-form-section">
+          <div class="section-title">Delivery Options</div>
+          <div class="delivery-options">
+            <div class="delivery-option active" id="btnDelivery" onclick="selectDelivery('Delivery')">
+              <i class="fas fa-box"></i>
+              <div>Delivery</div>
+            </div>
+            <div class="delivery-option" id="btnPickup" onclick="selectDelivery('Pickup')">
+              <i class="fas fa-map-marker-alt"></i>
+              <div>Pick Up</div>
+            </div>
           </div>
         </div>
 
-        <!-- Address Type -->
-        <div class="address-type-buttons">
-          <button class="address-type-btn active">Home/Office</button>
-          <button class="address-type-btn">APO/FPO</button>
-        </div>
-
-        <!-- Form Fields -->
-        <form id="checkoutForm">
+        <!-- 2. Customer Info -->
+        <div class="checkout-form-section">
+          <div class="section-title">Your Information</div>
           <div class="form-row">
             <div class="form-group">
-              <label for="firstName">First Name *</label>
-              <input type="text" class="form-control" id="firstName" placeholder="First Name" required>
+              <label>Full Name *</label>
+              <input type="text" name="customer_name" class="form-control"
+                     value="{{ customer.fname or '' }}" required>
             </div>
             <div class="form-group">
-              <label for="lastName">Last Name *</label>
-              <input type="text" class="form-control" id="lastName" placeholder="Last Name" required>
+              <label>Contact Number *</label>
+              <input type="text" name="contact" class="form-control"
+                     value="{{ customer.number or '' }}" required>
             </div>
           </div>
 
+          <div class="form-group" id="addressSection">
+            <label>Delivery Address *</label>
+            <input type="text" name="address" id="addressInput" class="form-control"
+                   value="{{ customer.address or '' }}">
+          </div>
+
+          <div class="pickup-info" id="pickupInfo">
+            <i class="fas fa-store"></i>
+            <strong>Pick Up Location:</strong><br>
+            Ms. Brave Cake Shop<br>
+            [Location] — MRS Braves R Mapa Street, Mandurriao Iloilo
+          </div>
+        </div>
+
+        <!-- 3. Occasion (custom orders only) -->
+        {% if order_type == 'custom' %}
+        <div class="checkout-form-section">
+          <div class="section-title">Occasion Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Occasion *</label>
+              <input type="text" name="occasion" class="form-control"
+                     placeholder="Birthday, Wedding..." required>
+            </div>
+            <div class="form-group">
+              <label>Celebrant / Dedication</label>
+              <input type="text" name="celebrant" class="form-control">
+            </div>
+          </div>
           <div class="form-group">
-            <label for="address">Address *</label>
-            <input type="text" class="form-control" id="address" placeholder="Start typing address" required>
+            <label>Age</label>
+            <input type="number" name="age" class="form-control" min="0">
           </div>
+        </div>
+        {% endif %}
 
-          <div class="enter-manual-link">
-            <a href="#">Enter address manually</a>
-          </div>
-
+        <!-- 4. Date & Time -->
+        <div class="checkout-form-section">
+          <div class="section-title" id="dateTitle">Delivery Details</div>
           <div class="form-row">
             <div class="form-group">
-              <label for="email">Email *</label>
-              <input type="email" class="form-control" id="email" placeholder="Email" required>
+              <label id="dateLabel">Delivery Date *</label>
+              <input type="date" name="delivery_date" class="form-control"
+                     min="{{ min_date }}" required>
             </div>
             <div class="form-group">
-              <label for="phone">Phone Number *</label>
-              <input type="tel" class="form-control" id="phone" placeholder="Phone Number" required>
+              <label id="timeLabel">Delivery Time *</label>
+              <input type="time" name="delivery_time" class="form-control" value="10:00" required>
             </div>
           </div>
-
-          <button type="button" class="btn-save">Save & Continue</button>
-        </form>
-      </div>
-
-      <!-- Payment Section -->
-      <div class="payment-section">
-        <div class="section-title">Payment</div>
-        
-          <div class="payment-method" onclick="selectPayment(this)">
-            <i class="fas fa-wallet"></i>
-            <div class="payment-method-label">Online Bank</div>
-          </div>
-          <div class="payment-method" onclick="selectPayment(this)">
-            <i class="fas fa-mobile-alt"></i>
-            <div class="payment-method-label">E-Wallet</div>
-          </div>
-          <div class="payment-method" onclick="selectPayment(this)">
-            <i class="fas fa-hand-holding-usd"></i>
-            <div class="payment-method-label">Cash on Delivery</div>
+          <div class="form-group">
+            <label>Notes <span style="font-weight:400;color:#999;">(optional)</span></label>
+            <textarea name="notes" class="form-control" rows="3"
+                      placeholder="Any special instructions...">{{ notes or '' }}</textarea>
           </div>
         </div>
-      </div>
 
-      <!-- Order Review Section -->
-      <div class="order-review-section">
-        <div class="section-title">Order Review</div>
-        
-        <div class="breadcrumb-checkout">
-          <div class="breadcrumb-item">Delivery</div>
-          <div class="breadcrumb-item">Payment</div>
-          <div class="breadcrumb-item active">Review</div>
+        <!-- 5. Payment -->
+        <div class="payment-section">
+          <div class="section-title">Payment</div>
+          <div class="payment-methods">
+            <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
+              <i class="fas fa-hand-holding-usd"></i>
+              <div class="payment-method-label">Cash on Delivery</div>
+            </div>
+            <div class="payment-method" onclick="selectPayment(this, 'GCash')">
+              <i class="fas fa-mobile-alt"></i>
+              <div class="payment-method-label">GCash</div>
+            </div>
+            <div class="payment-method" onclick="selectPayment(this, 'PayMaya')">
+              <i class="fas fa-wallet"></i>
+              <div class="payment-method-label">PayMaya</div>
+            </div>
+            <div class="payment-method" onclick="selectPayment(this, 'Bank Transfer')">
+              <i class="fas fa-university"></i>
+              <div class="payment-method-label">Bank Transfer</div>
+            </div>
+          </div>
         </div>
 
-        <div style="text-align: center; padding: 40px 20px; color: #6c757d;">
-          <i class="fas fa-check-circle" style="font-size: 2.5rem; color: #28a745; margin-bottom: 15px; display: block;"></i>
-          <p>Review your order details before placing the order.</p>
-        </div>
-
-        <button class="btn-save" style="background: #d63384;">
+        <button type="submit" class="btn-save" style="background:#d63384; margin-top:20px;">
           <i class="fas fa-check me-2"></i>Place Order
         </button>
+
       </div>
-    </div>
 
-    <!-- Right Column - Order Summary -->
-    <div>
-      <div class="order-summary">
-        <div class="edit-link">
-          <a href="#">Edit</a>
-        </div>
+      <!-- ===== RIGHT COLUMN ===== -->
+      <div>
+        <div class="order-summary">
+          <div class="order-summary-title">Your Order</div>
 
-        <div class="order-summary-title">In Your Order</div>
+          <div class="order-items">
 
-        <div class="order-items">
-          <!-- Order Item 1 -->
-          <div class="order-item">
-            <div class="order-item-image">
-              <i class="fas fa-birthday-cake"></i>
-            </div>
-            <div class="order-item-details">
-              <div class="order-item-name">Chocolate Cake</div>
-              <div class="order-item-spec">8 inches, Double Layer</div>
-              <div class="order-item-spec">Simple Design</div>
-              <div class="order-item-price">₱1,200.00</div>
-            </div>
+            {% if order_type == 'premade' and selected_items %}
+              <!-- Multiple premade items from cart -->
+              {% for item in selected_items %}
+              <div class="order-item">
+                <div class="order-item-image">
+                  <i class="fas fa-birthday-cake"></i>
+                </div>
+                <div class="order-item-details">
+                  <div class="order-item-name">{{ item.cake_name }}</div>
+                  <div class="order-item-price">₱{{ "%.2f"|format(item.price|float) }}</div>
+                </div>
+              </div>
+              {% endfor %}
+
+            {% else %}
+              <!-- Single custom cake -->
+              <div class="order-item">
+                <div class="order-item-image">
+                  <i class="fas fa-birthday-cake"></i>
+                </div>
+                <div class="order-item-details">
+                  <div class="order-item-name">Custom Cake</div>
+                  <div class="order-item-spec">{{ order_item }}</div>
+                  {% if rush == 'yes' %}
+                    <div class="order-item-spec" style="color:#d63384;">⚡ Rush Order</div>
+                  {% endif %}
+                  <div class="order-item-price">₱{{ "%.2f"|format(amount|float) }}</div>
+                </div>
+              </div>
+            {% endif %}
+
           </div>
 
-          <!-- Order Item 2 -->
-          <div class="order-item">
-            <div class="order-item-image">
-              <i class="fas fa-birthday-cake"></i>
-            </div>
-            <div class="order-item-details">
-              <div class="order-item-name">Vanilla Cupcake</div>
-              <div class="order-item-spec">Single Layer</div>
-              <div class="order-item-spec">Toppings: Sprinkles, Fruits</div>
-              <div class="order-item-price">₱550.00</div>
-            </div>
+          <!-- Total -->
+          <div class="order-summary-price total">
+            <span>Total</span>
+            <span>₱{{ "%.2f"|format(amount|float) }}</span>
           </div>
-        </div>
 
-        <!-- Price Breakdown -->
-        <div class="order-summary-price">
-          <span>Subtotal</span>
-          <span>₱1,750.00</span>
-        </div>
-        <div class="order-summary-price">
-          <span>Estimated Shipping</span>
-          <span>₱150.00</span>
-        </div>
-        <div class="order-summary-price">
-          <span>Estimated Tax</span>
-          <span>₱0.00</span>
-        </div>
-
-        <div class="order-summary-price total">
-          <span>Total</span>
-          <span>₱1,900.00</span>
-        </div>
-
-        <!-- Arrival Info -->
-        <div class="arrival-info">
-          <i class="fas fa-calendar-check"></i>
-          <strong>Arrives by</strong> Tuesday, Dec 20
         </div>
       </div>
+
     </div>
-  </div>
+  </form>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  function selectDelivery(element, type) {
-    document.querySelectorAll('.delivery-option').forEach(el => {
+  function selectDelivery(type) {
+    var addressSection = document.getElementById('addressSection');
+    var pickupInfo     = document.getElementById('pickupInfo');
+    var addressInput   = document.getElementById('addressInput');
+    var btnDelivery    = document.getElementById('btnDelivery');
+    var btnPickup      = document.getElementById('btnPickup');
+    var dateTitle      = document.getElementById('dateTitle');
+    var dateLabel      = document.getElementById('dateLabel');
+    var timeLabel      = document.getElementById('timeLabel');
+
+    document.getElementById('deliveryTypeInput').value = type;
+
+    if (type === 'Pickup') {
+      addressSection.style.display = 'none';
+      pickupInfo.style.display     = 'block';
+      addressInput.required        = false;
+      btnPickup.classList.add('active');
+      btnDelivery.classList.remove('active');
+      dateTitle.textContent = 'Pick Up Details';
+      dateLabel.textContent = 'Pick Up Date *';
+      timeLabel.textContent = 'Pick Up Time *';
+    } else {
+      addressSection.style.display = 'block';
+      pickupInfo.style.display     = 'none';
+      addressInput.required        = true;
+      btnDelivery.classList.add('active');
+      btnPickup.classList.remove('active');
+      dateTitle.textContent = 'Delivery Details';
+      dateLabel.textContent = 'Delivery Date *';
+      timeLabel.textContent = 'Delivery Time *';
+    }
+  }
+
+  function selectPayment(element, method) {
+    document.querySelectorAll('.payment-method').forEach(function(el) {
       el.classList.remove('active');
     });
     element.classList.add('active');
-    console.log('Selected delivery:', type);
+    document.getElementById('paymentInput').value = method;
   }
-
-  function selectPayment(element) {
-    document.querySelectorAll('.payment-method').forEach(el => {
-      el.classList.remove('active');
-    });
-    element.classList.add('active');
-    console.log('Selected payment method');
-  }
-
-  // Address type buttons
-  document.querySelectorAll('.address-type-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.address-type-btn').forEach(b => {
-        b.classList.remove('active');
-      });
-      this.classList.add('active');
-    });
-  });
-
-  // Form submission
-  document.getElementById('checkoutForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    alert('Order submitted! (This is a demo)');
-  });
 </script>
 
 </body>
