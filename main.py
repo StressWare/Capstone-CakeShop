@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 import uuid
 import os
 import json
+import cloudinary
+import cloudinary.uploader
 import firebase
 from db import sales, expenses, inventory, users, cakes  # Firestore collections
 from firebase_admin import auth, firestore
@@ -12,8 +14,14 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-cus_ups = 'static/c_uploads'
-ad_ups = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB max file size
+#cloud storage
+cloudinary.config(
+    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key    = os.getenv('CLOUDINARY_API_KEY'),
+    api_secret = os.getenv('CLOUDINARY_API_SECRET')
+)
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
 # Define Philippine Timezone (GMT+8)
 PH_TZ = timezone(timedelta(hours=8))
@@ -53,28 +61,34 @@ def get_faq_response(user_message):
 
 # ------ SECURED FILE HANDLING FUNC-----
 def save_uploaded_image(file, upload_type):
-    # Get file extension (jpg, png, etc)
     ext = file.filename.rsplit('.', 1)[1].lower()
-        # Check if extension is allowed
     if ext not in ALLOWED_EXTENSIONS:
-        return None  # Not an image, reject it
-    
-        # Determine folder ba   sed on upload type (ONE IF/ELSE)
-    if upload_type == 'cake':
-        folder =   ad_ups 
-    else:  # 'order'
-        folder = cus_ups  
+        return None
 
-    # Make filename safe and unique
-    safe_name = secure_filename(file.filename.rsplit('.', 1)[0])
-    unique_id = uuid.uuid4().hex[:8]
-    final_filename = f"{safe_name}-{unique_id}.{ext}"
-    
-    # Save the file
-    file.save(os.path.join(folder, final_filename))
-    
-    # Return the filename to save in database
-    return final_filename
+    # Check file size
+    file.seek(0, 2)
+    file_size = file.tell()
+    file.seek(0)
+
+    if file_size > 2 * 1024 * 1024:  # 2MB
+        return None
+
+    # Cloudinary upload
+    if upload_type == 'cake':
+        folder = 'cake_shop/cakes'
+    else:
+        folder = 'cake_shop/orders'
+
+    try:
+        result = cloudinary.uploader.upload(
+            file,
+            folder = folder,
+            resource_type = 'image'
+        )
+        return result['secure_url']
+    except Exception as e:
+        print(f"Cloudinary upload error: {str(e)}")
+        return None
 #ROUTE START
 # ---------------- HOME PAGE ----------------
 @app.route("/")
@@ -529,6 +543,9 @@ def place_order():
     file = request.files.get('image')
     if file and file.filename:
         inspo_image = save_uploaded_image(file, 'order')
+        if inspo_image is None:
+            flash('Image too large or invalid! Max 2MB.', 'danger')
+            return redirect(url_for('customize'))
     else:
         inspo_image = None
 
@@ -700,12 +717,13 @@ def customer_dashboard():
         orders.append(order)
 
     orders.sort(key=lambda x: x["created_at"], reverse=True)
-
+    cart_count = len(list(users.document(user_id).collection("cart").stream()))
     return render_template(
         "customer_dashboard.html",
         customer=customer,
         orders=orders,
-        user_id=user_id
+        user_id=user_id,
+        cart_count=cart_count
     )
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
@@ -743,6 +761,9 @@ def add_cake():
         file = request.files.get('image')
         if file and file.filename:
             image_filename = save_uploaded_image(file, 'cake')
+            if image_filename is None:
+                flash('Image too large or invalid! Max 2MB.', 'danger')
+                return redirect('/admin_dashboard#cake-availability')
         else:
             image_filename = None
 
@@ -815,33 +836,37 @@ def delete_cake(cake_id):
     current_user = session.get('user')
     if not current_user or not current_user.get('admin'):
         return render_template('403.html'), 403
-
+ 
     try:
         cake_ref = cakes.document(cake_id)
         cake_doc = cake_ref.get()
-        
+ 
         if not cake_doc.exists:
             flash('Cake not found!', 'danger')
-            return redirect('/admin_panel#cake-availability')
-        
+            return redirect('/admin_dashboard#cake-availability')
+ 
         cake_data = cake_doc.to_dict()
-        image_filename = cake_data.get('image')
-        
-        # Delete image
-        if image_filename:
-            image_path = os.path.join(ad_ups, image_filename)
-            if os.path.exists(image_path):
-                os.remove(image_path)
-        
+        image_url = cake_data.get('image')
+ 
+        # Delete from Cloudinary if image exists
+        if image_url and 'cloudinary.com' in image_url:
+            # Extract public_id from URL
+            # URL format: .../cake_shop/cakes/filename
+            public_id = '/'.join(image_url.split('/')[-3:]).rsplit('.', 1)[0]
+            try:
+                cloudinary.uploader.destroy(public_id)
+            except Exception as e:
+                print(f"Cloudinary delete error: {str(e)}")
+ 
         # Delete from Firestore
         cake_ref.delete()
-        
         flash('Cake deleted!', 'success')
+ 
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
-    
+ 
     return redirect('/admin_dashboard#cake-availability')
-
+ 
 
 @app.route("/cakes")
 def cakes_page():

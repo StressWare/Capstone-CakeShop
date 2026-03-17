@@ -93,8 +93,8 @@
     <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
 
     <label for="image">Cake Image Inspo</label>
-    <input type="file" name="image" id="image" accept="image/*">
-    <small>Upload an image of your desired cake (optional)</small>
+    <input type="file" name="image" id="image" accept="image/*" onchange="checkFileSize(this)">
+    <small>Upload an image of your desired cake (optional) — Max 2MB</small>
 
     <label>
       <input type="checkbox" name="rush" value="yes"> Rush Order
@@ -179,6 +179,13 @@ document.getElementById("toppers").addEventListener("change",  calculateTotal);
 document.querySelectorAll(".addons").forEach(a => a.addEventListener("change", calculateTotal));
 
 calculateTotal();
+
+function checkFileSize(input) {
+    if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
+        alert('File too large! Maximum size is 2MB.');
+        input.value = '';  // clear the input
+    }
+}
 </script>
 
 </body>

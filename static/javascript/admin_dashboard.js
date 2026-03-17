@@ -8,7 +8,12 @@ function confirmStatus(currentStatus) {
     "\n\nAre you sure you want to update this order?"
   );
 }
-
+function checkFileSize(input) {
+    if (input.files[0].size > 2 * 1024 * 1024) {
+        alert('File too large! Maximum size is 2MB.');
+        input.value = '';  // clear the input
+    }
+}
 // ============================================================================
 // UNIVERSAL PAGINATION BUTTON GENERATOR
 // ============================================================================

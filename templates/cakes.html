@@ -63,7 +63,7 @@
       <div class="cake-card">
         <div class="cake-image">
           {% if cake.image %}
-            <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" alt="{{ cake.name }}">
+            <img src="{{ cake.image }}" alt="{{ cake.name }}">
           {% else %}
             <div class="no-image">🎂</div>
           {% endif %}

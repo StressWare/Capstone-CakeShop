@@ -1,0 +1,113 @@
+/* ====== NAVBAR ====== */
+.navbar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 70px;
+    background-color: #000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    z-index: 999;
+    padding: 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.navbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
+
+.navbar-logo {
+    margin-top: 15px;
+    height: 180px;
+    width: 230px;
+    object-fit: contain;
+}
+
+/* ====== MENU (RIGHT-SIDE SLIDE-IN) ====== */
+.menu {
+    position: fixed;
+    top: 0;
+    right: -300px; /* hidden initially */
+    width: 300px;
+    height: 100%;
+    background-color: #f8f8f8;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+    transition: right 0.5s ease; /* longer & smoother */
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.menu.active {
+    right: 0; /* slides into view */
+}
+
+.menu-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: 2px solid #d63384;
+    color: #d63384;
+    border-radius: 8px;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: background-color 0.4s ease, color 0.4s ease; /* smooth hover */
+
+}
+
+.menu-btn:hover {
+    background-color: #d63384;
+    color: #fff;
+}
+
+/* ====== OFFCANVAS MENU ====== */
+.offcanvas {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background-color: #fff0f5;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    transition: right 0.5s ease; /* smooth slide-in */
+    z-index: 998;
+    padding: 20px;
+}
+
+.offcanvas.active {
+    right: 0;
+}
+
+.offcanvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.offcanvas-body a {
+    display: block;
+    text-decoration: none;
+    color: #d63384;
+    font-weight: 600;
+    margin-bottom: 15px;
+    transition: color 0.3s ease; /* smoother hover color change */
+}
+
+.offcanvas-body a:hover {
+    color: #a71d65;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
