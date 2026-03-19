@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS - Ms. Brave Cake Shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    body { background: #f5f5f5; }
+
+    .pos-wrapper {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 16px;
+      padding: 16px;
+      height: 100vh;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ── LEFT: CAKE GRID ── */
+    .cakes-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0e8f0;
+    }
+
+    .cake-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+    }
+
+    .cake-btn {
+      background: #fff;
+      border: 2px solid #f0e0eb;
+      border-radius: 10px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .cake-btn:hover {
+      border-color: #d63384;
+      background: #fdf0f5;
+      transform: translateY(-2px);
+    }
+    .cake-btn.sold-out {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .cake-img {
+      width: 80px; height: 80px;
+      border-radius: 8px;
+      object-fit: cover;
+      margin-bottom: 8px;
+    }
+    .cake-emoji { font-size: 2.5rem; margin-bottom: 8px; }
+    .cake-name  { font-size: 0.82rem; font-weight: 600; color: #333; margin-bottom: 4px; }
+    .cake-price { font-size: 0.88rem; font-weight: 700; color: #d63384; }
+    .cake-stock { font-size: 0.72rem; color: #aaa; }
+
+    /* ── RIGHT: ORDER PANEL ── */
+    .order-panel {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .order-items {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 200px;
+    }
+
+    .order-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f5f5;
+      font-size: 0.88rem;
+    }
+    .order-item-name  { font-weight: 500; color: #333; }
+    .order-item-price { color: #d63384; font-weight: 600; }
+
+    .btn-remove-item {
+      background: none; border: none;
+      color: #ccc; cursor: pointer;
+      font-size: 0.85rem; padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .btn-remove-item:hover { color: #e53935; background: #fdecea; }
+
+    .empty-order {
+      text-align: center;
+      color: #ccc;
+      padding: 40px 0;
+      font-size: 0.88rem;
+    }
+
+    /* ── TOTAL ── */
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 2px solid #f0e8f0;
+    }
+    .total-label  { font-weight: 700; font-size: 1rem; }
+    .total-amount { font-weight: 700; font-size: 1.3rem; color: #d63384; }
+
+    /* ── PAYMENT ── */
+    .payment-toggle {
+      display: flex;
+      gap: 8px;
+    }
+    .pay-btn {
+      flex: 1; padding: 10px;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #888;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .pay-btn.active {
+      border-color: #d63384;
+      background: #fdf0f5;
+      color: #d63384;
+    }
+
+    .cash-section { display: block; }
+    .gcash-section { display: none; }
+
+    .change-display {
+      background: #f0f9f0;
+      border: 1px solid #c3e6cb;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.88rem;
+    }
+    .change-amount {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #198754;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-place {
+      background: #d63384;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: opacity 0.2s;
+    }
+    .btn-place:hover { opacity: 0.88; }
+    .btn-place:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-clear {
+      background: #fff;
+      color: #888;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+    .btn-clear:hover { background: #fdecea; color: #e53935; border-color: #fdecea; }
+  </style>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;min-width:300px;">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show text-center">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="pos-wrapper">
+
+  <!-- ===== LEFT: CAKES ===== -->
+  <div class="cakes-panel">
+    <div class="panel-title">
+      <i class="fas fa-birthday-cake me-2" style="color:#d63384;"></i>
+      Available Cakes
+      <a href="/admin_dashboard" class="btn btn-sm btn-outline-secondary float-end">
+        <i class="fas fa-arrow-left me-1"></i>Back
+      </a>
+    </div>
+
+    <div class="cake-grid">
+      {% for cake in cakes %}
+      <div class="cake-btn {% if cake.quantity <= 0 %}sold-out{% endif %}"
+           onclick="addItem('{{ cake.id }}', '{{ cake.name }}', {{ cake.price }})">
+        {% if cake.image %}
+          <img src="{{ cake.image }}" alt="{{ cake.name }}" class="cake-img">
+        {% else %}
+          <div class="cake-emoji">🎂</div>
+        {% endif %}
+        <div class="cake-name">{{ cake.name }}</div>
+        <div class="cake-price">₱{{ "%.2f"|format(cake.price) }}</div>
+        <div class="cake-stock">
+          {% if cake.quantity <= 0 %}
+            Sold Out
+          {% else %}
+            {{ cake.quantity }} left
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ===== RIGHT: ORDER ===== -->
+  <div class="order-panel">
+    <div class="panel-title">
+      <i class="fas fa-receipt me-2" style="color:#d63384;"></i>
+      Current Order
+    </div>
+
+    <!-- Order Items -->
+    <div class="order-items" id="orderItems">
+      <div class="empty-order" id="emptyMsg">
+        <i class="fas fa-shopping-basket fa-2x mb-2"></i><br>
+        No items yet<br>Click a cake to add
+      </div>
+    </div>
+
+    <!-- Total -->
+    <div class="total-row">
+      <div class="total-label">Total</div>
+      <div class="total-amount">₱<span id="totalAmount">0.00</span></div>
+    </div>
+
+    <!-- Payment Toggle -->
+    <div>
+      <div class="panel-title" style="font-size:0.85rem; margin-bottom:8px;">Payment Method</div>
+      <div class="payment-toggle">
+        <div class="pay-btn active" id="btnCash" onclick="selectPayment('Cash')">
+          <i class="fas fa-money-bill me-1"></i>Cash
+        </div>
+        <div class="pay-btn" id="btnGcash" onclick="selectPayment('GCash')">
+          <i class="fas fa-mobile-alt me-1"></i>GCash
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash Section -->
+    <div class="cash-section" id="cashSection">
+      <label style="font-size:0.82rem; font-weight:600; color:#555;">Cash Received</label>
+      <input type="number" id="cashReceived" class="form-control form-control-sm mt-1"
+             placeholder="0.00" min="0" oninput="calculateChange()">
+      <div class="change-display mt-2" id="changeDisplay" style="display:none;">
+        <div style="font-size:0.78rem; color:#555;">Change</div>
+        <div class="change-amount">₱<span id="changeAmount">0.00</span></div>
+      </div>
+    </div>
+
+    <!-- GCash Section -->
+    <div class="gcash-section" id="gcashSection">
+      <div class="alert alert-info py-2 text-center" style="font-size:0.85rem;">
+        <i class="fas fa-mobile-alt me-2"></i>
+        Ask customer to scan the GCash QR on the counter
+      </div>
+      <button type="button" class="btn btn-success w-100 btn-sm" onclick="confirmGcash()">
+        <i class="fas fa-check me-2"></i>Payment Confirmed
+      </button>
+    </div>
+
+    <!-- Hidden Form -->
+    <form method="POST" action="/pos/order" id="posForm">
+      <input type="hidden" name="items"          id="itemsInput"   value="[]">
+      <input type="hidden" name="amount"         id="amountInput"  value="0">
+      <input type="hidden" name="payment_method" id="paymentInput" value="Cash">
+      <input type="hidden" name="cash_received"  id="cashInput"    value="0">
+    </form>
+
+    <!-- Action Buttons -->
+    <button type="button" class="btn-place" id="placeBtn" disabled onclick="placeOrder()">
+      <i class="fas fa-check-circle me-2"></i>Place Order
+    </button>
+    <button type="button" class="btn-clear" onclick="clearOrder()">
+      <i class="fas fa-trash me-2"></i>Clear Order
+    </button>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  var orderItems = [];
+  var currentPayment = 'Cash';
+  var gcashConfirmed = false;
+
+  function addItem(cakeId, cakeName, price) {
+    // Check if already in order
+    var existing = orderItems.find(i => i.cake_id === cakeId);
+    if (existing) {
+      // just increment (optional — for now just notify)
+      alert(cakeName + ' is already in the order!');
+      return;
+    }
+
+    orderItems.push({
+      cake_id:   cakeId,
+      cake_name: cakeName,
+      price:     price
+    });
+
+    renderOrder();
+  }
+
+  function removeItem(cakeId) {
+    orderItems = orderItems.filter(i => i.cake_id !== cakeId);
+    renderOrder();
+  }
+
+  function renderOrder() {
+    var container = document.getElementById('orderItems');
+    var emptyMsg  = document.getElementById('emptyMsg');
+
+    if (orderItems.length === 0) {
+      container.innerHTML = '<div class="empty-order" id="emptyMsg"><i class="fas fa-shopping-basket fa-2x mb-2"></i><br>No items yet<br>Click a cake to add</div>';
+      document.getElementById('totalAmount').textContent = '0.00';
+      document.getElementById('placeBtn').disabled = true;
+      document.getElementById('changeDisplay').style.display = 'none';
+      return;
+    }
+
+    var total = 0;
+    var html  = '';
+
+    orderItems.forEach(function(item) {
+      total += parseFloat(item.price);
+      html += `
+        <div class="order-item-row">
+          <div>
+            <div class="order-item-name">${item.cake_name}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="order-item-price">₱${parseFloat(item.price).toFixed(2)}</div>
+            <button class="btn-remove-item" onclick="removeItem('${item.cake_id}')">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    document.getElementById('totalAmount').textContent = total.toFixed(2);
+    document.getElementById('amountInput').value = total.toFixed(2);
+    document.getElementById('itemsInput').value  = JSON.stringify(orderItems);
+
+    updatePlaceBtn();
+    calculateChange();
+  }
+
+  function calculateChange() {
+    var total    = parseFloat(document.getElementById('amountInput').value) || 0;
+    var received = parseFloat(document.getElementById('cashReceived').value) || 0;
+    var change   = received - total;
+
+    var changeDisplay = document.getElementById('changeDisplay');
+    var changeAmount  = document.getElementById('changeAmount');
+
+    if (received > 0) {
+      changeDisplay.style.display = 'block';
+      changeAmount.textContent = change >= 0 ? change.toFixed(2) : '0.00';
+      changeDisplay.style.background = change >= 0 ? '#f0f9f0' : '#fdecea';
+      changeDisplay.style.borderColor = change >= 0 ? '#c3e6cb' : '#f5c6cb';
+      changeAmount.style.color = change >= 0 ? '#198754' : '#dc3545';
+    } else {
+      changeDisplay.style.display = 'none';
+    }
+
+    document.getElementById('cashInput').value = received;
+    updatePlaceBtn();
+  }
+
+  function selectPayment(method) {
+    currentPayment = method;
+    gcashConfirmed = false;
+
+    document.getElementById('btnCash').classList.toggle('active',   method === 'Cash');
+    document.getElementById('btnGcash').classList.toggle('active',  method === 'GCash');
+    document.getElementById('cashSection').style.display  = method === 'Cash'  ? 'block' : 'none';
+    document.getElementById('gcashSection').style.display = method === 'GCash' ? 'block' : 'none';
+    document.getElementById('paymentInput').value = method;
+
+    updatePlaceBtn();
+  }
+
+  function confirmGcash() {
+    gcashConfirmed = true;
+    document.getElementById('cashInput').value = document.getElementById('amountInput').value;
+    updatePlaceBtn();
+    alert('GCash payment confirmed! ✅');
+  }
+
+  function updatePlaceBtn() {
+    var hasItems = orderItems.length > 0;
+    var total    = parseFloat(document.getElementById('amountInput').value) || 0;
+    var received = parseFloat(document.getElementById('cashReceived').value) || 0;
+
+    var canPlace = false;
+    if (currentPayment === 'Cash') {
+      canPlace = hasItems && received >= total;
+    } else {
+      canPlace = hasItems && gcashConfirmed;
+    }
+
+    document.getElementById('placeBtn').disabled = !canPlace;
+  }
+
+  function placeOrder() {
+    document.getElementById('posForm').submit();
+  }
+
+  function clearOrder() {
+    if (orderItems.length === 0) return;
+    if (confirm('Clear all items?')) {
+      orderItems = [];
+      gcashConfirmed = false;
+      document.getElementById('cashReceived').value = '';
+      renderOrder();
+    }
+  }
+</script>
+
+</body>
+</html>

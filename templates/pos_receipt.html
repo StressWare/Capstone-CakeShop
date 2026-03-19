@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Receipt - Ms. Brave Cake Shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 16px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .receipt {
+      background: #fff;
+      width: 320px;
+      padding: 24px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    }
+
+    .shop-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+    .shop-info {
+      font-size: 0.72rem;
+      text-align: center;
+      color: #666;
+      margin-bottom: 2px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px dashed #ccc;
+      margin: 12px 0;
+    }
+
+    .receipt-label {
+      font-size: 0.72rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .receipt-value {
+      font-size: 0.82rem;
+      color: #333;
+    }
+
+    .item-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 3px 0;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 0.95rem;
+      padding: 4px 0;
+    }
+
+    .change-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 3px 0;
+    }
+
+    .thank-you {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #888;
+      margin-top: 4px;
+    }
+
+    .order-source-badge {
+      display: inline-block;
+      background: #d63384;
+      color: #fff;
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-bottom: 4px;
+    }
+
+    /* ── ACTION BUTTONS (hidden when printing) ── */
+    .action-buttons {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    /* ── PRINT STYLES ── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .receipt {
+        box-shadow: none;
+        border-radius: 0;
+        width: 80mm;
+        padding: 10px;
+      }
+      .action-buttons { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="receipt" id="receiptContent">
+
+  <!-- Shop Header -->
+  <div class="shop-name">Ms. Brave Cake Shop</div>
+  <div class="shop-info">R Mapa Street, Mandurriao, Iloilo City</div>
+  <div class="shop-info">0956 350 4486</div>
+
+  <hr class="divider">
+
+  <!-- Order Info -->
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <span class="order-source-badge">🏪 Walk-in</span>
+  </div>
+  <div class="receipt-label">Order ID</div>
+  <div class="receipt-value mb-1">{{ order.id[:12] }}...</div>
+
+  <div class="receipt-label">Date & Time</div>
+  <div class="receipt-value mb-1">
+    {% if order.created_at %}
+      {{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}
+    {% else %}N/A{% endif %}
+  </div>
+
+  <hr class="divider">
+
+  <!-- Items -->
+  <div class="receipt-label mb-1">Items</div>
+  {% for item in order.order_items %}
+  <div class="item-row">
+    <span>{{ item.cake_name }}</span>
+    <span>₱{{ "%.2f"|format(item.price|float) }}</span>
+  </div>
+  {% endfor %}
+
+  <hr class="divider">
+
+  <!-- Total -->
+  <div class="total-row">
+    <span>Total</span>
+    <span>₱{{ "%.2f"|format(order.amount) }}</span>
+  </div>
+
+  <!-- Payment Details -->
+  {% if order.payment_method == 'Cash' %}
+  <div class="change-row">
+    <span>Cash Received</span>
+    <span>₱{{ "%.2f"|format(order.cash_received) }}</span>
+  </div>
+  <div class="change-row">
+    <span>Change</span>
+    <span>₱{{ "%.2f"|format(order.change) }}</span>
+  </div>
+  {% endif %}
+
+  <hr class="divider">
+
+  <!-- Payment Method -->
+  <div class="receipt-label">Payment Method</div>
+  <div class="receipt-value mb-2">{{ order.payment_method }}</div>
+
+  <hr class="divider">
+
+  <!-- Thank You -->
+  <div class="thank-you">
+    Thank you for your order!<br>
+    Come again 🎂<br>
+    <small>— Ms. Brave Cake Shop —</small>
+  </div>
+
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons">
+  <button onclick="window.print()" class="btn btn-dark">
+    <i class="fas fa-print me-2"></i>Print Receipt
+  </button>
+  <a href="/pos" class="btn btn-outline-secondary">
+    <i class="fas fa-plus me-2"></i>New Order
+  </a>
+  <a href="/admin_dashboard" class="btn btn-outline-secondary">
+    <i class="fas fa-home me-2"></i>Dashboard
+  </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -521,7 +521,7 @@
               <tr>
                 <th>Date Ordered</th>
                 <th>Customer</th>
-                <th>Order Details</th>
+                <th>Order Item</th>
                 <th>Delivery Date</th>
                 <th>Status</th>
                 <th>Details</th>
@@ -978,6 +978,28 @@
                 </span>
               </span>
             </p>
+            <p class="mb-2">
+              <strong><i class="fas fa-truck me-2 text-primary"></i>Delivery Type:</strong><br>
+              <span class="ms-4">
+                {% if o.delivery_type == 'Pickup' %}
+                  <span class="badge bg-warning text-dark">🏪 Pick Up</span>
+                {% else %}
+                  <span class="badge bg-info text-dark">🚚 Delivery</span>
+                {% endif %}
+              </span>
+            </p>
+            <p class="mb-2">
+              <strong><i class="fas fa-credit-card me-2 text-primary"></i>Payment Method:</strong><br>
+              <span class="ms-4">{{ o.payment_method or 'N/A' }}</span>
+            </p>
+            <p class="mb-2">
+              <strong><i class="fas fa-clock me-2 text-primary"></i>Ordered On:</strong><br>
+              <span class="ms-4">
+                {% if o.created_at %}
+                  {{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}
+                {% else %}N/A{% endif %}
+              </span>
+            </p>
           </div>
           <div class="col-md-6">
             <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
@@ -1035,8 +1057,8 @@
           <h6 class="text-muted mb-3">
             <i class="fas fa-image me-2"></i>CAKE INSPO IMAGE
           </h6>
-          <img src="{{ url_for('static', filename='c_uploads/' + o.inspo_image) }}" 
-              alt="Cake inspo" 
+          <img src="{{ o.inspo_image }}"
+              alt="Cake inspo"
               class="img-fluid rounded"
               style="max-width: 300px; max-height: 300px; object-fit: cover;">
         </div>

@@ -6,20 +6,85 @@
   <title>Checkout - Ms. Brave Cake Shop</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link href="../static/css/checkout.css" rel="stylesheet">
-  <style>
-    #addressSection { transition: all 0.2s ease; }
-    .pickup-info {
-      display: none;
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      font-size: 0.92rem;
-      color: #664d03;
-    }
-    .pickup-info i { margin-right: 8px; color: #d63384; }
-  </style>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+      #addressSection { transition: all 0.2s ease; }
+
+      .pickup-info {
+        display: none;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        font-size: 0.92rem;
+        color: #664d03;
+      }
+      .pickup-info i { margin-right: 8px; color: #d63384; }
+
+      /* Map */
+      #mapContainer {
+        display: block;
+        margin-top: 12px;
+      }
+      #map {
+        height: 280px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        margin-bottom: 8px;
+        z-index: 1;
+      }
+      .map-hint {
+        font-size: 0.78rem;
+        color: #999;
+        margin-bottom: 8px;
+      }
+
+      /* Search box */
+      .map-search-wrapper {
+        position: relative;
+        margin-bottom: 10px;
+      }
+      #mapSearch {
+        width: 95%;
+        padding: 9px 36px 9px 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        outline: none;
+      }
+      #mapSearch:focus { border-color: #d63384; }
+      .map-search-icon {
+        position: absolute;
+        right: 10px; top: 50%;
+        transform: translateY(-50%);
+        color: #aaa; font-size: 0.85rem;
+      }
+
+      /* Search suggestions */
+      #searchSuggestions {
+        position: absolute;
+        top: 100%; left: 0; right: 0;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        z-index: 9999;
+        max-height: 180px;
+        overflow-y: auto;
+        display: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .suggestion-item {
+        padding: 10px 14px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border-bottom: 1px solid #f5f5f5;
+      }
+      .suggestion-item:hover { background: #fdf0f5; color: #d63384; }
+    </style>
 </head>
 <body>
 
@@ -49,6 +114,8 @@
     <input type="hidden" name="selected_items" value='{{ selected_items | tojson }}'>
     <input type="hidden" name="delivery_type"  id="deliveryTypeInput" value="Delivery">
     <input type="hidden" name="payment_method" id="paymentInput"      value="Cash on Delivery">
+    <input type="hidden" name="lat"            id="latInput"          value="">
+    <input type="hidden" name="lng"            id="lngInput"          value="">
 
     <div class="checkout-main">
 
@@ -86,18 +153,37 @@
             </div>
           </div>
 
+          <!-- Address + Map -->
           <div class="form-group" id="addressSection">
             <label>Delivery Address *</label>
             <input type="text" name="address" id="addressInput" class="form-control"
-                   value="{{ customer.address or '' }}">
+                   value="{{ customer.address or '' }}" placeholder="Type or pick on map">
+
+            <!-- Map Search -->
+            <div id="mapContainer">
+              <div class="map-search-wrapper" style="margin-top:10px;">
+                <input type="text" id="mapSearch" placeholder="Search location in Iloilo...">
+                <i class="fas fa-search map-search-icon"></i>
+                <div id="searchSuggestions"></div>
+              </div>
+              <p class="map-hint">📍 Click on map or drag the pin to set your delivery location</p>
+              <div id="map"></div>
+            </div>
           </div>
 
+          <!-- Pickup info -->
           <div class="pickup-info" id="pickupInfo">
             <i class="fas fa-store"></i>
             <strong>Pick Up Location:</strong><br>
             Ms. Brave Cake Shop<br>
-            [Location] — MRS Braves R Mapa Street, Mandurriao Iloilo
+            R Mapa Street, Mandurriao, Iloilo City
           </div>
+
+          <!-- Pickup Map (shop location only) -->
+          <div id="pickupMapContainer" style="display:none; margin-top:10px;">
+            <div id="pickupMap" style="height:200px; border-radius:10px; border:1px solid #e0e0e0;"></div>
+          </div>
+
         </div>
 
         <!-- 3. Occasion (custom orders only) -->
@@ -178,9 +264,7 @@
           <div class="order-summary-title">Your Order</div>
 
           <div class="order-items">
-
             {% if order_type == 'premade' and selected_items %}
-              <!-- Multiple premade items from cart -->
               {% for item in selected_items %}
               <div class="order-item">
                 <div class="order-item-image">
@@ -192,9 +276,7 @@
                 </div>
               </div>
               {% endfor %}
-
             {% else %}
-              <!-- Single custom cake -->
               <div class="order-item">
                 <div class="order-item-image">
                   <i class="fas fa-birthday-cake"></i>
@@ -209,10 +291,8 @@
                 </div>
               </div>
             {% endif %}
-
           </div>
 
-          <!-- Total -->
           <div class="order-summary-price total">
             <span>Total</span>
             <span>₱{{ "%.2f"|format(amount|float) }}</span>
@@ -225,41 +305,192 @@
   </form>
 </div>
 
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+  // ── ILOILO BOUNDS ──
+  const ILOILO = { lat: 10.7202, lng: 122.5621 };
+  const SHOP   = { lat: 10.711925117255893, lng: 122.53996450415457 }; // R Mapa St, Mandurriao
+
+  const bounds = L.latLngBounds(
+    [10.311925117255893, 121.912345678901234],  // southwest corner
+    [11.198765432109876, 123.098765432109876]   // northeast corner
+  );
+
+  // ── DELIVERY MAP ──
+  var deliveryMap = null;
+  var deliveryMarker = null;
+
+  function initDeliveryMap() {
+    if (deliveryMap) return; // already initialized
+
+    deliveryMap = L.map('map', {
+      center:    [ILOILO.lat, ILOILO.lng],
+      zoom:      11,
+      minZoom:   9,
+      maxZoom:   18,
+      maxBounds: bounds
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(deliveryMap);
+
+    // Default marker
+    deliveryMarker = L.marker([ILOILO.lat, ILOILO.lng], { draggable: true }).addTo(deliveryMap);
+
+    // Drag marker → update address
+    deliveryMarker.on('dragend', function() {
+      var pos = deliveryMarker.getLatLng();
+      reverseGeocode(pos.lat, pos.lng);
+    });
+
+    // Click map → move marker + update address
+    deliveryMap.on('click', function(e) {
+      deliveryMarker.setLatLng(e.latlng);
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    });
+  }
+
+  // ── PICKUP MAP (shop location only) ──
+  var pickupMap = null;
+
+  function initPickupMap() {
+    if (pickupMap) return;
+
+    pickupMap = L.map('pickupMap', {
+      center:  [SHOP.lat, SHOP.lng],
+      zoom:    16,
+      zoomControl: true,
+      dragging: false,  // locked, view only
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(pickupMap);
+
+    L.marker([SHOP.lat, SHOP.lng])
+      .addTo(pickupMap)
+      .bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao')
+      .openPopup();
+  }
+
+  // ── REVERSE GEOCODE (coordinates → address) ──
+  function reverseGeocode(lat, lng) {
+    document.getElementById('latInput').value = lat;
+    document.getElementById('lngInput').value = lng;
+
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+      .then(r => r.json())
+      .then(data => {
+        if (data && data.display_name) {
+          document.getElementById('addressInput').value = data.display_name;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // ── ADDRESS SEARCH ──
+  var searchTimeout;
+  document.getElementById('mapSearch').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    var query = this.value.trim();
+    if (query.length < 3) {
+      document.getElementById('searchSuggestions').style.display = 'none';
+      return;
+    }
+    searchTimeout = setTimeout(function() {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' Iloilo Philippines')}&format=json&limit=5`)
+        .then(r => r.json())
+        .then(results => {
+          var box = document.getElementById('searchSuggestions');
+          box.innerHTML = '';
+          if (results.length === 0) {
+            box.style.display = 'none';
+            return;
+          }
+          results.forEach(function(result) {
+            var div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.textContent = result.display_name;
+            div.addEventListener('click', function() {
+              var lat = parseFloat(result.lat);
+              var lon = parseFloat(result.lon);
+              deliveryMap.setView([lat, lon], 16);
+              deliveryMarker.setLatLng([lat, lon]);
+              document.getElementById('addressInput').value = result.display_name;
+              document.getElementById('latInput').value = lat;
+              document.getElementById('lngInput').value = lon;
+              document.getElementById('mapSearch').value = '';
+              box.style.display = 'none';
+            });
+            box.appendChild(div);
+          });
+          box.style.display = 'block';
+        });
+    }, 400);
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.map-search-wrapper')) {
+      document.getElementById('searchSuggestions').style.display = 'none';
+    }
+  });
+
+  // ── DELIVERY / PICKUP TOGGLE ──
   function selectDelivery(type) {
-    var addressSection = document.getElementById('addressSection');
-    var pickupInfo     = document.getElementById('pickupInfo');
-    var addressInput   = document.getElementById('addressInput');
-    var btnDelivery    = document.getElementById('btnDelivery');
-    var btnPickup      = document.getElementById('btnPickup');
-    var dateTitle      = document.getElementById('dateTitle');
-    var dateLabel      = document.getElementById('dateLabel');
-    var timeLabel      = document.getElementById('timeLabel');
+    var addressSection    = document.getElementById('addressSection');
+    var pickupInfo        = document.getElementById('pickupInfo');
+    var pickupMapContainer = document.getElementById('pickupMapContainer');
+    var addressInput      = document.getElementById('addressInput');
+    var btnDelivery       = document.getElementById('btnDelivery');
+    var btnPickup         = document.getElementById('btnPickup');
+    var dateTitle         = document.getElementById('dateTitle');
+    var dateLabel         = document.getElementById('dateLabel');
+    var timeLabel         = document.getElementById('timeLabel');
 
     document.getElementById('deliveryTypeInput').value = type;
 
     if (type === 'Pickup') {
-      addressSection.style.display = 'none';
-      pickupInfo.style.display     = 'block';
-      addressInput.required        = false;
+      addressSection.style.display     = 'none';
+      pickupInfo.style.display         = 'block';
+      pickupMapContainer.style.display = 'block';
+      addressInput.required            = false;
       btnPickup.classList.add('active');
       btnDelivery.classList.remove('active');
       dateTitle.textContent = 'Pick Up Details';
       dateLabel.textContent = 'Pick Up Date *';
       timeLabel.textContent = 'Pick Up Time *';
+
+      // Init pickup map
+      setTimeout(function() {
+        initPickupMap();
+        if (pickupMap) pickupMap.invalidateSize();
+      }, 100);
+
     } else {
-      addressSection.style.display = 'block';
-      pickupInfo.style.display     = 'none';
-      addressInput.required        = true;
+      addressSection.style.display     = 'block';
+      pickupInfo.style.display         = 'none';
+      pickupMapContainer.style.display = 'none';
+      addressInput.required            = true;
       btnDelivery.classList.add('active');
       btnPickup.classList.remove('active');
       dateTitle.textContent = 'Delivery Details';
       dateLabel.textContent = 'Delivery Date *';
       timeLabel.textContent = 'Delivery Time *';
+
+      // Init delivery map
+      setTimeout(function() {
+        initDeliveryMap();
+        if (deliveryMap) deliveryMap.invalidateSize();
+      }, 100);
     }
   }
 
+  // ── PAYMENT SELECTION ──
   function selectPayment(element, method) {
     document.querySelectorAll('.payment-method').forEach(function(el) {
       el.classList.remove('active');
@@ -267,6 +498,11 @@
     element.classList.add('active');
     document.getElementById('paymentInput').value = method;
   }
+
+  // Init delivery map on page load
+  window.addEventListener('load', function() {
+    initDeliveryMap();
+  });
 </script>
 
 </body>

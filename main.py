@@ -7,13 +7,15 @@ import json
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes  # Firestore collections
+from db import sales, expenses, inventory, users, cakes, walkin_orders # Firestore collections
 from firebase_admin import auth, firestore
 from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
+from pos import pos_bp
+app.register_blueprint(pos_bp)
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024 # 2MB max file size
 #cloud storage
 cloudinary.config(
@@ -355,6 +357,7 @@ def admin_page():
                     order["created_at"] = order["created_at"].astimezone(PH_TZ)
 
             orders.append(order)
+    orders.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
     all_users = []
     for user_doc in users.stream():
         user_data = user_doc.to_dict()
@@ -484,11 +487,46 @@ def update_order_status(user_id, order_id):
     current_user = session.get('user')
     if not current_user or not current_user.get('admin'):
         return render_template('403.html'), 403
-    
+
     new_status = request.form["status"]
-    users.document(user_id).collection("orders").document(order_id).update({
-        "status": new_status
-    })
+
+    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_doc = order_ref.get()
+
+    if order_doc.exists:
+        order_data = order_doc.to_dict()
+        old_status = order_data.get("status")
+        order_type = order_data.get("order_type", "custom")
+
+        # Decrease quantity when admin accepts premade order
+        if new_status == "Accepted" and old_status == "New" and order_type == "premade":
+            selected_items = order_data.get("selected_items", [])
+            for i in selected_items:
+                cake_ref = cakes.document(i["cake_id"])
+                cake_doc = cake_ref.get()
+                if cake_doc.exists:
+                    current_qty = cake_doc.to_dict().get("quantity", 0)
+                    new_qty = max(0, current_qty - 1)
+                    cake_ref.update({
+                        "quantity": new_qty,
+                        "status": new_qty > 0
+                    })
+
+        # Restore quantity when admin cancels accepted premade order
+        accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
+        if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
+            selected_items = order_data.get("selected_items", [])
+            for i in selected_items:
+                cake_ref = cakes.document(i["cake_id"])
+                cake_doc = cake_ref.get()
+                if cake_doc.exists:
+                    current_qty = cake_doc.to_dict().get("quantity", 0)
+                    cake_ref.update({
+                        "quantity": current_qty + 1,
+                        "status": True
+                    })
+
+    order_ref.update({"status": new_status})
     return redirect(url_for("admin_page"))
 
 
@@ -640,6 +678,7 @@ def finalize_order():
         amount         = sum(float(i["price"]) for i in selected_items)
         rush           = False
         inspo_image    = None
+        
         # Clear ordered items from cart
         for i in selected_items:
             users.document(user_id).collection("cart").document(i["cake_id"]).delete()
@@ -653,6 +692,7 @@ def finalize_order():
     order_data = {
         "delivery_date":  delivery_datetime,
         "item":           item_names,
+        "selected_items": selected_items,
         "amount":         amount,
         "status":         "New",
         "rush":           rush,
@@ -660,6 +700,7 @@ def finalize_order():
         "payment_method": request.form.get("payment_method", "Cash on Delivery"),
         "delivery_type":  delivery_type,
         "inspo_image":    inspo_image,
+        "order_type":     order_type,
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),
@@ -675,6 +716,28 @@ def finalize_order():
     flash("Order placed successfully! 🎂", "success")
     return redirect(url_for("customer_dashboard"))
 
+#CUSTOMER CANCEL ORDER
+@app.route("/order/cancel/<order_id>", methods=["POST"])
+def cancel_order(order_id):
+    user_id = session.get("user_id")
+    if not user_id:
+        return redirect(url_for("auth_page"))
+
+    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_doc = order_ref.get()
+
+    if not order_doc.exists:
+        flash("Order not found.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    order_data = order_doc.to_dict()
+    if order_data.get("status") != "New":
+        flash("Order cannot be cancelled anymore.", "warning")
+        return redirect(url_for("customer_dashboard"))
+
+    order_ref.update({"status": "Cancelled"})
+    flash("Order cancelled successfully.", "info")
+    return redirect(url_for("customer_dashboard"))
 # ---------------- CUSTOMER DASHBOARD ----------------
 @app.route("/customer_dashboard")
 def customer_dashboard():

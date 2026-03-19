@@ -78,27 +78,38 @@
           </div>
 
           {% if user_id %}
-          <form method="POST" action="/order/cake">
-            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-            <input type="hidden" name="cake_name" value="{{ cake.name }}">
-            <input type="hidden" name="price"     value="{{ cake.price }}">
-            <button type="submit" class="btn order-btn">
-              <i class="fas fa-bolt"></i> Order Now
-            </button>
-          </form>
+          {% if cake.quantity > 0 %}
+            <!-- Order Now -->
+            <form method="POST" action="/order/cake">
+              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+              <input type="hidden" name="price"     value="{{ cake.price }}">
+              <button type="submit" class="btn order-btn w-100 mb-2">
+                <i class="fas fa-bolt"></i> Order Now
+              </button>
+            </form>
+            <!-- Add to Cart -->
             <form method="POST" action="/cart/add">
               <input type="hidden" name="cake_id"   value="{{ cake.id }}">
               <input type="hidden" name="cake_name" value="{{ cake.name }}">
               <input type="hidden" name="price"     value="{{ cake.price }}">
-              <button type="submit" class="btn order-btn" style="background:#fff; color:#d63384; border:2px solid #d63384;">
+              <button type="submit" class="btn order-btn w-100"
+                      style="background:#fff; color:#d63384; border:2px solid #d63384;">
                 <i class="fas fa-cart-plus"></i> Add to Cart
               </button>
             </form>
           {% else %}
-            <a href="/authentication" class="btn order-btn">
-              <i class="fas fa-sign-in-alt"></i> Login to Order
-            </a>
+            <!-- Sold Out -->
+            <button class="btn w-100" disabled
+                    style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
+              😔 Sold Out
+            </button>
           {% endif %}
+        {% else %}
+          <a href="/authentication" class="btn order-btn w-100">
+            <i class="fas fa-sign-in-alt"></i> Login to Order
+          </a>
+        {% endif %}
 
         </div>
       </div>

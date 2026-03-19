@@ -22,4 +22,5 @@ expenses = db.collection("expenses")
 inventory = db.collection("inventory")
 users = db.collection("users")
 cakes = db.collection("cakes")
+walkin_orders = db.collection('walkin_orders')
 
