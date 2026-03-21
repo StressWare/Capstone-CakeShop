@@ -1,0 +1,371 @@
+{% extends 'admin_base.html' %}
+{% block title %}Analytics – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<style>
+  /* ── SUMMARY CARDS ── */
+  .stat-card-analytics {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    border-left: 4px solid;
+  }
+  .stat-label  { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#888; margin-bottom:6px; }
+  .stat-value  { font-size:1.6rem; font-weight:700; color:#1a1a1a; }
+  .stat-sub    { font-size:0.78rem; color:#aaa; margin-top:4px; }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    margin-bottom: 24px;
+  }
+  .chart-title {
+    font-size:0.9rem; font-weight:600; color:#333;
+    margin-bottom:16px; padding-bottom:10px;
+    border-bottom:1px solid #f5f5f5;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .section-label {
+    font-size:0.72rem; text-transform:uppercase;
+    letter-spacing:0.1em; color:#aaa; font-weight:600;
+    margin-bottom:16px; margin-top:8px;
+  }
+
+  /* ── TAB SWITCHER ── */
+  .tab-switcher {
+    display: flex;
+    gap: 4px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    padding: 6px 18px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab-btn.active {
+    background: #fff;
+    color: #d63384;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .tab-btn:hover:not(.active) { color: #555; }
+
+  /* ── CHART ANIMATION ── */
+  .chart-wrapper {
+    position: relative;
+    overflow: hidden;
+  }
+  #mainChartDiv {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  #mainChartDiv.fade-out {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  #mainChartDiv.fade-in {
+    opacity: 1;
+    transform: translateX(0);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+
+  <div class="section-header">
+    <h1 class="mb-2"><i class="fas fa-chart-line me-3"></i>Analytics</h1>
+    <p class="mb-0 opacity-75">Business performance overview</p>
+  </div>
+
+  <!-- ── SUMMARY CARDS ── -->
+  <div class="section-label">All Time Summary</div>
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#28a745;">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value text-success">₱{{ "%.2f"|format(total_revenue) }}</div>
+        <div class="stat-sub">From completed orders</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#0d6efd;">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value text-primary">{{ total_orders }}</div>
+        <div class="stat-sub">All orders placed</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#d63384;">
+        <div class="stat-label">Completion Rate</div>
+        <div class="stat-value" style="color:#d63384;">{{ completion_rate }}%</div>
+        <div class="stat-sub">Orders completed</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#fd7e14;">
+        <div class="stat-label">Avg Order Value</div>
+        <div class="stat-value text-warning">₱{{ "%.2f"|format(avg_order_value) }}</div>
+        <div class="stat-sub">Per completed order</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN ANIMATED CHART ── -->
+  <div class="section-label">Sales vs Expenses vs Profit</div>
+  <div class="chart-card">
+    <div class="chart-title">
+      <span>
+        <i class="fas fa-chart-line me-2 text-primary"></i>
+        <span id="chartTitleText">Weekly Overview</span>
+      </span>
+      <!-- Tab Switcher -->
+      <div class="tab-switcher">
+        <button class="tab-btn active" onclick="switchTab('weekly', this)">Weekly</button>
+        <button class="tab-btn" onclick="switchTab('monthly', this)">Monthly</button>
+        <button class="tab-btn" onclick="switchTab('alltime', this)">All Time</button>
+      </div>
+    </div>
+    <div class="chart-wrapper">
+      <div id="mainChartDiv" style="width:100%; height:320px;"></div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM ROW ── -->
+  <div class="section-label">Detailed Breakdown</div>
+  <div class="row g-3">
+
+    <!-- Monthly Revenue Bar -->
+    <div class="col-lg-5 col-md-12">
+      <div class="chart-card h-100">
+        <div class="chart-title">
+          <span><i class="fas fa-calendar me-2 text-success"></i>Monthly Revenue ({{ now.year }})</span>
+        </div>
+        <div id="monthlyRevenueChart" style="width:100%; height:260px;"></div>
+      </div>
+    </div>
+
+    <!-- Top 3 Cakes -->
+    <div class="col-lg-4 col-md-6">
+      <div class="chart-card h-100">
+        <div class="chart-title">
+          <span><i class="fas fa-birthday-cake me-2 text-warning"></i>Top 3 Premade Cakes</span>
+        </div>
+        {% if top_cake_names %}
+          <div id="topCakesChart" style="width:100%; height:260px;"></div>
+        {% else %}
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-birthday-cake fa-2x mb-2 d-block"></i>
+            No premade cake orders yet
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="col-lg-3 col-md-6">
+      <div class="chart-card h-100">
+        <div class="chart-title">
+          <span><i class="fas fa-credit-card me-2 text-info"></i>Payment Methods</span>
+        </div>
+        {% if payment_counts %}
+          <div id="paymentChart" style="width:100%; height:260px;"></div>
+        {% else %}
+          <div class="text-center text-muted py-5">
+            <i class="fas fa-credit-card fa-2x mb-2 d-block"></i>
+            No orders yet
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script type="text/javascript">
+  google.charts.load("current", {packages: ["corechart"]});
+  google.charts.setOnLoadCallback(initCharts);
+
+  // ── DATA FROM FLASK ──
+  var weeklyData = {
+    labels:   {{ days_order | tojson }},
+    sales:    [{% for d in days_order %}{{ weekly_sales[d]|float }},{% endfor %}],
+    expenses: [{% for d in days_order %}{{ weekly_expenses[d]|float }},{% endfor %}],
+    profit:   [{% for d in days_order %}{{ weekly_profit[d]|float }},{% endfor %}],
+  };
+
+  var monthlyData = {
+    labels:   {{ months | tojson }},
+    sales:    [{% for m in months %}{{ monthly_sales[m]|float }},{% endfor %}],
+    expenses: [{% for m in months %}{{ monthly_expenses[m]|float }},{% endfor %}],
+    profit:   [{% for m in months %}{{ monthly_profit[m]|float }},{% endfor %}],
+  };
+
+  var alltimeData = {
+    labels:   {{ alltime_labels | tojson }},
+    sales:    {{ alltime_sales_vals | tojson }},
+    expenses: {{ alltime_expense_vals | tojson }},
+    profit:   {{ alltime_profit_vals | tojson }},
+  };
+
+  var currentTab = 'weekly';
+  var mainChart  = null;
+
+  var tabTitles = {
+    weekly:  'Weekly Overview (Mon–Sun)',
+    monthly: 'Monthly Overview (' + new Date().getFullYear() + ')',
+    alltime: 'All Time Overview'
+  };
+
+  // ── BUILD CHART DATA TABLE ──
+  function buildDataTable(data) {
+    var table = new google.visualization.DataTable();
+    table.addColumn('string', 'Period');
+    table.addColumn('number', 'Sales');
+    table.addColumn('number', 'Expenses');
+    table.addColumn('number', 'Profit');
+    for (var i = 0; i < data.labels.length; i++) {
+      table.addRow([
+        data.labels[i],
+        data.sales[i],
+        data.expenses[i],
+        data.profit[i]
+      ]);
+    }
+    return table;
+  }
+
+  // ── DRAW MAIN CHART ──
+  function drawMainChart(data, animate) {
+    var options = {
+      curveType: 'function',
+      legend: { position: 'bottom' },
+      colors: ['#28a745', '#dc3545', '#0d6efd'],
+      hAxis: { textStyle: { fontSize: 11 } },
+      vAxis: { format: '₱#,###', textStyle: { fontSize: 11 } },
+      chartArea: { width: '85%', height: '68%' },
+      backgroundColor: 'transparent',
+      lineWidth: 3,
+      pointSize: 5,
+      animation: animate ? {
+        startup: true,
+        duration: 600,
+        easing: 'out'
+      } : {}
+    };
+
+    if (!mainChart) {
+      mainChart = new google.visualization.LineChart(document.getElementById('mainChartDiv'));
+    }
+    mainChart.draw(buildDataTable(data), options);
+  }
+
+  // ── TAB SWITCH WITH ANIMATION ──
+  function switchTab(tab, btn) {
+    if (tab === currentTab) return;
+    currentTab = tab;
+
+    // Update active tab button
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Update title
+    document.getElementById('chartTitleText').textContent = tabTitles[tab];
+
+    // Animate out
+    var chartDiv = document.getElementById('mainChartDiv');
+    chartDiv.style.opacity = '0';
+    chartDiv.style.transform = 'translateX(20px)';
+
+    setTimeout(function() {
+      // Draw new chart
+      var data = tab === 'weekly' ? weeklyData : tab === 'monthly' ? monthlyData : alltimeData;
+      drawMainChart(data, true);
+
+      // Animate in
+      chartDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      chartDiv.style.opacity = '1';
+      chartDiv.style.transform = 'translateX(0)';
+    }, 250);
+  }
+
+  // ── INIT ALL CHARTS ──
+  function initCharts() {
+    // Main chart (weekly default)
+    drawMainChart(weeklyData, true);
+
+    // Monthly Revenue Bar
+    var monthlyRevData = new google.visualization.DataTable();
+    monthlyRevData.addColumn('string', 'Month');
+    monthlyRevData.addColumn('number', 'Revenue');
+    {% for m in months %}
+    monthlyRevData.addRow(['{{ m }}', {{ monthly_sales[m]|float }}]);
+    {% endfor %}
+
+    new google.visualization.ColumnChart(document.getElementById('monthlyRevenueChart')).draw(
+      monthlyRevData, {
+        legend: { position: 'none' },
+        colors: ['#d63384'],
+        chartArea: { width: '80%', height: '65%' },
+        backgroundColor: 'transparent',
+        vAxis: { format: '₱#,###' },
+        animation: { startup: true, duration: 600, easing: 'out' }
+      }
+    );
+
+    // Top 3 Cakes
+    {% if top_cake_names %}
+    var cakesData = new google.visualization.DataTable();
+    cakesData.addColumn('string', 'Cake');
+    cakesData.addColumn('number', 'Orders');
+    {% for i in range(top_cake_names|length) %}
+    cakesData.addRow(['{{ top_cake_names[i] }}', {{ top_cake_counts[i] }}]);
+    {% endfor %}
+
+    new google.visualization.BarChart(document.getElementById('topCakesChart')).draw(
+      cakesData, {
+        legend: { position: 'none' },
+        colors: ['#fd7e14'],
+        chartArea: { width: '70%', height: '65%' },
+        backgroundColor: 'transparent',
+        animation: { startup: true, duration: 600, easing: 'out' }
+      }
+    );
+    {% endif %}
+
+    // Payment Methods Donut
+    {% if payment_counts %}
+    var payData = new google.visualization.DataTable();
+    payData.addColumn('string', 'Method');
+    payData.addColumn('number', 'Count');
+    {% for method, count in payment_counts.items() %}
+    payData.addRow(['{{ method }}', {{ count }}]);
+    {% endfor %}
+
+    new google.visualization.PieChart(document.getElementById('paymentChart')).draw(
+      payData, {
+        legend: { position: 'bottom' },
+        chartArea: { width: '90%', height: '65%' },
+        backgroundColor: 'transparent',
+        colors: ['#0d6efd', '#d63384', '#28a745', '#fd7e14'],
+        pieHole: 0.4,
+        animation: { startup: true, duration: 600, easing: 'out' }
+      }
+    );
+    {% endif %}
+  }
+</script>
+{% endblock %}

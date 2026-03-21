@@ -1,0 +1,147 @@
+{% extends 'admin_base.html' %}
+{% block title %}Inventory – Ms. Brave Cake Shop{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+  <div class="section-header">
+    <h1 class="mb-2"><i class="fas fa-boxes me-3"></i>Inventory Management</h1>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom">
+      <h4 class="mb-0"><i class="fas fa-boxes me-2"></i>Inventory</h4>
+    </div>
+    <div class="card-body">
+
+      <!-- ADD ITEM FORM -->
+      <form method="POST" action="/inventory/add" class="row g-3 mb-4">
+        <div class="col-md-4">
+          <label class="form-label">Item Name</label>
+          <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Quantity</label>
+          <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Cost (₱)</label>
+          <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i>Add Item</button>
+        </div>
+      </form>
+
+      <!-- FILTERS -->
+      <div class="row mb-3">
+        <div class="col-md-9 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="statusFilterInventory">
+            <option value="">All Status</option>
+            <option value="critical">Critical (< 5)</option>
+            <option value="low">Low Stock (< 10)</option>
+            <option value="good">Good Stock</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="inventoryTable">
+          <thead class="table-dark">
+            <tr><th>Item</th><th>Quantity</th><th>Cost (₱)</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for i in inventory %}
+            <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}">
+              <td><strong>{{ i.item }}</strong></td>
+              <td><span class="badge {% if i.quantity < 5 %}bg-danger{% elif i.quantity < 10 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ i.quantity }}</span></td>
+              <td class="fw-bold">₱{{ i.cost }}</td>
+              <td>
+                {% if i.quantity < 5 %}<span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Critical</span>
+                {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark"><i class="fas fa-exclamation"></i> Low Stock</span>
+                {% else %}<span class="badge bg-success"><i class="fas fa-check"></i> Good</span>{% endif %}
+              </td>
+              <td><button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}"><i class="fas fa-eye"></i> View</button></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No inventory items yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="inventoryPagination"></ul></nav>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODALS -->
+{% for i in inventory %}
+<div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/inventory/edit/{{ i.id }}">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Inventory Item</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 text-center">
+            {% if i.quantity < 5 %}<span class="badge bg-danger p-2">Critical Stock</span>
+            {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark p-2">Low Stock</span>
+            {% else %}<span class="badge bg-success p-2">Good Stock</span>{% endif %}
+          </div>
+          <div class="mb-3"><label class="form-label fw-bold">Item Name</label><input type="text" class="form-control" name="item" value="{{ i.item }}" required></div>
+          <div class="mb-3"><label class="form-label fw-bold">Quantity</label><input type="number" class="form-control" name="quantity" value="{{ i.quantity }}" min="0" required></div>
+          <div class="mb-3"><label class="form-label fw-bold">Cost (₱)</label><input type="number" class="form-control" name="cost" value="{{ i.cost }}" step="0.01" min="0" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-info text-white"><i class="fas fa-save me-2"></i>Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentInventoryPage = 1;
+const inventoryPerPage = 10;
+
+function updateInventoryDisplay() {
+  const searchValue = document.getElementById('searchInventory').value.toLowerCase();
+  const statusValue = document.getElementById('statusFilterInventory').value;
+  const allRows = document.querySelectorAll('#inventoryTable tbody tr');
+  let visibleRows = [];
+  allRows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const matchSearch = text.includes(searchValue);
+    let matchStatus = true;
+    if (statusValue === 'critical') matchStatus = row.classList.contains('table-danger');
+    else if (statusValue === 'low') matchStatus = row.classList.contains('table-warning');
+    else if (statusValue === 'good') matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
+    if (matchSearch && matchStatus) visibleRows.push(row);
+  });
+  const totalPages = Math.ceil(visibleRows.length / inventoryPerPage);
+  const start = (currentInventoryPage - 1) * inventoryPerPage;
+  const end = start + inventoryPerPage;
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, index) => { if (index >= start && index < end) row.style.display = ''; });
+  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => { currentInventoryPage = page; updateInventoryDisplay(); });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('searchInventory').addEventListener('keyup', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
+  document.getElementById('statusFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
+  updateInventoryDisplay();
+});
+</script>
+{% endblock %}

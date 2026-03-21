@@ -1,0 +1,111 @@
+{% extends 'admin_base.html' %}
+{% block title %}Users – Ms. Brave Cake Shop{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+  <div class="section-header"><h1 class="mb-2"><i class="fas fa-users me-3"></i>User Management</h1></div>
+
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom"><h4 class="mb-0"><i class="fas fa-users me-2"></i>Users</h4></div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search by name, email, phone..." id="searchUsers">
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="statusFilterUsers">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="verifiedFilterUsers">
+            <option value="">All Users</option>
+            <option value="verified">Verified</option>
+            <option value="unverified">Unverified</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="usersTable">
+          <thead class="table-dark">
+            <tr><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Verified</th><th>Status</th><th>Registered</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for u in all_users %}
+            <tr class="{% if u.disabled %}table-secondary{% endif %}"
+                data-status="{{ 'disabled' if u.disabled else 'active' }}"
+                data-verified="{{ 'verified' if u.email_verified else 'unverified' }}">
+              <td><strong>{{ u.fname or 'N/A' }}</strong><br><small class="text-muted">@{{ u.username or 'N/A' }}</small></td>
+              <td><small>{{ u.email or 'N/A' }}</small></td>
+              <td><small>{{ u.number or 'N/A' }}</small></td>
+              <td><span class="badge bg-primary">{{ u.order_count }} orders</span></td>
+              <td>
+                {% if u.email_verified %}<span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
+                {% else %}<span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>Unverified</span>{% endif %}
+              </td>
+              <td>
+                {% if u.disabled %}<span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Disabled</span>
+                {% else %}<span class="badge bg-success"><i class="fas fa-circle me-1"></i>Active</span>{% endif %}
+              </td>
+              <td><small>{% if u.created_at %}{{ u.created_at.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</small></td>
+              <td>
+                {% if u.disabled %}
+                  <form method="POST" action="/admin/user/enable/{{ u.uid }}" onsubmit="return confirm('Enable this user?')">
+                    <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Enable</button>
+                  </form>
+                {% else %}
+                  <form method="POST" action="/admin/user/disable/{{ u.uid }}" onsubmit="return confirm('Disable this user?')">
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-ban me-1"></i>Disable</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-users fa-3x mb-3 d-block"></i>No users yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="usersPagination"></ul></nav>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentUsersPage = 1;
+const usersPerPage = 5;
+function updateUsersDisplay() {
+  const searchValue = document.getElementById('searchUsers').value.toLowerCase();
+  const statusValue = document.getElementById('statusFilterUsers').value;
+  const verifiedValue = document.getElementById('verifiedFilterUsers').value;
+  const allRows = document.querySelectorAll('#usersTable tbody tr');
+  let visibleRows = [];
+  allRows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const matchSearch = text.includes(searchValue);
+    const matchStatus = !statusValue || row.getAttribute('data-status') === statusValue;
+    const matchVerified = !verifiedValue || row.getAttribute('data-verified') === verifiedValue;
+    if (matchSearch && matchStatus && matchVerified) visibleRows.push(row);
+  });
+  const totalPages = Math.ceil(visibleRows.length / usersPerPage);
+  const start = (currentUsersPage - 1) * usersPerPage;
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, i) => { if (i >= start && i < start + usersPerPage) row.style.display = ''; });
+  updatePaginationButtons('usersPagination', currentUsersPage, totalPages, (page) => { currentUsersPage = page; updateUsersDisplay(); });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('searchUsers').addEventListener('keyup', () => { currentUsersPage = 1; updateUsersDisplay(); });
+  document.getElementById('statusFilterUsers').addEventListener('change', () => { currentUsersPage = 1; updateUsersDisplay(); });
+  document.getElementById('verifiedFilterUsers').addEventListener('change', () => { currentUsersPage = 1; updateUsersDisplay(); });
+  updateUsersDisplay();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'admin_base.html' %}
+{% block title %}Cakes – Ms. Brave Cake Shop{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+  <div class="section-header"><h1 class="mb-2"><i class="fas fa-cake-candles me-3"></i>Cake Availability</h1></div>
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center">
+      <h4 class="mb-0"><i class="fas fa-cake-candles me-2"></i>Cake Availability</h4>
+      <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#cakeModal"><i class="fas fa-plus me-2"></i>Add New Cake</button>
+    </div>
+    <div class="card-body">
+      <div class="row mb-4">
+        <div class="col-md-6 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" id="searchCakes" placeholder="Search cakes by name...">
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="categoryFilter">
+            <option value="">All Categories</option>
+            <option value="Birthday">Birthday</option>
+            <option value="Wedding">Wedding</option>
+            <option value="Anniversary">Anniversary</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="cakeStatusFilter">
+            <option value="">All Status</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row g-3" id="cakesGrid">
+        {% for cake in cakes %}
+        <div class="col-lg-3 col-md-4 col-sm-6 cake-item"
+             data-name="{{ cake.name|lower }}"
+             data-category="{{ cake.category }}"
+             data-status="{{ 'available' if cake.status else 'unavailable' }}">
+          <div class="card cake-card h-100">
+            <div class="position-relative">
+              <div class="cake-image-placeholder">
+                {% if cake.image %}<img src="{{ cake.image }}" alt="{{ cake.name }}" style="width:100%; height:200px; object-fit:cover;">{% else %}🎂{% endif %}
+              </div>
+              <span class="badge cake-status-badge {{ 'bg-success' if cake.status else 'bg-danger' }}">{{ 'Available' if cake.status else 'Unavailable' }}</span>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title mb-2">{{ cake.name }}</h5>
+              <span class="badge bg-warning text-dark mb-2">{{ cake.category }}</span>
+              <p class="card-text small text-muted mb-2">{{ cake.description[:60] }}{% if cake.description|length > 60 %}...{% endif %}</p>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold text-success fs-5">₱{{ "%.2f"|format(cake.price) }}</span>
+                <span class="badge bg-secondary">{{ cake.quantity }} left</span>
+              </div>
+              <div class="d-grid gap-2">
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCakeModal{{ cake.id }}"><i class="fas fa-edit me-1"></i>Edit</button>
+                <form method="POST" action="{{ url_for('delete_cake', cake_id=cake.id) }}" onsubmit="return confirm('Delete this cake?');">
+                  <button type="submit" class="btn btn-sm btn-danger w-100"><i class="fas fa-trash me-1"></i>Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Cake Modal -->
+        <div class="modal fade" id="editCakeModal{{ cake.id }}" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('edit_cake', cake_id=cake.id) }}" enctype="multipart/form-data">
+                <div class="modal-header bg-warning text-dark">
+                  <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Cake</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Current Image</label>
+                    {% if cake.image %}<div class="mb-2"><img src="{{ cake.image }}" alt="{{ cake.name }}" style="max-width:200px; height:auto; border-radius:8px;"><p class="text-muted small mt-1">Image cannot be changed after upload</p></div>
+                    {% else %}<p class="text-muted">No image uploaded</p>{% endif %}
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3"><label class="form-label">Cake Name *</label><input type="text" class="form-control" name="name" value="{{ cake.name }}" required></div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Category *</label>
+                      <select class="form-select" name="category" required>
+                        <option value="Birthday" {{ 'selected' if cake.category == 'Birthday' }}>Birthday</option>
+                        <option value="Wedding" {{ 'selected' if cake.category == 'Wedding' }}>Wedding</option>
+                        <option value="Anniversary" {{ 'selected' if cake.category == 'Anniversary' }}>Anniversary</option>
+                        <option value="Custom" {{ 'selected' if cake.category == 'Custom' }}>Custom</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" rows="3" required>{{ cake.description }}</textarea></div>
+                  <div class="row">
+                    <div class="col-md-6 mb-3"><label class="form-label">Price (₱) *</label><input type="number" class="form-control" name="price" value="{{ cake.price }}" step="0.01" min="0" required></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" name="quantity" value="{{ cake.quantity }}" min="0" required></div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Status</label>
+                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="status" {{ 'checked' if cake.status }}><label class="form-check-label">Available</label></div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-warning text-dark"><i class="fas fa-save me-2"></i>Update</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="col-12 text-center py-5"><i class="fas fa-cake-candles fa-4x text-muted mb-3"></i><h5 class="text-muted">No cakes added yet</h5></div>
+        {% endfor %}
+      </div>
+      <nav class="mt-4"><ul class="pagination justify-content-end mb-0" id="cakesPagination"></ul></nav>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CAKE MODAL -->
+<div class="modal fade" id="cakeModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('add_cake') }}" enctype="multipart/form-data">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title"><i class="fas fa-cake-candles me-2"></i>Add Cake</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Cake Image</label><input type="file" class="form-control" name="image" accept="image/*" onchange="checkFileSize(this)"><small class="text-muted">Max 2MB</small></div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label">Cake Name *</label><input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream"></div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Category *</label>
+              <select class="form-select" name="category" required>
+                <option value="">Select category</option>
+                <option value="Birthday">Birthday</option>
+                <option value="Wedding">Wedding</option>
+                <option value="Anniversary">Anniversary</option>
+                <option value="Custom">Custom</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
+          <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label">Price (₱) *</label><input type="number" class="form-control" name="price" step="0.01" min="0" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" name="quantity" min="0" required></div>
+          </div>
+          <div class="mb-3"><label class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="status" checked><label class="form-check-label">Available</label></div></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning text-dark"><i class="fas fa-save me-2"></i>Save Cake</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentCakesPage = 1;
+const cakesPerPage = 8;
+function updateCakesDisplay() {
+  const searchValue = document.getElementById('searchCakes').value.toLowerCase();
+  const categoryValue = document.getElementById('categoryFilter').value;
+  const statusValue = document.getElementById('cakeStatusFilter').value;
+  const allItems = document.querySelectorAll('.cake-item');
+  let visibleItems = [];
+  allItems.forEach(item => {
+    const matchSearch = item.getAttribute('data-name').includes(searchValue);
+    const matchCategory = !categoryValue || item.getAttribute('data-category') === categoryValue;
+    const matchStatus = !statusValue || item.getAttribute('data-status') === statusValue;
+    if (matchSearch && matchCategory && matchStatus) visibleItems.push(item);
+  });
+  const totalPages = Math.ceil(visibleItems.length / cakesPerPage);
+  const start = (currentCakesPage - 1) * cakesPerPage;
+  allItems.forEach(item => item.style.display = 'none');
+  visibleItems.forEach((item, i) => { if (i >= start && i < start + cakesPerPage) item.style.display = ''; });
+  updatePaginationButtons('cakesPagination', currentCakesPage, totalPages, (page) => { currentCakesPage = page; updateCakesDisplay(); });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('searchCakes').addEventListener('keyup', () => { currentCakesPage = 1; updateCakesDisplay(); });
+  document.getElementById('categoryFilter').addEventListener('change', () => { currentCakesPage = 1; updateCakesDisplay(); });
+  document.getElementById('cakeStatusFilter').addEventListener('change', () => { currentCakesPage = 1; updateCakesDisplay(); });
+  updateCakesDisplay();
+});
+</script>
+{% endblock %}

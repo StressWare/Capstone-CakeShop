@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from datetime import datetime, timedelta, timezone
+import json
 from db import walkin_orders, cakes
 
 pos_bp = Blueprint('pos', __name__)
@@ -15,14 +16,13 @@ def pos_page():
     if not current_user.get('admin'):
         return render_template('403.html'), 403
 
-    # Fetch available cakes
     available_cakes = []
     for cake_doc in cakes.where("status", "==", True).stream():
         cake_data = cake_doc.to_dict()
         cake_data['id'] = cake_doc.id
         available_cakes.append(cake_data)
 
-    return render_template('pos.html', cakes=available_cakes)
+    return render_template('admin_pos.html', cakes=available_cakes)
 
 
 # ---------------- POS PLACE ORDER ----------------
@@ -34,7 +34,6 @@ def pos_order():
 
     now = datetime.now(PH_TZ)
 
-    import json
     items_json     = request.form.get('items', '[]')
     items          = json.loads(items_json)
     payment_method = request.form.get('payment_method', 'Cash')
@@ -47,10 +46,13 @@ def pos_order():
         return redirect(url_for('pos.pos_page'))
 
     # Build item string for admin dashboard
-    item_names = ", ".join([f"{i['cake_name']} (₱{float(i['price']):.0f})" for i in items])
+    item_names = ", ".join([
+        f"{i['cake_name']} x{i.get('quantity', 1)} (₱{float(i['price']):.0f})"
+        for i in items
+    ])
 
     order_data = {
-        "order_items":          items,
+        "order_items":    items,
         "item":           item_names,
         "amount":         amount,
         "payment_method": payment_method,
@@ -62,9 +64,22 @@ def pos_order():
         "created_at":     now
     }
 
-    # Save to walkin_orders collection
-    doc_ref = walkin_orders.add(order_data)
+    # Save to walkin_orders
+    doc_ref  = walkin_orders.add(order_data)
     order_id = doc_ref[1].id
+
+    # ── Decrease cake quantity for each ordered item ──
+    for i in items:
+        cake_ref = cakes.document(i["cake_id"])
+        cake_doc = cake_ref.get()
+        if cake_doc.exists:
+            current_qty = cake_doc.to_dict().get("quantity", 0)
+            ordered_qty = int(i.get("quantity", 1))
+            new_qty     = max(0, current_qty - ordered_qty)
+            cake_ref.update({
+                "quantity": new_qty,
+                "status":   new_qty > 0
+            })
 
     flash('Order placed successfully! 🎂', 'success')
     return redirect(url_for('pos.pos_receipt', order_id=order_id))
@@ -85,7 +100,6 @@ def pos_receipt(order_id):
     order = order_doc.to_dict()
     order['id'] = order_id
 
-    # Convert created_at
     created_at = order.get('created_at')
     if isinstance(created_at, datetime):
         if created_at.tzinfo is None:
@@ -94,4 +108,4 @@ def pos_receipt(order_id):
             created_at = created_at.astimezone(PH_TZ)
     order['created_at'] = created_at
 
-    return render_template('pos_receipt.html', order=order)
+    return render_template('admin_pos_receipt.html', order=order)

@@ -1,0 +1,539 @@
+{% extends 'admin_base.html' %}
+{% block title %}Orders – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── TAB SWITCHER ── */
+  .order-tabs {
+    display: flex;
+    gap: 4px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .order-tab-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .order-tab-btn.active {
+    background: #fff;
+    color: #d63384;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .order-tab-btn:hover:not(.active) { color: #555; }
+  .tab-count {
+    background: #e0e0e0;
+    border-radius: 10px;
+    padding: 1px 7px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .order-tab-btn.active .tab-count {
+    background: #fde8f1;
+    color: #d63384;
+  }
+
+  /* ── ORDER TYPE BADGES ── */
+  .badge-custom  { background: #6f42c1 !important; }
+  .badge-premade { background: #0d6efd !important; }
+  .badge-walkin  { background: #d63384 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+
+  <div class="section-header">
+    <h1 class="mb-2"><i class="fas fa-list-check me-3"></i>Order Management</h1>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom">
+      <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Order List</h4>
+    </div>
+    <div class="card-body">
+
+      <!-- ── 4 TABS ── -->
+      <div class="order-tabs">
+        <button class="order-tab-btn active" onclick="switchOrderTab('all', this)">
+          <i class="fas fa-layer-group"></i> All
+          <span class="tab-count" id="count-all">0</span>
+        </button>
+        <button class="order-tab-btn" onclick="switchOrderTab('custom', this)">
+          <i class="fas fa-paint-brush"></i> Online - Customized
+          <span class="tab-count" id="count-custom">0</span>
+        </button>
+        <button class="order-tab-btn" onclick="switchOrderTab('premade', this)">
+          <i class="fas fa-birthday-cake"></i> Online - Premade
+          <span class="tab-count" id="count-premade">0</span>
+        </button>
+        <button class="order-tab-btn" onclick="switchOrderTab('walkin', this)">
+          <i class="fas fa-store"></i> Walk-in
+          <span class="tab-count" id="count-walkin">0</span>
+        </button>
+      </div>
+
+      <!-- ── FILTERS ── -->
+      <div class="row mb-3">
+        <div class="col-md-6 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search orders, customers, contact..." id="searchOrders">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <select class="form-select" id="statusFilter">
+                <option value="">All Status</option>
+                <option value="New">🆕 New</option>
+                <option value="Accepted">✅ Accepted</option>
+                <option value="Pending">⏳ Pending</option>
+                <option value="Ready">🎂 Ready</option>
+                <option value="Out for Delivery">📦 Out for Delivery</option>
+                <option value="Completed">🟢 Completed</option>
+                <option value="Cancelled">❌ Cancelled</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <select class="form-select" id="rushFilter">
+                <option value="">All Orders</option>
+                <option value="yes">⚠️ Rush Only</option>
+                <option value="no">Non-Rush</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TABLE ── -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="ordersTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Date Ordered</th>
+              <th>Type</th>
+              <th>Customer</th>
+              <th>Order Item</th>
+              <th>Delivery Date</th>
+              <th>Status</th>
+              <th>Details</th>
+              <th>Update Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+            <tr class="{% if o.rush %}table-danger{% endif %}"
+                data-type="{{ 'walkin' if o.order_source == 'walk-in' else o.order_type or 'unknown' }}">
+              <td>
+                <small>{{ o.created_at.strftime('%b %d, %Y') }}</small><br>
+                <small class="text-muted">{{ o.created_at.strftime('%I:%M %p') }}</small>
+              </td>
+              <td>
+                {% if o.order_source == 'walk-in' %}
+                  <span class="badge badge-walkin">🏪 Walk-in</span>
+                {% elif o.order_type == 'custom' %}
+                  <span class="badge badge-custom">🎨 Custom</span>
+                {% elif o.order_type == 'premade' %}
+                  <span class="badge badge-premade">🎂 Premade</span>
+                {% else %}
+                  <span class="badge bg-secondary">📦 Online</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if o.order_source == 'walk-in' %}
+                  <strong>Walk-in Customer</strong><br>
+                  <small class="text-muted"><i class="fas fa-cash-register me-1"></i>POS</small>
+                {% else %}
+                  <strong>{{ o.customer.name }}</strong>
+                  {% if o.rush %}<span class="badge bg-danger ms-1">RUSH</span>{% endif %}
+                  <br><small class="text-muted"><i class="fas fa-phone me-1"></i>{{ o.customer.contact }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="text-truncate d-inline-block" style="max-width:200px;" title="{{ o.item }}">{{ o.item }}</span>
+              </td>
+              <td>
+                {% if o.order_source == 'walk-in' %}
+                  <small class="text-muted">N/A</small>
+                {% else %}
+                  <small>{{ o.delivery_date.strftime('%b %d, %Y') }}</small><br>
+                  <small class="text-muted">{{ o.delivery_date.strftime('%I:%M %p') }}</small>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge
+                  {% if o.status == 'New' %}bg-secondary
+                  {% elif o.status == 'Accepted' %}bg-info
+                  {% elif o.status == 'Pending' %}bg-warning text-dark
+                  {% elif o.status == 'Ready' %}bg-primary
+                  {% elif o.status == 'Out for Delivery' %}bg-dark
+                  {% elif o.status == 'Completed' %}bg-success
+                  {% elif o.status == 'Cancelled' %}bg-danger
+                  {% endif %}">{{ o.status }}</span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
+                  <i class="fas fa-eye"></i> View
+                </button>
+              </td>
+              <td>
+                {% if o.order_source == 'walk-in' %}
+                  <span class="badge bg-success p-2">Completed</span>
+                {% else %}
+                  <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}" onsubmit="return confirmStatus('{{ o.status }}')">
+                    <select name="status" class="form-select form-select-sm mb-1">
+                      <option value="New" {{ 'selected' if o.status=='New' }}>🆕 New</option>
+                      <option value="Accepted" {{ 'selected' if o.status=='Accepted' }}>✅ Accepted</option>
+                      <option value="Pending" {{ 'selected' if o.status=='Pending' }}>⏳ Pending</option>
+                      <option value="Ready" {{ 'selected' if o.status=='Ready' }}>🎂 Ready</option>
+                      <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>📦 Out for Delivery</option>
+                      <option value="Completed" {{ 'selected' if o.status=='Completed' }}>🟢 Completed</option>
+                      <option value="Cancelled" {{ 'selected' if o.status=='Cancelled' }}>❌ Cancelled</option>
+                    </select>
+                    <button class="btn btn-primary btn-sm w-100"><i class="fas fa-sync-alt"></i> Update</button>
+                  </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No orders yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- empty state per tab -->
+      <div id="emptyTabMsg" style="display:none;" class="text-center text-muted py-5">
+        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+        <span id="emptyTabText">No orders found</span>
+      </div>
+
+      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="ordersPagination"></ul></nav>
+    </div>
+  </div>
+</div>
+
+<!-- ── DETAILS MODALS ── -->
+{% for o in orders %}
+<div class="modal fade" id="details{{ o.id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header {% if o.rush %}bg-danger text-white{% elif o.order_source == 'walk-in' %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
+        <h5 class="modal-title">
+          <i class="fas fa-receipt me-2"></i>Order Details
+          {% if o.rush %}<span class="badge bg-white text-danger ms-2">RUSH</span>{% endif %}
+          {% if o.order_source == 'walk-in' %}<span class="badge bg-white text-success ms-2">WALK-IN</span>{% endif %}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
+            <p class="mb-2"><strong><i class="fas fa-cake-candles me-2 text-primary"></i>Order:</strong><br><span class="ms-4">{{ o.item }}</span></p>
+
+            {% if o.order_source != 'walk-in' %}
+            <p class="mb-2"><strong><i class="fas fa-calendar me-2 text-primary"></i>Delivery Date:</strong><br>
+              <span class="ms-4">{{ o.delivery_date.strftime('%B %d, %Y - %I:%M %p') }}</span></p>
+            {% endif %}
+
+            <p class="mb-2"><strong><i class="fas fa-info-circle me-2 text-primary"></i>Status:</strong><br>
+              <span class="ms-4"><span class="badge {% if o.status == 'New' %}bg-secondary{% elif o.status == 'Accepted' %}bg-info{% elif o.status == 'Pending' %}bg-warning text-dark{% elif o.status == 'Ready' %}bg-primary{% elif o.status == 'Out for Delivery' %}bg-dark{% elif o.status == 'Completed' %}bg-success{% elif o.status == 'Cancelled' %}bg-danger{% endif %}">{{ o.status }}</span></span>
+            </p>
+
+            {% if o.order_source != 'walk-in' %}
+            <p class="mb-2"><strong><i class="fas fa-truck me-2 text-primary"></i>Delivery Type:</strong><br>
+              <span class="ms-4">{% if o.delivery_type == 'Pickup' %}<span class="badge bg-warning text-dark">🏪 Pick Up</span>{% else %}<span class="badge bg-info text-dark">🚚 Delivery</span>{% endif %}</span>
+            </p>
+            {% endif %}
+
+            <p class="mb-2"><strong><i class="fas fa-credit-card me-2 text-primary"></i>Payment:</strong><br>
+              <span class="ms-4">{{ o.payment_method or 'N/A' }}</span></p>
+            <p class="mb-2"><strong><i class="fas fa-money-bill me-2 text-primary"></i>Amount:</strong><br>
+              <span class="ms-4 fw-bold text-success">₱{{ "%.2f"|format(o.amount) }}</span></p>
+            <p class="mb-2"><strong><i class="fas fa-clock me-2 text-primary"></i>Ordered On:</strong><br>
+              <span class="ms-4">{% if o.created_at %}{{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</span></p>
+          </div>
+
+          <div class="col-md-6">
+            {% if o.order_source == 'walk-in' %}
+              <h6 class="text-muted mb-3">WALK-IN DETAILS</h6>
+              <p class="mb-2"><strong><i class="fas fa-cash-register me-2 text-success"></i>Order Source:</strong><br><span class="ms-4">Walk-in (POS)</span></p>
+              {% if o.cash_received %}
+              <p class="mb-2"><strong><i class="fas fa-money-bill me-2 text-success"></i>Cash Received:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.cash_received) }}</span></p>
+              <p class="mb-2"><strong><i class="fas fa-coins me-2 text-success"></i>Change:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.change) }}</span></p>
+              {% endif %}
+            {% else %}
+              <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
+              <p class="mb-2"><strong><i class="fas fa-user me-2 text-success"></i>Name:</strong><br><span class="ms-4">{{ o.customer.name }}</span></p>
+              <p class="mb-2"><strong><i class="fas fa-phone me-2 text-success"></i>Contact:</strong><br><span class="ms-4">{{ o.customer.contact }}</span></p>
+              <p class="mb-2"><strong><i class="fas fa-location-dot me-2 text-success"></i>Address:</strong><br><span class="ms-4">{{ o.customer.address }}</span></p>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if o.order_source != 'walk-in' %}
+        <hr>
+        <div class="row">
+          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-gift me-2 text-warning"></i>Occasion:</strong><br><span class="ms-4">{{ o.customer.occasion or 'N/A' }}</span></p></div>
+          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-user-circle me-2 text-warning"></i>Celebrant:</strong><br><span class="ms-4">{{ o.customer.celebrant or 'N/A' }}</span></p></div>
+          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-cake-candles me-2 text-warning"></i>Age:</strong><br><span class="ms-4">{{ o.customer.age or 'N/A' }}</span></p></div>
+        </div>
+        {% endif %}
+
+        {% if o.notes %}
+        <hr>
+        <div class="alert alert-info mb-0">
+          <h6 class="alert-heading"><i class="fas fa-sticky-note me-2"></i>Special Instructions</h6>
+          <p class="mb-0">{{ o.notes }}</p>
+        </div>
+        {% endif %}
+
+        {% if o.inspo_image %}
+        <hr>
+        <div class="mb-3">
+          <h6 class="text-muted mb-3"><i class="fas fa-image me-2"></i>CAKE INSPO IMAGE</h6>
+          <img src="{{ o.inspo_image }}" alt="Cake inspo" class="img-fluid rounded" style="max-width:300px; max-height:300px; object-fit:cover;">
+        </div>
+        {% endif %}
+      </div>
+      <div class="modal-footer">
+        {% if o.order_source != 'walk-in' %}
+        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ o.id }}">
+          <i class="fas fa-edit me-2"></i>Edit
+        </button>
+        {% endif %}
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT ORDER MODAL (online only) -->
+{% if o.order_source != 'walk-in' %}
+<div class="modal fade" id="editOrderModal{{ o.id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="/order/edit/{{ o.user_id }}/{{ o.id }}" id="editOrderForm{{ o.id }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Order</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label>Cake Type</label>
+          <select id="editCakeType{{ o.id }}" name="cake_type" class="form-select edit-cake-type" data-order-id="{{ o.id }}">
+            <option value="800" {% if 'Chocolate' in o.item %}selected{% endif %}>Chocolate (₱800)</option>
+            <option value="850" {% if 'Vanilla' in o.item %}selected{% endif %}>Vanilla (₱850)</option>
+            <option value="900" {% if 'Red Velvet' in o.item %}selected{% endif %}>Red Velvet (₱900)</option>
+          </select>
+          <label class="mt-3">Design</label>
+          <select id="editDesign{{ o.id }}" name="design" class="form-select edit-design" data-order-id="{{ o.id }}">
+            <option value="0" {% if 'Simple' in o.item %}selected{% endif %}>Simple (₱0)</option>
+            <option value="300" {% if 'Themed' in o.item %}selected{% endif %}>Themed (₱300)</option>
+            <option value="500" {% if 'Luxury' in o.item %}selected{% endif %}>Luxury (₱500)</option>
+          </select>
+          <label class="mt-3">Cake Size</label>
+          <select id="editSize{{ o.id }}" name="cake_size" class="form-select edit-size" data-order-id="{{ o.id }}">
+            <option value="0" {% if '6 inches' in o.item %}selected{% endif %}>6 inches (₱0)</option>
+            <option value="200" {% if '8 inches' in o.item %}selected{% endif %}>8 inches (+₱200)</option>
+            <option value="400" {% if '10 inches' in o.item %}selected{% endif %}>10 inches (+₱400)</option>
+            <option value="600" {% if '12 inches' in o.item %}selected{% endif %}>12 inches (+₱600)</option>
+          </select>
+          <label class="mt-3">Layers</label>
+          <select id="editLayers{{ o.id }}" name="layers" class="form-select edit-layers" data-order-id="{{ o.id }}">
+            <option value="0" {% if 'Single Layer' in o.item %}selected{% endif %}>Single Layer (₱0)</option>
+            <option value="300" {% if 'Double Layer' in o.item %}selected{% endif %}>Double Layer (+₱300)</option>
+            <option value="600" {% if 'Triple Layer' in o.item %}selected{% endif %}>Triple Layer (+₱600)</option>
+          </select>
+          <label class="mt-3">Toppings</label>
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Sprinkles' in o.item %}checked{% endif %}><label class="form-check-label" for="editSprinkles{{ o.id }}">Sprinkles (₱100)</label></div>
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Fruits' in o.item %}checked{% endif %}><label class="form-check-label" for="editFruits{{ o.id }}">Fruits (₱150)</label></div>
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Chocolate Drip' in o.item %}checked{% endif %}><label class="form-check-label" for="editChocoDrip{{ o.id }}">Chocolate Drip (₱200)</label></div>
+          <label for="editNotes{{ o.id }}" class="mt-3">Special Instructions</label>
+          <textarea name="notes" id="editNotes{{ o.id }}" class="form-control" rows="2">{{ o.notes or '' }}</textarea>
+          <label for="editDeliveryDate{{ o.id }}" class="mt-3">Delivery Date</label>
+          <input type="date" name="delivery_date" id="editDeliveryDate{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%Y-%m-%d') }}" required>
+          <label for="editDeliveryTime{{ o.id }}" class="mt-3">Delivery Time</label>
+          <input type="time" name="delivery_time" id="editDeliveryTime{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%H:%M') }}" required>
+          <div class="price-box mt-3">New Total: ₱<span id="editTotalPrice{{ o.id }}">{{ o.amount }}</span></div>
+          <input type="hidden" name="order_item" id="editOrderItem{{ o.id }}">
+          <input type="hidden" name="amount" id="editAmount{{ o.id }}" value="{{ o.amount }}">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning" onclick="updateEditOrderData('{{ o.id }}')"><i class="fas fa-save me-2"></i>Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var currentTab     = 'all';
+  var currentOrders  = 1;
+  var ordersPerPage  = 6;
+
+  // ── TAB SWITCHING ──
+  function switchOrderTab(tab, btn) {
+    currentTab    = tab;
+    currentOrders = 1;
+    document.querySelectorAll('.order-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    updateOrdersDisplay();
+  }
+
+  // ── MAIN DISPLAY FUNCTION ──
+  function updateOrdersDisplay() {
+    var searchValue = document.getElementById('searchOrders').value.toLowerCase();
+    var statusValue = document.getElementById('statusFilter').value;
+    var rushValue   = document.getElementById('rushFilter').value;
+    var allRows     = document.querySelectorAll('#ordersTable tbody tr');
+    var visibleRows = [];
+
+    allRows.forEach(function(row) {
+      var text      = row.textContent.toLowerCase();
+      var rowType   = row.getAttribute('data-type') || 'unknown';
+
+      // Tab filter
+      var matchTab = false;
+      if (currentTab === 'all')     matchTab = true;
+      if (currentTab === 'custom')  matchTab = rowType === 'custom';
+      if (currentTab === 'premade') matchTab = rowType === 'premade';
+      if (currentTab === 'walkin')  matchTab = rowType === 'walkin';
+
+      // Search filter
+      var matchSearch = text.includes(searchValue);
+
+      // Status filter
+      var statusBadge = row.querySelector('td:nth-child(6) .badge');
+      var matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
+
+      // Rush filter
+      var isRush   = row.classList.contains('table-danger');
+      var matchRush = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
+
+      if (matchTab && matchSearch && matchStatus && matchRush) {
+        visibleRows.push(row);
+      }
+    });
+
+    // Update tab counts
+    updateTabCounts(allRows);
+
+    // Pagination
+    var totalPages = Math.ceil(visibleRows.length / ordersPerPage);
+    var start      = (currentOrders - 1) * ordersPerPage;
+    var end        = start + ordersPerPage;
+
+    allRows.forEach(row => row.style.display = 'none');
+    visibleRows.forEach(function(row, index) {
+      if (index >= start && index < end) row.style.display = '';
+    });
+
+    // Empty state
+    var emptyMsg = document.getElementById('emptyTabMsg');
+    var emptyText = document.getElementById('emptyTabText');
+    if (visibleRows.length === 0) {
+      emptyMsg.style.display = 'block';
+      var labels = {
+        all: 'No orders yet',
+        custom: 'No customized orders found',
+        premade: 'No premade orders found',
+        walkin: 'No walk-in orders found'
+      };
+      emptyText.textContent = labels[currentTab] || 'No orders found';
+    } else {
+      emptyMsg.style.display = 'none';
+    }
+
+    updatePaginationButtons('ordersPagination', currentOrders, totalPages, function(page) {
+      currentOrders = page;
+      updateOrdersDisplay();
+    });
+  }
+
+  // ── UPDATE TAB COUNTS ──
+  function updateTabCounts(allRows) {
+    var counts = { all: 0, custom: 0, premade: 0, walkin: 0 };
+    allRows.forEach(function(row) {
+      var rowType = row.getAttribute('data-type') || 'unknown';
+      counts.all++;
+      if (rowType === 'custom')  counts.custom++;
+      if (rowType === 'premade') counts.premade++;
+      if (rowType === 'walkin')  counts.walkin++;
+    });
+    document.getElementById('count-all').textContent     = counts.all;
+    document.getElementById('count-custom').textContent  = counts.custom;
+    document.getElementById('count-premade').textContent = counts.premade;
+    document.getElementById('count-walkin').textContent  = counts.walkin;
+  }
+
+  // ── EDIT ORDER FUNCTIONS ──
+  function calculateEditTotal(orderId) {
+    var cakePrice   = parseFloat(document.getElementById(`editCakeType${orderId}`).value) || 0;
+    var designPrice = parseFloat(document.getElementById(`editDesign${orderId}`).value) || 0;
+    var sizePrice   = parseFloat(document.getElementById(`editSize${orderId}`).value) || 0;
+    var layersPrice = parseFloat(document.getElementById(`editLayers${orderId}`).value) || 0;
+    var toppingsPrice = 0;
+    document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
+      toppingsPrice += parseFloat(t.value) || 0;
+    });
+    var total = cakePrice + designPrice + sizePrice + layersPrice + toppingsPrice;
+    document.getElementById(`editTotalPrice${orderId}`).innerText = total.toFixed(2);
+    document.getElementById(`editAmount${orderId}`).value = total.toFixed(2);
+  }
+
+  function updateEditOrderData(orderId) {
+    var cake   = document.getElementById(`editCakeType${orderId}`).selectedOptions[0].text;
+    var design = document.getElementById(`editDesign${orderId}`).selectedOptions[0].text;
+    var size   = document.getElementById(`editSize${orderId}`).selectedOptions[0].text;
+    var layers = document.getElementById(`editLayers${orderId}`).selectedOptions[0].text;
+    var toppings = [];
+    document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
+      toppings.push(document.querySelector(`label[for="${t.id}"]`).innerText.trim().split('(')[0].trim());
+    });
+    var description = `${cake}, ${size}, ${layers}, ${design}`;
+    if (toppings.length > 0) description += `, Toppings: ${toppings.join(", ")}`;
+    document.getElementById(`editOrderItem${orderId}`).value = description;
+  }
+
+  // ── EVENT LISTENERS ──
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchOrders').addEventListener('keyup', () => { currentOrders = 1; updateOrdersDisplay(); });
+    document.getElementById('statusFilter').addEventListener('change', () => { currentOrders = 1; updateOrdersDisplay(); });
+    document.getElementById('rushFilter').addEventListener('change',   () => { currentOrders = 1; updateOrdersDisplay(); });
+    updateOrdersDisplay();
+
+    document.querySelectorAll('[id^="editOrderForm"]').forEach(form => {
+      var orderId = form.id.replace('editOrderForm', '');
+      if (orderId) calculateEditTotal(orderId);
+    });
+  });
+
+  document.addEventListener("change", function(e) {
+    if (e.target.classList.contains("edit-cake-type") || e.target.classList.contains("edit-design") ||
+        e.target.classList.contains("edit-size")      || e.target.classList.contains("edit-layers") ||
+        e.target.classList.contains("edit-topping")) {
+      var orderId = e.target.getAttribute("data-order-id");
+      if (orderId) calculateEditTotal(orderId);
+    }
+  });
+</script>
+{% endblock %}

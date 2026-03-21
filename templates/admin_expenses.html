@@ -1,0 +1,61 @@
+<!-- ================================================================
+admin_expenses.html
+================================================================ -->
+{% extends 'admin_base.html' %}
+{% block title %}Expenses – Ms. Brave Cake Shop{% endblock %}
+{% block content %}
+<div class="container-fluid my-4 px-4">
+  <div class="section-header"><h1 class="mb-2"><i class="fas fa-receipt me-3"></i>Expenses</h1></div>
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom"><h4 class="mb-0"><i class="fas fa-receipt me-2"></i>Expense Records</h4></div>
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-12 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
+          </div>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="expensesTable">
+          <thead class="table-dark"><tr><th>Date</th><th>Description</th><th>Cost (₱)</th></tr></thead>
+          <tbody>
+            {% for e in expenses %}
+            <tr>
+              <td><small>{{ e.date.strftime('%b %d, %Y') }}</small><br><small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small></td>
+              <td><strong>{{ e.description }}</strong></td>
+              <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No expenses yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="expensesPagination"></ul></nav>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+let currentExpensesPage = 1;
+const expensesPerPage = 10;
+function updateExpensesDisplay() {
+  const searchValue = document.getElementById('searchExpenses').value.toLowerCase();
+  const allRows = document.querySelectorAll('#expensesTable tbody tr');
+  let visibleRows = [];
+  allRows.forEach(row => { if (row.textContent.toLowerCase().includes(searchValue)) visibleRows.push(row); });
+  const totalPages = Math.ceil(visibleRows.length / expensesPerPage);
+  const start = (currentExpensesPage - 1) * expensesPerPage;
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach((row, i) => { if (i >= start && i < start + expensesPerPage) row.style.display = ''; });
+  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => { currentExpensesPage = page; updateExpensesDisplay(); });
+}
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('searchExpenses').addEventListener('keyup', () => { currentExpensesPage = 1; updateExpensesDisplay(); });
+  updateExpensesDisplay();
+});
+</script>
+{% endblock %}

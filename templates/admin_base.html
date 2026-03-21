@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Admin – Ms. Brave Cake Shop{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="../static/css/admin_dashboard.css" rel="stylesheet">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-light">
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <i class="fas fa-cake-candles me-2"></i>Ms. Brave Admin
+  </div>
+  <ul class="sidebar-menu">
+    <li><a href="/admin/dashboard" class="{{ 'active' if request.path == '/admin/dashboard' }}"><i class="fas fa-home me-2"></i>Dashboard</a></li>
+    <li><a href="/admin/analytics" class="{{ 'active' if request.path == '/admin/analytics' }}"><i class="fas fa-chart-line me-2"></i>Analytics</a></li>
+    <li><a href="/admin/sales" class="{{ 'active' if request.path == '/admin/sales' }}"><i class="fas fa-money-bill-wave me-2"></i>Sales</a></li>
+    <li><a href="/admin/expenses" class="{{ 'active' if request.path == '/admin/expenses' }}"><i class="fas fa-receipt me-2"></i>Expenses</a></li>
+    <li><a href="/admin/inventory" class="{{ 'active' if request.path == '/admin/inventory' }}"><i class="fas fa-boxes me-2"></i>Inventory</a></li>
+    <li><a href="/admin/orders" class="{{ 'active' if request.path == '/admin/orders' }}"><i class="fas fa-list-check me-2"></i>Order List</a></li>
+    <li><a href="/admin/cakes" class="{{ 'active' if request.path == '/admin/cakes' }}"><i class="fas fa-cake-candles me-2"></i>Cake Availability</a></li>
+    <li><a href="/admin/users" class="{{ 'active' if request.path == '/admin/users' }}"><i class="fas fa-users me-2"></i>User Management</a></li>
+    <li><a href="/pos"><i class="fas fa-cash-register me-2"></i>POS</a></li>
+  </ul>
+  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
+    <a href="/logout" style="color: #e74c3c; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
+      <i class="fas fa-sign-out-alt me-2"></i>Logout
+    </a>
+  </div>
+</div>
+
+<!-- ============ MAIN CONTENT ============ -->
+<div class="main-content">
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div style="position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999; min-width:350px;">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show text-center shadow">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Shared JS (confirmStatus, checkFileSize, pagination) -->
+<script>
+function confirmStatus(currentStatus) {
+  return confirm("Current status: " + currentStatus + "\n\nAre you sure you want to update this order?");
+}
+
+function checkFileSize(input) {
+  if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
+    alert('File too large! Maximum size is 2MB.');
+    input.value = '';
+  }
+}
+
+function updatePaginationButtons(containerId, currentPage, totalPages, onPageClick) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  let html = '';
+  html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage - 1}">Previous</a></li>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages <= 5 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      html += `<li class="page-item ${i === currentPage ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`;
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      html += `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`;
+    }
+  }
+  html += `<li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage + 1}">Next</a></li>`;
+  container.innerHTML = html;
+  container.querySelectorAll('a.page-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const page = parseInt(link.getAttribute('data-page'));
+      if (page && page !== currentPage && page >= 1 && page <= totalPages) onPageClick(page);
+    });
+  });
+}
+
+setTimeout(function() {
+  document.querySelectorAll('.alert').forEach(function(alert) {
+    const bsAlert = new bootstrap.Alert(alert);
+    bsAlert.close();
+  });
+}, 5000);
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

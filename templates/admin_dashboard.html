@@ -1,62 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Admin – Ms. Brave Cake Shop</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Google Charts -->
-   <link href="../static/css/admin_dashboard.css" rel="stylesheet">
-  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-</head>
-<body class="bg-light">
-  <!-- ============ SIDEBAR ============ -->
-<div class="sidebar">
-  <div class="sidebar-brand">
-    <i class="fas fa-cake-candles me-2"></i>Ms. Brave Admin
-  </div>
+{% extends 'admin_base.html' %}
+{% block title %}Dashboard – Ms. Brave Cake Shop{% endblock %}
 
-  <ul class="sidebar-menu">
-    <li><a href="#dashboard" class="active"><i class="fas fa-home me-2"></i>Dashboard</a></li>
-    <li><a href="#status-overview"><i class="fas fa-tachometer-alt me-2"></i>Status Overview</a></li>
-    <li><a href="#analytics"><i class="fas fa-chart-line me-2"></i>Analytics</a></li>
-    <li><a href="#sales"><i class="fas fa-money-bill-wave me-2"></i>Sales</a></li>
-    <li><a href="#expenses"><i class="fas fa-receipt me-2"></i>Expenses</a></li>
-    <li><a href="#inventory"><i class="fas fa-boxes me-2"></i>Inventory</a></li>
-    <li><a href="#orders"><i class="fas fa-list-check me-2"></i>Order List</a></li>
-    <li><a href="#cake-availability"><i class="fas fa-cake-candles me-2"></i>Cake Availability</a></li>
-    <li><a href="#users"><i class="fas fa-users me-2"></i>User Management</a></li>
-  </ul>
+{% block content %}
+<div class="container-fluid my-4 px-4">
 
-  <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
-    <a href="/logout" style="color: #e74c3c; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
-      <i class="fas fa-sign-out-alt me-2"></i>Logout
-    </a>
-  </div>
-</div>
-<div class="main-content">
-<div class="container-fluid my-4 px-4" id="dashboard">
-  <!-- DASHBOARD HEADER -->
   <div class="section-header">
-    <h1 class="mb-2">
-      <i class="fas fa-chart-pie me-3"></i>Admin Dashboard
-    </h1>
+    <h1 class="mb-2"><i class="fas fa-chart-pie me-3"></i>Admin Dashboard</h1>
     <p class="mb-0 opacity-75">Complete overview of your cake shop business</p>
   </div>
-  
-  <!-- ============ 1. STATUS OVERVIEW (Stat Cards + Low Stock + Today's Deliveries) ============ -->
+
+  <!-- STATUS OVERVIEW -->
   <section id="status-overview" class="mb-5">
-    <h3 class="mb-3">
-      <i class="fas fa-tachometer-alt me-2 text-primary"></i>Status Overview
-    </h3>
+    <h3 class="mb-3"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Status Overview</h3>
     <div class="row g-3">
-      <!-- LEFT COLUMN: 8 Stat Cards + Low Stock -->
+
+      <!-- LEFT: Stat Cards + Low Stock -->
       <div class="col-md-7">
         <div class="row g-2">
-          <!-- NEW Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">🆕</div>
@@ -64,7 +24,6 @@
               <h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2>
             </div>
           </div>
-          <!-- ACCEPTED Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">✅</div>
@@ -72,7 +31,6 @@
               <h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2>
             </div>
           </div>
-          <!-- PENDING Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">⏳</div>
@@ -80,7 +38,6 @@
               <h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2>
             </div>
           </div>
-          <!-- READY Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">🎂</div>
@@ -88,7 +45,6 @@
               <h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2>
             </div>
           </div>
-          <!-- OUT FOR DELIVERY Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">📦</div>
@@ -96,7 +52,6 @@
               <h2 class="mb-0 fw-bold">{{ total_out }}</h2>
             </div>
           </div>
-          <!-- COMPLETED Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">🟢</div>
@@ -104,7 +59,6 @@
               <h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2>
             </div>
           </div>
-          <!-- CANCELLED Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">❌</div>
@@ -112,7 +66,6 @@
               <h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2>
             </div>
           </div>
-          <!-- RUSH Card -->
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
               <div class="fs-2 mb-1">⚠️</div>
@@ -120,8 +73,8 @@
               <h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2>
             </div>
           </div>
-          
-          <!-- LOW STOCK ALERT (Below stat cards) -->
+
+          <!-- Low Stock -->
           <div class="col-12 mt-3">
             <div class="card">
               <div class="card-body py-2">
@@ -145,11 +98,11 @@
         </div>
       </div>
 
-      <!-- RIGHT COLUMN: Today's Deliveries -->
+      <!-- RIGHT: Today's Deliveries -->
       <div class="col-md-5">
         <div class="card h-100">
           <div class="card-header bg-white">
-            <h5 class="mb-0">🚚 Today's Deliveries</h5>
+            <h5 class="mb-0">🚚 Today's Deliveries ({{ today_count }})</h5>
           </div>
           <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
             {% if today_deliveries %}
@@ -157,13 +110,11 @@
               <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                 <div>
                   <span class="badge bg-light text-dark me-2">🕑 {{ delivery.time }}</span>
-                  {% if delivery.rush %}
-                    <span class="badge bg-danger">RUSH</span>
-                  {% endif %}
+                  {% if delivery.rush %}<span class="badge bg-danger">RUSH</span>{% endif %}
                   <strong class="d-block">{{ delivery.customer }}</strong>
                   <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
                 </div>
-                <span class="badge 
+                <span class="badge
                   {% if delivery.status == 'New' %}bg-secondary
                   {% elif delivery.status == 'Accepted' %}bg-info
                   {% elif delivery.status == 'Pending' %}bg-warning text-dark
@@ -175,1186 +126,42 @@
               </div>
               {% endfor %}
             {% else %}
-              <div class="text-center py-3 text-muted">
-                No deliveries today
-              </div>
+              <div class="text-center py-3 text-muted">No deliveries today</div>
             {% endif %}
           </div>
-          <div class="card-footer bg-white text-end">
-            <small class="text-muted">Total: {{ today_count }} deliveries today</small>
-          </div>
         </div>
       </div>
+
     </div>
   </section>
-  
-  <!-- DIVIDER -->
-  <div class="section-divider">
-    <span class="section-divider-text">📈 BUSINESS ANALYTICS</span>
-  </div>
-  
-  <!-- ============ 2. ANALYTICS (Charts) ============ -->
-  <section id="analytics" class="mb-5">
-    <h3 class="mb-3">
-      <i class="fas fa-chart-line me-2 text-success"></i>Analytics Overview
-    </h3>
-    <div class="row">
-      <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title mb-3">💵 Weekly Sales</h5>
-            <div id="weeklySalesChart" style="width:100%; height:250px;"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title mb-3">💰 Weekly Expenses</h5>
-            <div id="weeklyExpensesChart" style="width:100%; height:250px;"></div>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card shadow-sm h-100">
-          <div class="card-body text-center">
-            <h5 class="card-title mb-3">📊 Weekly Profit</h5>
-            <div id="weeklyProfitChart" style="width:100%; height:250px;"></div>
-          </div>
-        </div>
-      </div>
+
+  <!-- Quick Links -->
+  <div class="row g-3 mt-2">
+    <div class="col-md-3">
+      <a href="/admin/orders" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
+        <i class="fas fa-list-check fa-2x text-primary mb-2"></i>
+        <div class="fw-bold">Orders</div>
+      </a>
     </div>
-  </section>
-  
-  <!-- DIVIDER -->
-  <div class="section-divider">
-    <span class="section-divider-text">📋 DETAILED RECORDS</span>
-  </div>
-  
-  <!-- ============ 4. SALES TABLE ============ -->
-  <section id="sales" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header card-header-custom">
-        <h4 class="mb-0">
-          <i class="fas fa-money-bill-wave me-2"></i>Sales Records
-        </h4>
-      </div>
-      <div class="card-body">
-        <!-- SEARCH & FILTERS FOR SALES -->
-        <div class="row mb-3">
-          <div class="col-md-9 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search by order name..." id="searchSales">
-            </div>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="orderFilterSales">
-              <option value="">All Orders</option>
-              <option value="Chocolate">Chocolate Cake</option>
-              <option value="Vanilla">Vanilla Cake</option>
-              <option value="Ube">Ube Cake</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" id="salesTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Date</th>
-                <th>Order</th>
-                <th>Amount (₱)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in sales %}
-              <tr>
-                <td>
-                  <small>{{ s.created_at.strftime('%b %d, %Y') }}</small><br>
-                  <small class="text-muted">{{ s.created_at.strftime('%I:%M %p') }}</small>
-                </td>
-                <td>{{ s.item }}</td>
-                <td class="fw-bold text-success">₱{{ "%.2f"|format(s.amount) }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="3" class="text-center text-muted py-4">
-                  <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                  No sales yet
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGINATION FOR SALES -->
-        <nav aria-label="Sales pagination" class="mt-3">
-          <ul class="pagination justify-content-end mb-0" id="salesPagination"></ul>
-        </nav>
-      </div>
+    <div class="col-md-3">
+      <a href="/admin/cakes" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
+        <i class="fas fa-cake-candles fa-2x text-warning mb-2"></i>
+        <div class="fw-bold">Cakes</div>
+      </a>
     </div>
-  </section>
-  
-  <!-- ============ 5. EXPENSES TABLE ============ -->
-  <section id="expenses" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header card-header-custom">
-        <h4 class="mb-0">
-          <i class="fas fa-receipt me-2"></i>Expenses
-        </h4>
-      </div>
-      <div class="card-body">
-        <!-- SEARCH & FILTERS FOR EXPENSES -->
-        <div class="row mb-3">
-          <div class="col-md-12 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
-            </div>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" id="expensesTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Cost (₱)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for e in expenses %}
-              <tr>
-                <td>
-                  <small>{{ e.date.strftime('%b %d, %Y') }}</small><br>
-                  <small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small>
-                </td>
-                <td><strong>{{ e.description }}</strong></td>
-                <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="3" class="text-center text-muted py-4">
-                  <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                  No expenses yet
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGINATION FOR EXPENSES -->
-        <nav aria-label="Expenses pagination" class="mt-3">
-          <ul class="pagination justify-content-end mb-0" id="expensesPagination"></ul>
-        </nav>
-      </div>
+    <div class="col-md-3">
+      <a href="/admin/inventory" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
+        <i class="fas fa-boxes fa-2x text-success mb-2"></i>
+        <div class="fw-bold">Inventory</div>
+      </a>
     </div>
-  </section>
-  
-  <!-- ============ 6. INVENTORY TABLE ============ -->
-<section id="inventory" class="mb-5">
-  <div class="card shadow-sm">
-    <div class="card-header card-header-custom">
-      <h4 class="mb-0">
-        <i class="fas fa-boxes me-2"></i>Inventory Management
-      </h4>
-    </div>
-    <div class="card-body">
-      <form method="POST" action="/inventory/add" class="row g-3 mb-4">
-        <div class="col-md-4">
-          <label class="form-label">Item Name</label>
-          <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Quantity</label>
-          <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Cost (₱)</label>
-          <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100">
-            <i class="fas fa-plus me-2"></i>Add Item
-          </button>
-        </div>
-      </form>
-
-      <!-- SEARCH & FILTERS FOR INVENTORY -->
-      <div class="row mb-3">
-        <div class="col-md-9 mb-2">
-          <div class="input-group">
-            <span class="input-group-text bg-white">
-              <i class="fas fa-search"></i>
-            </span>
-            <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
-          </div>
-        </div>
-        <div class="col-md-3 mb-2">
-          <select class="form-select" id="statusFilterInventory">
-            <option value="">All Status</option>
-            <option value="critical">Critical (< 5)</option>
-            <option value="low">Low Stock (< 10)</option>
-            <option value="good">Good Stock</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- INVENTORY TABLE -->
-      <div class="table-responsive">
-        <table class="table table-hover align-middle" id="inventoryTable">
-          <thead class="table-dark">
-            <tr>
-              <th>Item</th>
-              <th>Quantity</th>
-              <th>Cost (₱)</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for i in inventory %}
-            <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}">
-              <td>
-                <strong>{{ i.item }}</strong>
-              </td>
-              <td>
-                <span class="badge 
-                  {% if i.quantity < 5 %}bg-danger
-                  {% elif i.quantity < 10 %}bg-warning text-dark
-                  {% else %}bg-success
-                  {% endif %}">
-                  {{ i.quantity }}
-                </span>
-              </td>
-              <td class="fw-bold">₱{{ i.cost }}</td>
-              <td>
-                {% if i.quantity < 5 %}
-                  <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Critical</span>
-                {% elif i.quantity < 10 %}
-                  <span class="badge bg-warning text-dark"><i class="fas fa-exclamation"></i> Low Stock</span>
-                {% else %}
-                  <span class="badge bg-success"><i class="fas fa-check"></i> Good</span>
-                {% endif %}
-              </td>
-              <td>
-                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
-                  <i class="fas fa-eye"></i> View
-                </button>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="5" class="text-center text-muted py-5">
-                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                No inventory items yet
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- PAGINATION FOR INVENTORY -->
-      <nav aria-label="Inventory pagination" class="mt-3">
-        <ul class="pagination justify-content-end mb-0" id="inventoryPagination"></ul>
-      </nav>
+    <div class="col-md-3">
+      <a href="/admin/users" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
+        <i class="fas fa-users fa-2x text-info mb-2"></i>
+        <div class="fw-bold">Users</div>
+      </a>
     </div>
   </div>
-</section>
-  
-  <!-- ============ 7. ORDER LIST ============ -->
-  <section id="orders" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header card-header-custom">
-        <h4 class="mb-0">
-          <i class="fas fa-list-check me-2"></i>Order Management
-        </h4>
-      </div>
-      <div class="card-body">
-        <!-- SEARCH & FILTERS -->
-        <div class="row mb-3">
-          <div class="col-md-6 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search orders, customers, contact..." id="searchOrders">
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="row g-2">
-              <div class="col-md-6">
-                <select class="form-select" id="statusFilter">
-                  <option value="">All Status</option>
-                  <option value="New">🆕 New</option>
-                  <option value="Accepted">✅ Accepted</option>
-                  <option value="Pending">⏳ Pending</option>
-                  <option value="Ready">🎂 Ready</option>
-                  <option value="Out for Delivery">📦 Out for Delivery</option>
-                  <option value="Completed">🟢 Completed</option>
-                  <option value="Cancelled">❌ Cancelled</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select" id="rushFilter">
-                  <option value="">All Orders</option>
-                  <option value="yes">⚠️ Rush Only</option>
-                  <option value="no">Non-Rush</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- ORDERS TABLE -->
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" id="ordersTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Date Ordered</th>
-                <th>Customer</th>
-                <th>Order Item</th>
-                <th>Delivery Date</th>
-                <th>Status</th>
-                <th>Details</th>
-                <th>Update Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for o in orders %}
-              <tr class="{% if o.rush %}table-danger{% endif %}">
-                <td>
-                  <small>{{ o.created_at.strftime('%b %d, %Y') }}</small><br>
-                  <small class="text-muted">{{ o.created_at.strftime('%I:%M %p') }}</small>
-                </td>
-                <td>
-                  <strong>{{ o.customer.name }}</strong>
-                  {% if o.rush %}
-                    <span class="badge bg-danger ms-1">RUSH</span>
-                  {% endif %}
-                  <br>
-                  <small class="text-muted">
-                    <i class="fas fa-phone me-1"></i>{{ o.customer.contact }}
-                  </small>
-                </td>
-                <td>
-                  <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ o.item }}">
-                    {{ o.item }}
-                  </span>
-                </td>
-                <td>
-                  <small>{{ o.delivery_date.strftime('%b %d, %Y') }}</small><br>
-                  <small class="text-muted">{{ o.delivery_date.strftime('%I:%M %p') }}</small>
-                </td>
-                <td>
-                  <span class="badge
-                    {% if o.status == 'New' %}bg-secondary
-                    {% elif o.status == 'Accepted' %}bg-info
-                    {% elif o.status == 'Pending' %}bg-warning text-dark
-                    {% elif o.status == 'Ready' %}bg-primary
-                    {% elif o.status == 'Out for Delivery' %}bg-dark
-                    {% elif o.status == 'Completed' %}bg-success
-                    {% elif o.status == 'Cancelled' %}bg-danger
-                    {% endif %}">
-                    {{ o.status }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
-                    <i class="fas fa-eye"></i> View
-                  </button>
-                </td>
-                <td>
-                  <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}" onsubmit="return confirmStatus('{{ o.status }}')">
-                    <select name="status" class="form-select form-select-sm mb-1">
-                      <option value="New" {{ 'selected' if o.status=='New' }}>🆕 New</option>
-                      <option value="Accepted" {{ 'selected' if o.status=='Accepted' }}>✅ Accepted</option>
-                      <option value="Pending" {{ 'selected' if o.status=='Pending' }}>⏳ Pending</option>
-                      <option value="Ready" {{ 'selected' if o.status=='Ready' }}>🎂 Ready</option>
-                      <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>📦 Out for Delivery</option>
-                      <option value="Completed" {{ 'selected' if o.status=='Completed' }}>🟢 Completed</option>
-                      <option value="Cancelled" {{ 'selected' if o.status=='Cancelled' }}>❌ Cancelled</option>
-                    </select>
-                    <button class="btn btn-primary btn-sm w-100">
-                      <i class="fas fa-sync-alt"></i> Update
-                    </button>
-                  </form>
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="7" class="text-center text-muted py-5">
-                  <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                  No orders yet
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGINATION FOR ORDERS -->
-        <nav aria-label="Orders pagination" class="mt-3">
-          <ul class="pagination justify-content-end mb-0" id="ordersPagination"></ul>
-        </nav>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ 8. CAKE AVAILABILITY SECTION ============ -->
-  <section id="cake-availability" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center">
-        <h4 class="mb-0">
-          <i class="fas fa-cake-candles me-2"></i>Cake Availability
-        </h4>
-        <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#cakeModal">
-          <i class="fas fa-plus me-2"></i>Add New Cake
-        </button>
-      </div>
-      <div class="card-body">
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <!-- SEARCH & FILTERS (Frontend only) -->
-        <div class="row mb-4">
-          <div class="col-md-6 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" id="searchCakes" placeholder="Search cakes by name...">
-            </div>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="categoryFilter">
-              <option value="">All Categories</option>
-              <option value="Birthday">Birthday</option>
-              <option value="Wedding">Wedding</option>
-              <option value="Anniversary">Anniversary</option>
-              <option value="Custom">Custom</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="cakeStatusFilter">
-              <option value="">All Status</option>
-              <option value="available">Available</option>
-              <option value="unavailable">Unavailable</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- CAKE CARDS GRID -->
-        <div class="row g-3" id="cakesGrid">
-          {% for cake in cakes %}
-          <div class="col-lg-3 col-md-4 col-sm-6 cake-item" 
-               data-name="{{ cake.name|lower }}" 
-               data-category="{{ cake.category }}" 
-               data-status="{{ 'available' if cake.status else 'unavailable' }}">
-            <div class="card cake-card h-100">
-              <div class="position-relative">
-                <div class="cake-image-placeholder">
-                  {% if cake.image %}
-                    <img src="{{ cake.image }}" alt="{{ cake.name }}" style="width:100%; height:200px; object-fit:cover;">
-                  {% else %}
-                    🎂
-                  {% endif %}
-                </div>
-                <span class="badge cake-status-badge {{ 'bg-success' if cake.status else 'bg-danger' }}">
-                  {{ 'Available' if cake.status else 'Unavailable' }}
-                </span>
-              </div>
-              <div class="card-body">
-                <h5 class="card-title mb-2">{{ cake.name }}</h5>
-                <span class="badge bg-warning text-dark mb-2">{{ cake.category }}</span>
-                <p class="card-text small text-muted mb-2">{{ cake.description[:60] }}{% if cake.description|length > 60 %}...{% endif %}</p>
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <span class="fw-bold text-success fs-5">₱{{ "%.2f"|format(cake.price) }}</span>
-                  <span class="badge bg-secondary">{{ cake.quantity }} left</span>
-                </div>
-                <div class="d-grid gap-2">
-                  <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editCakeModal{{ cake.id }}">
-                    <i class="fas fa-edit me-1"></i>Edit
-                  </button>
-                  <form method="POST" action="{{ url_for('delete_cake', cake_id=cake.id) }}" onsubmit="return confirm('Are you sure you want to delete this cake?');" style="display:inline;">
-                    <button type="submit" class="btn btn-sm btn-danger w-100">
-                      <i class="fas fa-trash me-1"></i>Delete
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Edit Modal for each cake -->
-          <div class="modal fade" id="editCakeModal{{ cake.id }}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-              <div class="modal-content">
-                <form method="POST" action="{{ url_for('edit_cake', cake_id=cake.id) }}" enctype="multipart/form-data">
-                  <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">
-                      <i class="fas fa-edit me-2"></i>Edit Cake
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="mb-3">
-                      <label class="form-label">Current Image</label>
-                      {% if cake.image %}
-                        <div class="mb-2">
-                          <img src="{{ cake.image }}" alt="{{ cake.name }}" style="max-width: 200px; height: auto; border-radius: 8px;">
-                          <p class="text-muted small mt-1">Image cannot be changed after upload</p>
-                        </div>
-                      {% else %}
-                        <p class="text-muted">No image uploaded</p>
-                      {% endif %}
-                    </div>
-
-                    <div class="row">
-                      <div class="col-md-6 mb-3">
-                        <label class="form-label">Cake Name *</label>
-                        <input type="text" class="form-control" name="name" value="{{ cake.name }}" required>
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label class="form-label">Category *</label>
-                        <select class="form-select" name="category" required>
-                          <option value="Birthday" {{ 'selected' if cake.category == 'Birthday' }}>Birthday</option>
-                          <option value="Wedding" {{ 'selected' if cake.category == 'Wedding' }}>Wedding</option>
-                          <option value="Anniversary" {{ 'selected' if cake.category == 'Anniversary' }}>Anniversary</option>
-                          <option value="Custom" {{ 'selected' if cake.category == 'Custom' }}>Custom</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Description *</label>
-                      <textarea class="form-control" name="description" rows="3" required>{{ cake.description }}</textarea>
-                    </div>
-
-                    <div class="row">
-                      <div class="col-md-6 mb-3">
-                        <label class="form-label">Price (₱) *</label>
-                        <input type="number" class="form-control" name="price" value="{{ cake.price }}" step="0.01" min="0" required>
-                      </div>
-                      <div class="col-md-6 mb-3">
-                        <label class="form-label">Quantity (Max Orders) *</label>
-                        <input type="number" class="form-control" name="quantity" value="{{ cake.quantity }}" min="0" required>
-                      </div>
-                    </div>
-
-                    <div class="mb-3">
-                      <label class="form-label">Status</label>
-                      <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="status" {{ 'checked' if cake.status }}>
-                        <label class="form-check-label">
-                          Available (Uncheck to mark as unavailable)
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                      <i class="fas fa-times me-2"></i>Cancel
-                    </button>
-                    <button type="submit" class="btn btn-warning text-dark">
-                      <i class="fas fa-save me-2"></i>Update Cake
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-          {% else %}
-          <!-- Empty state -->
-          <div class="col-12 text-center py-5">
-            <i class="fas fa-cake-candles fa-4x text-muted mb-3"></i>
-            <h5 class="text-muted">No cakes added yet</h5>
-            <p class="text-muted">Click "Add New Cake" to get started</p>
-          </div>
-          {% endfor %}
-        </div>
-
-        <!-- PAGINATION FOR CAKES -->
-        <nav aria-label="Cakes pagination" class="mt-4">
-          <ul class="pagination justify-content-end mb-0" id="cakesPagination"></ul>
-        </nav>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============ 9. USER MANAGEMENT ============ -->
-  <section id="users" class="mb-5">
-    <div class="card shadow-sm">
-      <div class="card-header card-header-custom">
-        <h4 class="mb-0">
-          <i class="fas fa-users me-2"></i>User Management
-        </h4>
-      </div>
-      <div class="card-body">
-
-        <!-- SEARCH & FILTERS -->
-        <div class="row mb-3">
-          <div class="col-md-6 mb-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white">
-                <i class="fas fa-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search by name, email, phone..." id="searchUsers">
-            </div>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="statusFilterUsers">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="disabled">Disabled</option>
-            </select>
-          </div>
-          <div class="col-md-3 mb-2">
-            <select class="form-select" id="verifiedFilterUsers">
-              <option value="">All Users</option>
-              <option value="verified">Verified</option>
-              <option value="unverified">Unverified</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- USERS TABLE -->
-        <div class="table-responsive">
-          <table class="table table-hover align-middle" id="usersTable">
-            <thead class="table-dark">
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Orders</th>
-                <th>Verified</th>
-                <th>Status</th>
-                <th>Registered</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for u in all_users %}
-              <tr class="{% if u.disabled %}table-secondary{% endif %}"
-                  data-status="{{ 'disabled' if u.disabled else 'active' }}"
-                  data-verified="{{ 'verified' if u.email_verified else 'unverified' }}">
-                <td>
-                  <strong>{{ u.fname or 'N/A' }}</strong><br>
-                  <small class="text-muted">@{{ u.username or 'N/A' }}</small>
-                </td>
-                <td>
-                  <small>{{ u.email or 'N/A' }}</small>
-                </td>
-                <td>
-                  <small>{{ u.number or 'N/A' }}</small>
-                </td>
-                <td>
-                  <span class="badge bg-primary">{{ u.order_count }} orders</span>
-                </td>
-                <td>
-                  {% if u.email_verified %}
-                    <span class="badge bg-success"><i class="fas fa-check me-1"></i>Verified</span>
-                  {% else %}
-                    <span class="badge bg-warning text-dark"><i class="fas fa-exclamation me-1"></i>Unverified</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if u.disabled %}
-                    <span class="badge bg-danger"><i class="fas fa-ban me-1"></i>Disabled</span>
-                  {% else %}
-                    <span class="badge bg-success"><i class="fas fa-circle me-1"></i>Active</span>
-                  {% endif %}
-                </td>
-                <td>
-                  <small>
-                    {% if u.created_at %}
-                      {{ u.created_at.strftime('%b %d, %Y') }}
-                    {% else %}
-                      N/A
-                    {% endif %}
-                  </small>
-                </td>
-                <td>
-                  {% if u.disabled %}
-                    <form method="POST" action="/admin/user/enable/{{ u.uid }}" 
-                          onsubmit="return confirm('Enable this user?')">
-                      <button type="submit" class="btn btn-sm btn-success">
-                        <i class="fas fa-check me-1"></i>Enable
-                      </button>
-                    </form>
-                  {% else %}
-                    <form method="POST" action="/admin/user/disable/{{ u.uid }}"
-                          onsubmit="return confirm('Disable this user? They will not be able to login.')">
-                      <button type="submit" class="btn btn-sm btn-danger">
-                        <i class="fas fa-ban me-1"></i>Disable
-                      </button>
-                    </form>
-                  {% endif %}
-                </td>
-              </tr>
-              {% else %}
-              <tr>
-                <td colspan="8" class="text-center text-muted py-5">
-                  <i class="fas fa-users fa-3x mb-3 d-block"></i>
-                  No users yet
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PAGINATION FOR USERS -->
-        <nav aria-label="Users pagination" class="mt-3">
-          <ul class="pagination justify-content-end mb-0" id="usersPagination"></ul>
-        </nav>
-
-      </div>
-    </div>
-  </section>
-</div>
-
 
 </div>
-
-<!-- ============ MODALS ============ -->
-
-<!-- DETAILS MODALS -->
-{% for o in orders %}
-<div class="modal fade" id="details{{ o.id }}" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header {% if o.rush %}bg-danger text-white{% else %}bg-primary text-white{% endif %}">
-        <h5 class="modal-title">
-          <i class="fas fa-receipt me-2"></i>Order Details
-          {% if o.rush %}
-            <span class="badge bg-white text-danger ms-2">RUSH ORDER</span>
-          {% endif %}
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-md-6">
-            <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
-            <p class="mb-2">
-              <strong><i class="fas fa-cake-candles me-2 text-primary"></i>Order:</strong><br>
-              <span class="ms-4">{{ o.item }}</span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-calendar me-2 text-primary"></i>Delivery Date:</strong><br>
-              <span class="ms-4">{{ o.delivery_date.strftime('%B %d, %Y - %I:%M %p') }}</span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-info-circle me-2 text-primary"></i>Status:</strong><br>
-              <span class="ms-4">
-                <span class="badge
-                  {% if o.status == 'New' %}bg-secondary
-                  {% elif o.status == 'Accepted' %}bg-info
-                  {% elif o.status == 'Pending' %}bg-warning text-dark
-                  {% elif o.status == 'Ready' %}bg-primary
-                  {% elif o.status == 'Out for Delivery' %}bg-dark
-                  {% elif o.status == 'Completed' %}bg-success
-                  {% elif o.status == 'Cancelled' %}bg-danger
-                  {% endif %}">
-                  {{ o.status }}
-                </span>
-              </span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-truck me-2 text-primary"></i>Delivery Type:</strong><br>
-              <span class="ms-4">
-                {% if o.delivery_type == 'Pickup' %}
-                  <span class="badge bg-warning text-dark">🏪 Pick Up</span>
-                {% else %}
-                  <span class="badge bg-info text-dark">🚚 Delivery</span>
-                {% endif %}
-              </span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-credit-card me-2 text-primary"></i>Payment Method:</strong><br>
-              <span class="ms-4">{{ o.payment_method or 'N/A' }}</span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-clock me-2 text-primary"></i>Ordered On:</strong><br>
-              <span class="ms-4">
-                {% if o.created_at %}
-                  {{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}
-                {% else %}N/A{% endif %}
-              </span>
-            </p>
-          </div>
-          <div class="col-md-6">
-            <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
-            <p class="mb-2">
-              <strong><i class="fas fa-user me-2 text-success"></i>Name:</strong><br>
-              <span class="ms-4">{{ o.customer.name }}</span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-phone me-2 text-success"></i>Contact:</strong><br>
-              <span class="ms-4">{{ o.customer.contact }}</span>
-            </p>
-            <p class="mb-2">
-              <strong><i class="fas fa-location-dot me-2 text-success"></i>Address:</strong><br>
-              <span class="ms-4">{{ o.customer.address }}</span>
-            </p>
-          </div>
-        </div>
-        
-        <hr>
-        
-        <div class="row">
-          <div class="col-md-6">
-            <p class="mb-2">
-              <strong><i class="fas fa-gift me-2 text-warning"></i>Occasion:</strong><br>
-              <span class="ms-4">{{ o.customer.occasion }}</span>
-            </p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-2">
-              <strong><i class="fas fa-user-circle me-2 text-warning"></i>Celebrant:</strong><br>
-              <span class="ms-4">{{ o.customer.celebrant or 'N/A' }}</span>
-            </p>
-          </div>
-          <div class="col-md-6">
-            <p class="mb-2">
-              <strong><i class="fas fa-cake-candles me-2 text-warning"></i>Age:</strong><br>
-              <span class="ms-4">{{ o.customer.age or 'N/A' }}</span>
-            </p>
-          </div>
-        </div>
-        
-        {% if o.notes %}
-        <hr>
-        <div class="alert alert-info mb-0">
-          <h6 class="alert-heading">
-            <i class="fas fa-sticky-note me-2"></i>Special Instructions
-          </h6>
-          <p class="mb-0">{{ o.notes }}</p>
-        </div>
-        {% endif %}
-        
-        {% if o.inspo_image %}
-        <hr>
-        <div class="mb-3">
-          <h6 class="text-muted mb-3">
-            <i class="fas fa-image me-2"></i>CAKE INSPO IMAGE
-          </h6>
-          <img src="{{ o.inspo_image }}"
-              alt="Cake inspo"
-              class="img-fluid rounded"
-              style="max-width: 300px; max-height: 300px; object-fit: cover;">
-        </div>
-        {% endif %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ o.id }}">
-          <i class="fas fa-edit me-2"></i>Edit Cake Details
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times me-2"></i>Close
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-{% endfor %}
-
-<!-- EDIT ORDER MODAL -->
-{% for o in orders %}
-<div class="modal fade" id="editOrderModal{{ o.id }}" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="POST" action="/order/edit/{{ o.user_id }}/{{ o.id }}" id="editOrderForm{{ o.id }}">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Order - Customize Cake</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          
-          <!-- Cake Type -->
-          <label for="editCakeType{{ o.id }}">Cake Type</label>
-          <select id="editCakeType{{ o.id }}" name="cake_type" class="form-select edit-cake-type" data-order-id="{{ o.id }}">
-            <option value="800" {% if 'Chocolate' in o.item %}selected{% endif %}>Chocolate (₱800)</option>
-            <option value="850" {% if 'Vanilla' in o.item %}selected{% endif %}>Vanilla (₱850)</option>
-            <option value="900" {% if 'Red Velvet' in o.item %}selected{% endif %}>Red Velvet (₱900)</option>
-          </select>
-
-          <!-- Design -->
-          <label for="editDesign{{ o.id }}" class="mt-3">Design</label>
-          <select id="editDesign{{ o.id }}" name="design" class="form-select edit-design" data-order-id="{{ o.id }}">
-            <option value="0" {% if 'Simple' in o.item %}selected{% endif %}>Simple (₱0)</option>
-            <option value="300" {% if 'Themed' in o.item %}selected{% endif %}>Themed (₱300)</option>
-            <option value="500" {% if 'Luxury' in o.item %}selected{% endif %}>Luxury (₱500)</option>
-          </select>
-
-          <!-- Cake Size -->
-          <label for="editSize{{ o.id }}" class="mt-3">Cake Size</label>
-          <select id="editSize{{ o.id }}" name="cake_size" class="form-select edit-size" data-order-id="{{ o.id }}">
-            <option value="0" {% if '6 inches' in o.item %}selected{% endif %}>6 inches (₱0)</option>
-            <option value="200" {% if '8 inches' in o.item %}selected{% endif %}>8 inches (+₱200)</option>
-            <option value="400" {% if '10 inches' in o.item %}selected{% endif %}>10 inches (+₱400)</option>
-            <option value="600" {% if '12 inches' in o.item %}selected{% endif %}>12 inches (+₱600)</option>
-          </select>
-
-          <!-- Layers -->
-          <label for="editLayers{{ o.id }}" class="mt-3">Layers</label>
-          <select id="editLayers{{ o.id }}" name="layers" class="form-select edit-layers" data-order-id="{{ o.id }}">
-            <option value="0" {% if 'Single Layer' in o.item %}selected{% endif %}>Single Layer (₱0)</option>
-            <option value="300" {% if 'Double Layer' in o.item %}selected{% endif %}>Double Layer (+₱300)</option>
-            <option value="600" {% if 'Triple Layer' in o.item %}selected{% endif %}>Triple Layer (+₱600)</option>
-          </select>
-
-          <!-- Toppings -->
-          <label class="mt-3">Toppings</label>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Sprinkles' in o.item %}checked{% endif %}>
-            <label class="form-check-label" for="editSprinkles{{ o.id }}">Sprinkles (₱100)</label>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Fruits' in o.item %}checked{% endif %}>
-            <label class="form-check-label" for="editFruits{{ o.id }}">Fruits (₱150)</label>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Chocolate Drip' in o.item %}checked{% endif %}>
-            <label class="form-check-label" for="editChocoDrip{{ o.id }}">Chocolate Drip (₱200)</label>
-          </div>
-
-          <!-- Special Instructions - PRE-FILL -->
-          <label for="editNotes{{ o.id }}" class="mt-3">Special Instructions</label>
-          <textarea name="notes" id="editNotes{{ o.id }}" class="form-control" rows="2" placeholder="e.g., Allergy Warning, no nuts...">{{ o.notes or '' }}</textarea>
-
-          <!-- Delivery Date - PRE-FILL -->
-          <label for="editDeliveryDate{{ o.id }}" class="mt-3">Delivery Date</label>
-          <input type="date" name="delivery_date" id="editDeliveryDate{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%Y-%m-%d') }}" required>
-
-          <!-- Delivery Time - PRE-FILL -->
-          <label for="editDeliveryTime{{ o.id }}" class="mt-3">Delivery Time</label>
-          <input type="time" name="delivery_time" id="editDeliveryTime{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%H:%M') }}" required>
-
-          <!-- Calculated Price - PRE-FILL -->
-          <div class="price-box mt-3">
-            New Total: ₱<span id="editTotalPrice{{ o.id }}">{{ o.amount }}</span>
-          </div>
-
-          <!-- Hidden fields -->
-          <input type="hidden" name="order_item" id="editOrderItem{{ o.id }}">
-          <input type="hidden" name="amount" id="editAmount{{ o.id }}" value="{{ o.amount }}">
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning" onclick="updateEditOrderData('{{ o.id }}')">
-            <i class="fas fa-save me-2"></i>Save Changes
-          </button>
-        </div>
-
-      </form>
-    </div>
-  </div>
-</div>
-{% endfor %}
-
-<!-- CAKE MODAL FORM - ADD NEW CAKE -->
-<div class="modal fade" id="cakeModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <form method="POST" action="{{ url_for('add_cake') }}" enctype="multipart/form-data">
-        <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title">
-            <i class="fas fa-cake-candles me-2"></i>Add Cake
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Cake Image</label>
-            <input type="file" class="form-control" name="image" accept="image/*" onchange="checkFileSize(this)">
-            <small class="text-muted">Upload an image of the cake (JPG, PNG, max 5MB)</small>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Cake Name *</label>
-              <input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Category *</label>
-              <select class="form-select" name="category" required>
-                <option value="">Select category</option>
-                <option value="Birthday">Birthday</option>
-                <option value="Wedding">Wedding</option>
-                <option value="Anniversary">Anniversary</option>
-                <option value="Custom">Custom</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Description *</label>
-            <textarea class="form-control" name="description" rows="3" required placeholder="Describe the cake (flavors, ingredients, size, etc.)"></textarea>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Price (₱) *</label>
-              <input type="number" class="form-control" name="price" step="0.01" min="0" required placeholder="0.00">
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Quantity (Max Orders) *</label>
-              <input type="number" class="form-control" name="quantity" min="0" required placeholder="0">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label">Status</label>
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="status" checked>
-              <label class="form-check-label">
-                Available (Uncheck to mark as unavailable - won't display to customers)
-              </label>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="fas fa-times me-2"></i>Cancel
-          </button>
-          <button type="submit" class="btn btn-warning text-dark">
-            <i class="fas fa-save me-2"></i>Save Cake
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-<!-- INVENTORY EDIT MODALS - one for each inventory item -->
-{% for i in inventory %}
-<div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form method="POST" action="/inventory/edit/{{ i.id }}">
-        <div class="modal-header bg-info text-white">
-          <h5 class="modal-title">
-            <i class="fas fa-edit me-2"></i>Edit Inventory Item
-          </h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-
-          <!-- Status badge at top -->
-          <div class="mb-3 text-center">
-            {% if i.quantity < 5 %}
-              <span class="badge bg-danger p-2"><i class="fas fa-exclamation-triangle me-1"></i>Critical Stock</span>
-            {% elif i.quantity < 10 %}
-              <span class="badge bg-warning text-dark p-2"><i class="fas fa-exclamation me-1"></i>Low Stock</span>
-            {% else %}
-              <span class="badge bg-success p-2"><i class="fas fa-check me-1"></i>Good Stock</span>
-            {% endif %}
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Item Name</label>
-            <input type="text" class="form-control" name="item" value="{{ i.item }}" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Quantity</label>
-            <input type="number" class="form-control" name="quantity" value="{{ i.quantity }}" min="0" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Cost (₱)</label>
-            <input type="number" class="form-control" name="cost" value="{{ i.cost }}" step="0.01" min="0" required>
-          </div>
-
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            <i class="fas fa-times me-2"></i>Cancel
-          </button>
-          <button type="submit" class="btn btn-info text-white">
-            <i class="fas fa-save me-2"></i>Save Changes
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-{% endfor %}
-
-<script src="../static/javascript/admin_dashboard.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
- <script type="text/javascript">
-    google.charts.load("current", {packages:["corechart"]});
-    google.charts.setOnLoadCallback(drawCharts);
-
-    function drawCharts() {
-      // Weekly Sales
-      var salesData = google.visualization.arrayToDataTable([
-        ['Day', 'Sales'],
-        {% for day, val in weekly_sales.items() %}
-        ['{{ day }}', {{ val|float }}],
-        {% endfor %}
-      ]);
-      var salesChart = new google.visualization.PieChart(document.getElementById('weeklySalesChart'));
-      salesChart.draw(salesData, {
-        title: 'Weekly Sales',
-        is3D: true,
-        width: 250,
-        height: 250
-      });
-
-      // Weekly Expenses
-      var expensesData = google.visualization.arrayToDataTable([
-        ['Day', 'Expenses'],
-        {% for day, val in weekly_expenses.items() %}
-        ['{{ day }}', {{ val|float }}],
-        {% endfor %}
-      ]);
-      var expensesChart = new google.visualization.PieChart(document.getElementById('weeklyExpensesChart'));
-      expensesChart.draw(expensesData, {
-        title: 'Weekly Expenses',
-        is3D: true,
-        width: 250,
-        height: 250
-      });
-
-      // Weekly Profit
-      var profitData = google.visualization.arrayToDataTable([
-        ['Day', 'Profit'],
-        {% for day, val in weekly_profit.items() %}
-        ['{{ day }}', {{ val|float }}],
-        {% endfor %}
-      ]);
-      var profitChart = new google.visualization.ColumnChart(
-        document.getElementById('weeklyProfitChart')
-      );
-      profitChart.draw(profitData, {
-        title: 'Weekly Profit',
-        width: 250,
-        height: 250,
-        legend: { position: 'none' },
-        colors: ['#28a745']
-      });
-    }
-  </script>
-</body>
-</html>
+{% endblock %}
