@@ -8,6 +8,7 @@ import cloudinary.uploader
 import firebase
 from db import sales, expenses, inventory, users, cakes, walkin_orders
 from firebase_admin import auth, firestore
+from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -389,19 +390,19 @@ def checkout_page():
 @login_required
 def finalize_order():
     user_id = session.get("user_id")
-    now = datetime.now(PH_TZ)
-
-    date_str = request.form["delivery_date"]
-    time_str = request.form["delivery_time"]
+    now     = datetime.now(PH_TZ)
+ 
+    date_str          = request.form["delivery_date"]
+    time_str          = request.form["delivery_time"]
     delivery_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
     delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
-
-    delivery_type = request.form.get("delivery_type", "Delivery")
-    address = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
-
-    order_type    = request.form.get("order_type")
-    selected_json = request.form.get("selected_items", "[]")
-
+ 
+    delivery_type  = request.form.get("delivery_type", "Delivery")
+    address        = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
+    order_type     = request.form.get("order_type")
+    selected_json  = request.form.get("selected_items", "[]")
+    payment_method = request.form.get("payment_method", "Cash on Delivery")
+ 
     if order_type == "premade":
         selected_items = json.loads(selected_json)
         item_names     = ", ".join([f"{i['cake_name']} (₱{float(i['price']):.0f})" for i in selected_items])
@@ -416,7 +417,8 @@ def finalize_order():
         amount         = float(request.form.get("amount", 0))
         rush           = request.form.get("rush") == "yes"
         inspo_image    = request.form.get("inspo_image") or None
-
+ 
+    # ── Base order data ──
     order_data = {
         "delivery_date":  delivery_datetime,
         "item":           item_names,
@@ -425,7 +427,9 @@ def finalize_order():
         "status":         "New",
         "rush":           rush,
         "notes":          request.form.get("notes", ""),
-        "payment_method": request.form.get("payment_method", "Cash on Delivery"),
+        "payment_method": payment_method,
+        "payment_status": "Pending",   # default
+        "payment_id":     None,        # PayMongo reference
         "delivery_type":  delivery_type,
         "inspo_image":    inspo_image,
         "order_type":     order_type,
@@ -439,11 +443,47 @@ def finalize_order():
         },
         "created_at": now
     }
-
-    users.document(user_id).collection("orders").add(order_data)
-    flash("Order placed successfully! 🎂", "success")
-    return redirect(url_for("customer_dashboard"))
-
+ 
+    # ── COD or Bank Transfer → save immediately ──
+    if payment_method in ["Cash on Delivery", "Bank Transfer"]:
+        users.document(user_id).collection("orders").add(order_data)
+        flash("Order placed successfully! 🎂", "success")
+        return redirect(url_for("customer_dashboard"))
+ 
+    # ── GCash / Maya / Card → PayMongo checkout ──
+    line_items = build_line_items(order_type, selected_items, item_names, amount)
+ 
+    # Store order in session temporarily (save after payment confirmed)
+    session['pending_order'] = {
+        "user_id":    user_id,
+        "order_data": {
+            **order_data,
+            "delivery_date": delivery_datetime.isoformat(),
+            "created_at":    now.isoformat()
+        }
+    }
+ 
+    # Create PayMongo checkout session
+    base_url    = request.host_url.rstrip('/')
+    success_url = f"{base_url}/payment/success"
+    cancel_url  = f"{base_url}/payment/failed"
+ 
+    checkout = create_checkout_session(
+        amount            = int(amount * 100),
+        order_description = f"Ms. Brave Cake Shop - {item_names[:100]}",
+        line_items        = line_items,
+        success_url       = success_url,
+        cancel_url        = cancel_url
+    )
+ 
+    if not checkout:
+        flash("Payment service unavailable. Please try Cash on Delivery.", "danger")
+        return redirect(url_for("customer_dashboard"))
+ 
+    # Save session_id for verification
+    session['paymongo_session_id'] = checkout["session_id"]
+ 
+    return redirect(checkout["checkout_url"])
 # ---------------- CUSTOMER CANCEL ORDER ----------------
 @app.route("/order/cancel/<order_id>", methods=["POST"])
 @login_required
@@ -1080,6 +1120,74 @@ def enable_user(uid):
     flash('User enabled!', 'success')
     return redirect(url_for('admin_users'))
 
+# ================================================================
+# NEW: /payment/success
+# ================================================================
+@app.route("/payment/success")
+@login_required
+def payment_success():
+    session_id    = session.get('paymongo_session_id')
+    pending_order = session.get('pending_order')
+    
+    print("=== PAYMENT SUCCESS HIT ===")
+    print("SESSION ID:", session_id)
+    print("PENDING ORDER EXISTS:", pending_order is not None)
+    
+    if not session_id or not pending_order:
+        flash("Invalid payment session.", "danger")
+        return redirect(url_for("customer_dashboard"))
+ 
+    # Verify payment with PayMongo
+    payment_result = verify_payment(session_id)
+ 
+    if not payment_result.get("paid"):
+        flash("Payment not confirmed. Please try again.", "danger")
+        return redirect(url_for("customer_dashboard"))
+ 
+    # ── Payment confirmed → save order to Firestore ──
+    user_id    = pending_order["user_id"]
+    order_data = pending_order["order_data"]
+ 
+    # Convert ISO strings back to datetime
+    order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
+    order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
+ 
+    # Update payment info
+    order_data["payment_status"] = "Paid"
+    order_data["payment_id"]     = payment_result.get("reference")
+    order_data["payment_method"] = payment_result.get("payment_method", order_data["payment_method"]).upper()
+ 
+    # Save to Firestore
+    doc_ref  = users.document(user_id).collection("orders").add(order_data)
+    order_id = doc_ref[1].id
+ 
+    # Clear session
+    session.pop('paymongo_session_id', None)
+    session.pop('pending_order', None)
+ 
+    # Fetch saved order for thank you page
+    saved_order            = order_data.copy()
+    saved_order["id"]      = order_id
+    saved_order["user_id"] = user_id
+ 
+    return render_template("payment_success.html",
+        order          = saved_order,
+        payment_result = payment_result
+    )
+ 
+ 
+# ================================================================
+# NEW: /payment/failed
+# ================================================================
+@app.route("/payment/failed")
+@login_required
+def payment_failed():
+    # Clear pending session
+    session.pop('paymongo_session_id', None)
+    session.pop('pending_order', None)
+ 
+    flash("Payment was cancelled or failed. Please try again.", "danger")
+    return redirect(url_for("cakes_page"))
 # ================================================================
 # CHATBOT API ROUTES
 # ================================================================

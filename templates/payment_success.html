@@ -1,0 +1,238 @@
+{% extends 'base_customer.html' %}
+{% block title %}Payment Confirmed – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  .success-wrapper {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 16px;
+    background: #f9f9f9;
+  }
+
+  .success-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 32px;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .success-icon {
+    width: 80px; height: 80px;
+    background: #d4edda;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2.2rem;
+  }
+
+  .success-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 6px;
+  }
+
+  .success-subtitle {
+    font-size: 0.88rem;
+    color: #888;
+    margin-bottom: 28px;
+  }
+
+  .order-summary-box {
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: left;
+    margin-bottom: 24px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.88rem;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { color: #888; }
+  .summary-value { font-weight: 600; color: #333; }
+
+  .item-list {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    border: 1px solid #f0f0f0;
+    text-align: left;
+  }
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    padding: 4px 0;
+    color: #555;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 10px 0 0;
+    margin-top: 8px;
+    border-top: 2px solid #f0e8f0;
+  }
+
+  .payment-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #d4edda;
+    color: #155724;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .btn-primary-pink {
+    background: #d63384;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .btn-primary-pink:hover { opacity: 0.88; color: #fff; }
+
+  .btn-outline-pink {
+    background: #fff;
+    color: #d63384;
+    border: 2px solid #d63384;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-outline-pink:hover { background: #fdf0f5; color: #d63384; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-wrapper">
+  <div class="success-card">
+
+    <!-- Success Icon -->
+    <div class="success-icon">🎂</div>
+
+    <!-- Title -->
+    <div class="success-title">Payment Confirmed!</div>
+    <div class="success-subtitle">
+      Thank you for your order! We'll start preparing your cake soon.
+    </div>
+
+    <!-- Payment Badge -->
+    <div class="payment-badge">
+      <i class="fas fa-check-circle"></i>
+      Paid via {{ order.payment_method }}
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary-box">
+      <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; margin-bottom:12px; font-weight:600;">
+        Order Summary
+      </div>
+
+      <!-- Items -->
+      <div class="item-list">
+        {% if order.order_type == 'premade' and order.selected_items %}
+          {% for item in order.selected_items %}
+          <div class="item-row">
+            <span>{{ item.cake_name }}</span>
+            <span>₱{{ "%.2f"|format(item.price|float) }}</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="item-row">
+            <span>Custom Cake</span>
+            <span>₱{{ "%.2f"|format(order.amount|float) }}</span>
+          </div>
+          {% if order.item %}
+          <div style="font-size:0.78rem; color:#aaa; margin-top:4px;">{{ order.item }}</div>
+          {% endif %}
+        {% endif %}
+
+        <div class="total-row">
+          <span>Total Paid</span>
+          <span style="color:#d63384;">₱{{ "%.2f"|format(order.amount|float) }}</span>
+        </div>
+      </div>
+
+      <!-- Order Details -->
+      <div class="summary-row">
+        <span class="summary-label">Order ID</span>
+        <span class="summary-value">{{ order.id[:12] }}...</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Delivery Type</span>
+        <span class="summary-value">
+          {% if order.delivery_type == 'Pickup' %}🏪 Pick Up{% else %}🚚 Delivery{% endif %}
+        </span>
+      </div>
+      {% if order.delivery_date %}
+      <div class="summary-row">
+        <span class="summary-label">
+          {% if order.delivery_type == 'Pickup' %}Pick Up Date{% else %}Delivery Date{% endif %}
+        </span>
+        <span class="summary-value">
+          {{ order.delivery_date.strftime('%b %d, %Y') if order.delivery_date is not string
+             else order.delivery_date[:10] }}
+        </span>
+      </div>
+      {% endif %}
+      {% if payment_result.reference %}
+      <div class="summary-row">
+        <span class="summary-label">Reference No.</span>
+        <span class="summary-value" style="font-size:0.78rem;">{{ payment_result.reference[:16] }}...</span>
+      </div>
+      {% endif %}
+      <div class="summary-row">
+        <span class="summary-label">Payment Status</span>
+        <span class="summary-value" style="color:#28a745;">✅ Paid</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <a href="{{ url_for('customer_dashboard') }}" class="btn-primary-pink">
+        <i class="fas fa-receipt me-2"></i>View My Orders
+      </a>
+      <a href="{{ url_for('cakes_page') }}" class="btn-outline-pink">
+        <i class="fas fa-birthday-cake me-2"></i>Order Again
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
