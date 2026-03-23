@@ -33,32 +33,28 @@
 {% block content %}
 <div class="container-fluid my-4 px-4">
 
-  <div class="section-header">
-    <h1 class="mb-2"><i class="fas fa-list-check me-3"></i>Order Management</h1>
-  </div>
-
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
-      <h4 class="mb-0"><i class="fas fa-list-check me-2"></i>Order List</h4>
+      <h4 class="mb-0"></i>Order Management</h4>
     </div>
     <div class="card-body">
 
       <!-- TABS -->
       <div class="order-tabs">
         <button class="order-tab-btn active" onclick="switchOrderTab('all', this)">
-          <i class="fas fa-layer-group"></i> All
+           All
           <span class="tab-count" id="count-all">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('custom', this)">
-          <i class="fas fa-paint-brush"></i> Online - Customized
+           Online - Customized
           <span class="tab-count" id="count-custom">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('premade', this)">
-          <i class="fas fa-birthday-cake"></i> Online - Premade
+           Online - Premade
           <span class="tab-count" id="count-premade">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('walkin', this)">
-          <i class="fas fa-store"></i> Walk-in
+           Walk-in
           <span class="tab-count" id="count-walkin">0</span>
         </button>
       </div>
@@ -76,19 +72,19 @@
             <div class="col-md-6">
               <select class="form-select" id="statusFilter">
                 <option value="">All Status</option>
-                <option value="New">🆕 New</option>
-                <option value="Accepted">✅ Accepted</option>
-                <option value="Pending">⏳ Pending</option>
-                <option value="Ready">🎂 Ready</option>
-                <option value="Out for Delivery">📦 Out for Delivery</option>
-                <option value="Completed">🟢 Completed</option>
-                <option value="Cancelled">❌ Cancelled</option>
+                <option value="New">New</option>
+                <option value="Accepted">Accepted</option>
+                <option value="Pending">Pending</option>
+                <option value="Ready">Ready</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Completed">Completed</option>
+                <option value="Cancelled">Cancelled</option>
               </select>
             </div>
             <div class="col-md-6">
               <select class="form-select" id="rushFilter">
                 <option value="">All Orders</option>
-                <option value="yes">⚠️ Rush Only</option>
+                <option value="yes">Rush</option>
                 <option value="no">Non-Rush</option>
               </select>
             </div>
@@ -122,23 +118,23 @@
               </td>
               <td>
                 {% if o.order_source == 'walk-in' %}
-                  <span class="badge badge-walkin">🏪 Walk-in</span>
+                  <span class="badge badge-walkin">Walk-in</span>
                 {% elif o.order_type == 'custom' %}
-                  <span class="badge badge-custom">🎨 Custom</span>
+                  <span class="badge badge-custom">Custom</span>
                 {% elif o.order_type == 'premade' %}
-                  <span class="badge badge-premade">🎂 Premade</span>
+                  <span class="badge badge-premade">Premade</span>
                 {% else %}
-                  <span class="badge bg-secondary">📦 Online</span>
+                  <span class="badge bg-secondary">Online</span>
                 {% endif %}
               </td>
               <td>
                 {% if o.order_source == 'walk-in' %}
                   <strong>Walk-in Customer</strong><br>
-                  <small class="text-muted"><i class="fas fa-cash-register me-1"></i>POS</small>
+                  <small class="text-muted"></i>POS</small>
                 {% else %}
                   <strong>{{ o.customer.name }}</strong>
                   {% if o.rush %}<span class="badge bg-danger ms-1">RUSH</span>{% endif %}
-                  <br><small class="text-muted"><i class="fas fa-phone me-1"></i>{{ o.customer.contact }}</small>
+                  <br><small class="text-muted">{{ o.customer.contact }}</small>
                 {% endif %}
               </td>
               <td>
@@ -166,29 +162,29 @@
               <!-- ── PAYMENT STATUS COLUMN ── -->
               <td>
                 {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' %}
-                  <span class="badge bg-success">✅ Paid</span>
+                  <span class="badge bg-success">Paid</span>
                 {% else %}
-                  <span class="badge bg-warning text-dark">⏳ Pending</span>
+                  <span class="badge bg-warning text-dark">Pending</span>
                 {% endif %}
               </td>
               <td>
                 <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
-                  <i class="fas fa-eye"></i> View
+                   View
                 </button>
               </td>
               <td>
                 {% if o.order_source == 'walk-in' %}
-                  <span class="badge bg-success p-2">Completed</span>
+                  <span class="badge bg-success p-2">Walk in Customer</span>
                 {% else %}
                   <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}" onsubmit="return confirmStatus('{{ o.status }}')">
                     <select name="status" class="form-select form-select-sm mb-1">
-                      <option value="New"              {{ 'selected' if o.status=='New' }}>🆕 New</option>
-                      <option value="Accepted"         {{ 'selected' if o.status=='Accepted' }}>✅ Accepted</option>
-                      <option value="Pending"          {{ 'selected' if o.status=='Pending' }}>⏳ Pending</option>
-                      <option value="Ready"            {{ 'selected' if o.status=='Ready' }}>🎂 Ready</option>
-                      <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>📦 Out for Delivery</option>
-                      <option value="Completed"        {{ 'selected' if o.status=='Completed' }}>🟢 Completed</option>
-                      <option value="Cancelled"        {{ 'selected' if o.status=='Cancelled' }}>❌ Cancelled</option>
+                      <option value="New"              {{ 'selected' if o.status=='New' }}>New</option>
+                      <option value="Accepted"         {{ 'selected' if o.status=='Accepted' }}>Accepted</option>
+                      <option value="Pending"          {{ 'selected' if o.status=='Pending' }}>Pending</option>
+                      <option value="Ready"            {{ 'selected' if o.status=='Ready' }}>Ready</option>
+                      <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>Out for Delivery</option>
+                      <option value="Completed"        {{ 'selected' if o.status=='Completed' }}>Completed</option>
+                      <option value="Cancelled"        {{ 'selected' if o.status=='Cancelled' }}>Cancelled</option>
                     </select>
                     <button class="btn btn-primary btn-sm w-100"><i class="fas fa-sync-alt"></i> Update</button>
                   </form>
@@ -219,7 +215,7 @@
     <div class="modal-content">
       <div class="modal-header {% if o.rush %}bg-danger text-white{% elif o.order_source == 'walk-in' %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
         <h5 class="modal-title">
-          <i class="fas fa-receipt me-2"></i>Order Details
+          Order Details
           {% if o.rush %}<span class="badge bg-white text-danger ms-2">RUSH</span>{% endif %}
           {% if o.order_source == 'walk-in' %}<span class="badge bg-white text-success ms-2">WALK-IN</span>{% endif %}
         </h5>
@@ -229,14 +225,14 @@
         <div class="row">
           <div class="col-md-6">
             <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
-            <p class="mb-2"><strong><i class="fas fa-cake-candles me-2 text-primary"></i>Order:</strong><br><span class="ms-4">{{ o.item }}</span></p>
+            <p class="mb-2"><strong></i>Order:</strong><br><span class="ms-4">{{ o.item }}</span></p>
 
             {% if o.order_source != 'walk-in' %}
-            <p class="mb-2"><strong><i class="fas fa-calendar me-2 text-primary"></i>Delivery Date:</strong><br>
+            <p class="mb-2"><strong></i>Delivery Date:</strong><br>
               <span class="ms-4">{{ o.delivery_date.strftime('%B %d, %Y - %I:%M %p') }}</span></p>
             {% endif %}
 
-            <p class="mb-2"><strong><i class="fas fa-info-circle me-2 text-primary"></i>Status:</strong><br>
+            <p class="mb-2"><strong></i>Status:</strong><br>
               <span class="ms-4">
                 <span class="badge
                   {% if o.status == 'New' %}bg-secondary
@@ -252,53 +248,53 @@
             </p>
 
             {% if o.order_source != 'walk-in' %}
-            <p class="mb-2"><strong><i class="fas fa-truck me-2 text-primary"></i>Delivery Type:</strong><br>
+            <p class="mb-2"><strong>Delivery Type:</strong><br>
               <span class="ms-4">
                 {% if o.delivery_type == 'Pickup' %}
-                  <span class="badge bg-warning text-dark">🏪 Pick Up</span>
+                  <span class="badge bg-warning text-dark">Pick Up</span>
                 {% else %}
-                  <span class="badge bg-info text-dark">🚚 Delivery</span>
+                  <span class="badge bg-info text-dark">Delivery</span>
                 {% endif %}
               </span>
             </p>
             {% endif %}
 
-            <p class="mb-2"><strong><i class="fas fa-credit-card me-2 text-primary"></i>Payment Method:</strong><br>
+            <p class="mb-2"><strong></i>Payment Method:</strong><br>
               <span class="ms-4">{{ o.payment_method or 'N/A' }}</span></p>
 
             <!-- ── PAYMENT STATUS IN MODAL ── -->
-            <p class="mb-2"><strong><i class="fas fa-money-check me-2 text-primary"></i>Payment Status:</strong><br>
+            <p class="mb-2"><strong>Payment Status:</strong><br>
               <span class="ms-4">
                 {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' %}
-                  <span class="badge bg-success">✅ Paid</span>
+                  <span class="badge bg-success">Paid</span>
                   {% if o.payment_id %}
                     <small class="text-muted ms-1" style="font-size:0.72rem;">Ref: {{ o.payment_id[:16] }}...</small>
                   {% endif %}
                 {% else %}
-                  <span class="badge bg-warning text-dark">⏳ Pending</span>
+                  <span class="badge bg-warning text-dark">Pending</span>
                 {% endif %}
               </span>
             </p>
 
-            <p class="mb-2"><strong><i class="fas fa-money-bill me-2 text-primary"></i>Amount:</strong><br>
+            <p class="mb-2"><strong></i>Amount:</strong><br>
               <span class="ms-4 fw-bold text-success">₱{{ "%.2f"|format(o.amount) }}</span></p>
-            <p class="mb-2"><strong><i class="fas fa-clock me-2 text-primary"></i>Ordered On:</strong><br>
+            <p class="mb-2"><strong>Ordered On:</strong><br>
               <span class="ms-4">{% if o.created_at %}{{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</span></p>
           </div>
 
           <div class="col-md-6">
             {% if o.order_source == 'walk-in' %}
               <h6 class="text-muted mb-3">WALK-IN DETAILS</h6>
-              <p class="mb-2"><strong><i class="fas fa-cash-register me-2 text-success"></i>Order Source:</strong><br><span class="ms-4">Walk-in (POS)</span></p>
+              <p class="mb-2"><strong>Order Source:</strong><br><span class="ms-4">Walk-in (POS)</span></p>
               {% if o.cash_received %}
-              <p class="mb-2"><strong><i class="fas fa-money-bill me-2 text-success"></i>Cash Received:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.cash_received) }}</span></p>
-              <p class="mb-2"><strong><i class="fas fa-coins me-2 text-success"></i>Change:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.change) }}</span></p>
+              <p class="mb-2"><strong>Cash Received:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.cash_received) }}</span></p>
+              <p class="mb-2"><strong>Change:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.change) }}</span></p>
               {% endif %}
             {% else %}
               <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
-              <p class="mb-2"><strong><i class="fas fa-user me-2 text-success"></i>Name:</strong><br><span class="ms-4">{{ o.customer.name }}</span></p>
-              <p class="mb-2"><strong><i class="fas fa-phone me-2 text-success"></i>Contact:</strong><br><span class="ms-4">{{ o.customer.contact }}</span></p>
-              <p class="mb-2"><strong><i class="fas fa-location-dot me-2 text-success"></i>Address:</strong><br><span class="ms-4">{{ o.customer.address }}</span></p>
+              <p class="mb-2"><strong>Name:</strong><br><span class="ms-4">{{ o.customer.name }}</span></p>
+              <p class="mb-2"><strong>Contact:</strong><br><span class="ms-4">{{ o.customer.contact }}</span></p>
+              <p class="mb-2"><strong>Address:</strong><br><span class="ms-4">{{ o.customer.address }}</span></p>
             {% endif %}
           </div>
         </div>
@@ -306,16 +302,16 @@
         {% if o.order_source != 'walk-in' %}
         <hr>
         <div class="row">
-          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-gift me-2 text-warning"></i>Occasion:</strong><br><span class="ms-4">{{ o.customer.occasion or 'N/A' }}</span></p></div>
-          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-user-circle me-2 text-warning"></i>Celebrant:</strong><br><span class="ms-4">{{ o.customer.celebrant or 'N/A' }}</span></p></div>
-          <div class="col-md-6"><p class="mb-2"><strong><i class="fas fa-cake-candles me-2 text-warning"></i>Age:</strong><br><span class="ms-4">{{ o.customer.age or 'N/A' }}</span></p></div>
+          <div class="col-md-6"><p class="mb-2"><strong>Occasion:</strong><br><span class="ms-4">{{ o.customer.occasion or 'N/A' }}</span></p></div>
+          <div class="col-md-6"><p class="mb-2"><strong>Celebrant:</strong><br><span class="ms-4">{{ o.customer.celebrant or 'N/A' }}</span></p></div>
+          <div class="col-md-6"><p class="mb-2"><strong>Age:</strong><br><span class="ms-4">{{ o.customer.age or 'N/A' }}</span></p></div>
         </div>
         {% endif %}
 
         {% if o.notes %}
         <hr>
         <div class="alert alert-info mb-0">
-          <h6 class="alert-heading"><i class="fas fa-sticky-note me-2"></i>Special Instructions</h6>
+          <h6 class="alert-heading">Special Instructions</h6>
           <p class="mb-0">{{ o.notes }}</p>
         </div>
         {% endif %}

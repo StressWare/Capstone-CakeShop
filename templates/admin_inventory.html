@@ -3,13 +3,11 @@
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
-  <div class="section-header">
-    <h1 class="mb-2"><i class="fas fa-boxes me-3"></i>Inventory Management</h1>
-  </div>
+
 
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
-      <h4 class="mb-0"><i class="fas fa-boxes me-2"></i>Inventory</h4>
+      <h4 class="mb-0">Inventory</h4>
     </div>
     <div class="card-body">
 
@@ -63,11 +61,11 @@
               <td><span class="badge {% if i.quantity < 5 %}bg-danger{% elif i.quantity < 10 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ i.quantity }}</span></td>
               <td class="fw-bold">₱{{ i.cost }}</td>
               <td>
-                {% if i.quantity < 5 %}<span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Critical</span>
-                {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark"><i class="fas fa-exclamation"></i> Low Stock</span>
-                {% else %}<span class="badge bg-success"><i class="fas fa-check"></i> Good</span>{% endif %}
+                {% if i.quantity < 5 %}<span class="badge bg-danger">Critical</span>
+                {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark">Low Stock</span>
+                {% else %}<span class="badge bg-success">Good</span>{% endif %}
               </td>
-              <td><button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}"><i class="fas fa-eye"></i> View</button></td>
+              <td><button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">View</button></td>
             </tr>
             {% else %}
             <tr><td colspan="5" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No inventory items yet</td></tr>

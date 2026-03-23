@@ -122,6 +122,47 @@
       </div>
     {% endif %}
   </div>
+  {% if top_cakes %}
+<section class="top-cakes-section" style="padding: 40px 20px; background:#f9f9f9;">
+  <div class="container">
+    <h2 class="text-center mb-2" style="font-weight:700;">
+      ⭐ Our Best Cakes
+    </h2>
+    <p class="text-center text-muted mb-4">Loved by our customers</p>
+ 
+    <div class="row g-3 justify-content-center">
+      {% for cake in top_cakes %}
+      <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="card h-100 shadow-sm text-center" style="border-radius:12px; overflow:hidden;">
+          {% if cake.image %}
+            <img src="{{ cake.image }}" alt="{{ cake.name }}"
+                 style="width:100%; height:160px; object-fit:cover;">
+          {% else %}
+            <div style="height:160px; background:#fdf0f5; display:flex; align-items:center; justify-content:center; font-size:3rem;">🎂</div>
+          {% endif %}
+          <div class="card-body p-2">
+            <div class="fw-bold" style="font-size:0.85rem;">{{ cake.name }}</div>
+            <div style="color:#ffc107; font-size:0.8rem;">
+              {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
+              <small class="text-muted">({{ cake.review_count }})</small>
+            </div>
+            <div style="color:#d63384; font-weight:700; font-size:0.9rem;">
+              ₱{{ "%.2f"|format(cake.price) }}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+ 
+    <div class="text-center mt-4">
+      <a href="/cakes" class="btn" style="background:#d63384; color:#fff; border-radius:25px; padding:10px 30px;">
+        View All Cakes
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
 </main>
 
 <footer class="custom-footer">

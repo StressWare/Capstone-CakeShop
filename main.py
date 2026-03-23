@@ -6,7 +6,7 @@ import json
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes, walkin_orders
+from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews
 from firebase_admin import auth, firestore
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
@@ -133,13 +133,49 @@ def convert_timestamps(order):
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
-    user_id = session.get("user_id")
+    user_id  = session.get("user_id")
     customer = None
     if user_id:
         doc = users.document(user_id).get()
         if doc.exists:
             customer = doc.to_dict()
-    return render_template("home.html", customer=customer)
+ 
+    # Fetch top 5 rated cakes
+    available_cakes = []
+    for cake_doc in cakes.where("status", "==", True).stream():
+        cake_data = cake_doc.to_dict()
+        cake_data['id']           = cake_doc.id
+        cake_data['avg_rating']   = 0
+        cake_data['review_count'] = 0
+        available_cakes.append(cake_data)
+ 
+    # Calculate ratings
+    cake_ratings = {}
+    for r_doc in reviews.where("is_visible", "==", True).stream():
+        r   = r_doc.to_dict()
+        cid = r.get("cake_id")
+        if cid not in cake_ratings:
+            cake_ratings[cid] = {"total": 0, "count": 0}
+        cake_ratings[cid]["total"] += r.get("rating", 0)
+        cake_ratings[cid]["count"] += 1
+ 
+    for cake in available_cakes:
+        if cake["id"] in cake_ratings:
+            data = cake_ratings[cake["id"]]
+            cake["avg_rating"]   = round(data["total"] / data["count"], 1)
+            cake["review_count"] = data["count"]
+ 
+    # Sort by rating descending → top 5
+    top_cakes = sorted(
+        [c for c in available_cakes if c["review_count"] > 0],
+        key=lambda x: x["avg_rating"],
+        reverse=True
+    )[:5]
+ 
+    return render_template("home.html",
+        customer=customer,
+        top_cakes=top_cakes
+    )
 
 # ---------------- AUTHENTICATION ----------------
 @app.route("/authentication")
@@ -261,28 +297,34 @@ def complete_profile():
 @login_required
 def customer_dashboard():
     user_id = session.get("user_id")
-
+ 
     doc = users.document(user_id).get()
     if not doc.exists:
         return "User not found", 404
     customer = doc.to_dict()
-
-    orders = []
+ 
+    orders_list = []
     for order_doc in users.document(user_id).collection("orders").stream():
         order = order_doc.to_dict()
-        order["id"] = order_doc.id
+        order["id"]    = order_doc.id
         order["notes"] = order.get("notes", "")
+        order["reviewed"] = order.get("reviewed", False)  # ← ADD
         order = convert_timestamps(order)
-        orders.append(order)
-
-    orders.sort(key=lambda x: x["created_at"], reverse=True)
-    cart_count = len(list(users.document(user_id).collection("cart").stream()))
-
-    return render_template("customer_dashboard.html",
-        customer=customer, orders=orders,
-        user_id=user_id, cart_count=cart_count
+        orders_list.append(order)
+ 
+    orders_list.sort(
+        key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ),
+        reverse=True
     )
-
+ 
+    cart_count = len(list(users.document(user_id).collection("cart").stream()))
+ 
+    return render_template("customer_dashboard.html",
+        customer=customer,
+        orders=orders_list,
+        user_id=user_id,
+        cart_count=cart_count
+    )
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
 @login_required
@@ -306,6 +348,58 @@ def customize():
         if doc.exists:
             customer = doc.to_dict()
     return render_template('customization.html', customer=customer)
+
+# ---------------- ADD REVIEW PAGE ----------------
+@app.route("/review/add", methods=["POST"])
+@login_required
+def add_review():
+    user_id  = session.get("user_id")
+    now      = datetime.now(PH_TZ)
+ 
+    cake_id       = request.form.get("cake_id")
+    cake_name     = request.form.get("cake_name")
+    order_id      = request.form.get("order_id")
+    rating        = int(request.form.get("rating", 5))
+    comment       = request.form.get("comment", "").strip()
+ 
+    # Get reviewer name from Firestore
+    user_doc      = users.document(user_id).get()
+    reviewer_name = "Customer"
+    if user_doc.exists:
+        reviewer_name = user_doc.to_dict().get("fname") or \
+                        user_doc.to_dict().get("username") or \
+                        "Customer"
+ 
+    # Check if already reviewed this order
+    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_doc = order_ref.get()
+    if not order_doc.exists:
+        flash("Order not found.", "danger")
+        return redirect(url_for("customer_dashboard"))
+ 
+    if order_doc.to_dict().get("reviewed"):
+        flash("You already reviewed this order.", "warning")
+        return redirect(url_for("customer_dashboard"))
+ 
+    # Save review
+    reviews.add({
+        "user_id":       user_id,
+        "order_id":      order_id,
+        "cake_id":       cake_id,
+        "cake_name":     cake_name,
+        "rating":        rating,
+        "comment":       comment,
+        "reviewer_name": reviewer_name,
+        "is_visible":    True,
+        "created_at":    now
+    })
+ 
+    # Mark order as reviewed
+    order_ref.update({"reviewed": True})
+ 
+    flash("Review submitted! Thank you 🎂", "success")
+    return redirect(url_for("customer_dashboard"))
+ 
 
 # ================================================================
 # ORDER ROUTES
@@ -516,7 +610,27 @@ def cakes_page():
     for cake_doc in cakes.where("status", "==", True).stream():
         cake_data = cake_doc.to_dict()
         cake_data['id'] = cake_doc.id
+        cake_data['avg_rating'] = 0
+        cake_data['review_count'] = 0
         available_cakes.append(cake_data)
+ 
+    # Fetch visible reviews and calculate averages
+    cake_ratings = {}  # cake_id → {total, count}
+    for r_doc in reviews.where("is_visible", "==", True).stream():
+        r = r_doc.to_dict()
+        cid = r.get("cake_id")
+        if cid not in cake_ratings:
+            cake_ratings[cid] = {"total": 0, "count": 0}
+        cake_ratings[cid]["total"] += r.get("rating", 0)
+        cake_ratings[cid]["count"] += 1
+ 
+    # Attach ratings to cakes
+    for cake in available_cakes:
+        if cake["id"] in cake_ratings:
+            data = cake_ratings[cake["id"]]
+            cake["avg_rating"]   = round(data["total"] / data["count"], 1)
+            cake["review_count"] = data["count"]
+ 
     user_id = session.get("user_id")
     return render_template("cakes.html", cakes=available_cakes, user_id=user_id)
 
@@ -930,6 +1044,27 @@ def admin_users():
         all_users.append(user_data)
     return render_template("admin_users.html", all_users=all_users)
 
+# ADMIN - REVIEWS PAGE
+@app.route("/admin/reviews")
+@admin_required
+def admin_reviews():
+    all_reviews = []
+    for doc in reviews.order_by("created_at", direction="DESCENDING").stream():
+        r = doc.to_dict()
+        r["id"] = doc.id
+ 
+        created_at = r.get("created_at")
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                created_at = created_at.astimezone(PH_TZ)
+        r["created_at"] = created_at
+ 
+        all_reviews.append(r)
+ 
+    return render_template("admin_reviews.html", reviews=all_reviews)
+
 # ================================================================
 # ADMIN ACTION ROUTES
 # ================================================================
@@ -1120,6 +1255,21 @@ def enable_user(uid):
     flash('User enabled!', 'success')
     return redirect(url_for('admin_users'))
 
+# ---------------- TOGGLE REVIEW VISIBILITY ----------------
+@app.route("/admin/review/toggle/<review_id>", methods=["POST"])
+@admin_required
+def toggle_review(review_id):
+    review_ref = reviews.document(review_id)
+    review_doc = review_ref.get()
+ 
+    if not review_doc.exists:
+        flash("Review not found.", "danger")
+        return redirect(url_for("admin_reviews"))
+ 
+    current = review_doc.to_dict().get("is_visible", True)
+    review_ref.update({"is_visible": not current})
+    flash("Review visibility updated!", "success")
+    return redirect(url_for("admin_reviews"))
 # ================================================================
 # NEW: /payment/success
 # ================================================================

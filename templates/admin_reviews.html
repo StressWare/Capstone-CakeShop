@@ -1,0 +1,176 @@
+{% extends 'admin_base.html' %}
+{% block title %}Reviews – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  .star-display { color: #ffc107; font-size: 0.9rem; }
+  .review-comment {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .badge-visible   { background: #28a745 !important; }
+  .badge-hidden    { background: #6c757d !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+      <h4 class="mb-0"></i>Review Management</h4>
+      <span class="badge bg-primary">{{ reviews|length }} total</span>
+    </div>
+    <div class="card-body">
+
+      <!-- FILTERS -->
+      <div class="row mb-3">
+        <div class="col-md-6 mb-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <input type="text" class="form-control" placeholder="Search by cake, reviewer..." id="searchReviews">
+          </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="visibilityFilter">
+            <option value="">All Reviews</option>
+            <option value="visible">Visible</option>
+            <option value="hidden">Hidden</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="ratingFilter">
+            <option value="">All Ratings</option>
+            <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+            <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+            <option value="3">⭐⭐⭐ 3 Stars</option>
+            <option value="2">⭐⭐ 2 Stars</option>
+            <option value="1">⭐ 1 Star</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle" id="reviewsTable">
+          <thead class="table-dark">
+            <tr>
+              <th>Date</th>
+              <th>Cake</th>
+              <th>Reviewer</th>
+              <th>Rating</th>
+              <th>Comment</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in reviews %}
+            <tr data-visibility="{{ 'visible' if r.is_visible else 'hidden' }}"
+                data-rating="{{ r.rating }}">
+              <td>
+                <small>{{ r.created_at.strftime('%b %d, %Y') if r.created_at else 'N/A' }}</small><br>
+                <small class="text-muted">{{ r.created_at.strftime('%I:%M %p') if r.created_at else '' }}</small>
+              </td>
+              <td><strong>{{ r.cake_name }}</strong></td>
+              <td>{{ r.reviewer_name }}</td>
+              <td>
+                <span class="star-display">
+                  {% for i in range(r.rating) %}⭐{% endfor %}
+                </span>
+                <small class="text-muted">({{ r.rating }}/5)</small>
+              </td>
+              <td>
+                <span class="review-comment" title="{{ r.comment }}">
+                  {{ r.comment or '—' }}
+                </span>
+              </td>
+              <td>
+                {% if r.is_visible %}
+                  <span class="badge badge-visible">Visible</span>
+                {% else %}
+                  <span class="badge badge-hidden">Hidden</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="/admin/review/toggle/{{ r.id }}">
+                  {% if r.is_visible %}
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                      <i class="fas fa-eye-slash me-1"></i>Hide
+                    </button>
+                  {% else %}
+                    <button type="submit" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-eye me-1"></i>Show
+                    </button>
+                  {% endif %}
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="fas fa-star fa-3x mb-3 d-block"></i>
+                No reviews yet
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <nav class="mt-3">
+        <ul class="pagination justify-content-end mb-0" id="reviewsPagination"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var currentPage   = 1;
+  var itemsPerPage  = 10;
+
+  function updateDisplay() {
+    var searchValue     = document.getElementById('searchReviews').value.toLowerCase();
+    var visibilityValue = document.getElementById('visibilityFilter').value;
+    var ratingValue     = document.getElementById('ratingFilter').value;
+    var allRows         = document.querySelectorAll('#reviewsTable tbody tr');
+    var visibleRows     = [];
+
+    allRows.forEach(function(row) {
+      var text       = row.textContent.toLowerCase();
+      var visibility = row.getAttribute('data-visibility');
+      var rating     = row.getAttribute('data-rating');
+
+      var matchSearch     = text.includes(searchValue);
+      var matchVisibility = !visibilityValue || visibility === visibilityValue;
+      var matchRating     = !ratingValue || rating === ratingValue;
+
+      if (matchSearch && matchVisibility && matchRating) visibleRows.push(row);
+    });
+
+    var totalPages = Math.ceil(visibleRows.length / itemsPerPage);
+    var start      = (currentPage - 1) * itemsPerPage;
+
+    allRows.forEach(row => row.style.display = 'none');
+    visibleRows.forEach(function(row, i) {
+      if (i >= start && i < start + itemsPerPage) row.style.display = '';
+    });
+
+    updatePaginationButtons('reviewsPagination', currentPage, totalPages, function(page) {
+      currentPage = page;
+      updateDisplay();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('searchReviews').addEventListener('keyup',       () => { currentPage = 1; updateDisplay(); });
+    document.getElementById('visibilityFilter').addEventListener('change',   () => { currentPage = 1; updateDisplay(); });
+    document.getElementById('ratingFilter').addEventListener('change',       () => { currentPage = 1; updateDisplay(); });
+    updateDisplay();
+  });
+</script>
+{% endblock %}
