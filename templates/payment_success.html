@@ -144,7 +144,7 @@
   <div class="success-card">
 
     <!-- Success Icon -->
-    <div class="success-icon">🎂</div>
+    <div class="success-icon"><a href="/static/img/logo.png"></div>
 
     <!-- Title -->
     <div class="success-title">Payment Confirmed!</div>
@@ -197,7 +197,7 @@
       <div class="summary-row">
         <span class="summary-label">Delivery Type</span>
         <span class="summary-value">
-          {% if order.delivery_type == 'Pickup' %}🏪 Pick Up{% else %}🚚 Delivery{% endif %}
+          {% if order.delivery_type == 'Pickup' %}Pick Up{% else %}Delivery{% endif %}
         </span>
       </div>
       {% if order.delivery_date %}
@@ -219,7 +219,7 @@
       {% endif %}
       <div class="summary-row">
         <span class="summary-label">Payment Status</span>
-        <span class="summary-value" style="color:#28a745;">✅ Paid</span>
+        <span class="summary-value" style="color:#28a745;">Paid</span>
       </div>
     </div>
 
