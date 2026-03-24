@@ -1,32 +1,315 @@
-body {
-  background: #f8f9fa;
-  min-height: 100vh;
-}
+/* ============================= */
+/* Ms. Brave Cake Shop Dashboard */
+/* ============================= */
 
-.navbar {
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  z-index: 999;
-}
-
+/* ── CONTAINER ── */
 .container {
-  margin-top: 80px; /* To avoid overlap with fixed navbar */
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  font-family: 'Poppins', sans-serif;
+  color: #333;
 }
 
+/* ── HEADINGS ── */
 h2 {
-  color: #d63384;
+  color: #d63384; /* pink-themed headings */
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
+/* ── CARDS ── */
 .card {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.table th, .table td {
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* ── BUTTONS ── */
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #d63384;
+  border-color: #d63384;
+}
+
+.btn-primary:hover {
+  background: #e754a5;
+  border-color: #e754a5;
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #f8f9fa;
+  color: #333;
+  border-color: #ddd;
+}
+
+.btn-secondary:hover {
+  background: #e9ecef;
+}
+
+.btn-info {
+  background: #f783ac;
+  border-color: #f783ac;
+  color: #fff;
+}
+
+.btn-info:hover {
+  background: #ff92c0;
+  border-color: #ff92c0;
+  color: #fff;
+}
+
+.btn-warning {
+  background: #ffb3c6;
+  border-color: #ffb3c6;
+  color: #333;
+}
+
+.btn-warning:hover {
+  background: #ffccd9;
+  border-color: #ffccd9;
+}
+
+.btn-danger {
+  background: #ff6b81;
+  border-color: #ff6b81;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #ff8599;
+  border-color: #ff8599;
+}
+
+/* ── BADGES ── */
+.badge {
+  border-radius: 12px;
+  padding: 0.35em 0.75em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.badge-new       { background: #ff6b81; color: #fff; }
+.badge-accepted  { background: #e754a5; color: #fff; }
+.badge-pending   { background: #ffc0cb; color: #333 !important; }
+.badge-ready     { background: #ff85b3; color: #fff !important; }
+.badge-out       { background: #ff4d6d; color: #fff; }
+.badge-completed { background: #ff82a9; color: #fff; }
+.badge-cancelled { background: #ff1e4f; color: #fff; }
+
+/* ── TABLES ── */
+.table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table th {
+  background: #d63384;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #ffe6f0;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #ffd6eb;
+}
+
+.table td, .table th {
   vertical-align: middle;
 }
 
-.modal-title {
-  color: #d63384;
+/* ── MODALS ── */
+.modal-content {
+  border-radius: 12px;
+}
+
+.modal-header {
+  background: #d63384;
+  color: #fff;
+}
+
+.modal-footer button.btn {
+  min-width: 100px;
+}
+
+/* ── STAR RATINGS ── */
+.star-rating i {
+  font-size: 2rem;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.star-rating i.fas.fa-star {
+  color: #ffc0cb; /* unselected star color */
+}
+
+/* ── CHATBOT ── */
+.chatbot-container {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 2000; /* higher than any navbar */
+}
+
+.chatbot-toggle-btn {
+  background: #d63384;
+  color: #fff;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+
+.chatbot-toggle-btn:hover {
+  background: #e754a5;
+  transform: scale(1.1);
+}
+
+.chatbot-window {
+  display: flex;
+  flex-direction: column;
+  width: 350px;
+  max-height: 500px;
+  background: #fff0f6;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+.chatbot-header {
+  background: #d63384;
+  color: #fff;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatbot-messages {
+  padding: 1rem;
+  flex-grow: 1;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.message {
+  margin-bottom: 0.8rem;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  max-width: 80%;
+}
+
+.bot-message {
+  background: #ffe6f0;
+  align-self: flex-start;
+}
+
+.customer-message {
+  background: #ffb3c6;
+  align-self: flex-end;
+  color: #fff;
+}
+
+.bot-loading {
+  background: #ffd6eb;
+  align-self: flex-start;
+}
+
+.chatbot-input-area {
+  display: flex;
+  padding: 0.5rem 1rem;
+  background: #ffe6f0;
+}
+
+.chatbot-input {
+  flex-grow: 1;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  border: 1px solid #d63384;
+  outline: none;
+}
+
+.chatbot-input:focus {
+  border-color: #e754a5;
+}
+
+.send-btn {
+  background: #d63384;
+  border: none;
+  color: #fff;
+  border-radius: 50%;
+  margin-left: 0.5rem;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  transition: all 0.2s;
+}
+
+.send-btn:hover {
+  background: #e754a5;
+  transform: scale(1.1);
+}
+
+/* FAQ BUTTONS */
+.faq-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+}
+
+.faq-btn {
+  background: #ffb3c6;
+  border: none;
+  border-radius: 12px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.faq-btn:hover {
+  background: #ff85b3;
+  color: #fff;
+}
+
+/* SUPPORT SECTION */
+.support-section {
+  padding: 0.5rem 1rem;
+  text-align: center;
+}
+
+.btn-support {
+  background: #d63384;
+  color: #fff;
+  border-radius: 12px;
+  padding: 0.4rem 0.8rem;
+  transition: all 0.2s;
+}
+
+.btn-support:hover {
+  background: #e754a5;
+  color: #fff;
 }

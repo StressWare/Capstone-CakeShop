@@ -3,7 +3,7 @@
     position: fixed;
     top: 0;
     width: 100%;
-    height: 70px;
+    height: 70px; /* keep navbar height */
     background-color: #000;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     z-index: 999;
@@ -18,18 +18,19 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    position: relative; /* for logo positioning */
 }
 
 .navbar-brand {
-    display: flex;
-    align-items: center;
+    position: relative;
 }
 
 .navbar-logo {
-    margin-top: 15px;
-    height: 180px;
-    width: 230px;
-    object-fit: contain;
+    height: 180px; /* BIG logo */
+    width: auto;   /* keep aspect ratio */
+    position: absolute;
+    top: 50%; /* vertically center relative to navbar */
+    transform: translateY(-50%);
 }
 
 /* ====== MENU (RIGHT-SIDE SLIDE-IN) ====== */
@@ -59,7 +60,6 @@
     padding: 5px 15px;
     cursor: pointer;
     transition: background-color 0.4s ease, color 0.4s ease; /* smooth hover */
-
 }
 
 .menu-btn:hover {
@@ -110,4 +110,77 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
+}
+/* ====== CUSTOM OFFCANVAS MENU ====== */
+.custom-offcanvas {
+    position: fixed;
+    top: 0;
+    right: -250px;
+    width: 250px;
+    height: 100%;
+    background-color: #fff0f5;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    transition: right 0.5s ease;
+    z-index: 998;
+    padding: 20px;
+}
+
+.custom-offcanvas.active {
+    right: 0;
+}
+
+/* ===== FOOTER ===== */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+.custom-footer {
+    background: linear-gradient(135deg, #ffb6c1, #ff69b4);
+    color: white;
+    padding: 15px 40px;
+    margin-top: auto; /* pushes footer to bottom */
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.footer-left h2 {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+}
+
+.footer-right {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.footer-right p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.footer-right a {
+    color: white;
+    font-size: 18px;
+    transition: 0.3s ease;
+}
+
+.footer-right a:hover {
+    opacity: 0.8;
+    transform: scale(1.1);
 }
