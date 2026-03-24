@@ -1,12 +1,193 @@
 {% extends 'admin_base.html' %}
 {% block title %}Cakes – Ms. Brave Cake Shop{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* ── Pink Theme Variables ── */
+  :root {
+    --pink-primary:  #d63384;
+    --pink-light:    #fde8f1;
+    --pink-mid:      #f8b8d4;
+    --pink-dark:     #a0205e;
+    --pink-gradient: linear-gradient(135deg, #d63384 0%, #a0205e 100%);
+    --card-radius:   14px;
+    --shadow-soft:   0 4px 24px rgba(214,51,132,0.10);
+    --shadow-hover:  0 8px 32px rgba(214,51,132,0.18);
+  }
+
+  /* ── Main Card: pink top accent line ── */
+  .card.shadow-sm {
+    border: none;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    border-top: 4px solid var(--pink-primary) !important;
+  }
+
+  /* ── Card Header ── */
+  .card-header.bg-light {
+    border-top: 4px solid #c71585; /* pink top border */
+    color: #fff !important;
+    padding: 16px 24px;
+    border-bottom: none;
+  }
+  .card-header.bg-light h4 {
+    color: #000000 !important;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    font-size: 1.15rem;
+  }
+  .card-header.bg-light .btn-dark {
+    background: rgba(255,255,255,0.18);
+    border: 1.5px solid rgba(255,255,255,0.55);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.83rem;
+    border-radius: 8px;
+    transition: all 0.18s;
+  }
+  .card-header.bg-light .btn-dark:hover {
+    background: rgba(255,255,255,0.32);
+    border-color: #fff;
+  }
+
+  /* ── Search & Filters ── */
+  .input-group-text.bg-white {
+    border-right: none;
+    color: var(--pink-primary);
+  }
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--pink-mid);
+    box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.15);
+  }
+
+  /* ── Cake Cards ── */
+  .cake-card {
+    border: 1.5px solid #fce8f3;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(214,51,132,0.07);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    overflow: hidden;
+  }
+  .cake-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--pink-mid);
+  }
+
+  /* ── Cake image placeholder ── */
+  .cake-image-placeholder {
+    background: #fce8f3;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    overflow: hidden;
+  }
+
+  /* ── Status badge overlay ── */
+  .cake-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.72rem;
+    padding: 4px 9px;
+    border-radius: 20px;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  }
+
+  /* ── Cake card body ── */
+  .cake-card .card-body {
+    padding: 14px 16px 16px;
+  }
+  .cake-card .card-title {
+    font-size: 0.97rem;
+    font-weight: 700;
+    color: #2d1a26;
+    margin-bottom: 6px;
+  }
+
+  /* ── Edit & Delete buttons ── */
+  .cake-card .btn-primary {
+    background: var(--pink-gradient);
+    border: none;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: opacity 0.18s;
+  }
+  .cake-card .btn-primary:hover { opacity: 0.88; }
+
+  .cake-card .btn-danger {
+    border-radius: 7px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  /* ── Pagination ── */
+  .pagination .page-link {
+    color: var(--pink-primary);
+    border-color: #f5c2dc;
+    border-radius: 7px !important;
+    margin: 0 2px;
+    font-size: 0.82rem;
+  }
+  .pagination .page-item.active .page-link {
+    background: var(--pink-primary);
+    border-color: var(--pink-primary);
+    color: #fff;
+  }
+  .pagination .page-link:hover {
+    background: var(--pink-light);
+    border-color: var(--pink-primary);
+    color: var(--pink-dark);
+  }
+
+  /* ── Modals ── */
+  .modal-content {
+    border-radius: var(--card-radius);
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(214,51,132,0.14);
+    border-top: 4px solid var(--pink-primary);
+  }
+  .modal-header.bg-warning {
+    background: var(--pink-gradient) !important;
+    border-bottom: none;
+  }
+  .modal-header.bg-warning h5,
+  .modal-header.bg-warning .modal-title {
+    color: #fff !important;
+  }
+  .modal-header.bg-warning .btn-close {
+    filter: brightness(0) invert(1);
+  }
+  .modal-footer .btn-warning {
+    background: var(--pink-gradient);
+    border: none;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: 8px;
+  }
+  .modal-footer .btn-warning:hover { opacity: 0.88; }
+  .modal-footer .btn-secondary {
+    border-radius: 8px;
+  }
+
+  /* ── Empty state ── */
+  .text-muted.fa-4x { color: #e0a0bf !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid my-4 px-4">
- 
+
   <div class="card shadow-sm">
     <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center">
-      <h4 class="mb-0"></i>Cake Management</h4>
+      <h4 class="mb-0">Cake Management</h4>
       <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#cakeModal"><i class="fas fa-plus me-2"></i>Add New Cake</button>
     </div>
     <div class="card-body">

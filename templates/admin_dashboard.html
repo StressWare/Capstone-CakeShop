@@ -1,17 +1,82 @@
 {% extends 'admin_base.html' %}
 {% block title %}Dashboard – Ms. Brave Cake Shop{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* ── STAT CARDS ── */
+ .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    color: #000;
+    border-top: 4px solid #c71585; /* pink top border */
+  }
+  .stat-card h6 {
+    color: #c71585;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+  .stat-card h2 {
+    color: #000;
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+
+  }
+
+  /* ── LOW STOCK CARD ── */
+  #status-overview .card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  /* ── QUICK LINKS ── */
+  .card.text-decoration-none {
+    background: #ffffff;
+    color: #000;
+    transition: all 0.2s ease;
+    border-top: 4px solid #c71585; /* pink top border */
+
+  }
+  .card.text-decoration-none:hover {
+    background: #ffe6f0; /* soft pink hover */
+    color: #c71585;
+    transform: translateY(-2px);
+  }
+  .card.text-decoration-none i {
+    color: #c71585; /* pink icon */
+  }
+  .card.text-decoration-none .fw-bold {
+    color: #000;
+  }
+
+  /* ── DELIVERY STATUS BADGES ── */
+  .badge.bg-secondary { background-color: #000; color: #fff; }
+  .badge.bg-info { background-color: #c71585; color: #fff; }
+  .badge.bg-warning { background-color: #ffb6c1; color: #000; }
+  .badge.bg-primary { background-color: #c71585; color: #fff; }
+  .badge.bg-dark { background-color: #000; color: #fff; }
+  .badge.bg-danger { background-color: #ff4d6d; color: #fff; }
+  .badge.bg-light { background-color: #f8f2f8; color: #000; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid my-4 px-4">
 
   <div class="section-header">
-    <h1 class="mb-2"><i class="fas fa-chart-pie me-3"></i>Admin Dashboard</h1>
+    <h1 class="mb-2">Admin Dashboard</h1>
     <p class="mb-0 opacity-75">Complete overview of your cake shop business</p>
   </div>
 
   <!-- STATUS OVERVIEW -->
   <section id="status-overview" class="mb-5">
-    <h3 class="mb-3"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Status Overview</h3>
+    <h3 class="mb-3">Status Overview</h3>
     <div class="row g-3">
 
       <!-- LEFT: Stat Cards + Low Stock -->
@@ -19,57 +84,49 @@
         <div class="row g-2">
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">🆕</div>
-              <h6 class="text-muted mb-0 small">NEW</h6>
+              <h6 class="mb-0 small">NEW</h6>
               <h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">✅</div>
-              <h6 class="text-muted mb-0 small">ACCEPTED</h6>
+              <h6 class="mb-0 small">ACCEPTED</h6>
               <h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">⏳</div>
-              <h6 class="text-muted mb-0 small">PENDING</h6>
+              <h6 class="mb-0 small">PENDING</h6>
               <h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">🎂</div>
-              <h6 class="text-muted mb-0 small">READY</h6>
+              <h6 class="mb-0 small">READY</h6>
               <h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">📦</div>
-              <h6 class="text-muted mb-0 small">OUT</h6>
+              <h6 class="mb-0 small">OUT</h6>
               <h2 class="mb-0 fw-bold">{{ total_out }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">🟢</div>
-              <h6 class="text-muted mb-0 small">COMPLETED</h6>
+              <h6 class="mb-0 small">COMPLETED</h6>
               <h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">❌</div>
-              <h6 class="text-muted mb-0 small">CANCEL</h6>
+              <h6 class="mb-0 small">CANCEL</h6>
               <h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2>
             </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="card stat-card text-center p-2">
-              <div class="fs-2 mb-1">⚠️</div>
-              <h6 class="text-muted mb-0 small">RUSH</h6>
+              <h6 class="mb-0 small">RUSH</h6>
               <h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2>
             </div>
           </div>
@@ -79,7 +136,7 @@
             <div class="card">
               <div class="card-body py-2">
                 <div class="d-flex align-items-center">
-                  <h5 class="mb-0 me-3">⚠️ <strong>LOW STOCK:</strong></h5>
+                  <h5 class="mb-0 me-3"><strong>LOW STOCK:</strong></h5>
                   {% if low_stock %}
                     <div class="d-flex flex-wrap gap-2">
                       {% for i in low_stock %}
@@ -102,14 +159,14 @@
       <div class="col-md-5">
         <div class="card h-100">
           <div class="card-header bg-white">
-            <h5 class="mb-0">🚚 Today's Deliveries ({{ today_count }})</h5>
+            <h5 class="mb-0">Today's Deliveries ({{ today_count }})</h5>
           </div>
           <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
             {% if today_deliveries %}
               {% for delivery in today_deliveries %}
               <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                 <div>
-                  <span class="badge bg-light text-dark me-2">🕑 {{ delivery.time }}</span>
+                  <span class="badge bg-light text-dark me-2">{{ delivery.time }}</span>
                   {% if delivery.rush %}<span class="badge bg-danger">RUSH</span>{% endif %}
                   <strong class="d-block">{{ delivery.customer }}</strong>
                   <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
@@ -139,25 +196,21 @@
   <div class="row g-3 mt-2">
     <div class="col-md-3">
       <a href="/admin/orders" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <i class="fas fa-list-check fa-2x text-primary mb-2"></i>
         <div class="fw-bold">Orders</div>
       </a>
     </div>
     <div class="col-md-3">
       <a href="/admin/cakes" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <i class="fas fa-cake-candles fa-2x text-warning mb-2"></i>
         <div class="fw-bold">Cakes</div>
       </a>
     </div>
     <div class="col-md-3">
       <a href="/admin/inventory" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <i class="fas fa-boxes fa-2x text-success mb-2"></i>
         <div class="fw-bold">Inventory</div>
       </a>
     </div>
     <div class="col-md-3">
       <a href="/admin/users" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <i class="fas fa-users fa-2x text-info mb-2"></i>
         <div class="fw-bold">Users</div>
       </a>
     </div>

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Customize Your Cake - MRS. Brave's Cake Iloilo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <link href="../static/css/customization.css" rel="stylesheet">
 </head>
 <body>
@@ -27,7 +28,7 @@
   <div class="offcanvas-body">
     <a href="/">Home</a>
     <a href="/customer_dashboard">Profile</a>
-    <a href="/#cakes">Cake Showcase</a>
+    <a href="/cakes">Cake Showcase</a>
     <a href="/customize_cake">Customize Your Cake</a>
   </div>
 </div>
@@ -92,8 +93,10 @@
     <label for="notes">Special Instructions</label>
     <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
 
-    <label for="image">Cake Image Inspo</label>
-    <input type="file" name="image" id="image" accept="image/*" onchange="checkFileSize(this)">
+    <label for="image" class="custom-file-btn">
+     <i class="bi bi-upload"></i> Upload Cake Image
+    </label>
+    <input type="file" name="image" id="image" accept="image/*" onchange="checkFileSize(this)" hidden>
     <small>Upload an image of your desired cake (optional) — Max 2MB</small>
 
     <label>

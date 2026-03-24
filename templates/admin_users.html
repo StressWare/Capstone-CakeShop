@@ -1,6 +1,55 @@
 {% extends 'admin_base.html' %}
 {% block title %}Users – Ms. Brave Cake Shop{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* PINK THEME ADDITIONS (DESIGN ONLY, NO LOGIC CHANGES) */
+
+  /* ── CARD CUSTOMIZATION ── */
+  .card-header.card-header-custom {
+    border-top: 4px solid #d63384; /* pink top border */
+    background: #fff;
+    color: #c71585;
+    font-weight: 600;
+  }
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: #ffffff;
+  }
+
+  /* ── TABLE CUSTOMIZATION ── */
+  .table-pink th {
+    background-color: #d63384 !important; /* pink background */
+    color: #fff !important;               /* white text */
+    border-color: #d63384 !important;     /* remove default black border */
+  }
+  #usersTable tbody tr:hover {
+    background-color: #ffe6f0; /* subtle pink on hover */
+  }
+
+  /* ── INPUTS & FILTERS ── */
+  .input-group-text {
+    border-right: none;
+  }
+  .form-control, .form-select {
+    border-radius: 8px;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination .page-item.active .page-link {
+    background-color: #d63384;
+    border-color: #d63384;
+  }
+
+  /* ── BADGES (Keep original colors intact) ── */
+  .badge-primary { background-color: #6f42c1 !important; }
+  .badge-success { background-color: #28a745 !important; }
+  .badge-warning { background-color: #ffc107 !important; color: #212529; }
+  .badge-danger  { background-color: #dc3545 !important; }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid my-4 px-4">
 

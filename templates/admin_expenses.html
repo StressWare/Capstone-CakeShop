@@ -1,47 +1,121 @@
-<!-- ================================================================
-admin_expenses.html
-================================================================ -->
 {% extends 'admin_base.html' %}
 {% block title %}Expenses – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── CARD CUSTOMIZATION ── */
+  .card-header.card-header-custom {
+    border-top: 4px solid #c71585; /* pink top border */
+    background: #ffffff;
+    color: #c71585;
+  }
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: #ffffff;
+  }
+
+  /* ── TABLE STYLING ── */
+  #expensesTable {
+    border-radius: 8px;
+  }
+  #expensesTable thead {
+    background-color: #c71585;
+    color: #fff;
+  }
+  #expensesTable tbody tr:hover {
+    background-color: #ffe6f0;
+  }
+  #expensesTable td {
+    vertical-align: middle;
+  }
+  .text-danger {
+    color: #c71585 !important; /* pink for cost */
+  }
+
+  /* ── INPUT STYLING ── */
+  .input-group-text {
+    background: #ffffff;
+    border-right: none;
+    color: #c71585;
+  }
+  .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+  }
+  .form-control:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
+  }
+
+  /* ── PAGINATION ── */
+  .pagination .page-link {
+    color: #c71585;
+  }
+  .pagination .page-link.active {
+    background-color: #c71585;
+    color: #fff;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid my-4 px-4">
-
   <div class="card shadow-sm">
-    <div class="card-header card-header-custom"><h4 class="mb-0">Expenses Records</h4></div>
+    <div class="card-header card-header-custom">
+      <h4 class="mb-0">Expenses Records</h4>
+    </div>
     <div class="card-body">
       <div class="row mb-3">
         <div class="col-md-12 mb-2">
           <div class="input-group">
-            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
           </div>
         </div>
       </div>
+
       <div class="table-responsive">
         <table class="table table-hover align-middle" id="expensesTable">
-          <thead class="table-dark"><tr><th>Date</th><th>Description</th><th>Cost (₱)</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Cost (₱)</th>
+            </tr>
+          </thead>
           <tbody>
             {% for e in expenses %}
             <tr>
-              <td><small>{{ e.date.strftime('%b %d, %Y') }}</small><br><small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small></td>
+              <td>
+                <small>{{ e.date.strftime('%b %d, %Y') }}</small><br>
+                <small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small>
+              </td>
               <td><strong>{{ e.description }}</strong></td>
               <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
             </tr>
             {% else %}
-            <tr><td colspan="3" class="text-center text-muted py-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>No expenses yet</td></tr>
+            <tr>
+              <td colspan="3" class="text-center text-muted py-4">No expenses yet</td>
+            </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="expensesPagination"></ul></nav>
+
+      <nav class="mt-3">
+        <ul class="pagination justify-content-end mb-0" id="expensesPagination"></ul>
+      </nav>
     </div>
   </div>
 </div>
 {% endblock %}
+
 {% block extra_js %}
 <script>
 let currentExpensesPage = 1;
 const expensesPerPage = 10;
+
 function updateExpensesDisplay() {
   const searchValue = document.getElementById('searchExpenses').value.toLowerCase();
   const allRows = document.querySelectorAll('#expensesTable tbody tr');
@@ -53,6 +127,7 @@ function updateExpensesDisplay() {
   visibleRows.forEach((row, i) => { if (i >= start && i < start + expensesPerPage) row.style.display = ''; });
   updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => { currentExpensesPage = page; updateExpensesDisplay(); });
 }
+
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('searchExpenses').addEventListener('keyup', () => { currentExpensesPage = 1; updateExpensesDisplay(); });
   updateExpensesDisplay();

@@ -3,30 +3,260 @@
 
 {% block extra_css %}
 <style>
+  /* ── Pink Theme Variables ── */
+  :root {
+    --pink-primary:   #d63384;
+    --pink-light:     #fde8f1;
+    --pink-mid:       #f8b8d4;
+    --pink-dark:      #a0205e;
+    --pink-gradient:  linear-gradient(135deg, #d63384 0%, #a0205e 100%);
+    --card-radius:    14px;
+    --shadow-soft:    0 4px 24px rgba(214,51,132,0.10);
+    --shadow-hover:   0 8px 32px rgba(214,51,132,0.18);
+  }
+
+  /* ── Card: pink top accent line ── */
+  .card.shadow-sm {
+    border: none;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    border-top: 4px solid var(--pink-primary) !important;
+  }
+
+  /* ── Card Header ── */
+  .card-header-custom {
+    background: var(--pink-gradient) !important;
+    color: #fff !important;
+    padding: 16px 24px;
+    border-bottom: none;
+  }
+  .card-header-custom h4 {
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    font-size: 1.15rem;
+  }
+
+  /* Pink theme table header */
+  .table-pink th {
+    background-color: #d63384 !important; /* Pink background */
+    color: #fff; /* White text */
+  }
+
+  /* Optional: keep hover on rows lighter pink */
+  #usersTable tbody tr:hover {
+    background-color: #ffe6f0;
+  }
+
+  /* Existing pink card header remains */
+  .card-header.card-header-custom {
+    border-top: 4px solid #d63384;
+    background: #fff;
+    font-weight: 600;
+  }
+
+  /* ── Order Tabs ── */
   .order-tabs {
-    display: flex; gap: 4px;
-    background: #f5f5f5; border-radius: 10px;
-    padding: 4px; margin-bottom: 20px; flex-wrap: wrap;
+    display: flex;
+    gap: 4px;
+    background: #fce8f3;
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    border: 1.5px solid #f5c2dc;
   }
   .order-tab-btn {
-    padding: 8px 16px; border: none; border-radius: 8px;
-    background: transparent; font-size: 0.82rem; font-weight: 600;
-    color: #888; cursor: pointer; transition: all 0.2s ease;
-    display: flex; align-items: center; gap: 6px;
+    padding: 8px 18px;
+    border: none;
+    border-radius: 9px;
+    background: transparent;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #b0567e;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
   .order-tab-btn.active {
-    background: #fff; color: #d63384;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background: #fff;
+    color: var(--pink-primary);
+    box-shadow: 0 2px 10px rgba(214,51,132,0.13);
   }
-  .order-tab-btn:hover:not(.active) { color: #555; }
+  .order-tab-btn:hover:not(.active) {
+    color: var(--pink-primary);
+    background: rgba(255,255,255,0.55);
+  }
   .tab-count {
-    background: #e0e0e0; border-radius: 10px;
-    padding: 1px 7px; font-size: 0.72rem; font-weight: 700;
+    background: #f5c2dc;
+    border-radius: 10px;
+    padding: 1px 8px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #a0205e;
   }
-  .order-tab-btn.active .tab-count { background: #fde8f1; color: #d63384; }
+  .order-tab-btn.active .tab-count {
+    background: var(--pink-light);
+    color: var(--pink-primary);
+  }
+
+  /* ── Search & Filter ── */
+  .input-group-text.bg-white {
+    border-right: none;
+    color: var(--pink-primary);
+  }
+  .form-control:focus,
+  .form-select:focus {
+    border-color: var(--pink-mid);
+    box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.15);
+  }
+
+  /* ── Table ── */
+  #ordersTable thead.table-dark {
+    background: var(--pink-gradient) !important;
+    --bs-table-bg: transparent;
+    --bs-table-color: #fff;
+  }
+  #ordersTable thead.table-dark th {
+    background: transparent !important;
+    color: #fff !important;
+    font-size: 0.8rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    border-bottom: none;
+    padding: 13px 12px;
+  }
+  #ordersTable tbody tr {
+    transition: background 0.15s;
+  }
+  #ordersTable tbody tr:hover {
+    background: #fff5fa !important;
+  }
+  #ordersTable tbody td {
+    vertical-align: middle;
+    font-size: 0.87rem;
+    padding: 11px 12px;
+    border-color: #fce8f3;
+  }
+
+  /* ── Rush Row ── */
+  .table-danger {
+    background-color: #fff0f5 !important;
+  }
+
+  /* ── Badges ── */
   .badge-custom  { background: #6f42c1 !important; }
   .badge-premade { background: #0d6efd !important; }
-  .badge-walkin  { background: #d63384 !important; }
+  .badge-walkin  { background: var(--pink-primary) !important; }
+
+  /* ── View Button ── */
+  .btn-outline-info {
+    border-color: var(--pink-mid);
+    color: var(--pink-primary);
+    font-size: 0.78rem;
+    padding: 4px 12px;
+    border-radius: 7px;
+    font-weight: 600;
+    transition: all 0.18s;
+  }
+  .btn-outline-info:hover {
+    background: var(--pink-light);
+    border-color: var(--pink-primary);
+    color: var(--pink-dark);
+  }
+
+  /* ── Update Status form select ── */
+  #ordersTable .form-select-sm {
+    border-color: #f5c2dc;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+  #ordersTable .form-select-sm:focus {
+    border-color: var(--pink-primary);
+    box-shadow: 0 0 0 0.15rem rgba(214,51,132,0.15);
+  }
+  #ordersTable .btn-primary.btn-sm {
+    background: var(--pink-gradient);
+    border: none;
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: opacity 0.18s;
+  }
+  #ordersTable .btn-primary.btn-sm:hover {
+    opacity: 0.88;
+  }
+
+  /* ── Pagination ── */
+  .pagination .page-link {
+    color: var(--pink-primary);
+    border-color: #f5c2dc;
+    border-radius: 7px !important;
+    margin: 0 2px;
+    font-size: 0.82rem;
+  }
+  .pagination .page-item.active .page-link {
+    background: var(--pink-primary);
+    border-color: var(--pink-primary);
+    color: #fff;
+  }
+  .pagination .page-link:hover {
+    background: var(--pink-light);
+    border-color: var(--pink-primary);
+    color: var(--pink-dark);
+  }
+
+  /* ── Modal Header ── */
+  .modal-header.bg-primary {
+    background: var(--pink-gradient) !important;
+  }
+  .modal-header.bg-success {
+    background: linear-gradient(135deg, #198754, #0f5132) !important;
+  }
+  .modal-header.bg-danger {
+    background: linear-gradient(135deg, #dc3545, #9a1827) !important;
+  }
+  .modal-content {
+    border-radius: var(--card-radius);
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(214,51,132,0.14);
+    border-top: 4px solid var(--pink-primary);
+  }
+  .modal-footer .btn-warning {
+    background: linear-gradient(135deg, #ffc107, #e0a800);
+    border: none;
+    font-weight: 600;
+    border-radius: 8px;
+  }
+  .modal-footer .btn-secondary {
+    border-radius: 8px;
+  }
+
+  /* ── Edit Modal price box ── */
+  .price-box {
+    background: var(--pink-light);
+    border: 1.5px solid var(--pink-mid);
+    border-radius: 9px;
+    padding: 10px 16px;
+    font-weight: 700;
+    color: var(--pink-dark);
+    font-size: 1rem;
+  }
+
+  /* ── Empty state ── */
+  #emptyTabMsg {
+    color: #c07090;
+  }
+
+  /* ── Card body padding ── */
+  .card-body {
+    padding: 22px 24px;
+  }
 </style>
 {% endblock %}
 
@@ -35,7 +265,7 @@
 
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
-      <h4 class="mb-0"></i>Order Management</h4>
+      <h4 class="mb-0">Order Management</h4>
     </div>
     <div class="card-body">
 

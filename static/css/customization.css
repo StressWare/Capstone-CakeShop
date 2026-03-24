@@ -254,6 +254,23 @@ h2, h3 {
     cursor: pointer;
 }
 
+.custom-file-btn {
+  width: 30%;
+  display: inline-block;
+  padding: 7px;
+  background-color: #ff99cc;  /* soft pink */
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s;
+  margin-bottom: 0.3rem;
+}
+
+.custom-file-btn:hover {
+  background-color: #ffbedc;
+}
+
 /* ====== RESPONSIVE ====== */
 @media (max-width: 768px) {
 

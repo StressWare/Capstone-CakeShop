@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Cart - Ms. Brave Cake Shop</title>
-  <link rel="stylesheet" href="static/css/cakes.css">
+  <title>My Cart - MRS. Brave Cake Shop</title>
+  <link rel="stylesheet" href="static/css/cart.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
@@ -44,7 +44,7 @@
     {% endfor %}{% endif %}
   {% endwith %}
 
-  <div class="cart-title">🛒 My Cart</div>
+  <div class="cart-title">My Cart</div>
   <div class="cart-subtitle">Select items to checkout</div>
 
   {% if cart_items %}
@@ -69,8 +69,8 @@
 
       <div class="cake-img-box">
         {% if item.image %}
-          <img src="{{ url_for('static', filename='uploads/' + item.image) }}" alt="{{ item.cake_name }}">
-        {% else %}🎂{% endif %}
+          <img src="{{ url_for('static', filename='uploads/' + cake.image) }}" alt="{{ item.cake_name }}">
+        {% else %}{% endif %}
       </div>
 
       <div>
@@ -100,7 +100,7 @@
     </div>
     <button type="button" id="checkoutBtn" class="btn-checkout disabled"
             onclick="submitCheckout()">
-      <i class="fas fa-check-circle me-2"></i>Checkout
+      <i class="checkout"></i>Checkout
     </button>
   </div>
 

@@ -1,10 +1,91 @@
 {% extends 'admin_base.html' %}
 {% block title %}Inventory – Ms. Brave Cake Shop{% endblock %}
 
+{% block extra_css %}
+<style>
+  /* ── CARD CUSTOMIZATION ── */
+  .card-header.card-header-custom {
+    border-top: 4px solid #c71585; /* pink top border */
+    background: #ffffff;
+    color: #c71585;
+  }
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    background: #ffffff;
+  }
+
+  /* ── TABLE STYLING ── */
+  #inventoryTable {
+    border-radius: 8px;
+  }
+  #inventoryTable thead {
+    background-color: #c71585;
+    color: #fff;
+  }
+  #inventoryTable tbody tr:hover {
+    background-color: #ffe6f0;
+  }
+  #inventoryTable td {
+    vertical-align: middle;
+  }
+  .table-danger td, .table-warning td {
+    font-weight: bold;
+  }
+
+/* BADGES FOR STOCK STATUS */
+.badge-status-critical { background-color: #dc3545 !important; color: #fff !important; } /* red */
+.badge-status-low { background-color: #ffc107 !important; color: #000 !important; } /* yellow */
+.badge-status-good { background-color: #28a745 !important; color: #fff !important; } /* green */
+
+  /* ── INPUT STYLING ── */
+  .input-group-text {
+    background: #ffffff;
+    border-right: none;
+    color: #c71585;
+  }
+  .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+  }
+  .form-control:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
+  }
+
+  /* ── BUTTONS ── */
+  .btn-info {
+    background-color: #c71585;
+    border-color: #c71585;
+    color: #fff;
+  }
+  .btn-info:hover {
+    background-color: #a0106a;
+    border-color: #a0106a;
+  }
+
+  /* ── PAGINATION ── */
+  .pagination .page-link {
+    color: #c71585;
+  }
+  .pagination .page-link.active {
+    background-color: #c71585;
+    color: #fff;
+  }
+
+  /* ── MODAL HEADER ── */
+  .modal-header.bg-info {
+    background-color: #c71585 !important;
+    color: #fff;
+  }
+  .btn-close-white {
+    filter: invert(1);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid my-4 px-4">
-
-
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
       <h4 class="mb-0">Inventory</h4>
@@ -26,7 +107,7 @@
           <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-2"></i>Add Item</button>
+          <button type="submit" class="btn btn-info w-100">Add Item</button>
         </div>
       </form>
 
@@ -34,7 +115,7 @@
       <div class="row mb-3">
         <div class="col-md-9 mb-2">
           <div class="input-group">
-            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+            <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
           </div>
         </div>
@@ -51,8 +132,14 @@
       <!-- TABLE -->
       <div class="table-responsive">
         <table class="table table-hover align-middle" id="inventoryTable">
-          <thead class="table-dark">
-            <tr><th>Item</th><th>Quantity</th><th>Cost (₱)</th><th>Status</th><th>Action</th></tr>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Cost (₱)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
           </thead>
           <tbody>
             {% for i in inventory %}
@@ -61,19 +148,26 @@
               <td><span class="badge {% if i.quantity < 5 %}bg-danger{% elif i.quantity < 10 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ i.quantity }}</span></td>
               <td class="fw-bold">₱{{ i.cost }}</td>
               <td>
-                {% if i.quantity < 5 %}<span class="badge bg-danger">Critical</span>
-                {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark">Low Stock</span>
-                {% else %}<span class="badge bg-success">Good</span>{% endif %}
+                {% if i.quantity < 5 %}
+                  <span class="badge badge-status-critical">Critical</span>
+                {% elif i.quantity < 10 %}
+                  <span class="badge badge-status-low">Low Stock</span>
+                {% else %}
+                  <span class="badge badge-status-good">Good</span>
+                {% endif %}
               </td>
-              <td><button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">View</button></td>
+              <td><button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">View</button></td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No inventory items yet</td></tr>
+            <tr><td colspan="5" class="text-center text-muted py-5">No inventory items yet</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="inventoryPagination"></ul></nav>
+
+      <nav class="mt-3">
+        <ul class="pagination justify-content-end mb-0" id="inventoryPagination"></ul>
+      </nav>
     </div>
   </div>
 </div>
@@ -84,8 +178,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <form method="POST" action="/inventory/edit/{{ i.id }}">
-        <div class="modal-header bg-info text-white">
-          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Inventory Item</h5>
+        <div class="modal-header bg-info">
+          <h5 class="modal-title">Edit Inventory Item</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -100,7 +194,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-info text-white"><i class="fas fa-save me-2"></i>Save</button>
+          <button type="submit" class="btn btn-info text-white">Save</button>
         </div>
       </form>
     </div>

@@ -3,15 +3,46 @@
 
 {% block extra_css %}
 <style>
+  /* ── STAR DISPLAY ── */
   .star-display { color: #ffc107; font-size: 0.9rem; }
+
+  /* ── REVIEW COMMENT TRUNCATION ── */
   .review-comment {
     max-width: 300px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .badge-visible   { background: #28a745 !important; }
-  .badge-hidden    { background: #6c757d !important; }
+
+  /* ── STATUS BADGES ── */
+  .badge-visible   { background: #28a745 !important; } /* green */
+  .badge-hidden    { background: #6c757d !important; } /* gray */
+
+  /* ── CARD HEADER CUSTOMIZATION ── */
+  .card-header.card-header-custom {
+    border-top: 4px solid #c71585; /* pink top border */
+    background: #fffefe; /* light pink background */
+    color: #c71585;
+  }
+
+  /* ── TABLE HOVER PINK ACCENT ── */
+  #reviewsTable tbody tr:hover {
+    background-color: #fff0f6; /* very light pink on hover */
+  }
+
+  /* ── INPUT & SELECT FOCUS ── */
+  #searchReviews:focus,
+  #visibilityFilter:focus,
+  #ratingFilter:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.2rem rgba(199, 21, 133, 0.25);
+  }
+
+  /* ── PAGINATION ACTIVE ── */
+  .pagination .page-item.active .page-link {
+    background-color: #c71585;
+    border-color: #c71585;
+  }
 </style>
 {% endblock %}
 
