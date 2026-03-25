@@ -72,44 +72,64 @@
           <h5 class="cake-title">{{ cake.name }}</h5>
           <span class="badge category">{{ cake.category }}</span>
           <p class="cake-desc">{{ cake.description[:80] }}{% if cake.description|length > 80 %}...{% endif %}</p>
+
+          <!-- Price + Stock -->
           <div class="price-stock">
             <span class="price">₱{{ "%.2f"|format(cake.price) }}</span>
             <span class="stock">{{ cake.quantity }} left</span>
           </div>
 
+          <!-- ── STAR RATING ── -->
+          <div class="d-flex align-items-center gap-1 mb-2" style="margin-top:6px;">
+            {% if cake.review_count > 0 %}
+              <span style="color:#ffc107; font-size:0.85rem; letter-spacing:1px;">
+                {% set full  = cake.avg_rating | int %}
+                {% set half  = cake.avg_rating - full >= 0.5 %}
+                {% for i in range(full) %}⭐{% endfor %}
+                {% if half %}✨{% endif %}
+              </span>
+              <small class="text-muted" style="font-size:0.78rem;">
+                {{ cake.avg_rating }} ({{ cake.review_count }} review{{ 's' if cake.review_count > 1 }})
+              </small>
+            {% else %}
+              <small class="text-muted" style="font-size:0.78rem;">No reviews yet</small>
+            {% endif %}
+          </div>
+
+          <!-- Buttons -->
           {% if user_id %}
-          {% if cake.quantity > 0 %}
-            <!-- Order Now -->
-            <form method="POST" action="/order/cake">
-              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-              <input type="hidden" name="cake_name" value="{{ cake.name }}">
-              <input type="hidden" name="price"     value="{{ cake.price }}">
-              <button type="submit" class="btn order-btn w-100 mb-2">
-                <i class="fas fa-bolt"></i> Order Now
+            {% if cake.quantity > 0 %}
+              <!-- Order Now -->
+              <form method="POST" action="/order/cake">
+                <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                <input type="hidden" name="price"     value="{{ cake.price }}">
+                <button type="submit" class="btn order-btn w-100 mb-2">
+                  <i class="fas fa-bolt"></i> Order Now
+                </button>
+              </form>
+              <!-- Add to Cart -->
+              <form method="POST" action="/cart/add">
+                <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                <input type="hidden" name="price"     value="{{ cake.price }}">
+                <button type="submit" class="btn order-btn w-100"
+                        style="background:#fff; color:#d63384; border:2px solid #d63384;">
+                  <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+              </form>
+            {% else %}
+              <!-- Sold Out -->
+              <button class="btn w-100" disabled
+                      style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
+                😔 Sold Out
               </button>
-            </form>
-            <!-- Add to Cart -->
-            <form method="POST" action="/cart/add">
-              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-              <input type="hidden" name="cake_name" value="{{ cake.name }}">
-              <input type="hidden" name="price"     value="{{ cake.price }}">
-              <button type="submit" class="btn order-btn w-100"
-                      style="background:#fff; color:#d63384; border:2px solid #d63384;">
-                <i class="fas fa-cart-plus"></i> Add to Cart
-              </button>
-            </form>
+            {% endif %}
           {% else %}
-            <!-- Sold Out -->
-            <button class="btn w-100" disabled
-                    style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
-              😔 Sold Out
-            </button>
+            <a href="/authentication" class="btn order-btn w-100">
+              <i class="fas fa-sign-in-alt"></i> Login to Order
+            </a>
           {% endif %}
-        {% else %}
-          <a href="/authentication" class="btn order-btn w-100">
-            <i class="fas fa-sign-in-alt"></i> Login to Order
-          </a>
-        {% endif %}
 
         </div>
       </div>
@@ -122,47 +142,6 @@
       </div>
     {% endif %}
   </div>
-  {% if top_cakes %}
-<section class="top-cakes-section" style="padding: 40px 20px; background:#f9f9f9;">
-  <div class="container">
-    <h2 class="text-center mb-2" style="font-weight:700;">
-      ⭐ Our Best Cakes
-    </h2>
-    <p class="text-center text-muted mb-4">Loved by our customers</p>
- 
-    <div class="row g-3 justify-content-center">
-      {% for cake in top_cakes %}
-      <div class="col-lg-2 col-md-4 col-sm-6">
-        <div class="card h-100 shadow-sm text-center" style="border-radius:12px; overflow:hidden;">
-          {% if cake.image %}
-            <img src="{{ cake.image }}" alt="{{ cake.name }}"
-                 style="width:100%; height:160px; object-fit:cover;">
-          {% else %}
-            <div style="height:160px; background:#fdf0f5; display:flex; align-items:center; justify-content:center; font-size:3rem;">🎂</div>
-          {% endif %}
-          <div class="card-body p-2">
-            <div class="fw-bold" style="font-size:0.85rem;">{{ cake.name }}</div>
-            <div style="color:#ffc107; font-size:0.8rem;">
-              {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
-              <small class="text-muted">({{ cake.review_count }})</small>
-            </div>
-            <div style="color:#d63384; font-weight:700; font-size:0.9rem;">
-              ₱{{ "%.2f"|format(cake.price) }}
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
- 
-    <div class="text-center mt-4">
-      <a href="/cakes" class="btn" style="background:#d63384; color:#fff; border-radius:25px; padding:10px 30px;">
-        View All Cakes
-      </a>
-    </div>
-  </div>
-</section>
-{% endif %}
 </main>
 
 <footer class="custom-footer">
