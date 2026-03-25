@@ -11,7 +11,7 @@ PAYMONGO_SECRET_KEY = os.getenv('PAYMONGO_SECRET_KEY')
 PAYMONGO_BASE_URL   = 'https://api.paymongo.com/v1'
 
 def get_auth_header():
-    """Base64 encode secret key for PayMongo API auth"""
+    #Base64 encode secret key for PayMongo API auth
     encoded = base64.b64encode(f"{PAYMONGO_SECRET_KEY}:".encode()).decode()
     return {
         "Authorization": f"Basic {encoded}",
@@ -23,17 +23,8 @@ def get_auth_header():
 # CREATE CHECKOUT SESSION
 # ================================================================
 def create_checkout_session(amount, order_description, line_items, success_url, cancel_url):
-    """
-    Create a PayMongo checkout session
     
-    amount          → total in CENTAVOS (₱100 = 10000)
-    order_description → shown on PayMongo page
-    line_items      → list of {name, quantity, amount, currency}
-    success_url     → redirect here after successful payment
-    cancel_url      → redirect here if customer cancels
-    
-    Returns: {checkout_url, session_id} or None if failed
-    """
+    #Create a PayMongo checkout sessionReturns: {checkout_url, session_id} or None if failed
     url  = f"{PAYMONGO_BASE_URL}/checkout_sessions"
     payload = {
         "data": {
@@ -125,11 +116,8 @@ def verify_payment(session_id):
 # BUILD LINE ITEMS (for checkout session)
 # ================================================================
 def build_line_items(order_type, selected_items, order_item, amount):
-    """
-    Build line_items list for PayMongo checkout session
     
-    Returns list of line item dicts
-    """
+    #Build line_items list for PayMongo checkout session, Returns list of line item dicts
     line_items = []
 
     if order_type == "premade" and selected_items:
