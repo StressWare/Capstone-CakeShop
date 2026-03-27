@@ -1,0 +1,199 @@
+{% extends "admin_base.html" %}
+{% block title %}Activity Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-0">Activity Logs</h4>
+      <small class="text-muted">All admin actions — newest first</small>
+    </div>
+    <!-- Filter buttons -->
+    <div class="btn-group" id="filterBtns">
+      <button class="btn btn-sm btn-outline-secondary active" data-filter="all">All</button>
+      <button class="btn btn-sm btn-outline-danger"    data-filter="order">Orders</button>
+      <button class="btn btn-sm btn-outline-pink"      data-filter="cake">Cakes</button>
+      <button class="btn btn-sm btn-outline-warning"   data-filter="inventory">Inventory</button>
+      <button class="btn btn-sm btn-outline-primary"   data-filter="user">Users</button>
+      <button class="btn btn-sm btn-outline-success"   data-filter="review">Reviews</button>
+      <button class="btn btn-sm btn-outline-dark"      data-filter="pos">POS</button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="mb-4">
+    <input type="text" id="logSearch" class="form-control" 
+           placeholder="Search by action, target, or admin name..." style="max-width:400px;">
+  </div>
+
+  <!-- Timeline -->
+  {% if logs %}
+  <div class="timeline" id="logTimeline">
+    {% for log in logs %}
+    <div class="timeline-item" data-category="{{ log.category }}"
+         data-search="{{ log.action|lower }} {{ log.target|lower }} {{ log.admin_name|lower }}">
+      
+      <!-- Dot -->
+      <div class="timeline-dot 
+        {% if log.category == 'order' %}dot-order
+        {% elif log.category == 'cake' %}dot-cake
+        {% elif log.category == 'inventory' %}dot-inventory
+        {% elif log.category == 'user' %}dot-user
+        {% elif log.category == 'review' %}dot-review
+        {% elif log.category == 'pos' %}dot-pos
+        {% else %}dot-general{% endif %}">
+      </div>
+
+      <!-- Card -->
+      <div class="timeline-card">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+          <div>
+            <!-- Badge -->
+            <span class="badge mb-1
+              {% if log.category == 'order' %}bg-danger
+              {% elif log.category == 'cake' %}bg-pink
+              {% elif log.category == 'inventory' %}bg-warning text-dark
+              {% elif log.category == 'user' %}bg-primary
+              {% elif log.category == 'review' %}bg-success
+              {% elif log.category == 'pos' %}bg-dark
+              {% else %}bg-secondary{% endif %}">
+              {{ log.category | capitalize }}
+            </span>
+            <!-- Action -->
+            <div class="fw-semibold mt-1">{{ log.action }}</div>
+            <!-- Target -->
+            <div class="text-muted small">{{ log.target }}</div>
+          </div>
+          <div class="text-end">
+            <!-- Admin name -->
+            <div class="fw-semibold small">
+              <i class="bi bi-person-circle me-1"></i>{{ log.admin_name }}
+            </div>
+            <!-- Timestamp -->
+            <div class="text-muted small">
+              <i class="bi bi-clock me-1"></i>{{ log.timestamp_str }}
+            </div>
+            <!-- IP -->
+            {% if log.ip_address %}
+            <div class="text-muted" style="font-size:0.7rem;">
+              <i class="bi bi-wifi me-1"></i>{{ log.ip_address }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Empty after filter -->
+  <div id="noResults" class="text-center text-muted py-5 d-none">
+    <i class="bi bi-journal-x fs-1"></i>
+    <p class="mt-2">No logs found.</p>
+  </div>
+
+  {% else %}
+  <div class="text-center text-muted py-5">
+    <i class="bi bi-journal-text fs-1"></i>
+    <p class="mt-2">No activity logged yet.</p>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Styles -->
+<style>
+  .bg-pink { background-color: #e91e8c !important; }
+  .btn-outline-pink { color: #e91e8c; border-color: #e91e8c; }
+  .btn-outline-pink:hover { background-color: #e91e8c; color: white; }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    left: 0.45rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e0e0e0;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.25rem;
+  }
+  .timeline-dot {
+    position: absolute;
+    left: -1.6rem;
+    top: 0.75rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #ccc;
+  }
+  .dot-order      { background: #dc3545; }
+  .dot-cake       { background: #e91e8c; }
+  .dot-inventory  { background: #ffc107; }
+  .dot-user       { background: #0d6efd; }
+  .dot-review     { background: #198754; }
+  .dot-pos        { background: #212529; }
+  .dot-general    { background: #6c757d; }
+
+  .timeline-card {
+    background: white;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
+  }
+  .timeline-card:hover {
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  }
+</style>
+
+<!-- Filter + Search JS -->
+<script>
+  const filterBtns = document.querySelectorAll("#filterBtns button");
+  const items = document.querySelectorAll(".timeline-item");
+  const noResults = document.getElementById("noResults");
+  const searchInput = document.getElementById("logSearch");
+
+  let activeFilter = "all";
+
+  function applyFilters() {
+    const searchVal = searchInput.value.toLowerCase();
+    let visible = 0;
+
+    items.forEach(item => {
+      const matchFilter = activeFilter === "all" || item.dataset.category === activeFilter;
+      const matchSearch = item.dataset.search.includes(searchVal);
+      if (matchFilter && matchSearch) {
+        item.style.display = "";
+        visible++;
+      } else {
+        item.style.display = "none";
+      }
+    });
+
+    noResults.classList.toggle("d-none", visible > 0);
+  }
+
+  filterBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      filterBtns.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeFilter = btn.dataset.filter;
+      applyFilters();
+    });
+  });
+
+  searchInput.addEventListener("input", applyFilters);
+</script>
+{% endblock %}

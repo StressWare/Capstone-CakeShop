@@ -41,7 +41,7 @@
       <table class="table table-striped table-hover align-middle">
         <thead class="table-dark">
           <tr>
-            <th>Order ID</th>
+            
             <th>Items</th>
             <th>Total (₱)</th>
             <th>Delivery Date</th>
@@ -53,7 +53,7 @@
         <tbody>
           {% for order in orders %}
           <tr>
-            <td><small class="text-muted">{{ order.id[:8] }}...</small></td>
+            
             <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
             <td>{{ "%.2f"|format(order.amount) }}</td>
             <td>{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
@@ -178,6 +178,16 @@
 
                 <!-- ── MODAL FOOTER ── -->
                 <div class="modal-footer">
+
+                  <!-- ── VIEW RECEIPT (Completed only) ── -->
+                  {% if order.status == 'Completed' %}
+                  <a href="/order/receipt/{{ order.id }}"
+                     class="btn btn-success btn-sm">
+                    <i class="fas fa-receipt me-1"></i>View Receipt
+                  </a>
+                  {% endif %}
+
+                  <!-- ── REVIEW BUTTONS (Completed + Premade + Not reviewed) ── -->
                   {% if order.status == 'Completed' and order.order_type == 'premade' and not order.reviewed %}
                     {% for item in order.selected_items %}
                     <button type="button" class="btn btn-warning btn-sm"
@@ -188,6 +198,7 @@
                     {% endfor %}
                   {% endif %}
 
+                  <!-- ── CANCEL BUTTON (New only) ── -->
                   {% if order.status == 'New' %}
                   <form method="POST" action="/order/cancel/{{ order.id }}"
                         onsubmit="return confirm('Are you sure you want to cancel this order?')">
@@ -269,7 +280,7 @@
           {% else %}
           <tr>
             <td colspan="7" class="text-center text-muted py-4">
-              No orders yet! <a href="/cakes">Browse our cakes </a>
+              No orders yet! <a href="/cakes">Browse our cakes 🎂</a>
             </td>
           </tr>
           {% endfor %}
@@ -436,21 +447,17 @@ document.addEventListener('DOMContentLoaded', () => new ChatbotWidget());
 <!-- STAR RATING JS -->
 <script>
   var ratingLabels = {
-    1: '⭐ Poor',
-    2: '⭐⭐ Fair',
-    3: '⭐⭐⭐ Good',
-    4: '⭐⭐⭐⭐ Great',
+    1: '⭐ Poor', 2: '⭐⭐ Fair',
+    3: '⭐⭐⭐ Good', 4: '⭐⭐⭐⭐ Great',
     5: '⭐⭐⭐⭐⭐ Excellent!'
   };
-
   function hoverStars(star) {
     var container = star.closest('.star-rating');
-    var value     = parseInt(star.getAttribute('data-value'));
+    var value = parseInt(star.getAttribute('data-value'));
     container.querySelectorAll('.star-btn').forEach(function(s, i) {
       s.style.color = i < value ? '#ffc107' : '#ddd';
     });
   }
-
   function resetStars(star) {
     var container = star.closest('.star-rating');
     var targetId  = container.querySelector('.star-btn').getAttribute('data-target');
@@ -459,30 +466,23 @@ document.addEventListener('DOMContentLoaded', () => new ChatbotWidget());
       s.style.color = i < selected ? '#ffc107' : '#ddd';
     });
   }
-
   function selectStar(star) {
     var container = star.closest('.star-rating');
     var value     = parseInt(star.getAttribute('data-value'));
     var targetId  = star.getAttribute('data-target');
-
     document.getElementById(targetId).value = value;
     container.querySelectorAll('.star-btn').forEach(function(s, i) {
       s.style.color = i < value ? '#ffc107' : '#ddd';
     });
-
-    var labelId = 'ratingLabel_' + targetId.replace('rating_', '');
-    var label   = document.getElementById(labelId);
+    var label = document.getElementById('ratingLabel_' + targetId.replace('rating_', ''));
     if (label) label.textContent = ratingLabels[value];
   }
-
   document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.star-rating').forEach(function(container) {
       var stars    = container.querySelectorAll('.star-btn');
       var targetId = stars[0] ? stars[0].getAttribute('data-target') : null;
       var selected = targetId ? parseInt(document.getElementById(targetId).value) : 5;
-      stars.forEach(function(s, i) {
-        s.style.color = i < selected ? '#ffc107' : '#ddd';
-      });
+      stars.forEach(function(s, i) { s.style.color = i < selected ? '#ffc107' : '#ddd'; });
     });
   });
 </script>

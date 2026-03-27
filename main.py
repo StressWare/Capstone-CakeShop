@@ -6,7 +6,7 @@ import json
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews
+from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs
 from firebase_admin import auth, firestore
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
@@ -79,6 +79,18 @@ def admin_required(f):
 # ================================================================
 # HELPER FUNCTIONS
 # ================================================================
+def log_admin_action(action, target, category="general"):
+    try:
+        admin_logs.add({
+            "action": action,
+            "target": target,
+            "category": category,
+            "admin_name": session["user"]["name"],
+            "ip_address": request.remote_addr,
+            "timestamp": datetime.now(PH_TZ)
+        })
+    except Exception as e:
+        print(f"[LOG ERROR] {e}")
 
 def get_faq_response(user_message):
     """Match user message to FAQ using keyword matching"""
@@ -211,6 +223,7 @@ def verify_token():
             return jsonify({'error': 'Please verify your email first!', 'needs_verification': True}), 401
 
         user_doc = users.document(uid).get()
+        fname = user_doc.to_dict().get("fname", "") if user_doc.exists else "" #name in admin logs
         is_new_user = not user_doc.exists
 
         if not user_doc.exists:
@@ -223,7 +236,7 @@ def verify_token():
             })
 
         is_admin = decoded_token.get('admin', False)
-        session['user'] = {'uid': uid, 'email': email, 'admin': is_admin}
+        session['user'] = {'uid': uid, 'email': email, 'name': fname or email, 'admin': is_admin}
         session['user_id'] = uid
         session['username'] = email
 
@@ -325,6 +338,30 @@ def customer_dashboard():
         user_id=user_id,
         cart_count=cart_count
     )
+    
+@app.route("/order/receipt/<order_id>")
+@login_required
+def order_receipt(order_id):
+    user_id = session.get("user_id")
+ 
+    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_doc = order_ref.get()
+ 
+    if not order_doc.exists:
+        flash("Receipt not found.", "danger")
+        return redirect(url_for("customer_dashboard"))
+ 
+    order = order_doc.to_dict()
+    order["id"] = order_id
+    order = convert_timestamps(order)
+ 
+    # Only allow viewing receipt for completed orders
+    if order.get("status") != "Completed":
+        flash("Receipt is only available for completed orders.", "warning")
+        return redirect(url_for("customer_dashboard"))
+ 
+    return render_template("customer_receipt.html", order=order)
+
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
 @login_required
@@ -1065,6 +1102,26 @@ def admin_reviews():
  
     return render_template("admin_reviews.html", reviews=all_reviews)
 
+@app.route("/admin/logs")
+@admin_required
+def admin_logs_page():
+    logs_ref = (
+        admin_logs.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(200)
+    )
+    logs = []
+    for doc in logs_ref.stream():
+        log = doc.to_dict()
+        log["id"] = doc.id
+        # convert timestamp to PH timezone string
+        if log.get("timestamp"):
+            ts = log["timestamp"]
+            if hasattr(ts, "tzinfo") and ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            log["timestamp_str"] = ts.astimezone(PH_TZ).strftime("%b %d, %Y %I:%M %p")
+        logs.append(log)
+    
+    return render_template("admin_logs.html", logs=logs)
+
 # ================================================================
 # ADMIN ACTION ROUTES
 # ================================================================
@@ -1103,6 +1160,11 @@ def update_order_status(user_id, order_id):
                     cake_ref.update({"quantity": current_qty + 1, "status": True})
 
     order_ref.update({"status": new_status})
+    log_admin_action(
+        action=f"Changed order status to '{new_status}'",
+        target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
+        category="order"
+    )
     return redirect(url_for("admin_orders"))
 
 # ---------------- EDIT ORDER ----------------
@@ -1125,6 +1187,11 @@ def edit_order(user_id, order_id):
             "notes":         notes,
             "delivery_date": delivery_datetime
         })
+        log_admin_action(
+            action="Edited order details",
+            target=f"Order #{order_id} — {item}",
+            category="order"
+        )
         flash('Order updated successfully!', 'success')
     except Exception as e:
         flash(f'Error updating order: {str(e)}', 'error')
@@ -1141,7 +1208,11 @@ def add_inventory():
 
     inventory.add({"item": item, "quantity": quantity, "cost": cost})
     expenses.add({"description": item, "cost": cost, "date": datetime.now(PH_TZ)})
-
+    log_admin_action(
+        action="Added inventory item",
+        target=f"{item} — qty: {quantity}, cost: ₱{cost}",
+        category="inventory"
+    )
     return redirect(url_for("admin_inventory"))
 
 # ---------------- EDIT INVENTORY ----------------
@@ -1153,6 +1224,11 @@ def edit_inventory(id):
         "quantity": int(request.form["quantity"]),
         "cost":     float(request.form["cost"])
     })
+    log_admin_action(
+        action="Edited inventory item",
+        target=request.form["item"],
+        category="inventory"
+    )
     return redirect(url_for("admin_inventory"))
 
 # ---------------- ADD CAKE ----------------
@@ -1179,6 +1255,11 @@ def add_cake():
             'image':       image_filename,
             'created_at':  datetime.now()
         })
+        log_admin_action(
+            action="Added new cake",
+            target=request.form.get('name'),
+            category="cake"
+        )
         flash('Cake added!', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
@@ -1206,6 +1287,11 @@ def edit_cake(cake_id):
             'status':      request.form.get('status') == 'on',
             'image':       cake_doc.to_dict().get('image')
         })
+        log_admin_action(
+            action="Edited cake",
+            target=f"{request.form.get('name')} (ID: {cake_id})",
+            category="cake"
+        )
         flash('Cake updated!', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
@@ -1232,7 +1318,13 @@ def delete_cake(cake_id):
             except Exception as e:
                 print(f"Cloudinary delete error: {str(e)}")
 
+        cake_name = cake_doc.to_dict().get('name', cake_id)  # add this BEFORE cake_ref.delete()
         cake_ref.delete()
+        log_admin_action(
+            action="Deleted cake",
+            target=f"{cake_name} (ID: {cake_id})",
+            category="cake"
+        )
         flash('Cake deleted!', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
@@ -1244,6 +1336,11 @@ def delete_cake(cake_id):
 @admin_required
 def disable_user(uid):
     auth.update_user(uid, disabled=True)
+    log_admin_action(
+        action="Disabled user account",
+        target=uid,
+        category="user"
+    )
     flash('User disabled!', 'warning')
     return redirect(url_for('admin_users'))
 
@@ -1252,6 +1349,11 @@ def disable_user(uid):
 @admin_required
 def enable_user(uid):
     auth.update_user(uid, disabled=False)
+    log_admin_action(
+        action="Enabled user account",
+        target=uid,
+        category="user"
+    )
     flash('User enabled!', 'success')
     return redirect(url_for('admin_users'))
 
@@ -1268,6 +1370,12 @@ def toggle_review(review_id):
  
     current = review_doc.to_dict().get("is_visible", True)
     review_ref.update({"is_visible": not current})
+    review_data = review_doc.to_dict()
+    log_admin_action(
+        action="Hid review" if current else "Made review visible",
+        target=f"Review by {review_data.get('reviewer_name', '?')} on {review_data.get('cake_name', '?')}",
+        category="review"
+    )
     flash("Review visibility updated!", "success")
     return redirect(url_for("admin_reviews"))
 # ================================================================

@@ -1,0 +1,385 @@
+{% extends 'base_customer.html' %}
+{% block title %}Order Receipt – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<style>
+  .receipt-wrapper {
+    min-height: 80vh;
+    background: #f5f5f5;
+    padding: 40px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .receipt-doc {
+    background: #fff;
+    width: 100%;
+    max-width: 680px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  .receipt-header {
+    background: #d63384;
+    color: #fff;
+    padding: 28px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .receipt-shop-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .receipt-shop-info {
+    font-size: 0.78rem;
+    opacity: 0.85;
+  }
+  .receipt-title {
+    text-align: right;
+  }
+  .receipt-title h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.05em;
+  }
+  .receipt-title small {
+    font-size: 0.75rem;
+    opacity: 0.85;
+  }
+
+  /* ── BODY ── */
+  .receipt-body { padding: 28px 32px; }
+
+  /* Status banner */
+  .receipt-status-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 0.88rem;
+    color: #155724;
+    font-weight: 600;
+  }
+
+  /* Info grid */
+  .receipt-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .receipt-info-item .info-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    margin-bottom: 3px;
+  }
+  .receipt-info-item .info-value {
+    font-size: 0.88rem;
+    color: #333;
+    font-weight: 500;
+  }
+
+  /* Items table */
+  .receipt-items-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .receipt-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f9f9f9;
+    font-size: 0.88rem;
+  }
+  .receipt-item-name { color: #333; font-weight: 500; }
+  .receipt-item-price { color: #d63384; font-weight: 600; }
+
+  /* Total */
+  .receipt-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0 0;
+    margin-top: 8px;
+    border-top: 2px solid #f0e8f0;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+  .receipt-total-amount { color: #d63384; font-size: 1.3rem; }
+
+  /* Payment section */
+  .receipt-payment {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+  }
+  .payment-method-label { color: #888; }
+  .payment-method-value { font-weight: 600; color: #333; }
+  .payment-paid-badge {
+    background: #d4edda;
+    color: #155724;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .payment-pending-badge {
+    background: #fff3cd;
+    color: #856404;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  /* Notes */
+  .receipt-notes {
+    background: #fff8f0;
+    border: 1px solid #fde8cc;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 16px;
+    font-size: 0.85rem;
+    color: #664d03;
+  }
+
+  /* Footer */
+  .receipt-footer {
+    background: #f9f9f9;
+    padding: 20px 32px;
+    text-align: center;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.82rem;
+    color: #888;
+  }
+
+  /* Action buttons */
+  .receipt-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .btn-print {
+    background: #d63384; color: #fff; border: none;
+    border-radius: 10px; padding: 12px 28px;
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+    text-decoration: none;
+  }
+  .btn-print:hover { opacity: 0.88; color: #fff; }
+  .btn-back {
+    background: #fff; color: #555;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px; padding: 12px 28px;
+    font-size: 0.9rem; font-weight: 600;
+    cursor: pointer; text-decoration: none;
+    transition: all 0.2s;
+  }
+  .btn-back:hover { border-color: #d63384; color: #d63384; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body { background: #fff !important; }
+    .receipt-wrapper { background: #fff !important; padding: 0 !important; }
+    .receipt-doc { box-shadow: none !important; border-radius: 0 !important; max-width: 100% !important; }
+    .receipt-actions { display: none !important; }
+    nav, footer { display: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="receipt-wrapper">
+  <div class="receipt-doc">
+
+    <!-- ── HEADER ── -->
+    <div class="receipt-header">
+      <div>
+        <div class="receipt-shop-name">🎂 Ms. Brave Cake Shop</div>
+        <div class="receipt-shop-info">R Mapa Street, Mandurriao, Iloilo City</div>
+        <div class="receipt-shop-info">0956 350 4486</div>
+      </div>
+      <div class="receipt-title">
+        <h2>RECEIPT</h2>
+        <small>E-Invoice</small>
+      </div>
+    </div>
+
+    <!-- ── BODY ── -->
+    <div class="receipt-body">
+
+      <!-- Status Banner -->
+      <div class="receipt-status-banner">
+        <i class="fas fa-check-circle fa-lg"></i>
+        Order Completed ✅
+      </div>
+
+      <!-- Order Info Grid -->
+      <div class="receipt-info-grid">
+        <div class="receipt-info-item">
+          <div class="info-label">Order ID</div>
+          <div class="info-value" style="font-size:0.78rem;">{{ order.id }}</div>
+        </div>
+        <div class="receipt-info-item">
+          <div class="info-label">Date Ordered</div>
+          <div class="info-value">
+            {% if order.created_at %}
+              {{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}
+            {% else %}N/A{% endif %}
+          </div>
+        </div>
+        <div class="receipt-info-item">
+          <div class="info-label">
+            {% if order.delivery_type == 'Pickup' %}Pick Up Date{% else %}Delivery Date{% endif %}
+          </div>
+          <div class="info-value">
+            {{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}
+          </div>
+        </div>
+        <div class="receipt-info-item">
+          <div class="info-label">Delivery Type</div>
+          <div class="info-value">
+            {% if order.delivery_type == 'Pickup' %}
+              🏪 Pick Up
+            {% else %}
+              🚚 Delivery
+            {% endif %}
+          </div>
+        </div>
+        <div class="receipt-info-item">
+          <div class="info-label">Customer Name</div>
+          <div class="info-value">{{ order.customer.name or 'N/A' }}</div>
+        </div>
+        <div class="receipt-info-item">
+          <div class="info-label">Contact</div>
+          <div class="info-value">{{ order.customer.contact or 'N/A' }}</div>
+        </div>
+        {% if order.delivery_type != 'Pickup' %}
+        <div class="receipt-info-item" style="grid-column: 1 / -1;">
+          <div class="info-label">Delivery Address</div>
+          <div class="info-value">{{ order.customer.address or 'N/A' }}</div>
+        </div>
+        {% endif %}
+        {% if order.customer.occasion %}
+        <div class="receipt-info-item">
+          <div class="info-label">Occasion</div>
+          <div class="info-value">{{ order.customer.occasion }}</div>
+        </div>
+        {% endif %}
+        {% if order.customer.celebrant %}
+        <div class="receipt-info-item">
+          <div class="info-label">Celebrant</div>
+          <div class="info-value">{{ order.customer.celebrant }}</div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Items -->
+      <div class="receipt-items-title">Items Ordered</div>
+
+      {% if order.order_type == 'premade' and order.selected_items %}
+        {% for item in order.selected_items %}
+        <div class="receipt-item-row">
+          <span class="receipt-item-name">
+            {{ item.cake_name }}
+            {% if item.get('quantity', 1) > 1 %}
+              <small class="text-muted">x{{ item.get('quantity', 1) }}</small>
+            {% endif %}
+          </span>
+          <span class="receipt-item-price">
+            ₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}
+          </span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="receipt-item-row">
+          <span class="receipt-item-name">
+            🎂 Custom Cake
+            {% if order.rush %}
+              <span class="badge bg-danger ms-1" style="font-size:0.7rem;">⚡ Rush</span>
+            {% endif %}
+          </span>
+          <span class="receipt-item-price">₱{{ "%.2f"|format(order.amount) }}</span>
+        </div>
+        {% if order.item %}
+        <div style="font-size:0.78rem; color:#aaa; padding: 4px 0 8px;">
+          {{ order.item }}
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <!-- Total -->
+      <div class="receipt-total-row">
+        <span>Total</span>
+        <span class="receipt-total-amount">₱{{ "%.2f"|format(order.amount) }}</span>
+      </div>
+
+      <!-- Payment -->
+      <div class="receipt-payment">
+        <div>
+          <div class="payment-method-label">Payment Method</div>
+          <div class="payment-method-value">{{ order.payment_method or 'N/A' }}</div>
+        </div>
+        {% if order.payment_status == 'Paid' %}
+          <span class="payment-paid-badge">✅ Paid</span>
+        {% else %}
+          <span class="payment-pending-badge">⏳ Cash on Delivery</span>
+        {% endif %}
+      </div>
+
+      <!-- Notes -->
+      {% if order.notes %}
+      <div class="receipt-notes">
+        <strong><i class="fas fa-sticky-note me-2"></i>Special Instructions:</strong><br>
+        {{ order.notes }}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- ── FOOTER ── -->
+    <div class="receipt-footer">
+      Thank you for ordering from Ms. Brave Cake Shop! 🎂<br>
+      <small>This is an official e-receipt. Please keep for your records.</small>
+    </div>
+
+  </div>
+
+  <!-- ── ACTION BUTTONS ── -->
+  <div class="receipt-actions">
+    <button onclick="window.print()" class="btn-print">
+      <i class="fas fa-print me-2"></i>Print Receipt
+    </button>
+    <a href="{{ url_for('customer_dashboard') }}" class="btn-back">
+      <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+    </a>
+  </div>
+
+</div>
+{% endblock %}
