@@ -8,6 +8,7 @@ import cloudinary.uploader
 import firebase
 from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs
 from firebase_admin import auth, firestore
+from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
 load_dotenv()
@@ -15,7 +16,10 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
-
+@app.after_request
+def add_ngrok_header(response):
+    response.headers['ngrok-skip-browser-warning'] = 'true'
+    return response
 # ================================================================
 # BLUEPRINT REGISTRATION
 # ================================================================
@@ -188,7 +192,9 @@ def home_page():
         customer=customer,
         top_cakes=top_cakes
     )
-
+@app.route("/privacy-policy")
+def privacy_policy():
+    return render_template("privacy_policy.html")
 # ---------------- AUTHENTICATION ----------------
 @app.route("/authentication")
 def auth_page():
@@ -1447,66 +1453,240 @@ def payment_failed():
     flash("Payment was cancelled or failed. Please try again.", "danger")
     return redirect(url_for("cakes_page"))
 # ================================================================
-# CHATBOT API ROUTES
+# CHATBOT ROUTES
 # ================================================================
 
 # ---------------- SEND MESSAGE ----------------
-@app.route('/api/send-message', methods=['POST'])
+@app.route('/send-message', methods=['POST'])
 def api_send_message():
     try:
-        data            = request.get_json()
-        user_id         = data.get('user_id')
-        message         = data.get('message', '').strip()
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message = data.get('message', '').strip()
         conversation_id = data.get('conversation_id')
-
+        is_escalation = data.get('is_escalation', False)
+        
         if not user_id or not message:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
-
+        
         now = datetime.now(PH_TZ)
-        conv_ref = users.document(user_id).collection("conversations").document(conversation_id).collection("messages")
-
-        conv_ref.add({"text": message, "sender": "customer", "timestamp": now, "created_at": now})
-
-        bot_response = get_faq_response(message)
-        conv_ref.add({"text": bot_response, "sender": "bot", "timestamp": now, "created_at": now})
-
-        return jsonify({'success': True, 'response': bot_response, 'timestamp': now.isoformat()})
-
+        
+        # Ensure conversation document exists
+        conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
+        conv_doc = conv_ref.get()
+        
+        if not conv_doc.exists:
+            conv_ref.set({
+                'created_at': now,
+                'last_updated': now,
+                'escalated': False  # New flag
+            })
+        
+        # Get current conversation data
+        conv_data = conv_doc.to_dict() if conv_doc.exists else {'escalated': False}
+        is_escalated = conv_data.get('escalated', False)
+        
+        # If this is an escalation request, update the flag
+        if is_escalation and not is_escalated:
+            conv_ref.update({
+                'escalated': True,
+                'escalated_at': now,
+                'escalated_by': 'customer'
+            })
+            is_escalated = True
+        
+        # Save customer message
+        messages_ref = conv_ref.collection("messages")
+        messages_ref.add({
+            "text": message,
+            "sender": "customer",
+            "timestamp": now,
+            "created_at": now
+        })
+        
+        # Update last_updated
+        conv_ref.update({'last_updated': now})
+        
+        # Only send bot response if conversation is NOT escalated
+        if not is_escalated:
+            if is_escalation:
+                bot_response = "✅ Thank you! The shop owner has been notified and will respond shortly. You're now chatting with the owner."
+            else:
+                bot_response = get_faq_response(message)
+            
+            # Save bot response
+            messages_ref.add({
+                "text": bot_response,
+                "sender": "bot",
+                "timestamp": now,
+                "created_at": now
+            })
+        else:
+            # If escalated, don't send bot response
+            if is_escalation:
+                # Special message for escalation
+                messages_ref.add({
+                    "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
+                    "sender": "bot",
+                    "timestamp": now,
+                    "created_at": now
+                })
+        
+        return jsonify({'success': True, 'escalated': is_escalated})
+        
     except Exception as e:
         print(f"Error in send_message: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ---------------- GET MESSAGES ----------------
-@app.route('/api/messages/<user_id>/<conversation_id>', methods=['GET'])
-def api_get_messages(user_id, conversation_id):
+# ---------------- ADMIN REPLY ----------------
+@app.route('/admin/reply-message', methods=['POST'])
+@admin_required
+def admin_reply_message():
     try:
-        messages = []
-        messages_ref = users.document(user_id).collection("conversations").document(conversation_id).collection("messages").order_by("timestamp").stream()
-
-        for msg_doc in messages_ref:
-            msg = msg_doc.to_dict()
-            if isinstance(msg.get('timestamp'), datetime):
-                timestamp = msg['timestamp']
-                if timestamp.tzinfo is None:
-                    timestamp = timestamp.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-                else:
-                    timestamp = timestamp.astimezone(PH_TZ)
-                msg['timestamp'] = timestamp.isoformat()
-
-            messages.append({
-                'text':      msg.get('text', ''),
-                'sender':    msg.get('sender', 'unknown'),
-                'timestamp': msg.get('timestamp', '')
+        data = request.get_json()
+        user_id = data.get('user_id')
+        conversation_id = data.get('conversation_id')
+        message = data.get('message', '').strip()
+        
+        if not user_id or not message or not conversation_id:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+        
+        now = datetime.now(PH_TZ)
+        
+        # Ensure conversation exists and is escalated
+        conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
+        conv_doc = conv_ref.get()
+        
+        if not conv_doc.exists:
+            conv_ref.set({
+                'created_at': now,
+                'last_updated': now,
+                'escalated': True,  # Admin replying escalates automatically
+                'escalated_at': now,
+                'escalated_by': 'admin'
             })
-
-        return jsonify({'success': True, 'messages': messages})
-
+        else:
+            # If conversation exists but not escalated, escalate it
+            conv_data = conv_doc.to_dict()
+            if not conv_data.get('escalated', False):
+                conv_ref.update({
+                    'escalated': True,
+                    'escalated_at': now,
+                    'escalated_by': 'admin'
+                })
+        
+        # Save admin message
+        conv_ref.collection("messages").add({
+            "text": message,
+            "sender": "admin",
+            "timestamp": now,
+            "created_at": now
+        })
+        
+        # Update last_updated
+        conv_ref.update({'last_updated': now})
+        
+        return jsonify({'success': True})
+        
     except Exception as e:
-        print(f"Error in get_messages: {str(e)}")
+        print(f"Error in admin_reply: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+# ---------------- GET CONVERSATION STATUS ----------------
+@app.route('/conversation-status/<user_id>/<conversation_id>', methods=['GET'])
+def get_conversation_status(user_id, conversation_id):
+    try:
+        conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
+        conv_doc = conv_ref.get()
+        
+        if not conv_doc.exists:
+            return jsonify({'success': True, 'escalated': False})
+        
+        conv_data = conv_doc.to_dict()
+        return jsonify({
+            'success': True,
+            'escalated': conv_data.get('escalated', False),
+            'escalated_at': conv_data.get('escalated_at'),
+            'escalated_by': conv_data.get('escalated_by')
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ---------------- ADMIN GET CONVERSATIONS ----------------
+@app.route('/admin/conversations')
+@admin_required
+def admin_conversations():
+    try:
+        all_convos = []
+        
+        for user_doc in users.stream():
+            user_data = user_doc.to_dict()
+            if not user_data:
+                continue
+            
+            # Get all conversations for this user
+            conversations_ref = users.document(user_doc.id).collection("conversations").stream()
+            
+            for convo_doc in conversations_ref:
+                try:
+                    # Get conversation data FIRST
+                    convo_data = convo_doc.to_dict()  # This is the fix - define conv_data here
+                    
+                    # Get messages
+                    msgs = list(
+                        users.document(user_doc.id)
+                        .collection("conversations")
+                        .document(convo_doc.id)
+                        .collection("messages")
+                        .order_by("timestamp")
+                        .stream()
+                    )
+                    
+                    if not msgs:
+                        continue
+                    
+                    last = msgs[-1].to_dict()
+                    last_msg = last.get("text", "")[:50] if last.get("text") else "No message"
+                    ts = last.get("timestamp")
+                    
+                    if isinstance(ts, datetime):
+                        if ts.tzinfo is None:
+                            ts = ts.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                        else:
+                            ts = ts.astimezone(PH_TZ)
+                    
+                    all_convos.append({
+                        "user_id": user_doc.id,
+                        "convo_id": convo_doc.id,
+                        "customer_name": user_data.get("fname") or user_data.get("username", "Customer"),
+                        "email": user_data.get("email", "No email"),
+                        "last_message": last_msg,
+                        "last_time": ts.strftime("%b %d %I:%M %p") if ts else "No messages",
+                        "escalated": convo_data.get('escalated', False)  # Now convo_data exists
+                    })
+                    
+                except Exception as e:
+                    print(f"Error processing conversation {convo_doc.id}: {e}")
+                    continue
+        
+        all_convos.sort(key=lambda x: x["last_time"] or "", reverse=True)
+        
+        return render_template("admin_conversations.html", conversations=all_convos)
+        
+    except Exception as e:
+        print(f"Error in admin_conversations: {str(e)}")
+        flash("Error loading conversations", "danger")
+        return render_template("admin_conversations.html", conversations=[])
 # ================================================================
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
+    '''
+    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        ngrok.kill()
+        public_url = ngrok.connect(5000)
+        print(f"\n🌐 Public URL: {public_url}\n")
+    '''
     app.run(debug=True)

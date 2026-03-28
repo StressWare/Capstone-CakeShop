@@ -1,0 +1,2 @@
+pip isntall cloudinary
+pip install pyngrok

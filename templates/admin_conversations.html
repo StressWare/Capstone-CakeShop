@@ -1,0 +1,424 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Conversations - Admin Panel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversation-container {
+        display: flex;
+        height: calc(100vh - 100px);
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+    
+    .conversation-list {
+        width: 350px;
+        border-right: 1px solid #e0e0e0;
+        overflow-y: auto;
+        background: #fafafa;
+    }
+    
+    .customer-item {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .customer-item:hover {
+        background: #fff0f6;
+    }
+    
+    .customer-item.active {
+        background: #fff0f6;
+        border-left: 3px solid #e91e8c;
+    }
+    
+    .escalated-badge {
+        background: #ffc107;
+        color: #000;
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
+    
+    .avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: #e91e8c;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-right: 10px;
+    }
+    
+    .chat-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: white;
+    }
+    
+    .chat-header {
+        padding: 15px 20px;
+        background: white;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    
+    .msg-wrapper {
+        margin-bottom: 15px;
+    }
+    
+    .msg-customer {
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .msg-customer .bubble {
+        background: #e91e8c;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 18px 18px 4px 18px;
+        max-width: 70%;
+    }
+    
+    .msg-admin {
+        display: flex;
+        justify-content: flex-start;
+    }
+    
+    .msg-admin .bubble {
+        background: #d63384;
+        color: white;
+        padding: 8px 14px;
+        border-radius: 18px 18px 18px 4px;
+        max-width: 70%;
+    }
+    
+    .chat-input-area {
+        padding: 15px 20px;
+        border-top: 1px solid #e0e0e0;
+        background: white;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .chat-input {
+        flex: 1;
+        padding: 10px 15px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        outline: none;
+    }
+    
+    .chat-input:focus {
+        border-color: #e91e8c;
+    }
+    
+    .send-btn {
+        padding: 10px 24px;
+        background: #e91e8c;
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+    }
+    
+    .send-btn:hover:not(:disabled) {
+        background: #c2185b;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 50px;
+        color: #6c757d;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 20px;
+        outline: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-0">Customer Conversations</h4>
+            <small class="text-muted">Real-time chat — reply to customers instantly</small>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary" onclick="location.reload()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <div class="conversation-container">
+        <!-- Left: Customer List -->
+        <div class="conversation-list">
+            <div class="p-3 border-bottom">
+                <input type="text" id="searchCustomer" class="search-input" 
+                       placeholder="Search customer...">
+            </div>
+            <div id="customerListContainer">
+                {% if conversations %}
+                    {% for convo in conversations %}
+                    <div class="customer-item" 
+                         data-userid="{{ convo.user_id }}"
+                         data-convoid="{{ convo.convo_id }}"
+                         data-customername="{{ convo.customer_name }}"
+                         data-email="{{ convo.email }}">
+                        <div>
+                            <div style="display: flex; align-items: center;">
+                                <span class="avatar">{{ convo.customer_name[0]|upper if convo.customer_name else '?' }}</span>
+                                <div style="flex: 1;">
+                                    <div>
+                                        <strong>{{ convo.customer_name }}</strong>
+                                        {% if convo.escalated %}
+                                            <span class="escalated-badge">⚠️ Escalated</span>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ convo.email }}</small>
+                                    <div class="text-muted small">{{ convo.last_message }}</div>
+                                </div>
+                            </div>
+                            <div class="text-muted small text-end mt-1">
+                                {{ convo.last_time }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-comments fs-1"></i>
+                        <p class="mt-2">No conversations yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: Chat Window -->
+        <div class="chat-area">
+            <div class="chat-header" id="chatHeader" style="display: none;">
+                <div>
+                    <h5 class="mb-0" id="chatCustomerName">Select a customer</h5>
+                    <small class="text-muted" id="chatEmail"></small>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state" id="emptyState">
+                    <i class="fas fa-arrow-left fs-1"></i>
+                    <p class="mt-2">Select a customer to view conversation</p>
+                </div>
+            </div>
+            
+            <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                <input type="text" id="replyInput" class="chat-input" 
+                       placeholder="Type your reply..." autocomplete="off">
+                <button class="send-btn" id="sendReplyBtn">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let adminDb = null;
+let activeUserId = null;
+let activeConvoId = null;
+let messagesUnsubscribe = null;
+
+// Wait for Firebase
+function waitForFirebase() {
+    return new Promise((resolve, reject) => {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            resolve();
+        } else {
+            let attempts = 0;
+            const interval = setInterval(() => {
+                attempts++;
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    clearInterval(interval);
+                    resolve();
+                } else if (attempts > 20) {
+                    clearInterval(interval);
+                    reject(new Error('Firebase failed to load'));
+                }
+            }, 500);
+        }
+    });
+}
+
+// Initialize
+async function initChat() {
+    try {
+        await waitForFirebase();
+        adminDb = firebase.firestore();
+        console.log('✅ Firestore initialized');
+        
+        setupEventListeners();
+    } catch (error) {
+        console.error('Failed to initialize:', error);
+    }
+}
+
+function setupEventListeners() {
+    // Customer selection
+    document.querySelectorAll('.customer-item').forEach(item => {
+        item.addEventListener('click', () => {
+            document.querySelectorAll('.customer-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            
+            activeUserId = item.dataset.userid;
+            activeConvoId = item.dataset.convoid;
+            const name = item.dataset.customername;
+            const email = item.dataset.email;
+            
+            document.getElementById('chatHeader').style.display = 'block';
+            document.getElementById('chatInputArea').style.display = 'flex';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('chatCustomerName').textContent = name;
+            document.getElementById('chatEmail').textContent = email;
+            
+            loadMessages(activeUserId, activeConvoId);
+        });
+    });
+    
+    // Send reply
+    document.getElementById('sendReplyBtn').addEventListener('click', sendReply);
+    document.getElementById('replyInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendReply();
+    });
+    
+    // Search
+    document.getElementById('searchCustomer').addEventListener('input', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('.customer-item').forEach(item => {
+            const name = item.dataset.customername.toLowerCase();
+            const email = item.dataset.email.toLowerCase();
+            item.style.display = name.includes(term) || email.includes(term) ? '' : 'none';
+        });
+    });
+}
+
+function loadMessages(userId, convoId) {
+    if (messagesUnsubscribe) messagesUnsubscribe();
+    
+    const container = document.getElementById('chatMessages');
+    container.innerHTML = '<div class="empty-state">Loading messages...</div>';
+    
+    const messagesRef = adminDb
+        .collection('users').doc(userId)
+        .collection('conversations').doc(convoId)
+        .collection('messages')
+        .orderBy('timestamp', 'asc');
+    
+    messagesUnsubscribe = messagesRef.onSnapshot((snapshot) => {
+        container.innerHTML = '';
+        
+        if (snapshot.empty) {
+            container.innerHTML = '<div class="empty-state">No messages yet</div>';
+            return;
+        }
+        
+        snapshot.forEach(doc => {
+            const msg = doc.data();
+            if (msg.text && msg.sender) {
+                appendMessage(msg.sender, msg.text);
+            }
+        });
+        
+        container.scrollTop = container.scrollHeight;
+    });
+}
+
+function appendMessage(sender, text) {
+    const container = document.getElementById('chatMessages');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'msg-wrapper';
+    
+    if (sender === 'customer') {
+        wrapper.innerHTML = `
+            <div class="msg-customer">
+                <div class="bubble">${escapeHtml(text)}</div>
+            </div>`;
+    } else if (sender === 'admin') {
+        wrapper.innerHTML = `
+            <div class="msg-admin">
+                <div class="bubble">${escapeHtml(text)}</div>
+            </div>`;
+    } else {
+        return;
+    }
+    
+    container.appendChild(wrapper);
+}
+
+async function sendReply() {
+    const input = document.getElementById('replyInput');
+    const message = input.value.trim();
+    
+    if (!message || !activeUserId) return;
+    
+    input.disabled = true;
+    document.getElementById('sendReplyBtn').disabled = true;
+    
+    try {
+        const response = await fetch('/admin/reply-message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: activeUserId,
+                conversation_id: activeConvoId,
+                message: message
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            input.value = '';
+        } else {
+            alert('Failed to send: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error');
+    } finally {
+        input.disabled = false;
+        document.getElementById('sendReplyBtn').disabled = false;
+        input.focus();
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+document.addEventListener('DOMContentLoaded', initChat);
+</script>
+{% endblock %}

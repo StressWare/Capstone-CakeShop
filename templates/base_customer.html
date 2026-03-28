@@ -1,112 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Ms. Brave Cake Shop{% endblock %}</title>
-
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Base shared styles -->
-  <link href="../static/css/base.css" rel="stylesheet">
-
-  {% block extra_css %}{% endblock %}
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ms. Brave Cake Shop{% endblock %}</title>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+        // Initialize Firebase with error handling
+        try {
+            firebase.initializeApp({
+                apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
+                authDomain: "cakeshop-2faf4.firebaseapp.com",
+                projectId: "cakeshop-2faf4",
+                storageBucket: "cakeshop-2faf4.firebasestorage.app",
+                messagingSenderId: "470246706853",
+                appId: "1:470246706853:web:339c4084715b0286b6474c",
+                measurementId: "G-8PLLYZRD9Y"
+            });
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Base shared styles -->
+    <link href="../static/css/base.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-
-<!-- ── NAVBAR ── -->
-<!-- ================ TEAMMATE'S NAVBAR (DESIGN ONLY) ================ -->
-<nav class="navbar">
-  <div class="navbar-container">
-    <a class="navbar-brand" href="/">
-      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
-    </a>
-    <button class="menu-btn" id="menuToggle">☰ Menu</button>
-  </div>
-</nav>
-
-<!-- ================ TEAMMATE'S CUSTOM OFFCANVAS MENU ================ -->
-<div class="custom-offcanvas" id="offcanvasMenu">
-  <div class="offcanvas-header">
-    <h5>Navigate</h5>
-    <button class="close-btn" id="menuClose">&times;</button>
-  </div>
-  <div class="offcanvas-body">
-    <a href="/customer_dashboard">Profile</a>
-    <a href="/cakes">Cake Showcase</a>
-    <a href="/customize_cake">Customize Your Cake</a>
-    <a href="/logout">Logout</a>
-
-  </div>
-</div>
-
-<div style="margin-top: 70px;"></div>
-<!-- ── FLASH MESSAGES (centered, top) ── -->
-<div class="flash-container">
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- ── NAVBAR ── -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a class="navbar-brand" href="/">
+                <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
+            </a>
+            <button class="menu-btn" id="menuToggle">☰ Menu</button>
         </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-</div>
+    </nav>
 
-<!-- ── PAGE CONTENT ── -->
-{% block content %}{% endblock %}
-
-<!-- ===== FOOTER ===== --> 
-<footer class="custom-footer">
-  <div class="footer-container">
-
-    <div class="footer-left">
-      <h2>Mrs. Brave's</h2>
+    <!-- Offcanvas Menu -->
+    <div class="custom-offcanvas" id="offcanvasMenu">
+        <div class="offcanvas-header">
+            <h5>Navigate</h5>
+            <button class="close-btn" id="menuClose">&times;</button>
+        </div>
+        <div class="offcanvas-body">
+            <a href="/customer_dashboard">Profile</a>
+            <a href="/cakes">Cake Showcase</a>
+            <a href="/customize_cake">Customize Your Cake</a>
+            <a href="/logout">Logout</a>
+        </div>
     </div>
 
-    <div class="footer-right">
-      <p><i class="fas fa-phone"></i>0956 350 4486</p>
-      <p><i class="fas fa-location-dot"></i>R Mapa Street, Mandurriao, Iloilo City</p>
-      <p>
-        <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
-          <i class="fab fa-facebook"></i>
-        </a>
-      </p>
+    <div style="margin-top: 70px;"></div>
+
+    <!-- Flash Messages -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
-  </div>
-</footer>
+    <!-- Page Content -->
+    {% block content %}{% endblock %}
 
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Footer -->
+    <footer class="custom-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <h2>Mrs. Brave's</h2>
+            </div>
+            <div class="footer-right">
+                <p><i class="fas fa-phone"></i>0956 350 4486</p>
+                <p><i class="fas fa-location-dot"></i>R Mapa Street, Mandurriao, Iloilo City</p>
+                <p>
+                    <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                </p>
+            </div>
+        </div>
+    </footer>
 
-<script>
-// ================ TEAMMATE'S OFFCANVAS (FUNCTIONALITY) ================
-const menuBtn = document.getElementById("menuToggle");
-const offcanvas = document.getElementById("offcanvasMenu");
-const menuClose = document.getElementById("menuClose");
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Offcanvas Menu Functionality
+        const menuBtn = document.getElementById("menuToggle");
+        const offcanvas = document.getElementById("offcanvasMenu");
+        const menuClose = document.getElementById("menuClose");
 
-menuBtn.addEventListener("click", () => {
-    offcanvas.classList.add("active");
-});
-
-menuClose.addEventListener("click", () => {
-    offcanvas.classList.remove("active");
-});
-
-document.addEventListener("click", (e) => {
-    if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
-        offcanvas.classList.remove("active");
-    }
-});
-</script>
-
-{% block extra_js %}{% endblock %}
-
+        if (menuBtn && offcanvas && menuClose) {
+            menuBtn.addEventListener("click", () => {
+                offcanvas.classList.add("active");
+            });
+            menuClose.addEventListener("click", () => {
+                offcanvas.classList.remove("active");
+            });
+            document.addEventListener("click", (e) => {
+                if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
+                    offcanvas.classList.remove("active");
+                }
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>
