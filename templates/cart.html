@@ -28,15 +28,24 @@
       <input type="checkbox" class="item-check item-cb"
              data-id="{{ item.cake_id }}"
              data-name="{{ item.cake_name }}"
-             data-price="{{ item.price }}">
+             data-price="{{ item.price }}"
+             data-qty="{{ item.quantity | default(1) }}">
       <div class="cake-img-box">
         {% if item.image %}
           <img src="{{ item.image }}" alt="{{ item.cake_name }}">
         {% endif %}
       </div>
-      <div>
+      <div style="flex:1;">
         <div class="item-name">{{ item.cake_name }}</div>
-        <div class="item-price">₱{{ "%.2f"|format(item.price) }}</div>
+        <div class="item-price">
+          ₱{{ "%.2f"|format(item.price) }}
+          {% if item.quantity | default(1) > 1 %}
+            <span class="text-muted" style="font-size:0.8rem;">
+              × {{ item.quantity }} = ₱{{ "%.2f"|format(item.price * item.quantity) }}
+            </span>
+          {% endif %}
+        </div>
+        <div style="font-size:0.78rem; color:#999;">Qty: {{ item.quantity | default(1) }}</div>
       </div>
       <form method="POST" action="/cart/remove/{{ item.cake_id }}">
         <button type="submit" class="btn-remove">
@@ -88,7 +97,12 @@
   function update() {
     let total = 0, any = false;
     cbs.forEach(cb => {
-      if (cb.checked) { total += parseFloat(cb.dataset.price); any = true; }
+      if (cb.checked) {
+        const price = parseFloat(cb.dataset.price);
+        const qty   = parseInt(cb.dataset.qty) || 1;
+        total += price * qty;
+        any = true;
+      }
     });
     selTotal.textContent = total.toFixed(2);
     checkoutBtn.classList.toggle('disabled', !any);
@@ -106,10 +120,14 @@
     var selected = [];
     cbs.forEach(cb => {
       if (cb.checked) {
+        const price = parseFloat(cb.dataset.price);
+        const qty   = parseInt(cb.dataset.qty) || 1;
         selected.push({
           cake_id:   cb.dataset.id,
           cake_name: cb.dataset.name,
-          price:     cb.dataset.price
+          price:     price,
+          quantity:  qty,
+          subtotal:  price * qty
         });
       }
     });

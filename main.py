@@ -484,29 +484,33 @@ def place_order():
 @login_required
 def order_cake():
     user_id = session.get("user_id")
-
+ 
     customer_doc = users.document(user_id).get()
-    if customer_doc.exists:
-        customer = customer_doc.to_dict()
-    else:
-        customer = {}
-
-    min_date = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
-
+    customer     = customer_doc.to_dict() if customer_doc.exists else {}
+    min_date     = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+ 
     selected_json  = request.form.get('selected_items', '[]')
     selected_items = json.loads(selected_json)
-
+ 
     if selected_items:
-        amount = sum(float(i['price']) for i in selected_items)
+        # coming from cart — already has quantity + subtotal
+        for i in selected_items:
+            i['quantity'] = int(i.get('quantity', 1))
+            i['subtotal'] = float(i['price']) * i['quantity']
+        amount = sum(float(i['subtotal']) for i in selected_items)
     else:
-        # From Order Now (single cake)
+        # coming from Order Now on cakes page
+        quantity = int(request.form.get('quantity', 1))
+        price    = float(request.form.get('price', 0))
         selected_items = [{
             'cake_id':   request.form.get('cake_id'),
             'cake_name': request.form.get('cake_name'),
-            'price':     request.form.get('price')
+            'price':     price,
+            'quantity':  quantity,
+            'subtotal':  price * quantity
         }]
-        amount = float(request.form.get('price', 0))
-
+        amount = price * quantity
+ 
     return render_template('checkout.html',
         order_type     = 'premade',
         selected_items = selected_items,
@@ -514,13 +518,7 @@ def order_cake():
         customer       = customer,
         min_date       = min_date,
     )
-
-# ---------------- CHECKOUT PAGE ----------------
-@app.route('/checkout')
-def checkout_page():
-    if not session.get('user_id'):
-        return redirect(url_for('auth_page'))
-    return redirect(url_for('cakes_page'))
+ 
 
 # ---------------- PLACE ORDER (SAVE TO FIRESTORE) ----------------
 @app.route("/place-order", methods=["POST"])
@@ -701,20 +699,27 @@ def add_to_cart():
     cake_id   = request.form.get("cake_id")
     cake_name = request.form.get("cake_name")
     price     = float(request.form.get("price", 0))
-
+    quantity  = int(request.form.get("quantity", 1))
+ 
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
-
-    if cart_ref.get().exists:
-        flash(f"{cake_name} is already in your cart!", "info")
+    cart_doc = cart_ref.get()
+ 
+    if cart_doc.exists:
+        # add to existing quantity
+        existing_qty = cart_doc.to_dict().get("quantity", 1)
+        new_qty      = existing_qty + quantity
+        cart_ref.update({"quantity": new_qty})
+        flash(f"{cake_name} quantity updated to {new_qty} in cart! 🛒", "success")
     else:
         cart_ref.set({
             "cake_id":   cake_id,
             "cake_name": cake_name,
             "price":     price,
+            "quantity":  quantity,
             "added_at":  firestore.SERVER_TIMESTAMP
         })
         flash(f"{cake_name} added to cart! 🛒", "success")
-
+ 
     return redirect(url_for("cakes_page"))
 
 # ---------------- REMOVE FROM CART ----------------
@@ -892,6 +897,7 @@ def admin_sales():
                 order["id"] = order_doc.id
                 order = convert_timestamps(order)
                 sales_items.append(order)
+    sales_items.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ),reverse=True)
     return render_template("admin_sales.html", sales=sales_items)
 
 # ---------------- ADMIN ANALYTICS ----------------
@@ -1683,6 +1689,7 @@ def admin_conversations():
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
+    #indi pag kaksa ang comment pang live server lng na
     '''
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()

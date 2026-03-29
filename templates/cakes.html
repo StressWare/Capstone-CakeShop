@@ -3,6 +3,46 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cakes.css">
+<style>
+  .qty-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .qty-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid #d63384;
+    background: white;
+    color: #d63384;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+  }
+  .qty-btn:hover:not(:disabled) { background: #d63384; color: white; }
+  .qty-btn:disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
+  .qty-display {
+    font-weight: 700;
+    font-size: 1rem;
+    min-width: 30px;
+    text-align: center;
+    color: #333;
+  }
+  .qty-label {
+    font-size: 0.75rem;
+    color: #999;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -56,23 +96,44 @@
           <!-- Buttons -->
           {% if user_id %}
             {% if cake.quantity > 0 %}
+
+              <!-- Quantity Selector -->
+              <div class="qty-label">Quantity</div>
+              <div class="qty-selector">
+                <button type="button" class="qty-btn"
+                        onclick="changeQty('{{ cake.id }}', -1, {{ cake.quantity }})"
+                        id="qty-minus-{{ cake.id }}"
+                        disabled>−</button>
+                <span class="qty-display" id="qty-{{ cake.id }}">1</span>
+                <button type="button" class="qty-btn"
+                        onclick="changeQty('{{ cake.id }}', 1, {{ cake.quantity }})"
+                        id="qty-plus-{{ cake.id }}"
+                        {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
+              </div>
+
+              <!-- Order Now -->
               <form method="POST" action="/order/cake">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
                 <input type="hidden" name="price"     value="{{ cake.price }}">
+                <input type="hidden" name="quantity"  id="order-qty-{{ cake.id }}" value="1">
                 <button type="submit" class="btn order-btn w-100 mb-2">
                   <i class="fas fa-bolt"></i> Order Now
                 </button>
               </form>
+
+              <!-- Add to Cart -->
               <form method="POST" action="/cart/add">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
                 <input type="hidden" name="price"     value="{{ cake.price }}">
+                <input type="hidden" name="quantity"  id="cart-qty-{{ cake.id }}" value="1">
                 <button type="submit" class="btn order-btn w-100"
                         style="background:#fff; color:#d63384; border:2px solid #d63384;">
                   <i class="fas fa-cart-plus"></i> Add to Cart
                 </button>
               </form>
+
             {% else %}
               <button class="btn w-100" disabled
                       style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
@@ -96,4 +157,26 @@
     {% endif %}
   </div>
 </main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeQty(cakeId, delta, maxQty) {
+  const display  = document.getElementById('qty-' + cakeId);
+  const orderQty = document.getElementById('order-qty-' + cakeId);
+  const cartQty  = document.getElementById('cart-qty-' + cakeId);
+  const minusBtn = document.getElementById('qty-minus-' + cakeId);
+  const plusBtn  = document.getElementById('qty-plus-' + cakeId);
+
+  let current = parseInt(display.textContent);
+  current = Math.min(Math.max(current + delta, 1), maxQty);
+
+  display.textContent = current;
+  orderQty.value      = current;
+  cartQty.value       = current;
+
+  minusBtn.disabled = current <= 1;
+  plusBtn.disabled  = current >= maxQty;
+}
+</script>
 {% endblock %}

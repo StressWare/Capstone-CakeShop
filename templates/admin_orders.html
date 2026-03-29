@@ -391,7 +391,7 @@
               </td>
               <!-- ── PAYMENT STATUS COLUMN ── -->
               <td>
-                {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' %}
+                {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' or (o.status == 'Completed' and o.payment_method == 'Cash on Delivery') %}
                   <span class="badge bg-success">Paid</span>
                 {% else %}
                   <span class="badge bg-warning text-dark">Pending</span>
@@ -403,23 +403,53 @@
                 </button>
               </td>
               <td>
-                {% if o.order_source == 'walk-in' %}
-                  <span class="badge bg-success p-2">Walk in Customer</span>
-                {% else %}
-                  <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}" onsubmit="return confirmStatus('{{ o.status }}')">
-                    <select name="status" class="form-select form-select-sm mb-1">
-                      <option value="New"              {{ 'selected' if o.status=='New' }}>New</option>
-                      <option value="Accepted"         {{ 'selected' if o.status=='Accepted' }}>Accepted</option>
-                      <option value="Pending"          {{ 'selected' if o.status=='Pending' }}>Pending</option>
-                      <option value="Ready"            {{ 'selected' if o.status=='Ready' }}>Ready</option>
-                      <option value="Out for Delivery" {{ 'selected' if o.status=='Out for Delivery' }}>Out for Delivery</option>
-                      <option value="Completed"        {{ 'selected' if o.status=='Completed' }}>Completed</option>
-                      <option value="Cancelled"        {{ 'selected' if o.status=='Cancelled' }}>Cancelled</option>
-                    </select>
-                    <button class="btn btn-primary btn-sm w-100"><i class="fas fa-sync-alt"></i> Update</button>
-                  </form>
+              {% if o.order_source == 'walk-in' %}
+                <span class="badge bg-success p-2">Walk in Customer</span>
+
+              {% elif o.status in ['Completed', 'Cancelled'] %}
+                <span class="badge bg-success p-2">Completed</span>
+                {% if o.status == 'Completed' and o.payment_method == 'Cash on Delivery' %}
+                  <br><span class="badge bg-success mt-1">COD Paid</span>
                 {% endif %}
-              </td>
+
+              {% else %}
+                <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}"
+                      onsubmit="return confirmStatus('{{ o.status }}')">
+                  <select name="status" class="form-select form-select-sm mb-1">
+                    {% if o.status == 'New' %}
+                      <option value="New" selected>New</option>
+                      <option value="Accepted">Accepted</option>
+                      <option value="Cancelled">Cancelled</option>
+
+                    {% elif o.status == 'Accepted' %}
+                      <option value="Accepted" selected>Accepted</option>
+                      <option value="Pending">Pending</option>
+                      <option value="Cancelled">Cancelled</option>
+
+                    {% elif o.status == 'Pending' %}
+                      <option value="Pending" selected>Pending</option>
+                      <option value="Ready">Ready</option>
+                      <option value="Cancelled">Cancelled</option>
+
+                    {% elif o.status == 'Ready' %}
+                      <option value="Ready" selected>Ready</option>
+                      <option value="Out for Delivery">Out for Delivery</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+
+                    {% elif o.status == 'Out for Delivery' %}
+                      <option value="Out for Delivery" selected>Out for Delivery</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+
+                    {% endif %}
+                  </select>
+                  <button class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-sync-alt"></i> Update
+                  </button>
+                </form>
+              {% endif %}
+            </td>
             </tr>
             {% else %}
             <tr><td colspan="9" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No orders yet</td></tr>
@@ -556,7 +586,7 @@
         {% endif %}
       </div>
       <div class="modal-footer">
-        {% if o.order_source != 'walk-in' %}
+        {% if o.order_source != 'walk-in' and o.order_type == 'custom' and o.status not in ['Completed', 'Cancelled'] %}
         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ o.id }}">
           <i class="fas fa-edit me-2"></i>Edit
         </button>
