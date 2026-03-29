@@ -373,47 +373,10 @@
             </div>
         </div>
     </div>
-
-    <!-- Chatbot Widget -->
-    <div id="chatbot-widget" class="chatbot-container">
-        <button class="chatbot-toggle-btn" id="chatbotToggle" title="Open Chat">
-            <span class="chat-icon">💬</span>
-        </button>
-        <div class="chatbot-window" id="chatbotWindow" style="display: none;">
-            <div class="chatbot-header">
-                <div class="header-content">
-                    <h5>🎂 Ms. Brave Support</h5>
-                    <p class="status-text">Online - Instant replies</p>
-                </div>
-                <button class="close-btn" id="chatbotClose">✕</button>
-            </div>
-            <div class="chatbot-messages" id="chatbotMessages">
-                <div class="message bot-message">
-                    <p>👋 Hey there! Welcome to Ms. Brave Cake Shop support. How can we help you today?</p>
-                </div>
-            </div>
-            <div class="faq-buttons">
-                <button class="faq-btn" data-question="how to order">📝 How to Order?</button>
-                <button class="faq-btn" data-question="delivery time">🚚 Delivery Time?</button>
-                <button class="faq-btn" data-question="customization">🎨 Customization?</button>
-                <button class="faq-btn" data-question="payment methods">💳 Payment Methods?</button>
-                <button class="faq-btn" data-question="return policy">🔄 Return Policy?</button>
-            </div>
-            <div class="support-section">
-                <p class="support-text">Can't find what you need?</p>
-                <button class="btn-support" id="escalateBtn">👤 Chat with Owner</button>
-            </div>
-            <div class="chatbot-input-area">
-                <input type="text" id="chatbotInput" class="chatbot-input" placeholder="Ask a question..." autocomplete="off">
-                <button class="send-btn" id="chatbotSendBtn">➤</button>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="../static/javascript/chatbot.js"></script>
 <script>
   // Star Rating Functions
   var ratingLabels = {

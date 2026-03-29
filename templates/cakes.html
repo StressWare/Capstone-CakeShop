@@ -1,54 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Available Cakes - Ms. Brave Cake Shop</title>
-  <link rel="stylesheet" href="static/css/cakes.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body>
+{% extends 'base_customer.html' %}
+{% block title %}Available Cakes - Ms. Brave Cake Shop{% endblock %}
 
-<nav class="navbar">
-  <div class="navbar-container">
-    <a class="navbar-brand" href="/">
-      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
-    </a>
-    <button class="menu-btn" id="menuToggle">☰ Menu</button>
-  </div>
-</nav>
+{% block extra_css %}
+<link rel="stylesheet" href="static/css/cakes.css">
+{% endblock %}
 
-<div class="offcanvas" id="offcanvasMenu">
-  <div class="offcanvas-header">
-    <h5>Navigate</h5>
-    <button class="close-btn" id="menuClose">&times;</button>
-  </div>
-  <div class="offcanvas-body">
-    {% if user_id %}
-      <a href="/customer_dashboard">Profile</a>
-      <a href="/cart">My Cart</a>
-      <a href="/customize_cake">Customize Your Cake</a>
-      <a href="/logout">Logout</a>
-    {% else %}
-      <a href="/authentication">Login</a>
-    {% endif %}
-  </div>
-</div>
-
-<div style="margin-top: 70px;"></div>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="container mt-3">
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }} alert-dismissible fade show">
-          {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
-
+{% block content %}
 <header class="header">
   <div class="container text-center">
     <h1>🎂 Available Cakes</h1>
@@ -79,12 +36,12 @@
             <span class="stock">{{ cake.quantity }} left</span>
           </div>
 
-          <!-- ── STAR RATING ── -->
+          <!-- Star Rating -->
           <div class="d-flex align-items-center gap-1 mb-2" style="margin-top:6px;">
             {% if cake.review_count > 0 %}
               <span style="color:#ffc107; font-size:0.85rem; letter-spacing:1px;">
-                {% set full  = cake.avg_rating | int %}
-                {% set half  = cake.avg_rating - full >= 0.5 %}
+                {% set full = cake.avg_rating | int %}
+                {% set half = cake.avg_rating - full >= 0.5 %}
                 {% for i in range(full) %}⭐{% endfor %}
                 {% if half %}✨{% endif %}
               </span>
@@ -99,7 +56,6 @@
           <!-- Buttons -->
           {% if user_id %}
             {% if cake.quantity > 0 %}
-              <!-- Order Now -->
               <form method="POST" action="/order/cake">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -108,7 +64,6 @@
                   <i class="fas fa-bolt"></i> Order Now
                 </button>
               </form>
-              <!-- Add to Cart -->
               <form method="POST" action="/cart/add">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -119,7 +74,6 @@
                 </button>
               </form>
             {% else %}
-              <!-- Sold Out -->
               <button class="btn w-100" disabled
                       style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
                 😔 Sold Out
@@ -130,7 +84,6 @@
               <i class="fas fa-sign-in-alt"></i> Login to Order
             </a>
           {% endif %}
-
         </div>
       </div>
       {% endfor %}
@@ -143,30 +96,4 @@
     {% endif %}
   </div>
 </main>
-
-<footer class="custom-footer">
-  <div class="footer-container">
-    <div class="footer-left"><h2>Mrs. Brave's</h2></div>
-    <div class="footer-right">
-      <p><i class="fas fa-phone"></i> 0956 350 4486</p>
-      <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
-      <p>
-        <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
-          <i class="fab fa-facebook"></i>
-        </a>
-      </p>
-    </div>
-  </div>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const menuToggle = document.getElementById('menuToggle');
-  const offcanvas  = document.getElementById('offcanvasMenu');
-  const menuClose  = document.getElementById('menuClose');
-  menuToggle.addEventListener('click', () => offcanvas.classList.toggle('active'));
-  menuClose.addEventListener('click',  () => offcanvas.classList.remove('active'));
-</script>
-
-</body>
-</html>
+{% endblock %}

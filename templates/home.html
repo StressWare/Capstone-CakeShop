@@ -1,62 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>MRS. Brave's Cake Iloilo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <!-- TEAMMATE'S DESIGN - pure custom CSS -->
-  <link href="../static/css/style.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+{% extends 'base_customer.html' %}
+{% block title %}MRS. Brave's Cake Iloilo{% endblock %}
 
-  <style>
-    /* TEAMMATE'S STYLES - keep exactly as is */
-    body { scroll-behavior: smooth; }
-    .hero-title { font-weight: 700; }
-    .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
-  </style>
-</head>
-<body>
+{% block extra_css %}
+<link href="../static/css/style.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
+  body { scroll-behavior: smooth; }
+  .hero-title { font-weight: 700; }
+  .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
+</style>
+<style>
+<style>
+  .custom-carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    height: 400px;
+    margin-bottom: 50px;
+  }
+  .custom-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .custom-carousel-item {
+    display: none;
+    width: 100%;
+  }
+  .custom-carousel-item.active {
+    display: block;
+  }
+  .custom-carousel-item img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+  }
+</style>
+</style>
+{% endblock %}
 
-<!-- ================ TEAMMATE'S NAVBAR (DESIGN ONLY) ================ -->
-<nav class="navbar">
-  <div class="navbar-container">
-    <a class="navbar-brand" href="/">
-      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
-    </a>
-    <button class="menu-btn" id="menuToggle">☰ Menu</button>
-  </div>
-</nav>
+{% block content %}
 
-<!-- ================ TEAMMATE'S OFFCANVAS (DESIGN ONLY) ================ -->
-<div class="offcanvas" id="offcanvasMenu">
-  <div class="offcanvas-header">
-    <h5>Navigate</h5>
-    <button class="close-btn" id="menuClose">&times;</button>
-  </div>
-  <div class="offcanvas-body">
-    <a href="/customer_dashboard">Profile</a>
-    <a href="/cakes">Available Cakes</a>
-    <a href="#services">Services</a>
-    <a href="/customize_cake">Customize Your Cake</a>
-    <a href="/cart">Cart</a>
-    <a href="/logout">Logout</a>
-  </div>
-</div>
-
-<div style="margin-top: 70px;"></div>
-
-<!-- ================ TEAMMATE'S CAROUSEL (DESIGN ONLY) ================ -->
-<section id="cakes" class="carousel-container">
-  <div class="carousel" id="cakeCarousel">
-    <div class="carousel-item active">
+<!-- Carousel -->
+<!-- Carousel -->
+<section id="cakes" class="custom-carousel-container">
+  <div class="custom-carousel" id="cakeCarousel">
+    <div class="custom-carousel-item active">
       <img src="../static/img/1.jpg" alt="Cake 1">
     </div>
-    <div class="carousel-item">
+    <div class="custom-carousel-item">
       <img src="../static/img/2.jpg" alt="Cake 2">
     </div>
-    <div class="carousel-item">
+    <div class="custom-carousel-item">
       <img src="../static/img/3.jpg" alt="Cake 3">
     </div>
     <button class="carousel-prev" id="prevBtn">&#10094;</button>
@@ -64,6 +59,7 @@
   </div>
 </section>
 
+<!-- Categories -->
 <section class="categories-section">
   <h2>Our Categories</h2>
   <div class="categories-container">
@@ -73,43 +69,37 @@
       </div>
       <span class="category-name">Girl</span>
     </div>
-
     <div class="category-wrapper" onclick="openCategory('Boy')">
       <div class="category-circle">
         <img src="../static/categories/boys/boy10-removebg-preview.png" alt="Boy Cakes">
       </div>
       <span class="category-name">Boy</span>
     </div>
-
     <div class="category-wrapper" onclick="openCategory('Birthdays')">
       <div class="category-circle">
         <img src="../static/categories/bdaycakes/b2-removebg-preview.png" alt="Birthday Cakes">
       </div>
       <span class="category-name">Birthdays</span>
     </div>
-
     <div class="category-wrapper" onclick="openCategory('Christening')">
       <div class="category-circle">
-        <img src="../static/categories/christening/ch2-removebg-preview.png " alt="Christening Cakes">
+        <img src="../static/categories/christening/ch2-removebg-preview.png" alt="Christening Cakes">
       </div>
       <span class="category-name">Christening</span>
     </div>
-
     <div class="category-wrapper" onclick="openCategory('Ordinary')">
       <div class="category-circle">
         <img src="../static/categories/ordinarycakes/c5-removebg-preview.png" alt="Ordinary Cakes">
       </div>
       <span class="category-name">Ordinary Cakes</span>
     </div>
-
     <div class="category-wrapper" onclick="openCategory('Holiday')">
       <div class="category-circle">
-        <img src="../static/categories/holiday/H3.png " alt="Holiday Cakes">
+        <img src="../static/categories/holiday/H3.png" alt="Holiday Cakes">
       </div>
       <span class="category-name">Holiday Cakes</span>
     </div>
-
-        <div class="category-wrapper" onclick="openCategory('Cartoons')">
+    <div class="category-wrapper" onclick="openCategory('Cartoons')">
       <div class="category-circle">
         <img src="../static/categories/Cartoons/10.png" alt="Cartoons">
       </div>
@@ -117,44 +107,33 @@
     </div>
   </div>
 </section>
-  
-   
 
-<!-- Modal for showing category cards -->
+<!-- Category Modal -->
 <div id="categoryModal" class="category-modal">
   <div class="category-modal-content">
     <span class="close-btn" onclick="closeModal()">&times;</span>
-    <div id="categoryCards" class="category-cards">
-      <!-- Cards will be dynamically added here -->
-    </div>
+    <div id="categoryCards" class="category-cards"></div>
   </div>
 </div>
 
-    <!-- Available Cakes Button -->
-    <div class="available-cakes-btn-container">
-      <a href="/cakes" class="available-cakes-btn">Available Cakes</a>
-    </div>
+<!-- Available Cakes Button -->
+<div class="available-cakes-btn-container">
+  <a href="/cakes" class="available-cakes-btn">Available Cakes</a>
+</div>
 
-<!-- ================ REVIEWS ================ -->
-
-    {% if top_cakes %}
+<!-- Top Rated Cakes -->
+{% if top_cakes %}
 <section class="top-cakes-section" style="padding: 40px 50px; background:#ffffff;">
   <div class="container">
     <h2 class="text-center mb-3" style="font-weight:700;">Our Best Cakes Rated By Customers</h2>
-
-    <!-- Horizontal scroll wrapper -->
     <div class="top-cakes-scroll">
       {% for cake in top_cakes %}
       <div class="review-card">
-
-        <!-- IMAGE -->
         {% if cake.image %}
           <img src="{{ cake.image }}" alt="{{ cake.name }}" class="review-card-img">
         {% else %}
           <div class="review-card-img-placeholder">🎂</div>
         {% endif %}
-
-        <!-- DETAILS -->
         <div class="review-card-body">
           <div class="review-cake-name">{{ cake.name }}</div>
           <div class="review-stars" style="color:#ffc107; font-size:0.9rem;">
@@ -167,87 +146,42 @@
             ₱{{ "%.2f"|format(cake.price) }}
           </div>
         </div>
-
       </div>
       {% endfor %}
     </div>
   </div>
 </section>
-  {% endif %}
+{% endif %}
 
-<!-- ================ SERVICES (DESIGN ONLY) ================ -->
+<!-- Services -->
 <section id="services" class="services-section">
   <h2>Our Services</h2>
   <div class="services-row">
     <div class="service-card">
-      <!-- Cake Customization -->
       <i class="bi bi-cake" style="font-size: 2rem; color: #ff69b4;"></i>
       <h5>Cake Customization</h5>
       <p>Create cakes based on flavor, design, and toppings.</p>
     </div>
     <div class="service-card">
-      <!-- Event Orders -->
       <i class="bi bi-calendar-event" style="font-size: 2rem; color: #ff69b4;"></i>
       <h5>Event Orders</h5>
       <p>Birthday, wedding, anniversary & more.</p>
     </div>
     <div class="service-card">
-      <!-- Scheduled Delivery -->
       <i class="bi bi-truck" style="font-size: 2rem; color: #ff69b4;"></i>
-      <h5>Scheduled Delivery</h5>
-      <p>Pick your preferred date and time.</p>
+      <h5>Delivery</h5>
+      <p>Fast and reliable delivery to your doorstep.</p>
     </div>
   </div>
 </section>
 
+{% endblock %}
 
-<!-- ===== FOOTER ===== --> 
-<footer class="custom-footer">
-  <div class="footer-container">
-
-    <div class="footer-left">
-      <h2>Mrs. Brave's</h2>
-    </div>
-
-    <div class="footer-right">
-      <p><i class="fas fa-phone"></i>0956 350 4486</p>
-      <p><i class="fas fa-location-dot"></i>R Mapa Street, Mandurriao, Iloilo City</p>
-      <p>
-        <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
-          <i class="fab fa-facebook"></i>
-        </a>
-      </p>
-    </div>
-
-  </div>
-</footer>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+{% block extra_js %}
 <script>
-// ================ TEAMMATE'S OFFCANVAS (FUNCTIONALITY) ================
-const menuBtn = document.getElementById("menuToggle");
-const offcanvas = document.getElementById("offcanvasMenu");
-const menuClose = document.getElementById("menuClose");
-
-menuBtn.addEventListener("click", () => {
-    offcanvas.classList.add("active");
-});
-
-menuClose.addEventListener("click", () => {
-    offcanvas.classList.remove("active");
-});
-
-document.addEventListener("click", (e) => {
-    if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
-        offcanvas.classList.remove("active");
-    }
-});
-
-// ================ TEAMMATE'S CAROUSEL (FUNCTIONALITY) ================
+// Carousel
 const carousel = document.getElementById("cakeCarousel");
-const items = carousel.querySelectorAll(".carousel-item");
+const items = carousel.querySelectorAll(".custom-carousel-item");
 let currentIndex = 0;
 
 document.getElementById("prevBtn").addEventListener("click", () => {
@@ -268,31 +202,30 @@ setInterval(() => {
   items[currentIndex].classList.add("active");
 }, 5000);
 
-// ================ CATEGORIES ==================//
-
+// Categories
 const categories = {
   Girl: [
-    { name: 'Choco Lava', img: '../static/categories/girls/girl2-removebg-preview.png' },
-    { name: 'Dark Chocolate', img: '../static/categories/girls/girl3-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl4-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl5-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl6-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/girls/girl8-removebg-preview.png' }
+    { name: 'Choco Lava',      img: '../static/categories/girls/girl2-removebg-preview.png' },
+    { name: 'Dark Chocolate',  img: '../static/categories/girls/girl3-removebg-preview.png' },
+    { name: 'Choco Truffle',   img: '../static/categories/girls/girl4-removebg-preview.png' },
+    { name: 'Choco Truffle',   img: '../static/categories/girls/girl5-removebg-preview.png' },
+    { name: 'Choco Truffle',   img: '../static/categories/girls/girl6-removebg-preview.png' },
+    { name: 'Choco Truffle',   img: '../static/categories/girls/girl7-removebg-preview.png' },
+    { name: 'Choco Truffle',   img: '../static/categories/girls/girl8-removebg-preview.png' }
   ],
   Boy: [
-    { name: 'Choco Lava', img: '../static/categories/boys/boy2-removebg-preview.png' },
+    { name: 'Choco Lava',     img: '../static/categories/boys/boy2-removebg-preview.png' },
     { name: 'Dark Chocolate', img: '../static/categories/boys/boy3-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy4-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy5-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy6-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy8-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/boys/boy9-removebg-preview.png' }
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy4-removebg-preview.png' },
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy5-removebg-preview.png' },
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy6-removebg-preview.png' },
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy7-removebg-preview.png' },
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy8-removebg-preview.png' },
+    { name: 'Choco Truffle',  img: '../static/categories/boys/boy9-removebg-preview.png' }
   ],
   Birthdays: [
-    { name: 'Choco Lava', img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
-    { name: 'Dark Chocolate', img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
+    { name: 'Choco Lava',    img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
+    { name: 'Dark Chocolate',img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b6-removebg-preview.png' },
@@ -301,8 +234,8 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b9-removebg-preview.png' }
   ],
   Christening: [
-    { name: 'Choco Lava', img: '../static/categories/christening/ch1-removebg-preview.png' },
-    { name: 'Dark Chocolate', img: '../static/categories/christening/ch3-removebg-preview.png' },
+    { name: 'Choco Lava',    img: '../static/categories/christening/ch1-removebg-preview.png' },
+    { name: 'Dark Chocolate',img: '../static/categories/christening/ch3-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/christening/ch4-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/christening/ch10-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/christening/ch6-removebg-preview.png' },
@@ -311,8 +244,8 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/christening/ch9-removebg-preview.png' }
   ],
   Ordinary: [
-    { name: 'Choco Lava', img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
-    { name: 'Dark Chocolate', img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
+    { name: 'Choco Lava',    img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
+    { name: 'Dark Chocolate',img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c4-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c5-removebg-preview.png' },
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c6-removebg-preview.png' },
@@ -321,75 +254,59 @@ const categories = {
     { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c9-removebg-preview.png' }
   ],
   Holiday: [
-    { name: 'Festive Choco Lava', img: '../static/categories/holiday/H1.png' },
-    { name: 'Holiday Dark Chocolate', img: '../static/categories/holiday/H2.png' },
-    { name: 'Snowy Choco Truffle', img: '../static/categories/holiday/H3.png' },
-    { name: 'Red Velvet Celebration', img: '../static/categories/holiday/H4.png' },
-    { name: 'Winter Delight Cake', img: '../static/categories/holiday/H5.png' },
-    { name: 'Festive Sprinkle Cake', img: '../static/categories/holiday/H6.png' },
+    { name: 'Festive Choco Lava',            img: '../static/categories/holiday/H1.png' },
+    { name: 'Holiday Dark Chocolate',        img: '../static/categories/holiday/H2.png' },
+    { name: 'Snowy Choco Truffle',           img: '../static/categories/holiday/H3.png' },
+    { name: 'Red Velvet Celebration',        img: '../static/categories/holiday/H4.png' },
+    { name: 'Winter Delight Cake',           img: '../static/categories/holiday/H5.png' },
+    { name: 'Festive Sprinkle Cake',         img: '../static/categories/holiday/H6.png' },
     { name: 'Premium Chocolate Celebration', img: '../static/categories/holiday/H7.png' },
-    { name: 'Golden Glow Cake', img: '../static/categories/holiday/h8-removebg-preview.png' }
+    { name: 'Golden Glow Cake',              img: '../static/categories/holiday/h8-removebg-preview.png' }
   ],
   Cartoons: [
-    { name: 'Mickey Choco Delight', img: '../static/categories/Cartoons/1.png' },
-    { name: 'Minion Truffle', img: '../static/categories/Cartoons/2.png' },
-    { name: 'SpongeBob Surprise', img: '../static/categories/Cartoons/3.png' },
-    { name: 'Peppa Pig Chocolate Cake', img: '../static/categories/Cartoons/4.png' },
-    { name: 'Tom & Jerry Truffle', img: '../static/categories/Cartoons/5.png' },
-    { name: 'Frozen Fantasy Cake', img: '../static/categories/Cartoons/6.png' },
-    { name: 'Pokemon Pikachu Cake', img: '../static/categories/Cartoons/7.png' },
-    { name: 'Looney Tunes Chocolate', img: '../static/categories/Cartoons/8.png' },
-    { name: 'Looney Tunes Chocolate', img: '../static/categories/Cartoons/9.png' },
-    { name: 'Looney Tunes Chocolate', img: '../static/categories/Cartoons/10.png' }
+    { name: 'Mickey Choco Delight',    img: '../static/categories/Cartoons/1.png' },
+    { name: 'Minion Truffle',          img: '../static/categories/Cartoons/2.png' },
+    { name: 'SpongeBob Surprise',      img: '../static/categories/Cartoons/3.png' },
+    { name: 'Peppa Pig Chocolate',     img: '../static/categories/Cartoons/4.png' },
+    { name: 'Tom & Jerry Truffle',     img: '../static/categories/Cartoons/5.png' },
+    { name: 'Frozen Fantasy Cake',     img: '../static/categories/Cartoons/6.png' },
+    { name: 'Pokemon Pikachu Cake',    img: '../static/categories/Cartoons/7.png' },
+    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/8.png' },
+    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/9.png' },
+    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/10.png' }
   ]
 };
+
 function openCategory(category) {
-  const modal = document.getElementById('categoryModal');
+  const modal          = document.getElementById('categoryModal');
   const cardsContainer = document.getElementById('categoryCards');
-  
-  cardsContainer.innerHTML = ''; // Clear previous cards
-  
+  cardsContainer.innerHTML = '';
+
   categories[category].forEach(item => {
     const card = document.createElement('div');
     card.classList.add('category-card');
-    
-    // Create image element
-    const img = document.createElement('img');
-    img.src = item.img;
-    img.alt = item.name;
+    const img  = document.createElement('img');
+    img.src    = item.img;
+    img.alt    = item.name;
     img.classList.add('category-card-img');
-    
-    // Create name element
     const name = document.createElement('p');
     name.textContent = item.name;
     name.classList.add('category-card-name');
-
-    // **Description**
-    const desc = document.createElement('p');
-    desc.textContent = item.description;
-    desc.classList.add('category-card-description'); // new class for styling
-    
     card.appendChild(img);
     card.appendChild(name);
-    card.appendChild(desc); 
     cardsContainer.appendChild(card);
   });
-  
-  modal.style.display = 'flex'; // use flex for centering
+
+  modal.style.display = 'flex';
 }
 
 function closeModal() {
   document.getElementById('categoryModal').style.display = 'none';
 }
 
-// Close modal if clicked outside content
 window.onclick = function(event) {
   const modal = document.getElementById('categoryModal');
-  if (event.target == modal) {
-    modal.style.display = 'none';
-  }
+  if (event.target == modal) modal.style.display = 'none';
 }
 </script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,39 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Customize Your Cake - MRS. Brave's Cake Iloilo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../static/css/customization.css" rel="stylesheet">
-</head>
-<body>
+{% extends 'base_customer.html' %}
+{% block title %}Customize Your Cake - Ms. Brave Cake Shop{% endblock %}
 
-<!-- NAVBAR -->
-<nav class="navbar">
-  <div class="navbar-container">
-    <a class="navbar-brand" href="/">
-      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
-    </a>
-    <button class="menu-btn" id="menuToggle">☰ Menu</button>
-  </div>
-</nav>
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+<link href="../static/css/customization.css" rel="stylesheet">
+{% endblock %}
 
-<!-- OFFCANVAS -->
-<div class="offcanvas" id="offcanvasMenu">
-  <div class="offcanvas-header">
-    <h5>Navigate</h5>
-    <button class="close-btn" id="menuClose">&times;</button>
-  </div>
-  <div class="offcanvas-body">
-    <a href="/">Home</a>
-    <a href="/customer_dashboard">Profile</a>
-    <a href="/cart">Cart</a>
-    <a href="/cakes">Cake Showcase</a>
-    <a href="/customize_cake">Customize Your Cake</a>
-  </div>
-</div>
-<div style="margin-top: 50px;"></div>
+{% block content %}
 <section class="customize-section">
   <form method="POST" action="/order" enctype="multipart/form-data">
     <h3>Step 1: Customize Your Cake</h3>
@@ -95,9 +68,10 @@
     <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
 
     <label for="image" class="custom-file-btn">
-     <i class="bi bi-upload"></i> Upload Cake Image
+      <i class="bi bi-upload"></i> Upload Cake Image
     </label>
-    <input type="file" name="image" id="image" accept="image/*" onchange="checkFileSize(this)" hidden>
+    <input type="file" name="image" id="image" accept="image/*"
+           onchange="checkFileSize(this)" hidden>
     <small>Upload an image of your desired cake (optional) — Max 2MB</small>
 
     <label>
@@ -108,7 +82,6 @@
       Total: ₱<span id="totalPrice">0</span>
     </div>
 
-    <!-- Hidden fields populated by JS before submit -->
     <input type="hidden" name="order_item" id="orderItem">
     <input type="hidden" name="amount"     id="orderAmount">
 
@@ -117,24 +90,12 @@
     {% else %}
       <a href="/authentication" class="btn">Login to Order</a>
     {% endif %}
-
   </form>
 </section>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}
 <script>
-const menuBtn  = document.getElementById("menuToggle");
-const offcanvas = document.getElementById("offcanvasMenu");
-const menuClose = document.getElementById("menuClose");
-
-menuBtn.addEventListener("click",  () => offcanvas.classList.add("active"));
-menuClose.addEventListener("click", () => offcanvas.classList.remove("active"));
-document.addEventListener("click",  (e) => {
-  if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
-    offcanvas.classList.remove("active");
-  }
-});
-
 function calculateTotal() {
   const cakePrice    = parseFloat(document.getElementById("cakeType").value) || 0;
   const designPrice  = parseFloat(document.getElementById("design").value)   || 0;
@@ -153,7 +114,7 @@ function calculateTotal() {
 }
 
 function updateOrderData() {
-  const total = calculateTotal();
+  const total  = calculateTotal();
   document.getElementById("orderAmount").value = total.toFixed(2);
 
   const cake    = document.getElementById("cakeType").selectedOptions[0].text;
@@ -168,9 +129,7 @@ function updateOrderData() {
   });
 
   let description = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
-  if (addons.length > 0) {
-    description += `, Add-ons: ${addons.join(", ")}`;
-  }
+  if (addons.length > 0) description += `, Add-ons: ${addons.join(", ")}`;
 
   document.getElementById("orderItem").value = description;
 }
@@ -185,12 +144,10 @@ document.querySelectorAll(".addons").forEach(a => a.addEventListener("change", c
 calculateTotal();
 
 function checkFileSize(input) {
-    if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
-        alert('File too large! Maximum size is 2MB.');
-        input.value = '';  // clear the input
-    }
-}
+  if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
+    alert('File too large! Maximum size is 2MB.');
+    input.value = '';
+  }
+} 
 </script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,100 +1,77 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout - Ms. Brave Cake Shop</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link href="../static/css/checkout.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>
-    #addressSection { transition: all 0.2s ease; }
-    .pickup-info {
-      display: none;
-      background: #fff3cd;
-      border: 1px solid #ffc107;
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin-bottom: 16px;
-      font-size: 0.92rem;
-      color: #664d03;
-    }
-    .pickup-info i { margin-right: 8px; color: #d63384; }
-    #mapContainer { display: block; margin-top: 12px; }
-    #map {
-      height: 280px; border-radius: 10px;
-      border: 1px solid #e0e0e0; margin-bottom: 8px; z-index: 1;
-    }
-    .map-hint { font-size: 0.78rem; color: #999; margin-bottom: 8px; }
-    .map-search-wrapper { position: relative; margin-bottom: 10px; }
-    #mapSearch {
-      width: 95%; padding: 9px 36px 9px 12px;
-      border: 1px solid #ddd; border-radius: 8px;
-      font-size: 0.88rem; outline: none;
-    }
-    #mapSearch:focus { border-color: #d63384; }
-    .map-search-icon {
-      position: absolute; right: 10px; top: 50%;
-      transform: translateY(-50%); color: #aaa; font-size: 0.85rem;
-    }
-    #searchSuggestions {
-      position: absolute; top: 100%; left: 0; right: 0;
-      background: #fff; border: 1px solid #ddd; border-radius: 8px;
-      z-index: 9999; max-height: 180px; overflow-y: auto;
-      display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    .suggestion-item {
-      padding: 10px 14px; font-size: 0.85rem;
-      cursor: pointer; border-bottom: 1px solid #f5f5f5;
-    }
-    .suggestion-item:hover { background: #fdf0f5; color: #d63384; }
+{% extends 'base_customer.html' %}
+{% set show_chatbot = false %}
+{% block title %}Checkout - Ms. Brave Cake Shop{% endblock %}
 
-    /* ── PAYMENT SECTION ── */
-    .payment-group-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #aaa;
-      font-weight: 600;
-      margin-bottom: 8px;
-      margin-top: 14px;
-    }
-    .paymongo-badge {
-      background: #d4edda;
-      color: #155724;
-      border-radius: 10px;
-      padding: 2px 8px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      margin-left: 6px;
-    }
-    .paymongo-notice {
-      display: none;
-      margin-top: 12px;
-      background: #f0f9ff;
-      border: 1px solid #bee3f8;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 0.82rem;
-      color: #2b6cb0;
-    }
-  </style>
-</head>
-<body>
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<link href="../static/css/checkout.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  #addressSection { transition: all 0.2s ease; }
+  .pickup-info {
+    display: none;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    color: #664d03;
+  }
+  .pickup-info i { margin-right: 8px; color: #d63384; }
+  #mapContainer { display: block; margin-top: 12px; }
+  #map {
+    height: 280px; border-radius: 10px;
+    border: 1px solid #e0e0e0; margin-bottom: 8px; z-index: 1;
+  }
+  .map-hint { font-size: 0.78rem; color: #999; margin-bottom: 8px; }
+  .map-search-wrapper { position: relative; margin-bottom: 10px; }
+  #mapSearch {
+    width: 95%; padding: 9px 36px 9px 12px;
+    border: 1px solid #ddd; border-radius: 8px;
+    font-size: 0.88rem; outline: none;
+  }
+  #mapSearch:focus { border-color: #d63384; }
+  .map-search-icon {
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%); color: #aaa; font-size: 0.85rem;
+  }
+  #searchSuggestions {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    z-index: 9999; max-height: 180px; overflow-y: auto;
+    display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .suggestion-item {
+    padding: 10px 14px; font-size: 0.85rem;
+    cursor: pointer; border-bottom: 1px solid #f5f5f5;
+  }
+  .suggestion-item:hover { background: #fdf0f5; color: #d63384; }
+  .payment-group-label {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #aaa;
+    font-weight: 600; margin-bottom: 8px; margin-top: 14px;
+  }
+  .paymongo-badge {
+    background: #d4edda; color: #155724;
+    border-radius: 10px; padding: 2px 8px;
+    font-size: 0.7rem; font-weight: 600; margin-left: 6px;
+  }
+  .paymongo-notice {
+    display: none; margin-top: 12px;
+    background: #f0f9ff; border: 1px solid #bee3f8;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 0.82rem; color: #2b6cb0;
+  }
+</style>
+{% endblock %}
 
+{% block content %}
 <div class="checkout-container">
 
   <div class="checkout-header">
     <h1>Checkout</h1>
   </div>
-
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
 
   <form method="POST" action="/place-order">
 
@@ -113,7 +90,7 @@
 
     <div class="checkout-main">
 
-      <!-- ===== LEFT COLUMN ===== -->
+      <!-- LEFT COLUMN -->
       <div>
 
         <!-- 1. Delivery Options -->
@@ -207,66 +184,60 @@
             </div>
             <div class="form-group">
               <label id="timeLabel">Delivery Time *</label>
-              <input type="time" name="delivery_time" class="form-control" value="10:00" required>
+              <input type="time" name="delivery_time" class="form-control"
+                     value="10:00" required>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Notes <span style="font-weight:400;color:#999;">(optional)</span></label>
-            <textarea name="notes" class="form-control" rows="3"
-                      placeholder="Any special instructions...">{{ notes or '' }}</textarea>
           </div>
         </div>
 
-        <!-- ================================================================
-             5. Payment Method
-             ================================================================ -->
-        <div class="payment-section">
-          <div class="section-title">Payment</div>
-
-          <!-- Manual Payment -->
-          <div class="payment-group-label"></div>
-          <div class="payment-methods" style="margin-bottom:12px;">
+        <!-- 5. Payment -->
+        <div class="checkout-form-section">
+          <div class="section-title">Payment Method</div>
+          <div class="payment-group-label">Manual Payment</div>
+          <div class="payment-options">
             <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
-              <i class="fas fa-hand-holding-usd"></i>
-              <div class="payment-method-label">Cash on Delivery</div>
+              <i class="fas fa-money-bill-wave"></i>
+              <span class="payment-method-label">Cash on Delivery</span>
+            </div>
+            <div class="payment-method" onclick="selectPayment(this, 'Bank Transfer')">
+              <i class="fas fa-university"></i>
+              <span class="payment-method-label">Bank Transfer</span>
             </div>
           </div>
-
-          <!-- Online Payment via PayMongo -->
           <div class="payment-group-label">
-            <span class="paymongo-badge">
-              <i class="fas fa-lock me-1"></i>Secure via PayMongo
-            </span>
+            Online Payment <span class="paymongo-badge">via PayMongo</span>
           </div>
-          <div class="payment-methods">
+          <div class="payment-options">
             <div class="payment-method" onclick="selectPayment(this, 'GCash')">
               <i class="fas fa-mobile-alt"></i>
-              <div class="payment-method-label">GCash</div>
+              <span class="payment-method-label">GCash</span>
             </div>
             <div class="payment-method" onclick="selectPayment(this, 'PayMaya')">
               <i class="fas fa-wallet"></i>
-              <div class="payment-method-label">Maya</div>
+              <span class="payment-method-label">PayMaya</span>
             </div>
             <div class="payment-method" onclick="selectPayment(this, 'Card')">
               <i class="fas fa-credit-card"></i>
-              <div class="payment-method-label">Card</div>
+              <span class="payment-method-label">Card</span>
             </div>
           </div>
-
-          <!-- PayMongo redirect notice -->
           <div class="paymongo-notice" id="paymongoNotice">
             <i class="fas fa-lock me-2"></i>
-            You'll be redirected to PayMongo's secure payment page to complete your payment.
+            You'll be redirected to PayMongo's secure checkout page.
           </div>
         </div>
 
-        <button type="submit" class="btn-save" id="submitBtn" style="background:#d63384; margin-top:20px;">
-          <i class="fas me-2"></i> Place Order
-        </button>
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn w-100" id="submitBtn"
+                  style="background:#d63384; color:white; padding:14px; border-radius:10px;
+                         font-size:1rem; font-weight:600; border:none;">
+            <i class="fas fa-check me-2"></i>Place Order
+          </button>
+        </div>
 
       </div>
 
-      <!-- ===== RIGHT COLUMN ===== -->
+      <!-- RIGHT COLUMN -->
       <div>
         <div class="order-summary">
           <div class="order-summary-title">Your Order</div>
@@ -274,9 +245,7 @@
             {% if order_type == 'premade' and selected_items %}
               {% for item in selected_items %}
               <div class="order-item">
-                <div class="order-item-image">
-                  <i class="fas fa-birthday-cake"></i>
-                </div>
+                <div class="order-item-image"><i class="fas fa-birthday-cake"></i></div>
                 <div class="order-item-details">
                   <div class="order-item-name">{{ item.cake_name }}</div>
                   <div class="order-item-price">₱{{ "%.2f"|format(item.price|float) }}</div>
@@ -285,9 +254,7 @@
               {% endfor %}
             {% else %}
               <div class="order-item">
-                <div class="order-item-image">
-                  <i class="fas fa-birthday-cake"></i>
-                </div>
+                <div class="order-item-image"><i class="fas fa-birthday-cake"></i></div>
                 <div class="order-item-details">
                   <div class="order-item-name">Custom Cake</div>
                   <div class="order-item-spec">{{ order_item }}</div>
@@ -309,9 +276,10 @@
     </div>
   </form>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   const ILOILO = { lat: 10.7202, lng: 122.5621 };
   const SHOP   = { lat: 10.711925117255893, lng: 122.53996450415457 };
@@ -320,43 +288,22 @@
     [11.198765432109876, 123.098765432109876]
   );
 
-  var deliveryMap    = null;
-  var deliveryMarker = null;
-  var pickupMap      = null;
+  var deliveryMap = null, deliveryMarker = null, pickupMap = null;
 
   function initDeliveryMap() {
     if (deliveryMap) return;
-    deliveryMap = L.map('map', {
-      center: [ILOILO.lat, ILOILO.lng], zoom: 11,
-      minZoom: 9, maxZoom: 18, maxBounds: bounds
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(deliveryMap);
+    deliveryMap = L.map('map', { center: [ILOILO.lat, ILOILO.lng], zoom: 11, minZoom: 9, maxZoom: 18, maxBounds: bounds });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(deliveryMap);
     deliveryMarker = L.marker([ILOILO.lat, ILOILO.lng], { draggable: true }).addTo(deliveryMap);
-    deliveryMarker.on('dragend', function() {
-      var pos = deliveryMarker.getLatLng();
-      reverseGeocode(pos.lat, pos.lng);
-    });
-    deliveryMap.on('click', function(e) {
-      deliveryMarker.setLatLng(e.latlng);
-      reverseGeocode(e.latlng.lat, e.latlng.lng);
-    });
+    deliveryMarker.on('dragend', function() { var pos = deliveryMarker.getLatLng(); reverseGeocode(pos.lat, pos.lng); });
+    deliveryMap.on('click', function(e) { deliveryMarker.setLatLng(e.latlng); reverseGeocode(e.latlng.lat, e.latlng.lng); });
   }
 
   function initPickupMap() {
     if (pickupMap) return;
-    pickupMap = L.map('pickupMap', {
-      center: [SHOP.lat, SHOP.lng], zoom: 16,
-      zoomControl: true, dragging: false
-    });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(pickupMap);
-    L.marker([SHOP.lat, SHOP.lng])
-      .addTo(pickupMap)
-      .bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao')
-      .openPopup();
+    pickupMap = L.map('pickupMap', { center: [SHOP.lat, SHOP.lng], zoom: 16, zoomControl: true, dragging: false });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(pickupMap);
+    L.marker([SHOP.lat, SHOP.lng]).addTo(pickupMap).bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao').openPopup();
   }
 
   function reverseGeocode(lat, lng) {
@@ -364,20 +311,15 @@
     document.getElementById('lngInput').value = lng;
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
       .then(r => r.json())
-      .then(data => {
-        if (data && data.display_name)
-          document.getElementById('addressInput').value = data.display_name;
-      }).catch(() => {});
+      .then(data => { if (data && data.display_name) document.getElementById('addressInput').value = data.display_name; })
+      .catch(() => {});
   }
 
   var searchTimeout;
   document.getElementById('mapSearch').addEventListener('input', function() {
     clearTimeout(searchTimeout);
     var query = this.value.trim();
-    if (query.length < 3) {
-      document.getElementById('searchSuggestions').style.display = 'none';
-      return;
-    }
+    if (query.length < 3) { document.getElementById('searchSuggestions').style.display = 'none'; return; }
     searchTimeout = setTimeout(function() {
       fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' Iloilo Philippines')}&format=json&limit=5`)
         .then(r => r.json())
@@ -390,8 +332,7 @@
             div.className = 'suggestion-item';
             div.textContent = result.display_name;
             div.addEventListener('click', function() {
-              var lat = parseFloat(result.lat);
-              var lon = parseFloat(result.lon);
+              var lat = parseFloat(result.lat), lon = parseFloat(result.lon);
               deliveryMap.setView([lat, lon], 16);
               deliveryMarker.setLatLng([lat, lon]);
               document.getElementById('addressInput').value = result.display_name;
@@ -412,10 +353,9 @@
       document.getElementById('searchSuggestions').style.display = 'none';
   });
 
-  function selectDelivery(type) { 
+  function selectDelivery(type) {
     document.getElementById('deliveryTypeInput').value = type;
     var isPickup = type === 'Pickup';
-
     document.getElementById('addressSection').style.display     = isPickup ? 'none'  : 'block';
     document.getElementById('pickupInfo').style.display         = isPickup ? 'block' : 'none';
     document.getElementById('pickupMapContainer').style.display = isPickup ? 'block' : 'none';
@@ -425,35 +365,21 @@
     document.getElementById('dateTitle').textContent = isPickup ? 'Pick Up Details'  : 'Delivery Details';
     document.getElementById('dateLabel').textContent = isPickup ? 'Pick Up Date *'   : 'Delivery Date *';
     document.getElementById('timeLabel').textContent = isPickup ? 'Pick Up Time *'   : 'Delivery Time *';
-    var codLabel = document.querySelector('.payment-method-label');
-    if (isPickup) {
-        // rename COD to just Cash
-        document.querySelectorAll('.payment-method-label').forEach(function(el) {
-            if (el.textContent === 'Cash on Delivery') {
-                el.textContent = 'Cash';
-            }
-        });
-    } else {
-        document.querySelectorAll('.payment-method-label').forEach(function(el) {
-            if (el.textContent === 'Cash') {
-                el.textContent = 'Cash on Delivery';
-            }
-        });
-    }
+    document.querySelectorAll('.payment-method-label').forEach(function(el) {
+      if (isPickup && el.textContent === 'Cash on Delivery') el.textContent = 'Cash';
+      if (!isPickup && el.textContent === 'Cash') el.textContent = 'Cash on Delivery';
+    });
     setTimeout(function() {
       if (isPickup) { initPickupMap(); if (pickupMap) pickupMap.invalidateSize(); }
       else          { initDeliveryMap(); if (deliveryMap) deliveryMap.invalidateSize(); }
     }, 100);
   }
 
-  // ── PAYMENT SELECTION ──
   var onlinePayments = ['GCash', 'PayMaya', 'Card'];
-
   function selectPayment(element, method) {
     document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
     document.getElementById('paymentInput').value = method;
-
     var isOnline = onlinePayments.includes(method);
     document.getElementById('paymongoNotice').style.display = isOnline ? 'block' : 'none';
     document.getElementById('submitBtn').innerHTML = isOnline
@@ -463,6 +389,4 @@
 
   window.addEventListener('load', function() { initDeliveryMap(); });
 </script>
-
-</body>
-</html>
+{% endblock %}
