@@ -1683,10 +1683,10 @@ def admin_conversations():
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
-    
+    '''
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-
+    '''
     app.run(debug=True)
