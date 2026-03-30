@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <style>
-  /* ── Pink Theme Variables ── */
   :root {
     --pink-primary:   #d63384;
     --pink-light:     #fde8f1;
@@ -14,255 +13,79 @@
     --shadow-soft:    0 4px 24px rgba(214,51,132,0.10);
     --shadow-hover:   0 8px 32px rgba(214,51,132,0.18);
   }
-
-  /* ── Card: pink top accent line ── */
   .card.shadow-sm {
-    border: none;
-    border-radius: var(--card-radius);
-    box-shadow: var(--shadow-soft);
-    overflow: hidden;
+    border: none; border-radius: var(--card-radius);
+    box-shadow: var(--shadow-soft); overflow: hidden;
     border-top: 4px solid var(--pink-primary) !important;
   }
-
-  /* ── Card Header ── */
   .card-header-custom {
     background: var(--pink-gradient) !important;
-    color: #fff !important;
-    padding: 16px 24px;
-    border-bottom: none;
+    color: #fff !important; padding: 16px 24px; border-bottom: none;
   }
-  .card-header-custom h4 {
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    font-size: 1.15rem;
-  }
-
-  /* Pink theme table header */
-  .table-pink th {
-    background-color: #d63384 !important; /* Pink background */
-    color: #fff; /* White text */
-  }
-
-  /* Optional: keep hover on rows lighter pink */
-  #usersTable tbody tr:hover {
-    background-color: #ffe6f0;
-  }
-
-  /* Existing pink card header remains */
-  .card-header.card-header-custom {
-    border-top: 4px solid #d63384;
-    background: #fff;
-    font-weight: 600;
-  }
-
-  /* ── Order Tabs ── */
+  .card-header-custom h4 { font-weight: 700; letter-spacing: 0.3px; font-size: 1.15rem; }
   .order-tabs {
-    display: flex;
-    gap: 4px;
-    background: #fce8f3;
-    border-radius: 12px;
-    padding: 5px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    border: 1.5px solid #f5c2dc;
+    display: flex; gap: 4px; background: #fce8f3;
+    border-radius: 12px; padding: 5px; margin-bottom: 20px;
+    flex-wrap: wrap; border: 1.5px solid #f5c2dc;
   }
   .order-tab-btn {
-    padding: 8px 18px;
-    border: none;
-    border-radius: 9px;
-    background: transparent;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #b0567e;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    padding: 8px 18px; border: none; border-radius: 9px;
+    background: transparent; font-size: 0.82rem; font-weight: 600;
+    color: #b0567e; cursor: pointer; transition: all 0.2s ease;
+    display: flex; align-items: center; gap: 6px;
   }
-  .order-tab-btn.active {
-    background: #fff;
-    color: var(--pink-primary);
-    box-shadow: 0 2px 10px rgba(214,51,132,0.13);
-  }
-  .order-tab-btn:hover:not(.active) {
-    color: var(--pink-primary);
-    background: rgba(255,255,255,0.55);
-  }
-  .tab-count {
-    background: #f5c2dc;
-    border-radius: 10px;
-    padding: 1px 8px;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #a0205e;
-  }
-  .order-tab-btn.active .tab-count {
-    background: var(--pink-light);
-    color: var(--pink-primary);
-  }
-
-  /* ── Search & Filter ── */
-  .input-group-text.bg-white {
-    border-right: none;
-    color: var(--pink-primary);
-  }
-  .form-control:focus,
-  .form-select:focus {
-    border-color: var(--pink-mid);
-    box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.15);
-  }
-
-  /* ── Table ── */
-  #ordersTable thead.table-dark {
-    background: var(--pink-gradient) !important;
-    --bs-table-bg: transparent;
-    --bs-table-color: #fff;
-  }
-  #ordersTable thead.table-dark th {
-    background: transparent !important;
-    color: #fff !important;
-    font-size: 0.8rem;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-    border-bottom: none;
-    padding: 13px 12px;
-  }
-  #ordersTable tbody tr {
-    transition: background 0.15s;
-  }
-  #ordersTable tbody tr:hover {
-    background: #fff5fa !important;
-  }
-  #ordersTable tbody td {
-    vertical-align: middle;
-    font-size: 0.87rem;
-    padding: 11px 12px;
-    border-color: #fce8f3;
-  }
-
-  /* ── Rush Row ── */
-  .table-danger {
-    background-color: #fff0f5 !important;
-  }
-
-  /* ── Badges ── */
+  .order-tab-btn.active { background: #fff; color: var(--pink-primary); box-shadow: 0 2px 10px rgba(214,51,132,0.13); }
+  .order-tab-btn:hover:not(.active) { color: var(--pink-primary); background: rgba(255,255,255,0.55); }
+  .tab-count { background: #f5c2dc; border-radius: 10px; padding: 1px 8px; font-size: 0.72rem; font-weight: 700; color: #a0205e; }
+  .order-tab-btn.active .tab-count { background: var(--pink-light); color: var(--pink-primary); }
+  .input-group-text.bg-white { border-right: none; color: var(--pink-primary); }
+  .form-control:focus, .form-select:focus { border-color: var(--pink-mid); box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.15); }
+  #ordersTable thead.table-dark { background: var(--pink-gradient) !important; --bs-table-bg: transparent; --bs-table-color: #fff; }
+  #ordersTable thead.table-dark th { background: transparent !important; color: #fff !important; font-size: 0.8rem; letter-spacing: 0.4px; text-transform: uppercase; border-bottom: none; padding: 13px 12px; }
+  #ordersTable tbody tr { transition: background 0.15s; }
+  #ordersTable tbody tr:hover { background: #fff5fa !important; }
+  #ordersTable tbody td { vertical-align: middle; font-size: 0.87rem; padding: 11px 12px; border-color: #fce8f3; }
+  .table-danger { background-color: #fff0f5 !important; }
   .badge-custom  { background: #6f42c1 !important; }
   .badge-premade { background: #0d6efd !important; }
   .badge-walkin  { background: var(--pink-primary) !important; }
+  .btn-outline-info { border-color: var(--pink-mid); color: var(--pink-primary); font-size: 0.78rem; padding: 4px 12px; border-radius: 7px; font-weight: 600; transition: all 0.18s; }
+  .btn-outline-info:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
+  #ordersTable .form-select-sm { border-color: #f5c2dc; border-radius: 7px; font-size: 0.8rem; margin-bottom: 5px; }
+  #ordersTable .form-select-sm:focus { border-color: var(--pink-primary); box-shadow: 0 0 0 0.15rem rgba(214,51,132,0.15); }
+  #ordersTable .btn-primary.btn-sm { background: var(--pink-gradient); border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.2px; transition: opacity 0.18s; }
+  #ordersTable .btn-primary.btn-sm:hover { opacity: 0.88; }
+  .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
+  .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
+  .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
+  .modal-header.bg-primary { background: var(--pink-gradient) !important; }
+  .modal-header.bg-success { background: linear-gradient(135deg, #198754, #0f5132) !important; }
+  .modal-header.bg-danger  { background: linear-gradient(135deg, #dc3545, #9a1827) !important; }
+  .modal-content { border-radius: var(--card-radius); border: none; overflow: hidden; box-shadow: 0 8px 40px rgba(214,51,132,0.14); border-top: 4px solid var(--pink-primary); }
+  .modal-footer .btn-warning { background: linear-gradient(135deg, #ffc107, #e0a800); border: none; font-weight: 600; border-radius: 8px; }
+  .modal-footer .btn-secondary { border-radius: 8px; }
+  .price-box { background: var(--pink-light); border: 1.5px solid var(--pink-mid); border-radius: 9px; padding: 10px 16px; font-weight: 700; color: var(--pink-dark); font-size: 1rem; }
+  #emptyTabMsg { color: #c07090; }
+  .card-body { padding: 22px 24px; }
 
-  /* ── View Button ── */
-  .btn-outline-info {
-    border-color: var(--pink-mid);
-    color: var(--pink-primary);
-    font-size: 0.78rem;
-    padding: 4px 12px;
-    border-radius: 7px;
-    font-weight: 600;
-    transition: all 0.18s;
+  /* Order items list in modal */
+  .order-item-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.88rem;
   }
-  .btn-outline-info:hover {
-    background: var(--pink-light);
-    border-color: var(--pink-primary);
-    color: var(--pink-dark);
-  }
-
-  /* ── Update Status form select ── */
-  #ordersTable .form-select-sm {
-    border-color: #f5c2dc;
-    border-radius: 7px;
-    font-size: 0.8rem;
-    margin-bottom: 5px;
-  }
-  #ordersTable .form-select-sm:focus {
-    border-color: var(--pink-primary);
-    box-shadow: 0 0 0 0.15rem rgba(214,51,132,0.15);
-  }
-  #ordersTable .btn-primary.btn-sm {
-    background: var(--pink-gradient);
-    border: none;
-    border-radius: 7px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.2px;
-    transition: opacity 0.18s;
-  }
-  #ordersTable .btn-primary.btn-sm:hover {
-    opacity: 0.88;
-  }
-
-  /* ── Pagination ── */
-  .pagination .page-link {
-    color: var(--pink-primary);
-    border-color: #f5c2dc;
-    border-radius: 7px !important;
-    margin: 0 2px;
-    font-size: 0.82rem;
-  }
-  .pagination .page-item.active .page-link {
-    background: var(--pink-primary);
-    border-color: var(--pink-primary);
-    color: #fff;
-  }
-  .pagination .page-link:hover {
-    background: var(--pink-light);
-    border-color: var(--pink-primary);
-    color: var(--pink-dark);
-  }
-
-  /* ── Modal Header ── */
-  .modal-header.bg-primary {
-    background: var(--pink-gradient) !important;
-  }
-  .modal-header.bg-success {
-    background: linear-gradient(135deg, #198754, #0f5132) !important;
-  }
-  .modal-header.bg-danger {
-    background: linear-gradient(135deg, #dc3545, #9a1827) !important;
-  }
-  .modal-content {
-    border-radius: var(--card-radius);
-    border: none;
-    overflow: hidden;
-    box-shadow: 0 8px 40px rgba(214,51,132,0.14);
-    border-top: 4px solid var(--pink-primary);
-  }
-  .modal-footer .btn-warning {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    border: none;
-    font-weight: 600;
-    border-radius: 8px;
-  }
-  .modal-footer .btn-secondary {
-    border-radius: 8px;
-  }
-
-  /* ── Edit Modal price box ── */
-  .price-box {
-    background: var(--pink-light);
-    border: 1.5px solid var(--pink-mid);
-    border-radius: 9px;
-    padding: 10px 16px;
-    font-weight: 700;
-    color: var(--pink-dark);
-    font-size: 1rem;
-  }
-
-  /* ── Empty state ── */
-  #emptyTabMsg {
-    color: #c07090;
-  }
-
-  /* ── Card body padding ── */
-  .card-body {
-    padding: 22px 24px;
-  }
+  .order-item-line:last-child { border-bottom: none; }
+  .order-item-line .name { font-weight: 500; color: #333; }
+  .order-item-line .meta { color: #888; font-size: 0.8rem; }
+  .order-item-line .sub  { font-weight: 600; color: #d63384; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
-
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
       <h4 class="mb-0">Order Management</h4>
@@ -272,20 +95,16 @@
       <!-- TABS -->
       <div class="order-tabs">
         <button class="order-tab-btn active" onclick="switchOrderTab('all', this)">
-           All
-          <span class="tab-count" id="count-all">0</span>
+          All <span class="tab-count" id="count-all">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('custom', this)">
-           Online - Customized
-          <span class="tab-count" id="count-custom">0</span>
+          Online - Customized <span class="tab-count" id="count-custom">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('premade', this)">
-           Online - Premade
-          <span class="tab-count" id="count-premade">0</span>
+          Online - Premade <span class="tab-count" id="count-premade">0</span>
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('walkin', this)">
-           Walk-in
-          <span class="tab-count" id="count-walkin">0</span>
+          Walk-in <span class="tab-count" id="count-walkin">0</span>
         </button>
       </div>
 
@@ -360,7 +179,7 @@
               <td>
                 {% if o.order_source == 'walk-in' %}
                   <strong>Walk-in Customer</strong><br>
-                  <small class="text-muted"></i>POS</small>
+                  <small class="text-muted">POS</small>
                 {% else %}
                   <strong>{{ o.customer.name }}</strong>
                   {% if o.rush %}<span class="badge bg-danger ms-1">RUSH</span>{% endif %}
@@ -389,67 +208,65 @@
                   {% elif o.status == 'Cancelled' %}bg-danger
                   {% endif %}">{{ o.status }}</span>
               </td>
-              <!-- ── PAYMENT STATUS COLUMN ── -->
               <td>
                 {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' or (o.status == 'Completed' and o.payment_method == 'Cash on Delivery') %}
-                  <span class="badge bg-success">Paid</span>
+                  <span class="badge bg-success">✅ Paid</span>
                 {% else %}
-                  <span class="badge bg-warning text-dark">Pending</span>
+                  <span class="badge bg-warning text-dark">⏳ Pending</span>
                 {% endif %}
               </td>
               <td>
                 <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
-                   View
+                  View
                 </button>
               </td>
               <td>
-              {% if o.order_source == 'walk-in' %}
-                <span class="badge bg-success p-2">Walk in Customer</span>
+                {% if o.order_source == 'walk-in' %}
+                  <span class="badge bg-success p-2">Walk in Customer</span>
 
-              {% elif o.status in ['Completed', 'Cancelled'] %}
-                <span class="badge bg-success p-2">Completed</span>
-                {% if o.status == 'Completed' and o.payment_method == 'Cash on Delivery' %}
-                  <br><span class="badge bg-success mt-1">COD Paid</span>
-                {% endif %}
-
-              {% else %}
-                <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}"
-                      onsubmit="return confirmStatus('{{ o.status }}')">
-                  <select name="status" class="form-select form-select-sm mb-1">
-                    {% if o.status == 'New' %}
-                      <option value="New" selected>New</option>
-                      <option value="Accepted">Accepted</option>
-                      <option value="Cancelled">Cancelled</option>
-
-                    {% elif o.status == 'Accepted' %}
-                      <option value="Accepted" selected>Accepted</option>
-                      <option value="Pending">Pending</option>
-                      <option value="Cancelled">Cancelled</option>
-
-                    {% elif o.status == 'Pending' %}
-                      <option value="Pending" selected>Pending</option>
-                      <option value="Ready">Ready</option>
-                      <option value="Cancelled">Cancelled</option>
-
-                    {% elif o.status == 'Ready' %}
-                      <option value="Ready" selected>Ready</option>
-                      <option value="Out for Delivery">Out for Delivery</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-
-                    {% elif o.status == 'Out for Delivery' %}
-                      <option value="Out for Delivery" selected>Out for Delivery</option>
-                      <option value="Completed">Completed</option>
-                      <option value="Cancelled">Cancelled</option>
-
+                {% elif o.status in ['Completed', 'Cancelled'] %}
+                  {% if o.status == 'Completed' %}
+                    <span class="badge bg-success p-2">✅ Completed</span>
+                    {% if o.payment_method == 'Cash on Delivery' %}
+                      <br><span class="badge bg-success mt-1">💰 COD Paid</span>
                     {% endif %}
-                  </select>
-                  <button class="btn btn-primary btn-sm w-100">
-                    <i class="fas fa-sync-alt"></i> Update
-                  </button>
-                </form>
-              {% endif %}
-            </td>
+                  {% else %}
+                    <span class="badge bg-danger p-2">❌ Cancelled</span>
+                  {% endif %}
+
+                {% else %}
+                  <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}"
+                        onsubmit="return confirmStatus('{{ o.status }}')">
+                    <select name="status" class="form-select form-select-sm mb-1">
+                      {% if o.status == 'New' %}
+                        <option value="New" selected>New</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Cancelled">Cancelled</option>
+                      {% elif o.status == 'Accepted' %}
+                        <option value="Accepted" selected>Accepted</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Cancelled">Cancelled</option>
+                      {% elif o.status == 'Pending' %}
+                        <option value="Pending" selected>Pending</option>
+                        <option value="Ready">Ready</option>
+                        <option value="Cancelled">Cancelled</option>
+                      {% elif o.status == 'Ready' %}
+                        <option value="Ready" selected>Ready</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      {% elif o.status == 'Out for Delivery' %}
+                        <option value="Out for Delivery" selected>Out for Delivery</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      {% endif %}
+                    </select>
+                    <button class="btn btn-primary btn-sm w-100">
+                      <i class="fas fa-sync-alt"></i> Update
+                    </button>
+                  </form>
+                {% endif %}
+              </td>
             </tr>
             {% else %}
             <tr><td colspan="9" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No orders yet</td></tr>
@@ -485,14 +302,36 @@
         <div class="row">
           <div class="col-md-6">
             <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
-            <p class="mb-2"><strong></i>Order:</strong><br><span class="ms-4">{{ o.item }}</span></p>
+
+            <!-- Items display with quantity/subtotal -->
+            <p class="mb-1"><strong>Order:</strong></p>
+            {% if o.order_type == 'premade' and o.selected_items %}
+              <div class="mb-2">
+                {% for item in o.selected_items %}
+                <div class="order-item-line">
+                  <div>
+                    <div class="name">{{ item.cake_name }}</div>
+                    <div class="meta">
+                      ₱{{ "%.2f"|format(item.price|float) }}
+                      {% if item.get('quantity', 1) > 1 %}
+                        × {{ item.get('quantity', 1) }}
+                      {% endif %}
+                    </div>
+                  </div>
+                  <div class="sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="ms-2 mb-2">{{ o.item }}</p>
+            {% endif %}
 
             {% if o.order_source != 'walk-in' %}
-            <p class="mb-2"><strong></i>Delivery Date:</strong><br>
+            <p class="mb-2"><strong>Delivery Date:</strong><br>
               <span class="ms-4">{{ o.delivery_date.strftime('%B %d, %Y - %I:%M %p') }}</span></p>
             {% endif %}
 
-            <p class="mb-2"><strong></i>Status:</strong><br>
+            <p class="mb-2"><strong>Status:</strong><br>
               <span class="ms-4">
                 <span class="badge
                   {% if o.status == 'New' %}bg-secondary
@@ -519,10 +358,9 @@
             </p>
             {% endif %}
 
-            <p class="mb-2"><strong></i>Payment Method:</strong><br>
+            <p class="mb-2"><strong>Payment Method:</strong><br>
               <span class="ms-4">{{ o.payment_method or 'N/A' }}</span></p>
 
-            <!-- ── PAYMENT STATUS IN MODAL ── -->
             <p class="mb-2"><strong>Payment Status:</strong><br>
               <span class="ms-4">
                 {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' %}
@@ -536,8 +374,8 @@
               </span>
             </p>
 
-            <p class="mb-2"><strong></i>Amount:</strong><br>
-              <span class="ms-4 fw-bold text-success">₱{{ "%.2f"|format(o.amount) }}</span></p>
+            <p class="mb-2"><strong>Amount:</strong><br>
+              <span class="ms-4 fw-bold text-success">₱{{ "%.2f"|format(o.calculated_total) }}</span></p>
             <p class="mb-2"><strong>Ordered On:</strong><br>
               <span class="ms-4">{% if o.created_at %}{{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</span></p>
           </div>
@@ -686,18 +524,15 @@
     allRows.forEach(function(row) {
       var text    = row.textContent.toLowerCase();
       var rowType = row.getAttribute('data-type') || 'unknown';
-
       var matchTab = currentTab === 'all' ||
                      (currentTab === 'custom'  && rowType === 'custom')  ||
                      (currentTab === 'premade' && rowType === 'premade') ||
                      (currentTab === 'walkin'  && rowType === 'walkin');
-
       var matchSearch = text.includes(searchValue);
       var statusBadge = row.querySelector('td:nth-child(6) .badge');
       var matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
       var isRush      = row.classList.contains('table-danger');
       var matchRush   = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
-
       if (matchTab && matchSearch && matchStatus && matchRush) visibleRows.push(row);
     });
 

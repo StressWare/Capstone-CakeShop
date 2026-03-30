@@ -14,6 +14,19 @@
     .badge-completed { background: #198754; }
     .badge-cancelled { background: #dc3545; }
     .star-rating i   { font-size: 2rem; color: #ddd; cursor: pointer; transition: color 0.15s; }
+
+    .order-item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.88rem;
+    }
+    .order-item-row:last-child { border-bottom: none; }
+    .order-item-name { color: #333; font-weight: 500; }
+    .order-item-qty  { color: #888; font-size: 0.82rem; }
+    .order-item-sub  { color: #d63384; font-weight: 600; }
 </style>
 {% endblock %}
 
@@ -135,8 +148,29 @@
 
                                     <hr>
                                     <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Items</h6>
-                                    <p>{{ order.item }}</p>
-                                    <p><strong>Total: ₱{{ "%.2f"|format(order.amount) }}</strong></p>
+
+                                    {% if order.order_type == 'premade' and order.selected_items %}
+                                        {% for item in order.selected_items %}
+                                        <div class="order-item-row">
+                                            <div>
+                                                <div class="order-item-name">{{ item.cake_name }}</div>
+                                                <div class="order-item-qty">
+                                                    ₱{{ "%.2f"|format(item.price|float) }}
+                                                    {% if item.get('quantity', 1) > 1 %}
+                                                        × {{ item.get('quantity', 1) }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="order-item-sub">
+                                                ₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <p>{{ order.item }}</p>
+                                    {% endif %}
+                                        
+                                        <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
 
                                     <hr>
                                     <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Delivery Info</h6>
@@ -176,15 +210,12 @@
 
                                 <!-- ── MODAL FOOTER ── -->
                                 <div class="modal-footer">
-
-                                    <!-- View Receipt (Completed only) -->
                                     {% if order.status == 'Completed' %}
                                     <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
                                         <i class="fas fa-receipt me-1"></i>View Receipt
                                     </a>
                                     {% endif %}
 
-                                    <!-- Review Button (Completed + Premade + Not reviewed) -->
                                     {% if order.status == 'Completed' and order.order_type == 'premade' and not order.reviewed %}
                                         {% for item in order.selected_items %}
                                         <button type="button" class="btn btn-warning btn-sm"
@@ -195,7 +226,6 @@
                                         {% endfor %}
                                     {% endif %}
 
-                                    <!-- Cancel Button (New only) -->
                                     {% if order.status == 'New' %}
                                     <form method="POST" action="/order/cancel/{{ order.id }}"
                                           onsubmit="return confirm('Are you sure you want to cancel this order?')">
@@ -222,14 +252,12 @@
                                         <input type="hidden" name="cake_id"   value="{{ item.cake_id }}">
                                         <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
                                         <input type="hidden" name="order_id"  value="{{ order.id }}">
-
                                         <div class="modal-header" style="background:#d63384; color:#fff;">
                                             <h5 class="modal-title">
                                                 <i class="fas fa-star me-2"></i>Review {{ item.cake_name }}
                                             </h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
-
                                         <div class="modal-body">
                                             <div class="mb-3">
                                                 <label class="form-label fw-bold">Rating *</label>
@@ -259,7 +287,6 @@
                                                           placeholder="How was the cake? Share your experience..."></textarea>
                                             </div>
                                         </div>
-
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                             <button type="submit" class="btn" style="background:#d63384; color:#fff;">
@@ -326,13 +353,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- STAR RATING JS -->
 <script>
     var ratingLabels = {
-        1: '⭐ Poor',
-        2: '⭐⭐ Fair',
-        3: '⭐⭐⭐ Good',
-        4: '⭐⭐⭐⭐ Great',
+        1: '⭐ Poor', 2: '⭐⭐ Fair',
+        3: '⭐⭐⭐ Good', 4: '⭐⭐⭐⭐ Great',
         5: '⭐⭐⭐⭐⭐ Excellent!'
     };
 

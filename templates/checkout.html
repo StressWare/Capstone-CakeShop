@@ -245,12 +245,26 @@
             {% if order_type == 'premade' and selected_items %}
               {% for item in selected_items %}
               <div class="order-item">
-                <div class="order-item-image"><i class="fas fa-birthday-cake"></i></div>
+                <div class="order-item-image">
+                  {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.cake_name }}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                  {% else %}
+                    <i class="fas fa-birthday-cake"></i>
+                  {% endif %}
+                </div>
                 <div class="order-item-details">
                   <div class="order-item-name">{{ item.cake_name }}</div>
-                  <div class="order-item-price">₱{{ "%.2f"|format(item.price|float) }}</div>
+                  <div class="order-item-spec">
+                    ₱{{ "%.2f"|format(item.price|float) }}
+                    {% if item.quantity > 1 %}
+                      × {{ item.quantity }}
+                    {% endif %}
+                  </div>
+                  <div class="order-item-price">
+                    Subtotal: ₱{{ "%.2f"|format(item.subtotal|float) }}
+                  </div>
                 </div>
-              </div>
+              </div>  
               {% endfor %}
             {% else %}
               <div class="order-item">

@@ -325,9 +325,20 @@ def customer_dashboard():
     orders_list = []
     for order_doc in users.document(user_id).collection("orders").stream():
         order = order_doc.to_dict()
-        order["id"]    = order_doc.id
+        order["id"] = order_doc.id
         order["notes"] = order.get("notes", "")
-        order["reviewed"] = order.get("reviewed", False)  # ← ADD
+        order["reviewed"] = order.get("reviewed", False)
+        
+        # Calculate total for premade orders
+        if order.get("order_type") == "premade" and order.get("selected_items"):
+            total = 0
+            for item in order["selected_items"]:
+                subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
+                total += float(subtotal)
+            order["calculated_total"] = total
+        else:
+            order["calculated_total"] = order.get("amount", 0)
+        
         order = convert_timestamps(order)
         orders_list.append(order)
  
@@ -344,29 +355,6 @@ def customer_dashboard():
         user_id=user_id,
         cart_count=cart_count
     )
-    
-@app.route("/order/receipt/<order_id>")
-@login_required
-def order_receipt(order_id):
-    user_id = session.get("user_id")
- 
-    order_ref = users.document(user_id).collection("orders").document(order_id)
-    order_doc = order_ref.get()
- 
-    if not order_doc.exists:
-        flash("Receipt not found.", "danger")
-        return redirect(url_for("customer_dashboard"))
- 
-    order = order_doc.to_dict()
-    order["id"] = order_id
-    order = convert_timestamps(order)
- 
-    # Only allow viewing receipt for completed orders
-    if order.get("status") != "Completed":
-        flash("Receipt is only available for completed orders.", "warning")
-        return redirect(url_for("customer_dashboard"))
- 
-    return render_template("customer_receipt.html", order=order)
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
@@ -497,17 +485,33 @@ def order_cake():
         for i in selected_items:
             i['quantity'] = int(i.get('quantity', 1))
             i['subtotal'] = float(i['price']) * i['quantity']
+            
+            # Get image URL from cakes collection if not present
+            if 'image_url' not in i and i.get('cake_id'):
+                cake_doc = cakes.document(i['cake_id']).get()
+                if cake_doc.exists:
+                    cake_data = cake_doc.to_dict()
+                    i['image_url'] = cake_data.get('image', None)
+            
         amount = sum(float(i['subtotal']) for i in selected_items)
     else:
         # coming from Order Now on cakes page
         quantity = int(request.form.get('quantity', 1))
         price    = float(request.form.get('price', 0))
+        cake_id  = request.form.get('cake_id')
+        cake_name = request.form.get('cake_name')
+        
+        # Get cake details including image from database
+        cake_doc = cakes.document(cake_id).get()
+        cake_data = cake_doc.to_dict() if cake_doc.exists else {}
+        
         selected_items = [{
-            'cake_id':   request.form.get('cake_id'),
-            'cake_name': request.form.get('cake_name'),
+            'cake_id':   cake_id,
+            'cake_name': cake_name,
             'price':     price,
             'quantity':  quantity,
-            'subtotal':  price * quantity
+            'subtotal':  price * quantity,
+            'image_url': cake_data.get('image', None)  # This is the Cloudinary URL
         }]
         amount = price * quantity
  
@@ -807,6 +811,14 @@ def admin_orders():
             order["customer_username"] = user_data.get("username", "")
             order["order_type"]        = order.get("order_type", "custom")  # fallback for old orders
             order["order_source"]      = order.get("order_source", "online")
+            if order.get("order_type") == "premade" and order.get("selected_items"):
+                total = 0
+                for item in order["selected_items"]:
+                    subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
+                    total += float(subtotal)
+                order["calculated_total"] = total
+            else:
+                order["calculated_total"] = order.get("amount", 0)
             order = convert_timestamps(order)
             orders.append(order)
  
@@ -821,7 +833,7 @@ def admin_orders():
         order["rush"]         = False
         order["delivery_type"]= "Walk-in"
         order["payment_method"]= order.get("payment_method", "Cash")
- 
+        order["calculated_total"] = order.get("amount", 0)
         # Walk-in has no delivery_date so set dummy
         order["delivery_date"] = order.get("created_at") or datetime.now(PH_TZ)
  
