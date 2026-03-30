@@ -469,8 +469,8 @@ def order_receipt(order_id):
     order = convert_timestamps(order)
     
     # Only allow viewing receipt for completed orders
-    if order.get("status") != "Completed":
-        flash("Receipt is only available for completed orders.", "warning")
+    if order.get("status") != "Completed" and order.get("payment_status") != "Paid":
+        flash("Receipt is only available for completed or paid orders.", "warning")
         return redirect(url_for("customer_dashboard"))
     
     # Calculate total for premade orders if not already calculated
