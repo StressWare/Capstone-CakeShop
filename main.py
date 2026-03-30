@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from datetime import datetime, timedelta, timezone
 from functools import wraps
+import re
 import os
 import json
 import cloudinary
@@ -386,13 +387,12 @@ def customize():
 def add_review():
     user_id  = session.get("user_id")
     now      = datetime.now(PH_TZ)
- 
+    
     cake_id       = request.form.get("cake_id")
     cake_name     = request.form.get("cake_name")
     order_id      = request.form.get("order_id")
-    rating        = int(request.form.get("rating", 5))
     comment       = request.form.get("comment", "").strip()
- 
+    
     # Get reviewer name from Firestore
     user_doc      = users.document(user_id).get()
     reviewer_name = "Customer"
@@ -400,37 +400,90 @@ def add_review():
         reviewer_name = user_doc.to_dict().get("fname") or \
                         user_doc.to_dict().get("username") or \
                         "Customer"
- 
+    
     # Check if already reviewed this order
     order_ref = users.document(user_id).collection("orders").document(order_id)
     order_doc = order_ref.get()
     if not order_doc.exists:
         flash("Order not found.", "danger")
         return redirect(url_for("customer_dashboard"))
- 
-    if order_doc.to_dict().get("reviewed"):
+    
+    order_data = order_doc.to_dict()
+    if order_data.get("reviewed"):
         flash("You already reviewed this order.", "warning")
         return redirect(url_for("customer_dashboard"))
- 
-    # Save review
-    reviews.add({
+    
+    # Build review data based on order type
+    review_data = {
         "user_id":       user_id,
         "order_id":      order_id,
         "cake_id":       cake_id,
         "cake_name":     cake_name,
-        "rating":        rating,
         "comment":       comment,
         "reviewer_name": reviewer_name,
         "is_visible":    True,
-        "created_at":    now
-    })
- 
+        "created_at":    now,
+        "order_type":    order_data.get("order_type")
+    }
+    
+    # For custom orders, include flavor, design, overall ratings
+    if order_data.get("order_type") == "custom":
+        flavor_rating = int(request.form.get("flavor_rating", 5))
+        design_rating = int(request.form.get("design_rating", 5))
+        overall_rating = int(request.form.get("rating", 5))
+        
+        review_data["flavor_rating"] = flavor_rating
+        review_data["design_rating"] = design_rating
+        review_data["overall_rating"] = overall_rating
+        review_data["rating"] = overall_rating  # For compatibility
+        
+    else:
+        # Premade orders: single rating
+        rating = int(request.form.get("rating", 5))
+        review_data["rating"] = rating
+    
+    # Save review
+    reviews.add(review_data)
+    
     # Mark order as reviewed
     order_ref.update({"reviewed": True})
- 
+    
     flash("Review submitted! Thank you 🎂", "success")
     return redirect(url_for("customer_dashboard"))
- 
+#RECEIPT
+@app.route("/order/receipt/<order_id>")
+@login_required
+def order_receipt(order_id):
+    user_id = session.get("user_id")
+    
+    # Get the order
+    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_doc = order_ref.get()
+    
+    if not order_doc.exists:
+        flash("Receipt not found.", "danger")
+        return redirect(url_for("customer_dashboard"))
+    
+    order = order_doc.to_dict()
+    order["id"] = order_id
+    order = convert_timestamps(order)
+    
+    # Only allow viewing receipt for completed orders
+    if order.get("status") != "Completed":
+        flash("Receipt is only available for completed orders.", "warning")
+        return redirect(url_for("customer_dashboard"))
+    
+    # Calculate total for premade orders if not already calculated
+    if order.get("order_type") == "premade" and order.get("selected_items"):
+        total = 0
+        for item in order["selected_items"]:
+            subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
+            total += float(subtotal)
+        order["calculated_total"] = total
+    else:
+        order["calculated_total"] = order.get("amount", 0)
+    
+    return render_template("customer_receipt.html", order=order)
 
 # ================================================================
 # ORDER ROUTES
@@ -550,12 +603,39 @@ def finalize_order():
         inspo_image    = None
         for i in selected_items:
             users.document(user_id).collection("cart").document(i["cake_id"]).delete()
+        custom_components = []  # empty for premade
     else:
         selected_items = []
         item_names     = request.form.get("order_item", "")
         amount         = float(request.form.get("amount", 0))
         rush           = request.form.get("rush") == "yes"
         inspo_image    = request.form.get("inspo_image") or None
+        
+        # Parse custom order string into components for vertical display
+        custom_components = []
+        # Split the item string by comma
+        item_parts = item_names.split(", ")
+        
+        for part in item_parts:
+            # Match pattern: "Component Name (₱price)"
+            match = re.search(r'(.+) \(₱([\d,]+)\)', part)
+            if match:
+                component_name = match.group(1).strip()
+                component_price = float(match.group(2).replace(',', ''))
+                custom_components.append({
+                    "name": component_name,
+                    "price": component_price
+                })
+            else:
+                # Try to match pattern without ₱ symbol (fallback)
+                match2 = re.search(r'(.+) \(([\d,]+)\)', part)
+                if match2:
+                    component_name = match2.group(1).strip()
+                    component_price = float(match2.group(2).replace(',', ''))
+                    custom_components.append({
+                        "name": component_name,
+                        "price": component_price
+                    })
  
     # ── Base order data ──
     order_data = {
@@ -572,6 +652,7 @@ def finalize_order():
         "delivery_type":  delivery_type,
         "inspo_image":    inspo_image,
         "order_type":     order_type,
+        "custom_components": custom_components,  # ADD THIS LINE
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),

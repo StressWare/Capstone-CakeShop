@@ -300,10 +300,11 @@
         {% endif %}
       </div>
 
-      <!-- Items -->
+      <!-- ========== ITEMS SECTION - FIXED ========== -->
       <div class="receipt-items-title">Items Ordered</div>
 
       {% if order.order_type == 'premade' and order.selected_items %}
+        <!-- PREMADE ORDERS - Vertical list -->
         {% for item in order.selected_items %}
         <div class="receipt-item-row">
           <span class="receipt-item-name">
@@ -317,7 +318,22 @@
           </span>
         </div>
         {% endfor %}
+        
+      {% elif order.order_type == 'custom' and order.custom_components %}
+        <!-- CUSTOM ORDERS WITH COMPONENTS - Vertical list -->
+        {% for component in order.custom_components %}
+        <div class="receipt-item-row">
+          <span class="receipt-item-name">
+            {{ component.name }}
+          </span>
+          <span class="receipt-item-price">
+            ₱{{ "%.2f"|format(component.price|float) }}
+          </span>
+        </div>
+        {% endfor %}
+        
       {% else %}
+        <!-- FALLBACK for old orders without components -->
         <div class="receipt-item-row">
           <span class="receipt-item-name">
             🎂 Custom Cake
@@ -333,6 +349,7 @@
         </div>
         {% endif %}
       {% endif %}
+      <!-- ========== END ITEMS SECTION ========== -->
 
       <!-- Total -->
       <div class="receipt-total-row">

@@ -305,7 +305,8 @@
 
             <!-- Items display with quantity/subtotal -->
             <p class="mb-1"><strong>Order:</strong></p>
-            {% if o.order_type == 'premade' and o.selected_items %}
+                        {% if o.order_type == 'premade' and o.selected_items %}
+              <!-- PREMADE ORDERS - Vertical list -->
               <div class="mb-2">
                 {% for item in o.selected_items %}
                 <div class="order-item-line">
@@ -322,7 +323,25 @@
                 </div>
                 {% endfor %}
               </div>
+              
+            {% elif o.order_type == 'custom' and o.custom_components %}
+              <!-- CUSTOM ORDERS WITH COMPONENTS - Vertical list -->
+              <div class="mb-2">
+                {% for component in o.custom_components %}
+                <div class="order-item-line">
+                  <div>
+                    <div class="name">{{ component.name }}</div>
+                    <div class="meta">
+                      ₱{{ "%.2f"|format(component.price|float) }}
+                    </div>
+                  </div>
+                  <div class="sub">₱{{ "%.2f"|format(component.price|float) }}</div>
+                </div>
+                {% endfor %}
+              </div>
+              
             {% else %}
+              <!-- FALLBACK for old orders -->
               <p class="ms-2 mb-2">{{ o.item }}</p>
             {% endif %}
 
