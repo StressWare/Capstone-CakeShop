@@ -1,5 +1,4 @@
 {% extends 'base_customer.html' %}
-
 {% block title %}My Dashboard - Ms. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
@@ -17,17 +16,54 @@
     .star-rating i   { font-size: 2rem; color: #ddd; cursor: pointer; transition: color 0.15s; }
 
     .order-item-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 6px 0;
-        border-bottom: 1px solid #f0f0f0;
-        font-size: 0.88rem;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem;
     }
     .order-item-row:last-child { border-bottom: none; }
     .order-item-name { color: #333; font-weight: 500; }
     .order-item-qty  { color: #888; font-size: 0.82rem; }
     .order-item-sub  { color: #d63384; font-weight: 600; }
+
+    /* ── Favorites grid ── */
+    .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 8px;
+    }
+    .fav-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .fav-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+    .fav-card-img {
+        width: 100%; height: 140px; object-fit: cover;
+    }
+    .fav-card-no-img {
+        width: 100%; height: 140px; background: #fce8f3;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 3rem;
+    }
+    .fav-card-body { padding: 10px 12px; }
+    .fav-card-name { font-weight: 600; font-size: 0.9rem; color: #333; margin-bottom: 2px; }
+    .fav-card-price { color: #d63384; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+    .fav-card-rating { font-size: 0.75rem; color: #888; margin-bottom: 8px; }
+    .fav-card-stock { font-size: 0.75rem; color: #999; margin-bottom: 8px; }
+    .fav-btn-group { display: flex; flex-direction: column; gap: 5px; }
+    .fav-btn-group .btn { font-size: 0.78rem; padding: 5px 8px; border-radius: 7px; }
+    .btn-unfav {
+        background: none; border: none; color: #dc3545;
+        font-size: 0.78rem; cursor: pointer; padding: 4px 0;
+        text-align: left; width: 100%;
+    }
+    .btn-unfav:hover { text-decoration: underline; }
+    .fav-empty {
+        text-align: center; color: #999; padding: 40px 0;
+    }
+    .fav-empty i { font-size: 3rem; margin-bottom: 12px; display: block; }
 </style>
 {% endblock %}
 
@@ -37,25 +73,17 @@
     <!-- PROFILE SECTION -->
     <section id="profile" class="mb-5">
         <h2 class="mb-3">My Profile</h2>
-
         <div class="profile-card-enhanced">
-
-            <!-- LEFT ICON -->
             <div class="profile-avatar">
                 <i class="bi bi-person-circle" style="color: white; font-size: 4rem;"></i>
             </div>
-
-            <!-- MIDDLE INFO -->
             <div class="profile-info">
                 <p><strong>Full Name:</strong> {{ customer.fname }}</p>
                 <p><strong>Username:</strong> {{ customer.username }}</p>
                 <p><strong>Contact:</strong> {{ customer.number }}</p>
-                <p><strong>Email:</strong> {{ customer.email}}</p>
+                <p><strong>Email:</strong> {{ customer.email }}</p>
                 <p><strong>Address:</strong> {{ customer.address }}</p>
-                
             </div>
-
-            <!-- RIGHT BUTTON -->
             <div class="profile-action">
                 <button class="btn btn-primary btn-sm"
                         data-bs-toggle="modal"
@@ -63,326 +91,291 @@
                     Edit Profile
                 </button>
             </div>
-
         </div>
 
-        <!-- ================= ADDED ICON NAVIGATION ================= -->
+        <!-- ICON NAV -->
         <div class="dashboard-nav-icons">
-
             <button class="nav-icon active" onclick="showTab('orders')">
                 <i class="bi bi-box-seam"></i>
                 <span>Orders</span>
             </button>
-
             <button class="nav-icon" onclick="showTab('favorites')">
                 <i class="bi bi-heart"></i>
                 <span>Favorites</span>
+                {% if favorites_list %}
+                <span class="badge bg-danger ms-1" style="font-size:0.65rem;"></span>
+                {% endif %}
             </button>
-
         </div>
     </section>
 
-    <!-- ================= ORDERS TAB WRAPPER ================= -->
+    <!-- ================= ORDERS TAB ================= -->
     <div id="ordersTab">
+        <section id="orders">
+            <h2 class="mb-3">Order History</h2>
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="searchOrders" class="form-control" placeholder="Search by item, order ID...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="New">New</option>
+                        <option value="Accepted">Accepted</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Ready">Ready</option>
+                        <option value="Out for Delivery">Out for Delivery</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="typeFilter" class="form-select">
+                        <option value="">All Types</option>
+                        <option value="premade">Premade</option>
+                        <option value="custom">Custom</option>
+                    </select>
+                </div>
+            </div>
 
-    <!-- ORDER HISTORY -->
-    <section id="orders">
-        
-        <h2 class="mb-3">Order History</h2>
-        <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input type="text" id="searchOrders" class="form-control" placeholder="Search by item, order ID...">
-        </div>
-    </div>
-    <div class="col-md-3">
-        <select id="statusFilter" class="form-select">
-            <option value="">All Status</option>
-            <option value="New">New</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Pending">Pending</option>
-            <option value="Ready">Ready</option>
-            <option value="Out for Delivery">Out for Delivery</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <select id="typeFilter" class="form-select">
-            <option value="">All Types</option>
-            <option value="premade">Premade</option>
-            <option value="custom">Custom</option>
-        </select>
-    </div>
-</div>
             <div class="table-responsive table-wrapper">
                 <table class="table table-hover align-middle custom-table">
                     <thead class="table-dark">
-                    <tr>
-                        <th>Items</th>
-                        <th>Total (₱)</th>
-                        <th>Delivery Date</th>
-                        <th>Ordered On</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
-                        <td>{{ "%.2f"|format(order.amount) }}</td>
-                        <td>{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
-                        <td>
-                            {% if order.created_at %}
-                                {{ order.created_at.strftime('%b %d, %Y') }}
-                            {% else %}N/A{% endif %}
-                        </td>
-                        <td>
-                            {% set s = order.status %}
-                            {% if s == 'New' %}<span class="badge badge-new">New</span>
-                            {% elif s == 'Accepted' %}<span class="badge badge-accepted">Accepted</span>
-                            {% elif s == 'Pending' %}<span class="badge badge-pending">Pending</span>
-                            {% elif s == 'Ready' %}<span class="badge badge-ready">Ready</span>
-                            {% elif s == 'Out for Delivery' %}<span class="badge badge-out">Out for Delivery</span>
-                            {% elif s == 'Completed' %}<span class="badge badge-completed">Completed</span>
-                            {% elif s == 'Cancelled' %}<span class="badge badge-cancelled">Cancelled</span>
-                            {% else %}<span class="badge bg-secondary">{{ s }}</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#orderModal{{ order.id }}">
-                                View
-                            </button>
-                        </td>
-                    </tr>
+                        <tr>
+                            <th>Items</th>
+                            <th>Total (₱)</th>
+                            <th>Delivery Date</th>
+                            <th>Ordered On</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
+                            <td>{{ "%.2f"|format(order.amount) }}</td>
+                            <td>{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
+                            <td>
+                                {% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y') }}
+                                {% else %}N/A{% endif %}
+                            </td>
+                            <td>
+                                {% set s = order.status %}
+                                {% if s == 'New' %}<span class="badge badge-new">New</span>
+                                {% elif s == 'Accepted' %}<span class="badge badge-accepted">Accepted</span>
+                                {% elif s == 'Pending' %}<span class="badge badge-pending">Pending</span>
+                                {% elif s == 'Ready' %}<span class="badge badge-ready">Ready</span>
+                                {% elif s == 'Out for Delivery' %}<span class="badge badge-out">Out for Delivery</span>
+                                {% elif s == 'Completed' %}<span class="badge badge-completed">Completed</span>
+                                {% elif s == 'Cancelled' %}<span class="badge badge-cancelled">Cancelled</span>
+                                {% else %}<span class="badge bg-secondary">{{ s }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <button class="btn btn-info btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#orderModal{{ order.id }}">
+                                    View
+                                </button>
+                            </td>
+                        </tr>
 
-                    <!-- ============ ORDER DETAILS MODAL ============ -->
-                    <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Order Details</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Order Info</h6>
-                                    <div class="row g-2 mb-4">
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Order ID:</strong></p>
-                                            <small class="text-muted">{{ order.id }}</small>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Ordered On:</strong></p>
-                                            <p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Delivery Date:</strong></p>
-                                            <p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Delivery Type:</strong></p>
-                                            <p>
-                                                {% if order.delivery_type == 'Pickup' %}
-                                                    <span class="badge bg-warning text-dark">🏪 Pick Up</span>
-                                                {% else %}
-                                                    <span class="badge bg-info text-dark">🚚 Delivery</span>
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Payment Method:</strong></p>
-                                            <p>{{ order.payment_method or 'N/A' }}</p>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Rush Order:</strong></p>
-                                            <p>
-                                                {% if order.rush %}
-                                                    <span class="badge bg-danger">⚡ Yes</span>
-                                                {% else %}
-                                                    <span class="badge bg-secondary">No</span>
-                                                {% endif %}
-                                            </p>
-                                        </div>
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Status:</strong></p>
-                                            <p>{{ order.status }}</p>
-                                        </div>
+                        <!-- ORDER DETAILS MODAL -->
+                        <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Order Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-
-                                    <hr>
-                                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Items</h6>
-
-                                    {% if order.order_type == 'premade' and order.selected_items %}
-                                        {% for item in order.selected_items %}
-                                        <div class="order-item-row">
-                                            <div>
-                                                <div class="order-item-name">{{ item.cake_name }}</div>
-                                                <div class="order-item-qty">
-                                                    ₱{{ "%.2f"|format(item.price|float) }}
-                                                    {% if item.get('quantity', 1) > 1 %}
-                                                        × {{ item.get('quantity', 1) }}
+                                    <div class="modal-body">
+                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Order Info</h6>
+                                        <div class="row g-2 mb-4">
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Order ID:</strong></p>
+                                                <small class="text-muted">{{ order.id }}</small>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Ordered On:</strong></p>
+                                                <p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Delivery Date:</strong></p>
+                                                <p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p>
+                                            </div>
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Delivery Type:</strong></p>
+                                                <p>
+                                                    {% if order.delivery_type == 'Pickup' %}
+                                                        <span class="badge bg-warning text-dark">🏪 Pick Up</span>
+                                                    {% else %}
+                                                        <span class="badge bg-info text-dark">🚚 Delivery</span>
                                                     {% endif %}
-                                                </div>
+                                                </p>
                                             </div>
-                                            <div class="order-item-sub">
-                                                ₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Payment Method:</strong></p>
+                                                <p>{{ order.payment_method or 'N/A' }}</p>
                                             </div>
-                                        </div>
-                                        {% endfor %}
-                                    {% elif order.order_type == 'custom' and order.custom_components %}
-                                        {% for component in order.custom_components %}
-                                        <div class="order-item-row">
-                                            <div>
-                                                <div class="order-item-name">{{ component.name }}</div>
-                                                <div class="order-item-qty">
-                                                    ₱{{ "%.2f"|format(component.price|float) }}
-                                                </div>
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Rush Order:</strong></p>
+                                                <p>
+                                                    {% if order.rush %}<span class="badge bg-danger">⚡ Yes</span>
+                                                    {% else %}<span class="badge bg-secondary">No</span>{% endif %}
+                                                </p>
                                             </div>
-                                            <div class="order-item-sub">
-                                                ₱{{ "%.2f"|format(component.price|float) }}
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Status:</strong></p>
+                                                <p>{{ order.status }}</p>
                                             </div>
                                         </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        <p>{{ order.item }}</p>
-                                    {% endif %}
-                                        
-                                    <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
 
-                                    <hr>
-                                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Delivery Info</h6>
-                                    <div class="row g-2">
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Address:</strong></p>
-                                            <p>{{ order.customer.address or 'N/A' }}</p>
-                                        </div>
-                                        {% if order.customer.occasion %}
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Occasion:</strong></p>
-                                            <p>{{ order.customer.occasion }}</p>
-                                        </div>
-                                        {% endif %}
-                                        {% if order.customer.celebrant %}
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Celebrant:</strong></p>
-                                            <p>{{ order.customer.celebrant }}</p>
-                                        </div>
-                                        {% endif %}
-                                        {% if order.customer.age %}
-                                        <div class="col-6">
-                                            <p class="mb-1"><strong>Age:</strong></p>
-                                            <p>{{ order.customer.age }}</p>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-
-                                    {% if order.notes %}
-                                    <hr>
-                                    <div class="alert alert-info mt-2">
-                                        <strong>Special Instructions:</strong>
-                                        <p class="mb-0">{{ order.notes }}</p>
-                                    </div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="modal-footer">
-                                    {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
-                                    <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
-                                        <i class="fas fa-receipt me-1"></i>View Receipt
-                                    </a>
-                                    {% endif %}
-
-                                    {% if order.status == 'Completed' and not order.reviewed %}
-                                        {% if order.order_type == 'premade' %}
+                                        <hr>
+                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Items</h6>
+                                        {% if order.order_type == 'premade' and order.selected_items %}
                                             {% for item in order.selected_items %}
-                                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}">
-                                                <i class="fas fa-star me-1"></i>Review {{ item.cake_name }}
-                                            </button>
+                                            <div class="order-item-row">
+                                                <div>
+                                                    <div class="order-item-name">{{ item.cake_name }}</div>
+                                                    <div class="order-item-qty">
+                                                        ₱{{ "%.2f"|format(item.price|float) }}
+                                                        {% if item.get('quantity', 1) > 1 %} × {{ item.get('quantity', 1) }}{% endif %}
+                                                    </div>
+                                                </div>
+                                                <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
+                                            </div>
                                             {% endfor %}
-                                        {% elif order.order_type == 'custom' %}
-                                            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}">
+                                        {% else %}
+                                            <p>{{ order.item }}</p>
+                                        {% endif %}
+                                        <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
+
+                                        <hr>
+                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Delivery Info</h6>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Address:</strong></p>
+                                                <p>{{ order.customer.address or 'N/A' }}</p>
+                                            </div>
+                                            {% if order.customer.occasion %}
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Occasion:</strong></p>
+                                                <p>{{ order.customer.occasion }}</p>
+                                            </div>
+                                            {% endif %}
+                                            {% if order.customer.celebrant %}
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Celebrant:</strong></p>
+                                                <p>{{ order.customer.celebrant }}</p>
+                                            </div>
+                                            {% endif %}
+                                            {% if order.customer.age %}
+                                            <div class="col-6">
+                                                <p class="mb-1"><strong>Age:</strong></p>
+                                                <p>{{ order.customer.age }}</p>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% if order.notes %}
+                                        <hr>
+                                        <div class="alert alert-info mt-2">
+                                            <strong>Special Instructions:</strong>
+                                            <p class="mb-0">{{ order.notes }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
+                                        <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-receipt me-1"></i>View Receipt
+                                        </a>
+                                        {% endif %}
+
+                                        {% if order.status == 'Completed' and not order.reviewed %}
+                                            {% if order.order_type == 'premade' %}
+                                                {% for item in order.selected_items %}
+                                                <button type="button" class="btn btn-warning btn-sm"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}">
+                                                    <i class="fas fa-star me-1"></i>Review {{ item.cake_name }}
+                                                </button>
+                                                {% endfor %}
+                                            {% elif order.order_type == 'custom' %}
+                                            <button type="button" class="btn btn-warning btn-sm"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#reviewModal{{ order.id }}">
                                                 <i class="fas fa-star me-1"></i>Review Order
                                             </button>
+                                            {% endif %}
                                         {% endif %}
-                                    {% endif %}
 
-                                    {% if order.status == 'New' %}
-                                    <form method="POST" action="/order/cancel/{{ order.id }}"
-                                          onsubmit="return confirm('Are you sure you want to cancel this order?')">
-                                        <button type="submit" class="btn btn-danger">
-                                            <i class="fas fa-times me-2"></i>Cancel Order
-                                        </button>
-                                    </form>
-                                    {% endif %}
+                                        {% if order.status == 'New' %}
+                                        <form method="POST" action="/order/cancel/{{ order.id }}"
+                                              onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                                            <button type="submit" class="btn btn-danger">
+                                                <i class="fas fa-times me-2"></i>Cancel Order
+                                            </button>
+                                        </form>
+                                        {% endif %}
 
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- ============ REVIEW MODALS ============ -->
-                    {% if order.status == 'Completed' and not order.reviewed %}
-                        {% if order.order_type == 'premade' and order.selected_items %}
-                            {% for item in order.selected_items %}
-                            <div class="modal fade" id="reviewModal{{ order.id }}_{{ item.cake_id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="/review/add">
-                                            <input type="hidden" name="cake_id"   value="{{ item.cake_id }}">
-                                            <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
-                                            <input type="hidden" name="order_id"  value="{{ order.id }}">
-                                            <div class="modal-header" style="background:#d63384; color:#fff;">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-star me-2"></i>Review {{ item.cake_name }}
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">Rating *</label>
-                                                    <div class="star-rating" id="stars_{{ order.id }}_{{ item.cake_id }}">
-                                                        {% for i in range(1, 6) %}
-                                                        <i class="fas fa-star star-btn"
-                                                           data-value="{{ i }}"
-                                                           data-target="rating_{{ order.id }}_{{ item.cake_id }}"
-                                                           onmouseover="hoverStars(this)"
-                                                           onmouseout="resetStars(this)"
-                                                           onclick="selectStar(this)">
-                                                        </i>
-                                                        {% endfor %}
+                        <!-- REVIEW MODALS -->
+                        {% if order.status == 'Completed' and not order.reviewed %}
+                            {% if order.order_type == 'premade' and order.selected_items %}
+                                {% for item in order.selected_items %}
+                                <div class="modal fade" id="reviewModal{{ order.id }}_{{ item.cake_id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <form method="POST" action="/review/add">
+                                                <input type="hidden" name="cake_id"   value="{{ item.cake_id }}">
+                                                <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
+                                                <input type="hidden" name="order_id"  value="{{ order.id }}">
+                                                <div class="modal-header" style="background:#d63384; color:#fff;">
+                                                    <h5 class="modal-title"><i class="fas fa-star me-2"></i>Review {{ item.cake_name }}</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Rating *</label>
+                                                        <div class="star-rating" id="stars_{{ order.id }}_{{ item.cake_id }}">
+                                                            {% for i in range(1, 6) %}
+                                                            <i class="fas fa-star star-btn"
+                                                               data-value="{{ i }}"
+                                                               data-target="rating_{{ order.id }}_{{ item.cake_id }}"
+                                                               onmouseover="hoverStars(this)"
+                                                               onmouseout="resetStars(this)"
+                                                               onclick="selectStar(this)"></i>
+                                                            {% endfor %}
+                                                        </div>
+                                                        <input type="hidden" name="rating" id="rating_{{ order.id }}_{{ item.cake_id }}" value="5">
+                                                        <small class="text-muted" id="ratingLabel_{{ order.id }}_{{ item.cake_id }}">⭐⭐⭐⭐⭐ Excellent!</small>
                                                     </div>
-                                                    <input type="hidden" name="rating"
-                                                           id="rating_{{ order.id }}_{{ item.cake_id }}" value="5">
-                                                    <small class="text-muted"
-                                                           id="ratingLabel_{{ order.id }}_{{ item.cake_id }}">
-                                                        ⭐⭐⭐⭐⭐ Excellent!
-                                                    </small>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                                                        <textarea name="comment" class="form-control" rows="3" placeholder="How was the cake? Share your experience..."></textarea>
+                                                    </div>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Comment <span class="text-muted fw-normal">(optional)</span>
-                                                    </label>
-                                                    <textarea name="comment" class="form-control" rows="3"
-                                                              placeholder="How was the cake? Share your experience..."></textarea>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn" style="background:#d63384; color:#fff;">
+                                                        <i class="fas fa-paper-plane me-2"></i>Submit Review
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn" style="background:#d63384; color:#fff;">
-                                                    <i class="fas fa-paper-plane me-2"></i>Submit Review
-                                                </button>
-                                            </div>
-                                        </form>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {% endfor %}
-                            
-                        {% elif order.order_type == 'custom' %}
+                                {% endfor %}
+                            {% elif order.order_type == 'custom' %}
                             <div class="modal fade" id="reviewModal{{ order.id }}" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
@@ -391,78 +384,28 @@
                                             <input type="hidden" name="cake_name" value="Custom Cake">
                                             <input type="hidden" name="order_id"  value="{{ order.id }}">
                                             <div class="modal-header" style="background:#d63384; color:#fff;">
-                                                <h5 class="modal-title">
-                                                    <i class="fas fa-star me-2"></i>Review Your Custom Cake Order
-                                                </h5>
+                                                <h5 class="modal-title"><i class="fas fa-star me-2"></i>Review Your Custom Cake Order</h5>
                                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Flavor Rating *</label>
-                                                    <div class="star-rating" id="flavor_stars_{{ order.id }}">
+                                                    <label class="form-label fw-bold">Rating *</label>
+                                                    <div class="star-rating">
                                                         {% for i in range(1, 6) %}
                                                         <i class="fas fa-star star-btn"
                                                            data-value="{{ i }}"
-                                                           data-target="flavor_rating_{{ order.id }}"
+                                                           data-target="rating_{{ order.id }}"
                                                            onmouseover="hoverStars(this)"
                                                            onmouseout="resetStars(this)"
-                                                           onclick="selectStar(this)">
-                                                        </i>
+                                                           onclick="selectStar(this)"></i>
                                                         {% endfor %}
                                                     </div>
-                                                    <input type="hidden" name="flavor_rating"
-                                                           id="flavor_rating_{{ order.id }}" value="5">
-                                                    <small class="text-muted" id="flavor_rating_label_{{ order.id }}">
-                                                        ⭐⭐⭐⭐⭐ Excellent!
-                                                    </small>
+                                                    <input type="hidden" name="rating" id="rating_{{ order.id }}" value="5">
+                                                    <small class="text-muted" id="ratingLabel_{{ order.id }}">⭐⭐⭐⭐⭐ Excellent!</small>
                                                 </div>
-                                                
                                                 <div class="mb-3">
-                                                    <label class="form-label fw-bold">Design Rating *</label>
-                                                    <div class="star-rating" id="design_stars_{{ order.id }}">
-                                                        {% for i in range(1, 6) %}
-                                                        <i class="fas fa-star star-btn"
-                                                           data-value="{{ i }}"
-                                                           data-target="design_rating_{{ order.id }}"
-                                                           onmouseover="hoverStars(this)"
-                                                           onmouseout="resetStars(this)"
-                                                           onclick="selectStar(this)">
-                                                        </i>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <input type="hidden" name="design_rating"
-                                                           id="design_rating_{{ order.id }}" value="5">
-                                                    <small class="text-muted" id="design_rating_label_{{ order.id }}">
-                                                        ⭐⭐⭐⭐⭐ Excellent!
-                                                    </small>
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">Overall Rating *</label>
-                                                    <div class="star-rating" id="overall_stars_{{ order.id }}">
-                                                        {% for i in range(1, 6) %}
-                                                        <i class="fas fa-star star-btn"
-                                                           data-value="{{ i }}"
-                                                           data-target="overall_rating_{{ order.id }}"
-                                                           onmouseover="hoverStars(this)"
-                                                           onmouseout="resetStars(this)"
-                                                           onclick="selectStar(this)">
-                                                        </i>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <input type="hidden" name="rating"
-                                                           id="overall_rating_{{ order.id }}" value="5">
-                                                    <small class="text-muted" id="overall_rating_label_{{ order.id }}">
-                                                        ⭐⭐⭐⭐⭐ Excellent!
-                                                    </small>
-                                                </div>
-                                                
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">
-                                                        Comment <span class="text-muted fw-normal">(optional)</span>
-                                                    </label>
-                                                    <textarea name="comment" class="form-control" rows="3"
-                                                              placeholder="Share your experience with the flavor, design, and overall cake..."></textarea>
+                                                    <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                                                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your experience..."></textarea>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
@@ -475,48 +418,112 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% endif %}
-                    {% endif %}
 
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            No orders yet! <a href="/cakes">Browse our cakes 🎂</a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        <!-- Pagination -->
-        <nav class="mt-4">
-            <ul class="pagination justify-content-end" id="ordersPagination">
-                <!-- Pagination buttons will appear here -->
-            </ul>
-        </nav>
-    </section>
-
-    </div> <!-- END ordersTab -->
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                No orders yet! <a href="/cakes">Browse our cakes 🎂</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <nav class="mt-4">
+                <ul class="pagination justify-content-end" id="ordersPagination"></ul>
+            </nav>
+        </section>
+    </div>
 
     <!-- ================= FAVORITES TAB ================= -->
     <div id="favoritesTab" style="display:none;">
         <h2 class="mb-3">My Favorites</h2>
 
+        {% if favorites_list %}
         <div class="favorites-grid">
+            {% for cake in favorites_list %}
+            <div class="fav-card" id="fav-card-{{ cake.id }}">
 
-            <div class="favorite-card">
-                <i class="bi bi-cake2"></i>
-                <h5>Chocolate Cake</h5>
-                <p>₱350</p>
+                <!-- Image -->
+                {% if cake.image %}
+                    <img src="{{ cake.image }}" alt="{{ cake.name }}" class="fav-card-img">
+                {% else %}
+                    <div class="fav-card-no-img">🎂</div>
+                {% endif %}
+
+                <div class="fav-card-body">
+                    <div class="fav-card-name">{{ cake.name }}
+                        
+                    </div>
+                    <div class="fav-card-price">₱{{ "%.2f"|format(cake.price) }}</div>
+
+                    <!-- Rating -->
+                    <div class="fav-card-rating">
+                        {% if cake.review_count > 0 %}
+                            {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
+                            {{ cake.avg_rating }} ({{ cake.review_count }})
+                        {% else %}
+                            No reviews yet
+                        {% endif %}
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="fav-card-stock">
+                        {% if cake.quantity > 0 %}
+                            {{ cake.quantity }} left
+                        {% else %}
+                            😔 Sold Out
+                        {% endif %}
+                    </div>
+
+                    {% if cake.quantity > 0 %}
+                    <div class="fav-btn-group">
+                        <!-- Order Now -->
+                        <form method="POST" action="/order/cake">
+                            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                            <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                            <input type="hidden" name="price"     value="{{ cake.price }}">
+                            <input type="hidden" name="quantity"  value="1">
+                            <button type="submit" class="btn btn-sm w-100"
+                                    style="background:#d63384; color:white; border:none;">
+                                <i class="fas fa-bolt me-1"></i> Order Now
+                            </button>
+                        </form>
+                        <!-- Add to Cart -->
+                        <form method="POST" action="/cart/add">
+                            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                            <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                            <input type="hidden" name="price"     value="{{ cake.price }}">
+                            <input type="hidden" name="quantity"  value="1">
+                            <button type="submit" class="btn btn-sm w-100"
+                                    style="background:white; color:#d63384; border:2px solid #d63384;">
+                                <i class="fas fa-cart-plus me-1"></i> Add to Cart
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+
+                    <!-- Remove from favorites -->
+                    <button class="btn-unfav mt-2"
+                            onclick="removeFavorite('{{ cake.id }}', '{{ cake.name }}')">
+                        Remove from Favorites
+                    </button>
+                </div>
             </div>
-
-            <div class="favorite-card">
-                <i class="bi bi-cake"></i>
-                <h5>Strawberry Cake</h5>
-                <p>₱420</p>
-            </div>
-
+            {% endfor %}
         </div>
+
+        {% else %}
+        <div class="fav-empty">
+            <i class="bi bi-heart"></i>
+            <p>No favorites yet!</p>
+            <a href="/cakes" class="btn btn-sm" style="background:#d63384; color:white; border:none;">
+                Browse Cakes
+            </a>
+        </div>
+        {% endif %}
     </div>
 
     <!-- EDIT PROFILE MODAL -->
@@ -564,30 +571,45 @@
 
 {% block extra_js %}
 <script>
+// ── Tab switcher ──
 function showTab(tab) {
-    const orders = document.getElementById("ordersTab");
-    const favorites = document.getElementById("favoritesTab");
+    document.getElementById("ordersTab").style.display    = tab === 'orders'    ? 'block' : 'none';
+    document.getElementById("favoritesTab").style.display = tab === 'favorites' ? 'block' : 'none';
+    document.querySelectorAll(".nav-icon").forEach((btn, i) => {
+        btn.classList.toggle("active", (tab === 'orders' && i === 0) || (tab === 'favorites' && i === 1));
+    });
+}
 
-    const buttons = document.querySelectorAll(".nav-icon");
+// ── Remove favorite from dashboard ──
+async function removeFavorite(cakeId, cakeName) {
+    try {
+        const res  = await fetch('/favorites/toggle', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ cake_id: cakeId, cake_name: cakeName })
+        });
+        const data = await res.json();
+        if (data.success && data.action === 'removed') {
+            const card = document.getElementById('fav-card-' + cakeId);
+            if (card) card.remove();
 
-    buttons.forEach(btn => btn.classList.remove("active"));
-
-    if (tab === "orders") {
-        orders.style.display = "block";
-        favorites.style.display = "none";
-        buttons[0].classList.add("active");
-    } else {
-        orders.style.display = "none";
-        favorites.style.display = "block";
-        buttons[1].classList.add("active");
+            // show empty state if no more favorites
+            const grid = document.querySelector('.favorites-grid');
+            if (grid && grid.children.length === 0) {
+                grid.outerHTML = `<div class="fav-empty">
+                    <i class="bi bi-heart" style="font-size:3rem; display:block; margin-bottom:12px;"></i>
+                    <p>No favorites yet!</p>
+                    <a href="/cakes" class="btn btn-sm" style="background:#d63384; color:white; border:none;">Browse Cakes</a>
+                </div>`;
+            }
+        }
+    } catch (e) {
+        console.error('Remove favorite error:', e);
     }
 }
 
-var ratingLabels = {
-    1: '⭐ Poor', 2: '⭐⭐ Fair',
-    3: '⭐⭐⭐ Good', 4: '⭐⭐⭐⭐ Great',
-    5: '⭐⭐⭐⭐⭐ Excellent!'
-};
+// ── Star rating ──
+var ratingLabels = { 1:'⭐ Poor', 2:'⭐⭐ Fair', 3:'⭐⭐⭐ Good', 4:'⭐⭐⭐⭐ Great', 5:'⭐⭐⭐⭐⭐ Excellent!' };
 
 function hoverStars(star) {
     var container = star.closest('.star-rating');
@@ -623,126 +645,40 @@ document.addEventListener('DOMContentLoaded', function() {
         var stars    = container.querySelectorAll('.star-btn');
         var targetId = stars[0] ? stars[0].getAttribute('data-target') : null;
         var selected = targetId ? parseInt(document.getElementById(targetId).value) : 5;
-        stars.forEach(function(s, i) {
-            s.style.color = i < selected ? '#ffc107' : '#ddd';
-        });
+        stars.forEach(function(s, i) { s.style.color = i < selected ? '#ffc107' : '#ddd'; });
     });
 });
-</script>
-<script>
-    // Search and Filter functionality
-function filterOrders() {
-    const searchValue = document.getElementById('searchOrders').value.toLowerCase();
-    const statusValue = document.getElementById('statusFilter').value;
-    const typeValue = document.getElementById('typeFilter').value;
-    
-    const rows = document.querySelectorAll('#orders tbody tr');
-    
-    rows.forEach(row => {
-        // Skip the "no orders" row
-        if (row.querySelector('td[colspan]')) return;
-        
-        const itemText = row.cells[0]?.textContent.toLowerCase() || '';
-        const statusText = row.cells[4]?.textContent.trim() || '';
-        const orderType = row.getAttribute('data-type') || '';
-        
-        let show = true;
-        
-        // Search filter
-        if (searchValue && !itemText.includes(searchValue)) {
-            show = false;
-        }
-        
-        // Status filter
-        if (statusValue && statusValue !== statusText) {
-            show = false;
-        }
-        
-        // Type filter
-        if (typeValue && typeValue !== orderType) {
-            show = false;
-        }
-        
-        row.style.display = show ? '' : 'none';
-    });
-    
-    // Show/hide no results message
-    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none' && !row.querySelector('td[colspan]'));
-    let noResultsRow = document.getElementById('noResultsRow');
-    
-    if (visibleRows.length === 0 && rows.length > 1) {
-        if (!noResultsRow) {
-            noResultsRow = document.createElement('tr');
-            noResultsRow.id = 'noResultsRow';
-            noResultsRow.innerHTML = '<td colspan="6" class="text-center text-muted py-4">No orders match your search</td>';
-            document.querySelector('#orders tbody').appendChild(noResultsRow);
-        }
-        noResultsRow.style.display = '';
-    } else if (noResultsRow) {
-        noResultsRow.style.display = 'none';
-    }
-}
 
-// Add event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchOrders');
-    const statusSelect = document.getElementById('statusFilter');
-    const typeSelect = document.getElementById('typeFilter');
-    
-    if (searchInput) searchInput.addEventListener('keyup', filterOrders);
-    if (statusSelect) statusSelect.addEventListener('change', filterOrders);
-    if (typeSelect) typeSelect.addEventListener('change', filterOrders);
-});
-</script>
-<script>
-    // Pagination variables
+// ── Orders search/filter/pagination ──
 let currentPage = 1;
 const rowsPerPage = 5;
 let allRows = [];
 
-// Function to update pagination display
 function updatePaginationDisplay() {
-    // Get all non-hidden rows (exclude the "no orders" row)
     const tbody = document.querySelector('#orders tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
-        return !row.querySelector('td[colspan]'); // Exclude the "no orders" row
-    });
-    
-    // Store visible rows based on current filters
+    const rows  = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
     const searchValue = document.getElementById('searchOrders')?.value.toLowerCase() || '';
     const statusValue = document.getElementById('statusFilter')?.value || '';
-    const typeValue = document.getElementById('typeFilter')?.value || '';
-    
-    // First, filter all rows
+    const typeValue   = document.getElementById('typeFilter')?.value || '';
+
     allRows = rows.filter(row => {
-        const itemText = row.cells[0]?.textContent.toLowerCase() || '';
+        const itemText   = row.cells[0]?.textContent.toLowerCase() || '';
         const statusText = row.cells[4]?.textContent.trim() || '';
-        const orderType = row.getAttribute('data-type') || '';
-        
+        const orderType  = row.getAttribute('data-type') || '';
         let show = true;
         if (searchValue && !itemText.includes(searchValue)) show = false;
         if (statusValue && statusValue !== statusText) show = false;
-        if (typeValue && typeValue !== orderType) show = false;
-        
+        if (typeValue   && typeValue   !== orderType)   show = false;
         return show;
     });
-    
-    // Calculate total pages
+
     const totalPages = Math.ceil(allRows.length / rowsPerPage);
-    
-    // Adjust current page if out of bounds
     if (currentPage > totalPages) currentPage = totalPages || 1;
-    
-    // Hide all rows first
-    rows.forEach(row => row.style.display = 'none');
-    
-    // Show only rows for current page
+
+    rows.forEach(r => r.style.display = 'none');
     const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const visibleRows = allRows.slice(start, end);
-    visibleRows.forEach(row => row.style.display = '');
-    
-    // Show/hide no results message
+    allRows.slice(start, start + rowsPerPage).forEach(r => r.style.display = '');
+
     let noResultsRow = document.getElementById('noResultsRow');
     if (allRows.length === 0) {
         if (!noResultsRow) {
@@ -755,82 +691,26 @@ function updatePaginationDisplay() {
     } else if (noResultsRow) {
         noResultsRow.style.display = 'none';
     }
-    
-    // Update pagination buttons
+
     updatePaginationButtons(totalPages);
 }
 
-// Function to create pagination buttons
 function updatePaginationButtons(totalPages) {
-    const paginationEl = document.getElementById('ordersPagination');
-    if (!paginationEl) return;
-    
-    if (totalPages <= 1) {
-        paginationEl.innerHTML = '';
-        return;
-    }
-    
+    const el = document.getElementById('ordersPagination');
+    if (!el || totalPages <= 1) { if (el) el.innerHTML = ''; return; }
     let html = '';
-    
-    // Previous button
-    html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="goToPage(${currentPage - 1}); return false;">Previous</a>
-            </li>`;
-    
-    // Page 1
-    if (currentPage > 2) {
-        html += `<li class="page-item">
-                    <a class="page-link" href="#" onclick="goToPage(1); return false;">1</a>
-                </li>`;
+    html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage-1});return false;">Previous</a></li>`;
+    for (let i = 1; i <= totalPages; i++) {
+        if (totalPages <= 5 || i===1 || i===totalPages || (i>=currentPage-1 && i<=currentPage+1)) {
+            html += `<li class="page-item ${currentPage===i?'active':''}"><a class="page-link" href="#" onclick="goToPage(${i});return false;">${i}</a></li>`;
+        } else if (i===currentPage-2 || i===currentPage+2) {
+            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
     }
-    
-    // Show ... if current page is beyond 2
-    if (currentPage > 3) {
-        html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-    }
-    
-    // Pages around current page
-    let startPage = Math.max(2, currentPage - 1);
-    let endPage = Math.min(totalPages - 1, currentPage + 1);
-    
-    // If current page is near the beginning
-    if (currentPage <= 2) {
-        startPage = 2;
-        endPage = Math.min(totalPages - 1, 3);
-    }
-    // If current page is near the end
-    if (currentPage >= totalPages - 1) {
-        startPage = Math.max(2, totalPages - 2);
-        endPage = totalPages - 1;
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        html += `<li class="page-item ${currentPage === i ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i}</a>
-                </li>`;
-    }
-    
-    // Show ... before last page
-    if (currentPage < totalPages - 2) {
-        html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-    }
-    
-    // Last page
-    if (currentPage < totalPages - 1) {
-        html += `<li class="page-item">
-                    <a class="page-link" href="#" onclick="goToPage(${totalPages}); return false;">${totalPages}</a>
-                </li>`;
-    }
-    
-    // Next button
-    html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" onclick="goToPage(${currentPage + 1}); return false;">Next</a>
-            </li>`;
-    
-    paginationEl.innerHTML = html;
+    html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage+1});return false;">Next</a></li>`;
+    el.innerHTML = html;
 }
 
-// Function to go to a specific page
 function goToPage(page) {
     const totalPages = Math.ceil(allRows.length / rowsPerPage);
     if (page < 1 || page > totalPages) return;
@@ -838,23 +718,15 @@ function goToPage(page) {
     updatePaginationDisplay();
 }
 
-// Filter function that resets to page 1
-function filterOrders() {
-    currentPage = 1;
-    updatePaginationDisplay();
-}
+function filterOrders() { currentPage = 1; updatePaginationDisplay(); }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchOrders');
-    const statusSelect = document.getElementById('statusFilter');
-    const typeSelect = document.getElementById('typeFilter');
-    
-    if (searchInput) searchInput.addEventListener('keyup', filterOrders);
-    if (statusSelect) statusSelect.addEventListener('change', filterOrders);
-    if (typeSelect) typeSelect.addEventListener('change', filterOrders);
-    
-    // Initial load
+    const s = document.getElementById('searchOrders');
+    const f = document.getElementById('statusFilter');
+    const t = document.getElementById('typeFilter');
+    if (s) s.addEventListener('keyup',  filterOrders);
+    if (f) f.addEventListener('change', filterOrders);
+    if (t) t.addEventListener('change', filterOrders);
     updatePaginationDisplay();
 });
 </script>

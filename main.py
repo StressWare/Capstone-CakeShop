@@ -323,23 +323,24 @@ def customer_dashboard():
         return "User not found", 404
     customer = doc.to_dict()
  
+    # ── Orders ──
     orders_list = []
     for order_doc in users.document(user_id).collection("orders").stream():
         order = order_doc.to_dict()
-        order["id"] = order_doc.id
-        order["notes"] = order.get("notes", "")
+        order["id"]       = order_doc.id
+        order["notes"]    = order.get("notes", "")
         order["reviewed"] = order.get("reviewed", False)
-        
+ 
         # Calculate total for premade orders
         if order.get("order_type") == "premade" and order.get("selected_items"):
-            total = 0
-            for item in order["selected_items"]:
-                subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
-                total += float(subtotal)
+            total = sum(
+                float(i.get("subtotal", float(i.get("price", 0)) * int(i.get("quantity", 1))))
+                for i in order["selected_items"]
+            )
             order["calculated_total"] = total
         else:
             order["calculated_total"] = order.get("amount", 0)
-        
+ 
         order = convert_timestamps(order)
         orders_list.append(order)
  
@@ -348,14 +349,82 @@ def customer_dashboard():
         reverse=True
     )
  
+    # ── Favorites — fetch ids + live cake data ──
+    favorite_ids    = []
+    favorites_list  = []
+ 
+    for fav_doc in users.document(user_id).collection("favorites").stream():
+        cake_id = fav_doc.id
+        favorite_ids.append(cake_id)
+ 
+        # fetch live cake data
+        cake_doc = cakes.document(cake_id).get()
+        if cake_doc.exists:
+            cake_data             = cake_doc.to_dict()
+            cake_data['id']       = cake_doc.id
+            cake_data['avg_rating']   = 0
+            cake_data['review_count'] = 0
+            favorites_list.append(cake_data)
+ 
+    # attach ratings to favorites
+    if favorites_list:
+        fav_id_set = {c['id'] for c in favorites_list}
+        cake_ratings = {}
+        for r_doc in reviews.where("is_visible", "==", True).stream():
+            r   = r_doc.to_dict()
+            cid = r.get("cake_id")
+            if cid in fav_id_set:
+                if cid not in cake_ratings:
+                    cake_ratings[cid] = {"total": 0, "count": 0}
+                cake_ratings[cid]["total"] += r.get("rating", 0)
+                cake_ratings[cid]["count"] += 1
+        for cake in favorites_list:
+            if cake["id"] in cake_ratings:
+                data = cake_ratings[cake["id"]]
+                cake["avg_rating"]   = round(data["total"] / data["count"], 1)
+                cake["review_count"] = data["count"]
+ 
     cart_count = len(list(users.document(user_id).collection("cart").stream()))
  
     return render_template("customer_dashboard.html",
-        customer=customer,
-        orders=orders_list,
-        user_id=user_id,
-        cart_count=cart_count
+        customer       = customer,
+        orders         = orders_list,
+        user_id        = user_id,
+        cart_count     = cart_count,
+        favorite_ids   = favorite_ids,    # ← for heart pre-fill on cakes page
+        favorites_list = favorites_list,  # ← for favorites tab
     )
+
+# ---------------- FAVORITES TOGGLE ----------------
+@app.route("/favorites/toggle", methods=["POST"])
+@login_required
+def favorites_toggle():
+    try:
+        user_id   = session.get("user_id")
+        data      = request.get_json()
+        cake_id   = data.get("cake_id")
+        cake_name = data.get("cake_name", "")
+ 
+        if not cake_id:
+            return jsonify({"success": False, "error": "Missing cake_id"}), 400
+ 
+        fav_ref = users.document(user_id).collection("favorites").document(cake_id)
+        fav_doc = fav_ref.get()
+ 
+        if fav_doc.exists:
+            fav_ref.delete()
+            return jsonify({"success": True, "action": "removed"})
+        else:
+            fav_ref.set({
+                "cake_id":   cake_id,
+                "cake_name": cake_name,
+                "added_at":  datetime.now(PH_TZ)
+            })
+            return jsonify({"success": True, "action": "added"})
+ 
+    except Exception as e:
+        print(f"[FAVORITES ERROR] {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
@@ -756,9 +825,15 @@ def cakes_page():
             data = cake_ratings[cake["id"]]
             cake["avg_rating"]   = round(data["total"] / data["count"], 1)
             cake["review_count"] = data["count"]
- 
+
+   
+        
     user_id = session.get("user_id")
-    return render_template("cakes.html", cakes=available_cakes, user_id=user_id)
+    favorite_ids = []
+    if user_id:
+        for doc in users.document(user_id).collection("favorites").stream():
+            favorite_ids.append(doc.id)
+    return render_template("cakes.html", cakes=available_cakes, user_id=user_id, favorite_ids=favorite_ids)
 
 # ================================================================
 # CART ROUTES
@@ -1170,7 +1245,8 @@ def admin_cakes():
 @admin_required
 def admin_users():
     all_users = []
-    for user_doc in users.stream():
+    users_ref = users.order_by("created_at", direction="DESCENDING").stream()
+    for user_doc in users_ref:
         user_data = user_doc.to_dict()
         user_data['uid'] = user_doc.id
         user_data['order_count'] = len(list(users.document(user_doc.id).collection('orders').stream()))
@@ -1211,7 +1287,7 @@ def admin_reviews():
 @admin_required
 def admin_logs_page():
     logs_ref = (
-        admin_logs.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(200)
+        admin_logs.order_by("timestamp", direction="DESCENDING").limit(200)
     )
     logs = []
     for doc in logs_ref.stream():
