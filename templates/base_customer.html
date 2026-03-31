@@ -108,7 +108,7 @@
 {% if session.get('user_id') %}
 <div id="chatbot-widget" class="chatbot-container" data-user-id="{{ session.get('user_id') }}">
   <button class="chatbot-toggle-btn" id="chatbotToggle" title="Open Chat">
-    <span class="chat-icon">💬</span>
+    <span class="chat-icon">        <img src="../static/img/chathead.jpg" alt="Chat" style="width: 60px; height: 60px; border-radius: 50%;"></span>
   </button>
   <div class="chatbot-window" id="chatbotWindow" style="display:none;">
     <div class="chatbot-header">
