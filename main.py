@@ -721,7 +721,7 @@ def finalize_order():
         "delivery_type":  delivery_type,
         "inspo_image":    inspo_image,
         "order_type":     order_type,
-        "custom_components": custom_components,  # ADD THIS LINE
+        "custom_components": custom_components,
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),
@@ -732,6 +732,22 @@ def finalize_order():
         },
         "created_at": now
     }
+ 
+    # ========== ADD QUANTITY DEDUCTION HERE ==========
+    # Deduct cake quantity for premade orders (before saving)
+    if order_type == "premade":
+        for item in selected_items:
+            cake_id = item.get("cake_id")
+            quantity_ordered = item.get("quantity", 1)
+            
+            cake_ref = cakes.document(cake_id)
+            cake_doc = cake_ref.get()
+            
+            if cake_doc.exists:
+                current_qty = cake_doc.to_dict().get("quantity", 0)
+                new_qty = current_qty - quantity_ordered
+                cake_ref.update({"quantity": new_qty})
+    # ========== END QUANTITY DEDUCTION ==========
  
     # ── COD or Bank Transfer → save immediately ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
