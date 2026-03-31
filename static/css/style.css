@@ -266,8 +266,12 @@ h2 {
   padding: 5px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  background: #f19ae2;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  background: rgba(236, 9, 107, 0.15); /* transparent pink */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* for Safari */
+  border: 1px solid rgba(255, 167, 205, 0.3);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  color: white;
   overflow: hidden;           /* ensures image stays inside card */
 }
 
@@ -308,8 +312,10 @@ h2 {
   background-color: rgba(0,0,0,0.5);
 }
 
+
 .category-modal-content {
-  background-color: #fff;
+  background: linear-gradient(to right, #000000, #ff69b4, #ffc0cb);
+  background-attachment: fixed;  
   margin: 8% auto;
   padding: 30px;
   width: 100%;
@@ -552,8 +558,12 @@ label[for="notes"] {
 .rated-cakes .container,
 .rated-cakes .card,
 .top-cakes-scroll .card {
-    background: transparent !important;
+    background-color: transparent !important;
+    color: white !important;
+
 }
+
+
 
 /* Horizontal scroll container */
 .top-cakes-scroll {
@@ -580,13 +590,14 @@ label[for="notes"] {
     height: 290px;
     border-radius: 20px;
     overflow: hidden;
+    color: white;
 
     /* glass effect (no solid white) */
-    background: rgba(255, 255, 255, 255) !important;
+    background: transparent;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 
-    box-shadow: 0 6px 16px rgba(0,0,0,0.10);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 
     display: flex;
     flex-direction: column;
@@ -634,6 +645,7 @@ label[for="notes"] {
     font-weight: 600;
     font-size: 0.95rem;
     margin-bottom: 6px;
+    color: white;
 }
 
 /* STARS */
@@ -646,7 +658,10 @@ label[for="notes"] {
 .review-rating-text {
     font-size: 0.85rem;
     opacity: 0.85;
+    color: white;
 }
+
+
 
 
 /* ===== FOOTER ===== */

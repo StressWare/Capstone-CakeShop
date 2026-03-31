@@ -3,43 +3,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cakes.css">
-<style>
-  /* Quantity selector */
-  .qty-selector {
-    display: flex; align-items: center; justify-content: center;
-    gap: 8px; margin-bottom: 8px;
-  }
-  .qty-btn {
-    width: 30px; height: 30px; border-radius: 50%;
-    border: 2px solid #d63384; background: white; color: #d63384;
-    font-size: 1.1rem; font-weight: bold; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; line-height: 1;
-  }
-  .qty-btn:hover:not(:disabled) { background: #d63384; color: white; }
-  .qty-btn:disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
-  .qty-display { font-weight: 700; font-size: 1rem; min-width: 30px; text-align: center; color: #333; }
-  .qty-label   { font-size: 0.75rem; color: #999; text-align: center; margin-bottom: 4px; }
-
-  /* Heart favorite button */
-  .heart-btn {
-    position: absolute;
-    top: 8px; right: 8px;
-    background: rgba(255,255,255,0.9);
-    border: none; border-radius: 50%;
-    width: 34px; height: 34px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 1.1rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-    transition: transform 0.2s, box-shadow 0.2s;
-    z-index: 2;
-  }
-  .heart-btn:hover { transform: scale(1.15); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-  .heart-btn.favorited { background: #fff0f5; }
-
-  /* Make cake-image position relative so heart positions correctly */
-  .cake-image { position: relative; }
-</style>
 {% endblock %}
 
 {% block content %}

@@ -7,7 +7,8 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #fff;
+  background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+  background-attachment: fixed;
   color: #333;
   line-height: 1.5;
 }
@@ -16,77 +17,6 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 15px;
-}
-
-/* ===== NAVBAR ===== */
-.navbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background-color: #000;
-  color: #fff;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-  z-index: 100;
-}
-
-.navbar-brand {
-  color: #fff;
-  text-decoration: none;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-}
-
-.menu-btn {
-  background: none;
-  border: 2px solid #d63384;
-  color: #d63384;
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.menu-btn:hover {
-  background-color: #d63384;
-  color: #fff;
-}
-
-.menu {
-  position: fixed;
-  top: 60px;
-  right: -200px;
-  width: 200px;
-  height: 100%;
-  background-color: #fff0f5;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.2);
-  transition: right 0.3s ease;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.menu.active {
-  right: 0;
-}
-
-.menu a {
-  text-decoration: none;
-  color: #d63384;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.menu a:hover {
-  color: #a71d65;
-}
-
-.menu a.active {
-  color: #000;
 }
 
 /* ====== NAVBAR ====== */
@@ -205,8 +135,9 @@ body {
 
 /* ===== HEADER ===== */
 .header {
-  padding: 100px 15px 50px; /* extra top padding for navbar */
-  background-color: #f8f8f8;
+  padding: 60px 15px 1px; /* extra top padding for navbar */
+  background: transparent;
+  color: white;
   text-align: center;
 }
 
@@ -217,7 +148,7 @@ body {
 
 .header p {
   font-size: 1rem;
-  color: #666;
+  color: #ffffff;
 }
 
 /* ===== CAKES GRID ===== */
@@ -312,6 +243,45 @@ body {
 .btn.order-btn:hover {
   background-color: #084298;
 }
+
+
+
+/* Quantity selector */
+  .qty-selector {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .qty-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid #d63384; background: white; color: #d63384;
+    font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; line-height: 1;
+  }
+  .qty-btn:hover:not(:disabled) { background: #d63384; color: white; }
+  .qty-btn:disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
+  .qty-display { font-weight: 700; font-size: 1rem; min-width: 30px; text-align: center; color: #333; }
+  .qty-label   { font-size: 0.75rem; color: #999; text-align: center; margin-bottom: 4px; }
+
+  /* Heart favorite button */
+  .heart-btn {
+    position: absolute;
+    top: 8px; right: 8px;
+    background: rgba(255,255,255,0.9);
+    border: none; border-radius: 50%;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s, box-shadow 0.2s;
+    z-index: 2;
+  }
+  .heart-btn:hover { transform: scale(1.15); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  .heart-btn.favorited { background: #fff0f5; }
+
+  /* Make cake-image position relative so heart positions correctly */
+  .cake-image { position: relative; }
+
 
 /* ===== CAKES GRID ===== */
 .cakes-container {
@@ -455,46 +425,56 @@ body {
 
 /* ===== FOOTER ===== */
 .custom-footer {
-  background: linear-gradient(135deg, #ffb6c1, #ff69b4);
-  color: white;
-  padding: 15px 40px; 
+    background: linear-gradient(135deg, #ffb6c1, #ff69b4);
+    color: white;
+    padding: 10px 40px; /* reduced height */
+    margin-top: auto;
 }
 
+/* keep row but center everything */
 .footer-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+    display: flex;
+    justify-content: center;  /* center everything */
+    align-items: center;
+    gap: 20px;               /* spacing between items */
 }
 
+/* title */
 .footer-left h2 {
-  font-size: 20px;
-  margin: 0;
+    color: white;
+    font-size: 18px;
+    margin: 0;
 }
 
+/* right side */
 .footer-right {
-  display: flex;
-  align-items: center;
-  gap: 25px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
+/* text */
 .footer-right p {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
 }
 
+/* facebook icon */
 .footer-right a {
-  color: white;
-  font-size: 18px;
-  transition: 0.3s ease;
+    color: white;
+    font-size: 16px;
+    transition: 0.3s ease;
+    display: flex;
+    align-items: center;
 }
 
 .footer-right a:hover {
-  opacity: 0.8;
-  transform: scale(1.1);
-};
+    opacity: 0.8;
+    transform: scale(1.1);
+}
 
 /* ===== MEDIA QUERIES ===== */
 @media (max-width: 768px) {
@@ -514,7 +494,7 @@ body {
     grid-template-columns: 1fr;
   }
   .menu {
-    width: 180px;
+    width: 100px;
   }
   .menu-btn {
     font-size: 0.9rem;
@@ -533,4 +513,39 @@ body {
   .cakes-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* ===== MOBILE: HORIZONTAL CAKE CARDS ===== */
+@media (max-width: 768px) {
+  .cakes-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 14px;
+    padding: 10px;
+    scroll-snap-type: x mandatory;
+  }
+
+  .cake-card {
+    flex: 0 0 auto;
+    width: 200px;       /* increased width */
+    height: auto;       /* prevents overly tall cards */
+    scroll-snap-align: start;
+  }
+
+  .cake-image img,
+  .no-image {
+    height: 140px;      /* balanced image height */
+    width: 100%;
+    object-fit: cover;
+  }
+}
+
+/* hide scrollbar (optional clean look) */
+.cakes-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.cakes-grid {
+  scrollbar-width: none;
 }
