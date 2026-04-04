@@ -3,6 +3,99 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cakes.css">
+<style>
+  /* Quantity selector */
+  .qty-selector {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .qty-btn {
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 2px solid #d63384; background: white; color: #d63384;
+    font-size: 1.1rem; font-weight: bold; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; line-height: 1;
+  }
+  .qty-btn:hover:not(:disabled) { background: #d63384; color: white; }
+  .qty-btn:disabled { border-color: #ccc; color: #ccc; cursor: not-allowed; }
+  .qty-display { font-weight: 700; font-size: 1rem; min-width: 30px; text-align: center; color: #333; }
+  .qty-label   { font-size: 0.75rem; color: #999; text-align: center; margin-bottom: 4px; }
+
+  /* Heart button */
+  .heart-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,0.9); border: none; border-radius: 50%;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s, box-shadow 0.2s; z-index: 2;
+  }
+  .heart-btn:hover { transform: scale(1.15); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+  .heart-btn.favorited { background: #fff0f5; }
+
+  /* Clickable cake card */
+  .cake-image {
+    position: relative;
+    cursor: pointer;
+  }
+  .cake-image::after {
+    content: ' View Details';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(214,51,132,0.82);
+    color: white; font-size: 0.8rem; font-weight: 600;
+    text-align: center; padding: 8px;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .cake-image:hover::after { opacity: 1; }
+
+  /* ── Modal styles ── */
+  .cake-modal-img {
+    width: 100%; max-height: 280px;
+    object-fit: cover; border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .cake-modal-no-img {
+    width: 100%; height: 200px; background: #fce8f3;
+    border-radius: 10px; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 4rem; margin-bottom: 16px;
+  }
+  .modal-section-title {
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    color: #aaa; margin: 16px 0 8px;
+    padding-bottom: 6px; border-bottom: 1px solid #f0f0f0;
+  }
+
+  /* Review item */
+  .review-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .review-item:last-child { border-bottom: none; }
+  .review-stars { color: #ffc107; font-size: 0.85rem; }
+  .review-comment {
+    font-size: 0.88rem; color: #444;
+    margin: 4px 0; font-style: italic;
+  }
+  .review-meta {
+    font-size: 0.75rem; color: #aaa;
+  }
+  .no-reviews {
+    text-align: center; color: #bbb;
+    padding: 16px 0; font-size: 0.88rem;
+  }
+
+  /* Modal heart button */
+  .modal-heart-btn {
+    background: none; border: none;
+    font-size: 1.3rem; cursor: pointer;
+    transition: transform 0.2s;
+    vertical-align: middle;
+  }
+  .modal-heart-btn:hover { transform: scale(1.2); }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -18,25 +111,29 @@
     {% if cakes %}
       {% for cake in cakes %}
       <div class="cake-card">
-        <div class="cake-image">
 
+        <!-- Clickable image → opens modal -->
+         <div style="position: relative;">
+        <div class="cake-image"
+             data-bs-toggle="modal"
+             data-bs-target="#cakeModal{{ cake.id }}">
           {% if cake.image %}
             <img src="{{ cake.image }}" alt="{{ cake.name }}">
           {% else %}
             <div class="no-image">🎂</div>
           {% endif %}
-
-          <!-- Heart Button (logged in only) -->
+          </div>
+          <!-- Heart Button -->
           {% if user_id %}
           <button class="heart-btn {% if cake.id in favorite_ids %}favorited{% endif %}"
                   id="heart-{{ cake.id }}"
-                  onclick="toggleFavorite('{{ cake.id }}', '{{ cake.name }}')"
+                  onclick="event.stopPropagation(); toggleFavorite('{{ cake.id }}', '{{ cake.name }}'); return false;"
                   title="{% if cake.id in favorite_ids %}Remove from favorites{% else %}Add to favorites{% endif %}">
             {% if cake.id in favorite_ids %}❤️{% else %}🤍{% endif %}
           </button>
           {% endif %}
-
         </div>
+
         <div class="cake-info">
           <h5 class="cake-title">{{ cake.name }}</h5>
           <span class="badge category">{{ cake.category }}</span>
@@ -48,10 +145,10 @@
             <span class="stock">{{ cake.quantity }} left</span>
           </div>
 
-          <!-- Star Rating -->
+          <!-- Star Rating summary -->
           <div class="d-flex align-items-center gap-1 mb-2" style="margin-top:6px;">
             {% if cake.review_count > 0 %}
-              <span style="color:#ffc107; font-size:0.85rem; letter-spacing:1px;">
+              <span style="color:#ffc107; font-size:0.85rem;">
                 {% set full = cake.avg_rating | int %}
                 {% set half = cake.avg_rating - full >= 0.5 %}
                 {% for i in range(full) %}⭐{% endfor %}
@@ -68,7 +165,6 @@
           <!-- Buttons -->
           {% if user_id %}
             {% if cake.quantity > 0 %}
-              <!-- Quantity Selector -->
               <div class="qty-label">Quantity</div>
               <div class="qty-selector">
                 <button type="button" class="qty-btn"
@@ -80,8 +176,6 @@
                         id="qty-plus-{{ cake.id }}"
                         {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
               </div>
-
-              <!-- Order Now -->
               <form method="POST" action="/order/cake">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -91,8 +185,6 @@
                   <i class="fas fa-bolt"></i> Order Now
                 </button>
               </form>
-
-              <!-- Add to Cart -->
               <form method="POST" action="/cart/add">
                 <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                 <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -103,7 +195,6 @@
                   <i class="fas fa-cart-plus"></i> Add to Cart
                 </button>
               </form>
-
             {% else %}
               <button class="btn w-100" disabled
                       style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
@@ -127,11 +218,172 @@
     {% endif %}
   </div>
 </main>
+
+<!-- ================================================================ -->
+<!-- CAKE DETAIL MODALS (outside grid to avoid z-index issues)        -->
+<!-- ================================================================ -->
+{% for cake in cakes %}
+<div class="modal fade" id="cakeModal{{ cake.id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header" style="background:#d63384; color:white;">
+        <h5 class="modal-title">
+          {{ cake.name }}
+          {% if user_id %}
+          <button class="modal-heart-btn ms-2"
+                  id="modal-heart-{{ cake.id }}"
+                  onclick="toggleFavorite('{{ cake.id }}', '{{ cake.name }}')"
+                  title="Toggle favorite">
+            {% if cake.id in favorite_ids %}❤️{% else %}🤍{% endif %}
+          </button>
+          {% endif %}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Image -->
+        {% if cake.image %}
+          <img src="{{ cake.image }}" alt="{{ cake.name }}" class="cake-modal-img">
+        {% else %}
+          <div class="cake-modal-no-img">🎂</div>
+        {% endif %}
+
+        <!-- Name + Category -->
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <h5 class="mb-0 fw-bold">{{ cake.name }}</h5>
+          <span class="badge" style="background:#d63384;">{{ cake.category }}</span>
+        </div>
+
+        <!-- Full Description -->
+        <p class="text-muted" style="font-size:0.9rem;">{{ cake.description }}</p>
+
+        <!-- Price + Stock -->
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <span style="font-size:1.3rem; font-weight:700; color:#d63384;">
+            ₱{{ "%.2f"|format(cake.price) }}
+          </span>
+          <span class="badge {% if cake.quantity > 0 %}bg-success{% else %}bg-secondary{% endif %}">
+            {% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %}Sold Out{% endif %}
+          </span>
+        </div>
+
+        <!-- Rating summary -->
+        {% if cake.review_count > 0 %}
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span style="color:#ffc107; font-size:1rem;">
+            {% set full = cake.avg_rating | int %}
+            {% set half = cake.avg_rating - full >= 0.5 %}
+            {% for i in range(full) %}⭐{% endfor %}
+            {% if half %}✨{% endif %}
+          </span>
+          <span style="font-size:0.88rem; color:#555;">
+            {{ cake.avg_rating }} / 5 — {{ cake.review_count }} review{{ 's' if cake.review_count > 1 }}
+          </span>
+        </div>
+        {% endif %}
+
+        <!-- ── ORDER SECTION ── -->
+        {% if user_id and cake.quantity > 0 %}
+        <div class="modal-section-title">Order</div>
+
+        <div class="qty-label">Quantity</div>
+        <div class="qty-selector mb-3">
+          <button type="button" class="qty-btn"
+                  onclick="changeQty('m{{ cake.id }}', -1, {{ cake.quantity }})"
+                  id="qty-minus-m{{ cake.id }}" disabled>−</button>
+          <span class="qty-display" id="qty-m{{ cake.id }}">1</span>
+          <button type="button" class="qty-btn"
+                  onclick="changeQty('m{{ cake.id }}', 1, {{ cake.quantity }})"
+                  id="qty-plus-m{{ cake.id }}"
+                  {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
+        </div>
+
+        <div class="d-flex gap-2">
+          <form method="POST" action="/order/cake" class="flex-fill">
+            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+            <input type="hidden" name="cake_name" value="{{ cake.name }}">
+            <input type="hidden" name="price"     value="{{ cake.price }}">
+            <input type="hidden" name="quantity"  id="order-qty-m{{ cake.id }}" value="1">
+            <button type="submit" class="btn w-100"
+                    style="background:#d63384; color:white; border:none; border-radius:8px; padding:10px;">
+              <i class="fas fa-bolt me-1"></i> Order Now
+            </button>
+          </form>
+          <form method="POST" action="/cart/add" class="flex-fill">
+            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+            <input type="hidden" name="cake_name" value="{{ cake.name }}">
+            <input type="hidden" name="price"     value="{{ cake.price }}">
+            <input type="hidden" name="quantity"  id="cart-qty-m{{ cake.id }}" value="1">
+            <button type="submit" class="btn w-100"
+                    style="background:white; color:#d63384; border:2px solid #d63384; border-radius:8px; padding:10px;">
+              <i class="fas fa-cart-plus me-1"></i> Add to Cart
+            </button>
+          </form>
+        </div>
+
+        {% elif not user_id %}
+        <div class="modal-section-title">Order</div>
+        <a href="/authentication" class="btn w-100 mt-2"
+           style="background:#d63384; color:white; border:none; border-radius:8px;">
+          <i class="fas fa-sign-in-alt me-1"></i> Login to Order
+        </a>
+        {% endif %}
+
+        <!-- ── REVIEWS SECTION ── -->
+        <div class="modal-section-title">
+          Reviews
+          {% if cake.review_count > 0 %}
+            <span class="text-muted fw-normal" style="font-size:0.75rem; text-transform:none;">
+              ({{ cake.review_count }})
+            </span>
+          {% endif %}
+        </div>
+
+        {% if cake.reviews %}
+          {% for review in cake.reviews %}
+          <div class="review-item">
+            <div class="d-flex align-items-center gap-2">
+              <div class="review-stars">
+                {% for i in range(review.rating) %}⭐{% endfor %}
+              </div>
+              <strong style="font-size:0.88rem;">{{ review.reviewer_name }}</strong>
+            </div>
+            {% if review.comment %}
+            <p class="review-comment">"{{ review.comment }}"</p>
+            {% endif %}
+            <div class="review-meta">
+              {% if review.created_at %}
+                {{ review.created_at.strftime('%b %d, %Y') }}
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="no-reviews">
+            <i class="fas fa-star" style="font-size:1.5rem; color:#eee; display:block; margin-bottom:6px;"></i>
+            No reviews yet. Be the first to review!
+          </div>
+        {% endif %}
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endfor %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// ── Quantity selector ──
+// ── Quantity selector (handles both card and modal quantities) ──
 function changeQty(cakeId, delta, maxQty) {
   const display  = document.getElementById('qty-' + cakeId);
   const orderQty = document.getElementById('order-qty-' + cakeId);
@@ -139,21 +391,20 @@ function changeQty(cakeId, delta, maxQty) {
   const minusBtn = document.getElementById('qty-minus-' + cakeId);
   const plusBtn  = document.getElementById('qty-plus-' + cakeId);
 
+  if (!display) return;
+
   let current = parseInt(display.textContent);
   current = Math.min(Math.max(current + delta, 1), maxQty);
 
   display.textContent = current;
-  orderQty.value      = current;
-  cartQty.value       = current;
-  minusBtn.disabled   = current <= 1;
-  plusBtn.disabled    = current >= maxQty;
+  if (orderQty) orderQty.value = current;
+  if (cartQty)  cartQty.value  = current;
+  if (minusBtn) minusBtn.disabled = current <= 1;
+  if (plusBtn)  plusBtn.disabled  = current >= maxQty;
 }
 
-// ── Favorite toggle ──
+// ── Favorite toggle — syncs card heart + modal heart ──
 async function toggleFavorite(cakeId, cakeName) {
-  const btn = document.getElementById('heart-' + cakeId);
-  if (!btn) return;
-
   try {
     const res  = await fetch('/favorites/toggle', {
       method:  'POST',
@@ -163,14 +414,23 @@ async function toggleFavorite(cakeId, cakeName) {
     const data = await res.json();
 
     if (data.success) {
-      if (data.action === 'added') {
-        btn.textContent = '❤️';
-        btn.classList.add('favorited');
-        btn.title = 'Remove from favorites';
-      } else {
-        btn.textContent = '🤍';
-        btn.classList.remove('favorited');
-        btn.title = 'Add to favorites';
+      const isAdded   = data.action === 'added';
+      const emoji     = isAdded ? '❤️' : '🤍';
+      const title     = isAdded ? 'Remove from favorites' : 'Add to favorites';
+
+      // update card heart
+      const cardBtn = document.getElementById('heart-' + cakeId);
+      if (cardBtn) {
+        cardBtn.textContent = emoji;
+        cardBtn.title = title;
+        cardBtn.classList.toggle('favorited', isAdded);
+      }
+
+      // update modal heart
+      const modalBtn = document.getElementById('modal-heart-' + cakeId);
+      if (modalBtn) {
+        modalBtn.textContent = emoji;
+        modalBtn.title = title;
       }
     }
   } catch (e) {

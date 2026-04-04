@@ -823,33 +823,63 @@ def cakes_page():
         cake_data['id'] = cake_doc.id
         cake_data['avg_rating'] = 0
         cake_data['review_count'] = 0
+        cake_data['reviews'] = []
         available_cakes.append(cake_data)
- 
-    # Fetch visible reviews and calculate averages
-    cake_ratings = {}  # cake_id → {total, count}
-    for r_doc in reviews.where("is_visible", "==", True).stream():
+
+    # Fetch reviews with Firestore ordering (no lambda)
+    cake_ratings = {}
+    cake_reviews = {}
+
+    for r_doc in reviews.where("is_visible", "==", True).order_by("created_at", direction="DESCENDING").stream():
         r = r_doc.to_dict()
         cid = r.get("cake_id")
+
+        # Store ratings
         if cid not in cake_ratings:
             cake_ratings[cid] = {"total": 0, "count": 0}
         cake_ratings[cid]["total"] += r.get("rating", 0)
         cake_ratings[cid]["count"] += 1
- 
-    # Attach ratings to cakes
-    for cake in available_cakes:
-        if cake["id"] in cake_ratings:
-            data = cake_ratings[cake["id"]]
-            cake["avg_rating"]   = round(data["total"] / data["count"], 1)
-            cake["review_count"] = data["count"]
 
-   
+        # Store full review
+        if cid not in cake_reviews:
+            cake_reviews[cid] = []
+
+        created_at = r.get("created_at")
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                created_at = created_at.astimezone(PH_TZ)
+
+        cake_reviews[cid].append({
+            "rating": r.get("rating", 5),
+            "comment": r.get("comment", ""),
+            "reviewer_name": r.get("reviewer_name", "Customer"),
+            "created_at": created_at
+        })
+
+    # Attach to cakes
+    for cake in available_cakes:
+        cid = cake["id"]
+        if cid in cake_ratings:
+            data = cake_ratings[cid]
+            cake["avg_rating"] = round(data["total"] / data["count"], 1)
+            cake["review_count"] = data["count"]
         
+        # Already sorted from Firestore, no lambda needed
+        cake["reviews"] = cake_reviews.get(cid, [])
+
     user_id = session.get("user_id")
     favorite_ids = []
     if user_id:
         for doc in users.document(user_id).collection("favorites").stream():
             favorite_ids.append(doc.id)
-    return render_template("cakes.html", cakes=available_cakes, user_id=user_id, favorite_ids=favorite_ids)
+
+    return render_template("cakes.html",
+        cakes=available_cakes,
+        user_id=user_id,
+        favorite_ids=favorite_ids
+    )
 
 # ================================================================
 # CART ROUTES
@@ -876,16 +906,12 @@ def add_to_cart():
     cake_name = request.form.get("cake_name")
     price     = float(request.form.get("price", 0))
     quantity  = int(request.form.get("quantity", 1))
-
-    # ✅ ADD THIS BLOCK (SAFE - NO STRUCTURE CHANGE)
-    cake_doc = cakes.document(cake_id).get()
-    cake_data = cake_doc.to_dict() if cake_doc.exists else {}
-    cake_image = cake_data.get("image", None)
-
+ 
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
     cart_doc = cart_ref.get()
-
+ 
     if cart_doc.exists:
+        # add to existing quantity
         existing_qty = cart_doc.to_dict().get("quantity", 1)
         new_qty      = existing_qty + quantity
         cart_ref.update({"quantity": new_qty})
@@ -896,14 +922,10 @@ def add_to_cart():
             "cake_name": cake_name,
             "price":     price,
             "quantity":  quantity,
-
-            # ✅ ADD THIS LINE ONLY
-            "image": cake_image,
-
             "added_at":  firestore.SERVER_TIMESTAMP
         })
         flash(f"{cake_name} added to cart! 🛒", "success")
-
+ 
     return redirect(url_for("cakes_page"))
 
 # ---------------- REMOVE FROM CART ----------------
@@ -1462,7 +1484,7 @@ def edit_inventory(id):
     )
     
     return redirect(url_for("admin_inventory"))
-    
+
 # ---------------- EDIT EXPENSES COST----------------
 @app.route("/expenses/edit/<id>", methods=["POST"])
 @admin_required
