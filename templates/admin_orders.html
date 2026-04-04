@@ -67,6 +67,26 @@
   .price-box { background: var(--pink-light); border: 1.5px solid var(--pink-mid); border-radius: 9px; padding: 10px 16px; font-weight: 700; color: var(--pink-dark); font-size: 1rem; }
   #emptyTabMsg { color: #c07090; }
   .card-body { padding: 22px 24px; }
+  .modal-content,
+.modal-body,
+.modal-header,
+.modal-title,
+.modal-body p,
+.modal-body span,
+.modal-body small,
+.modal-body strong,
+.modal-body label,
+.modal-body h6 {
+
+  color: #000000 !important;
+}
+
+/* override Bootstrap muted text inside modal only */
+.modal-body .text-muted {
+  color: #000000 !important;
+}
+
+
 
   /* Order items list in modal */
   .order-item-line {
