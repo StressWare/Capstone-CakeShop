@@ -1052,7 +1052,8 @@ def admin_inventory():
 @admin_required
 def admin_expenses():
     exp_items = []
-    for doc in expenses.stream():
+    
+    for doc in expenses.order_by("date", direction="DESCENDING").stream():
         e = doc.to_dict()
         e["id"] = doc.id
         date_val = e.get("date")
@@ -1065,8 +1066,8 @@ def admin_expenses():
                 date_val = date_val.astimezone(PH_TZ)
         e["date"] = date_val
         exp_items.append(e)
+    
     return render_template("admin_expenses.html", expenses=exp_items)
-
 # ---------------- ADMIN SALES ----------------
 @app.route("/admin/sales")
 @admin_required
@@ -1402,9 +1403,24 @@ def add_inventory():
     item     = request.form["item"]
     quantity = int(request.form["quantity"])
     cost     = float(request.form["cost"])
+    now      = datetime.now(PH_TZ)
 
-    inventory.add({"item": item, "quantity": quantity, "cost": cost})
-    expenses.add({"description": item, "cost": cost, "date": datetime.now(PH_TZ)})
+    # Add to inventory with timestamps
+    inventory.add({
+        "item": item,
+        "quantity": quantity,
+        "cost": cost,
+        "created_at": now,
+        "updated_at": now
+    })
+    
+    # Add to expenses
+    expenses.add({
+        "description": f"Purchased {quantity} x {item}",
+        "cost": cost * quantity,
+        "date": now
+    })
+    
     log_admin_action(
         action="Added inventory item",
         target=f"{item} — qty: {quantity}, cost: ₱{cost}",
@@ -1416,18 +1432,41 @@ def add_inventory():
 @app.route("/inventory/edit/<id>", methods=["POST"])
 @admin_required
 def edit_inventory(id):
+    now = datetime.now(PH_TZ)
+    
+    # Update inventory
     inventory.document(id).update({
-        "item":     request.form["item"],
+        "item": request.form["item"],
         "quantity": int(request.form["quantity"]),
-        "cost":     float(request.form["cost"])
+        "cost": float(request.form["cost"]),
+        "updated_at": now
     })
+    expenses.add({
+        "description": f"Edited inventory: {request.form['item']} - Qty: {request.form['quantity']}, Cost: ₱{request.form['cost']}",
+        "cost": float(request.form["cost"]) * int(request.form["quantity"]),
+        "date": now
+    })
+    
     log_admin_action(
         action="Edited inventory item",
         target=request.form["item"],
         category="inventory"
     )
+    
     return redirect(url_for("admin_inventory"))
-
+    
+# ---------------- EDIT EXPENSES COST----------------
+@app.route("/expenses/edit/<id>", methods=["POST"])
+@admin_required
+def edit_expense(id):
+    new_cost = float(request.form["cost"])
+    
+    expenses.document(id).update({
+        "cost": new_cost
+    })
+    
+    flash("Expense cost updated", "success")
+    return redirect(url_for("admin_expenses"))
 # ---------------- ADD CAKE ----------------
 @app.route('/cake/add', methods=['POST'])
 @admin_required

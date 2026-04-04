@@ -5,7 +5,7 @@
 <style>
   /* ── CARD CUSTOMIZATION ── */
   .card-header.card-header-custom {
-    border-top: 4px solid #c71585; /* pink top border */
+    border-top: 4px solid #c71585;
     background: #ffffff;
     color: #c71585;
   }
@@ -30,7 +30,7 @@
     vertical-align: middle;
   }
   .text-danger {
-    color: #c71585 !important; /* pink for cost */
+    color: #c71585 !important;
   }
 
   /* ── INPUT STYLING ── */
@@ -82,6 +82,7 @@
               <th>Date</th>
               <th>Description</th>
               <th>Cost (₱)</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
@@ -93,10 +94,43 @@
               </td>
               <td><strong>{{ e.description }}</strong></td>
               <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
+              <td>
+                <button class="btn btn-sm btn-info" style="background:#c71585; color:white; border:none;" data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ e.id }}">
+                    Edit Cost
+                </button>
+              </td>
             </tr>
+
+            <!-- Edit Expense Modal - INSIDE the for loop -->
+            <div class="modal fade" id="editExpenseModal{{ e.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="POST" action="/expenses/edit/{{ e.id }}">
+                            <div class="modal-header" style="background:#c71585; color:white;">
+                                <h5 class="modal-title">Edit Expense Cost</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label>Description</label>
+                                    <input type="text" class="form-control" value="{{ e.description }}" readonly disabled>
+                                </div>
+                                <div class="mb-3">
+                                    <label>Cost (₱)</label>
+                                    <input type="number" name="cost" class="form-control" value="{{ e.cost }}" step="0.01" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" style="background:#c71585; color:white; border:none;">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
             {% else %}
             <tr>
-              <td colspan="3" class="text-center text-muted py-4">No expenses yet</td>
+              <td colspan="4" class="text-center text-muted py-4">No expenses yet</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -120,16 +154,29 @@ function updateExpensesDisplay() {
   const searchValue = document.getElementById('searchExpenses').value.toLowerCase();
   const allRows = document.querySelectorAll('#expensesTable tbody tr');
   let visibleRows = [];
-  allRows.forEach(row => { if (row.textContent.toLowerCase().includes(searchValue)) visibleRows.push(row); });
+  allRows.forEach(row => { 
+    // Skip rows that are modals or empty
+    if (row.cells.length > 1 && row.textContent.toLowerCase().includes(searchValue)) 
+      visibleRows.push(row); 
+  });
   const totalPages = Math.ceil(visibleRows.length / expensesPerPage);
   const start = (currentExpensesPage - 1) * expensesPerPage;
   allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, i) => { if (i >= start && i < start + expensesPerPage) row.style.display = ''; });
-  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => { currentExpensesPage = page; updateExpensesDisplay(); });
+  visibleRows.forEach((row, i) => { 
+    if (i >= start && i < start + expensesPerPage) 
+      row.style.display = ''; 
+  });
+  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => { 
+    currentExpensesPage = page; 
+    updateExpensesDisplay(); 
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchExpenses').addEventListener('keyup', () => { currentExpensesPage = 1; updateExpensesDisplay(); });
+  document.getElementById('searchExpenses').addEventListener('keyup', () => { 
+    currentExpensesPage = 1; 
+    updateExpensesDisplay(); 
+  });
   updateExpensesDisplay();
 });
 </script>
