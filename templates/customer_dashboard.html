@@ -155,7 +155,7 @@
                     </thead>
                     <tbody>
                         {% for order in orders %}
-                        <tr>
+                        <tr data-type="{{ order.order_type }}">
                             <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
                             <td>{{ "%.2f"|format(order.amount) }}</td>
                             <td>{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
@@ -248,6 +248,18 @@
                                                 <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
                                             </div>
                                             {% endfor %}
+                                            
+                                        {% elif order.order_type == 'custom' and order.custom_components %}
+                                            {% for component in order.custom_components %}
+                                            <div class="order-item-row">
+                                                <div>
+                                                    <div class="order-item-name">{{ component.name }}</div>
+                                                    <div class="order-item-qty">₱{{ "%.2f"|format(component.price|float) }}</div>
+                                                </div>
+                                                <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
+                                            </div>
+                                            {% endfor %}
+                                            
                                         {% else %}
                                             <p>{{ order.item }}</p>
                                         {% endif %}
