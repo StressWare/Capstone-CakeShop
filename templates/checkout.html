@@ -6,70 +6,12 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <link href="../static/css/checkout.css" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-  #addressSection { transition: all 0.2s ease; }
-  .pickup-info {
-    display: none;
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 16px;
-    font-size: 0.92rem;
-    color: #664d03;
-  }
-  .pickup-info i { margin-right: 8px; color: #d63384; }
-  #mapContainer { display: block; margin-top: 12px; }
-  #map {
-    height: 280px; border-radius: 10px;
-    border: 1px solid #e0e0e0; margin-bottom: 8px; z-index: 1;
-  }
-  .map-hint { font-size: 0.78rem; color: #999; margin-bottom: 8px; }
-  .map-search-wrapper { position: relative; margin-bottom: 10px; }
-  #mapSearch {
-    width: 95%; padding: 9px 36px 9px 12px;
-    border: 1px solid #ddd; border-radius: 8px;
-    font-size: 0.88rem; outline: none;
-  }
-  #mapSearch:focus { border-color: #d63384; }
-  .map-search-icon {
-    position: absolute; right: 10px; top: 50%;
-    transform: translateY(-50%); color: #aaa; font-size: 0.85rem;
-  }
-  #searchSuggestions {
-    position: absolute; top: 100%; left: 0; right: 0;
-    background: #fff; border: 1px solid #ddd; border-radius: 8px;
-    z-index: 9999; max-height: 180px; overflow-y: auto;
-    display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  .suggestion-item {
-    padding: 10px 14px; font-size: 0.85rem;
-    cursor: pointer; border-bottom: 1px solid #f5f5f5;
-  }
-  .suggestion-item:hover { background: #fdf0f5; color: #d63384; }
-  .payment-group-label {
-    font-size: 0.75rem; text-transform: uppercase;
-    letter-spacing: 0.08em; color: #aaa;
-    font-weight: 600; margin-bottom: 8px; margin-top: 14px;
-  }
-  .paymongo-badge {
-    background: #d4edda; color: #155724;
-    border-radius: 10px; padding: 2px 8px;
-    font-size: 0.7rem; font-weight: 600; margin-left: 6px;
-  }
-  .paymongo-notice {
-    display: none; margin-top: 12px;
-    background: #f0f9ff; border: 1px solid #bee3f8;
-    border-radius: 8px; padding: 10px 14px;
-    font-size: 0.82rem; color: #2b6cb0;
-  }
-</style>
 {% endblock %}
 
 {% block content %}
 <div class="checkout-container">
 
-  <div class="checkout-header">
+  <div class="checkout-header text-white">
     <h1>Checkout</h1>
   </div>
 
@@ -129,12 +71,12 @@
             <input type="text" name="address" id="addressInput" class="form-control"
                    value="{{ customer.address or '' }}" placeholder="Type or pick on map">
             <div id="mapContainer">
-              <div class="map-search-wrapper" style="margin-top:10px;">
+              <div class="map-search-wrapper" style="margin-top:4px; padding:10px">
                 <input type="text" id="mapSearch" placeholder="Search location in Iloilo...">
-                <i class="fas fa-search map-search-icon"></i>
+                <i class="fas fa-search map-search-icon "></i>
                 <div id="searchSuggestions"></div>
               </div>
-              <p class="map-hint">📍 Click on map or drag the pin to set your delivery location</p>
+              <p class="map-hint text-white">📍 Click on map or drag the pin to set your delivery location</p>
               <div id="map"></div>
             </div>
           </div>
@@ -151,7 +93,7 @@
           </div>
         </div>
 
-        <!-- 3. Occasion (custom orders only) -->
+        <!-- 3. Occasion -->
         {% if order_type == 'custom' %}
         <div class="checkout-form-section">
           <div class="section-title">Occasion Details</div>
@@ -193,7 +135,8 @@
         <!-- 5. Payment -->
         <div class="checkout-form-section">
           <div class="section-title">Payment Method</div>
-          <div class="payment-group-label">Manual Payment</div>
+
+          <div class="payment-group-label text-white">Manual Payment</div>
           <div class="payment-options">
             <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
               <i class="fas fa-money-bill-wave"></i>
@@ -204,7 +147,8 @@
               <span class="payment-method-label">Bank Transfer</span>
             </div>
           </div>
-          <div class="payment-group-label">
+
+          <div class="payment-group-label text-white">
             Online Payment <span class="paymongo-badge">via PayMongo</span>
           </div>
           <div class="payment-options">
@@ -221,18 +165,11 @@
               <span class="payment-method-label">Card</span>
             </div>
           </div>
+
           <div class="paymongo-notice" id="paymongoNotice">
             <i class="fas fa-lock me-2"></i>
             You'll be redirected to PayMongo's secure checkout page.
           </div>
-        </div>
-
-        <div style="margin-top: 20px;">
-          <button type="submit" class="btn w-100" id="submitBtn"
-                  style="background:#d63384; color:white; padding:14px; border-radius:10px;
-                         font-size:1rem; font-weight:600; border:none;">
-            <i class="fas fa-check me-2"></i>Place Order
-          </button>
         </div>
 
       </div>
@@ -242,6 +179,7 @@
         <div class="order-summary">
           <div class="order-summary-title">Your Order</div>
           <div class="order-items">
+
             {% if order_type == 'premade' and selected_items %}
               {% for item in selected_items %}
               <div class="order-item">
@@ -256,15 +194,13 @@
                   <div class="order-item-name">{{ item.cake_name }}</div>
                   <div class="order-item-spec">
                     ₱{{ "%.2f"|format(item.price|float) }}
-                    {% if item.quantity > 1 %}
-                      × {{ item.quantity }}
-                    {% endif %}
+                    {% if item.quantity > 1 %} × {{ item.quantity }} {% endif %}
                   </div>
                   <div class="order-item-price">
                     Subtotal: ₱{{ "%.2f"|format(item.subtotal|float) }}
                   </div>
                 </div>
-              </div>  
+              </div>
               {% endfor %}
             {% else %}
               <div class="order-item">
@@ -279,12 +215,24 @@
                 </div>
               </div>
             {% endif %}
+
           </div>
+
           <div class="order-summary-price total">
             <span>Total</span>
             <span>₱{{ "%.2f"|format(amount|float) }}</span>
           </div>
         </div>
+
+        <!-- ✅ FIXED: BUTTON MOVED HERE (RIGHT COLUMN UNDER SUMMARY) -->
+        <div style="margin-top: 20px;">
+          <button type="submit" class="btn w-100" id="submitBtn"
+                  style="background:#d63384; color:white; padding:14px; border-radius:10px;
+                         font-size:1rem; font-weight:600; border:none;">
+            <i class="fas fa-check me-2"></i>Place Order
+          </button>
+        </div>
+
       </div>
 
     </div>
@@ -293,6 +241,7 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- unchanged JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   const ILOILO = { lat: 10.7202, lng: 122.5621 };

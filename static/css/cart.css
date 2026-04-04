@@ -1,19 +1,35 @@
-  /* ====== GENERAL STYLES ====== */
+/* ====== GENERAL STYLES ====== */
 * {
     box-sizing: border-box; /* ensures padding/margin are included in width */
 }
 
+/* ADDED */
+html, body {
+    height: 100%;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #ffffff;
+    background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+    background-attachment: fixed;
     color: #333;
     margin: 0;
     padding: 0;
     scroll-behavior: smooth;
     overflow-x: hidden; /* prevents horizontal scroll if menu slides in */
     position: relative; /* safer than absolute */
-
+    display: flex;
+    flex-direction: column;
 }
+
+.main-content {
+    flex: 1;
+}
+
+footer {
+    margin-top: auto;
+}
+
 
 .container {
     max-width: 1200px;
@@ -146,13 +162,13 @@ body {
     .cart-title {
       font-size: 2rem;
       font-weight: 700;
-      color: #c71585;
+      color: #ffffff;
       margin-bottom: 0.2rem;
     }
 
     .cart-subtitle {
       font-size: 1rem;
-      color: #a64d79;
+      color: #ffffff;
       margin-bottom: 1.5rem;
     }
 
@@ -165,6 +181,12 @@ body {
       padding: 1rem 1.2rem;
       box-shadow: 0 3px 10px rgba(0,0,0,0.05);
       margin-bottom: 1.5rem;
+          /* glass effect (no solid white) */
+      background: transparent;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
     }
 
     .select-all-row {
@@ -176,9 +198,27 @@ body {
     .select-all-label {
       margin-left: 0.5rem;
       font-weight: 500;
-      color: #c71585;
+      color: #ffffff;
     }
 
+.item-count {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.90rem;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.item-qty {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.75rem;
+    color: #fff;
+    background: rgba(255, 182, 193, 0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
     /* CART ITEMS */
     .cart-item-row {
       display: flex;
@@ -193,14 +233,14 @@ body {
     /* Ensure cart row spreads all elements evenly */
     .cart-item-row {
     display: flex;
-    align-items: center;     /* vertically center items */
-    justify-content: flex-start; /* default row start */
-    gap: 0.8rem;             /* spacing between image, text, and button */
-    width: 100%;             /* make the row full width */
+    align-items: center;     
+    justify-content: flex-start; 
+    gap: 0.8rem;             
+    width: 100%;            
     }
 
     .cart-item-row form {
-    margin-left: auto;       /* push remove button to far right */
+    margin-left: auto;       
     }
 
     .cake-img-box {
@@ -225,17 +265,20 @@ body {
 
     .item-name {
       font-weight: 600;
-      color: #c71585;
+      color: #ffffff;
       margin-bottom: 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .item-price {
-      color: #a64d79;
+      color: #ffffff;
       font-weight: 500;
     }
 
     .btn-remove {
-        margin-left: 600px;
+        margin-left: 500px;
         background: #ffe6f0;
         border: 1px solid #ffcce6;
         color: #9d0000;
@@ -244,14 +287,16 @@ body {
         cursor: pointer;
         transition: all 0.2s;
         display: flex;
-        align-items: center; /* changed from 'end' to 'center' */
+        align-items: center;
         font-size: 0.85rem;
     }
 
     .btn-remove:hover {
-    background: #7a003f;
+    background: #ff0000;
     color: #fff;
     }
+
+
 
     /* EMPTY STATE */
     .empty-state {
@@ -264,24 +309,29 @@ body {
     }
 
     /* CHECKOUT BAR */
-    .checkout-bar {
-      position: fixed;
+   .checkout-bar {
+      position: relative;
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #ffccdd;
       padding: 0.8rem 1.2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 -3px 10px rgba(0,0,0,0.08);
-      border-top: 1px solid #ffcce6;
+    /* glass effect (no solid white) */
+      background: transparent;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
       z-index: 100;
+      border-radius: 12px;
+      border: 1px solid #ffcce6;
+
     }
 
     .total-label {
       font-size: 0.9rem;
-      color: #a64d79;
+      color: #ffffff;
     }
 
     .total-amount {

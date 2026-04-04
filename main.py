@@ -876,12 +876,16 @@ def add_to_cart():
     cake_name = request.form.get("cake_name")
     price     = float(request.form.get("price", 0))
     quantity  = int(request.form.get("quantity", 1))
- 
+
+    # ✅ ADD THIS BLOCK (SAFE - NO STRUCTURE CHANGE)
+    cake_doc = cakes.document(cake_id).get()
+    cake_data = cake_doc.to_dict() if cake_doc.exists else {}
+    cake_image = cake_data.get("image", None)
+
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
     cart_doc = cart_ref.get()
- 
+
     if cart_doc.exists:
-        # add to existing quantity
         existing_qty = cart_doc.to_dict().get("quantity", 1)
         new_qty      = existing_qty + quantity
         cart_ref.update({"quantity": new_qty})
@@ -892,10 +896,14 @@ def add_to_cart():
             "cake_name": cake_name,
             "price":     price,
             "quantity":  quantity,
+
+            # ✅ ADD THIS LINE ONLY
+            "image": cake_image,
+
             "added_at":  firestore.SERVER_TIMESTAMP
         })
         flash(f"{cake_name} added to cart! 🛒", "success")
- 
+
     return redirect(url_for("cakes_page"))
 
 # ---------------- REMOVE FROM CART ----------------

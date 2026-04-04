@@ -47,14 +47,76 @@
 
       body {
       display: flex;
+    
     }
+
+     /* ── STAT CARDS ── */
+ .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    color: #000;
+    border-top: 4px solid #c71585; /* pink top border */
+  }
+  .stat-card h6 {
+    color: #c71585;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+  }
+  .stat-card h2 {
+    color: #000;
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+
+  }
+
+  /* ── LOW STOCK CARD ── */
+  #status-overview .card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  /* ── QUICK LINKS ── */
+  .card.text-decoration-none {
+    background: #ffffff;
+    color: #000;
+    transition: all 0.2s ease;
+    border-top: 4px solid #c71585; /* pink top border */
+
+  }
+  .card.text-decoration-none:hover {
+    background: #ffe6f0; /* soft pink hover */
+    color: #c71585;
+    transform: translateY(-2px);
+  }
+  .card.text-decoration-none i {
+    color: #c71585; /* pink icon */
+  }
+  .card.text-decoration-none .fw-bold {
+    color: #000;
+  }
+
+  /* ── DELIVERY STATUS BADGES ── */
+  .badge.bg-secondary { background-color: #000; color: #fff; }
+  .badge.bg-info { background-color: #c71585; color: #fff; }
+  .badge.bg-warning { background-color: #ffb6c1; color: #000; }
+  .badge.bg-primary { background-color: #c71585; color: #fff; }
+  .badge.bg-dark { background-color: #000; color: #fff; }
+  .badge.bg-danger { background-color: #ff4d6d; color: #fff; }
+  .badge.bg-light { background-color: #f8f2f8; color: #000; }
 
     .sidebar {
       width: 250px;
-      background-color: #d63384;
+      background-color: #630031;
       color: white; /* you may keep white text or switch to dark gray for contrast */
       padding: 20px;
-      min-height: 100vh;
+      height: 100vh;
       position: fixed;
       left: 0;
       top: 0;
@@ -95,9 +157,19 @@
 
     .main-content {
       margin-left: 250px;
+      background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+      background-attachment: fixed;
       flex: 1;
-      background-color: #f5f5f5;
       min-height: 100vh;
+    }
+
+    h1, h3{
+      color: white;
+    }
+
+
+    p{
+      color: rgb(255, 255, 255);
     }
 
     .page-container {

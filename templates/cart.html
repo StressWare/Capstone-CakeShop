@@ -18,7 +18,7 @@
       <input type="checkbox" class="item-check" id="selectAll">
       <label for="selectAll" class="select-all-label">
         Select All
-        <span class="text-muted fw-normal">({{ cart_items|length }} item{{ 's' if cart_items|length > 1 }})</span>
+        <span class="item-count">({{ cart_items|length }} item{{ 's' if cart_items|length > 1 }})</span>
       </label>
     </div>
 
@@ -40,13 +40,14 @@
         <div class="item-price">
           ₱{{ "%.2f"|format(item.price) }}
           {% if item.quantity | default(1) > 1 %}
-            <span class="text-muted" style="font-size:0.8rem;">
+            <span class="item-count" style="font-size:0.8rem;">
               × {{ item.quantity }} = ₱{{ "%.2f"|format(item.price * item.quantity) }}
             </span>
           {% endif %}
         </div>
-        <div style="font-size:0.78rem; color:#999;">Qty: {{ item.quantity | default(1) }}</div>
-      </div>
+      <div class="item-qty">
+        Qty: {{ item.quantity | default(1) }}
+      </div>      </div>
       <form method="POST" action="/cart/remove/{{ item.cake_id }}">
         <button type="submit" class="btn-remove">
           <i class="fas fa-trash-alt me-1"></i>Remove

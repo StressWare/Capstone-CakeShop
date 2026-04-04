@@ -1,7 +1,15 @@
     body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  
-    }
+    background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+    background-attachment: fixed;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    position: relative;
+}
+    
 
     .checkout-container {
       max-width: 1200px;
@@ -12,13 +20,13 @@
     .checkout-header {
       text-align: center;
       margin-bottom: 40px;
-
+      padding-top: 30px; /* 👈 this controls the downward spacing properly */
     }
 
     .checkout-header h1 {
       font-size: 2rem;
       font-weight: 500;
-      margin-bottom: 5px;
+      margin: 0; /* remove margin-top conflict */
     }
 
     .checkout-main {
@@ -28,20 +36,83 @@
       margin-bottom: 40px;
     }
 
-    @media (max-width: 992px) {
-      .checkout-main {
-        grid-template-columns: 1fr;
-        gap: 30px;
-      }
-    }
+
+
+    #addressSection { transition: all 0.2s ease; }
+  .pickup-info {
+    display: none;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 0.92rem;
+    color: #664d03;
+  }
+  .pickup-info i { margin-right: 8px; color: #d63384; }
+  #mapContainer { display: block; margin-top: 12px; }
+  #map {
+    height: 280px; border-radius: 10px;
+    border: 1px solid #e0e0e0; margin-bottom: 8px; z-index: 1;
+  }
+  .map-hint { font-size: 0.78rem; color: #999; margin-bottom: 8px; }
+  .map-search-wrapper { position: relative; margin-bottom: 10px; }
+  #mapSearch {
+    width: 95%; padding: 9px 36px 9px 12px;
+    border: 1px solid #ddd; border-radius: 8px;
+    font-size: 0.88rem; outline: none;
+  }
+  #mapSearch:focus { border-color: #d63384; }
+  .map-search-icon {
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%); color: #aaa; font-size: 0.85rem;
+  }
+  #searchSuggestions {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: #fff; border: 1px solid #ddd; border-radius: 8px;
+    z-index: 9999; max-height: 180px; overflow-y: auto;
+    display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .suggestion-item {
+    padding: 10px 14px; font-size: 0.85rem;
+    cursor: pointer; border-bottom: 1px solid #f5f5f5;
+  }
+  .suggestion-item:hover { background: #fdf0f5; color: #d63384; }
+  .payment-group-label {
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #aaa;
+    font-weight: 600; margin-bottom: 8px; margin-top: 14px;
+  }
+  .paymongo-badge {
+    background: #d4edda; color: #155724;
+    border-radius: 10px; padding: 2px 8px;
+    font-size: 0.7rem; font-weight: 600; margin-left: 6px;
+  }
+  .paymongo-notice {
+    display: none; margin-top: 12px;
+    background: #f0f9ff; border: 1px solid #bee3f8;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 0.82rem; color: #2b6cb0;
+  }
 
     /* Left Column */
     .checkout-form-section {
-      background: white;
-      padding: 0;
+    background: rgba(236, 9, 107, 0.15); /* transparent pink */ 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px); /* for Safari */ 
+    border: 1px solid rgb(255, 255, 255); 
+    flex: 1 1 280px; border-radius: 20px; 
+    padding: 40px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;  
+    }
+
+    label{
+      color: white;
     }
 
     .section-title {
+      color: white;
       font-size: 1.25rem;
       font-weight: 500;
       margin-bottom: 20px;
@@ -141,7 +212,62 @@
 
     .form-row.full {
       grid-template-columns: 1fr;
+
     }
+.payment-options {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  flex-wrap: nowrap;
+}
+
+.payment-options .payment-method {
+  flex: 1;
+  padding: 7px 7px;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+  border: 1px solid #dee2e6;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.payment-options .payment-method i {
+  font-size: 1.5rem;
+  margin-bottom: 0;
+}
+
+.payment-options .payment-method .payment-method-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.payment-options .payment-method:hover {
+  background: #d63384;
+  border-color: #d63384;
+  transform: translateY(-2px);
+}
+
+.payment-options .payment-method:hover i,
+.payment-options .payment-method:hover .payment-method-label {
+  color: #fff;
+}
+
+.payment-options .payment-method.active {
+  background: #d63384;
+  border-color: #d63384;
+}
+
+.payment-options .payment-method.active i,
+.payment-options .payment-method.active .payment-method-label {
+  color: #fff;
+}
 
     .enter-manual-link {
       font-size: 0.9rem;
@@ -176,7 +302,13 @@
 
     /* Right Column - Order Summary */
     .order-summary {
-      background: white;
+      background: rgba(236, 9, 107, 0.15); /* transparent pink */ 
+      backdrop-filter: blur(12px); 
+      -webkit-backdrop-filter: blur(12px); /* for Safari */ 
+      border: 1px solid rgb(255, 255, 255); 
+      flex: 1 1 280px; border-radius: 20px; 
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;  
       padding: 30px;
       border-radius: 8px;
       height: fit-content;
@@ -190,18 +322,22 @@
       margin-bottom: 20px;
       padding-bottom: 15px;
       border-bottom: 1px solid #e9ecef;
+      color: white;
     }
 
     .order-items {
       margin-bottom: 30px;
       padding-bottom: 20px;
       border-bottom: 1px solid #e9ecef;
+      color: white;
     }
 
     .order-item {
       display: flex;
       gap: 15px;
       margin-bottom: 15px;
+      color: white;
+
     }
 
     .order-item-image {
@@ -217,27 +353,33 @@
 
     .order-item-image i {
       font-size: 2rem;
-      color: #6c757d;
+      color: white;
     }
 
     .order-item-details {
       flex: 1;
+      color: white;
+
     }
 
     .order-item-name {
       font-weight: 500;
       margin-bottom: 5px;
+      color: white;
+
     }
 
     .order-item-spec {
       font-size: 0.85rem;
-      color: #6c757d;
+      color: white;
       margin-bottom: 3px;
     }
 
     .order-item-price {
       font-weight: 500;
       margin-top: 8px;
+      color: white;
+
     }
 
     .order-summary-price {
@@ -245,6 +387,8 @@
       display: flex;
       justify-content: space-between;
       font-size: 0.95rem;
+      color: white;
+
     }
 
     .order-summary-price.total {
@@ -253,6 +397,8 @@
       padding-top: 15px;
       border-top: 1px solid #e9ecef;
       margin-top: 15px;
+      color: white;
+
     }
 
     .arrival-info {
@@ -353,4 +499,13 @@
 
     .breadcrumb-item:hover {
       color: #000;
+    }
+
+
+    
+    @media (max-width: 992px) {
+      .checkout-main {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
     }
