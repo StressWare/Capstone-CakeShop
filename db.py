@@ -26,4 +26,4 @@ walkin_orders = db.collection('walkin_orders')
 reviews = db.collection('reviews')
 admin_logs = db.collection("admin_logs")
 orders = db.collection("orders")
-
+notifications = db.collection("notifications")

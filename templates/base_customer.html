@@ -34,7 +34,7 @@
   <link href="{{ url_for('static', filename='css/chatbot.css') }}" rel="stylesheet">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body data-user-id="{{ session.get('user_id') }}">
 
 <!-- ── NAVBAR ── -->
 <nav class="navbar">
@@ -42,10 +42,25 @@
     <a class="navbar-brand" href="/">
       <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
     </a>
-    <button class="menu-btn" id="menuToggle">☰ Menu</button>
+    <div style="display: flex; align-items: center; gap: 15px;">
+      <!-- Bell Notification -->
+      <div class="notification-bell-wrapper" id="notificationBellWrapper" style="position: relative; cursor: pointer;">
+        <i class="fas fa-bell bell-icon" style="font-size: 1.3rem; color: #d63384;"></i>
+        <span class="notification-badge" id="unreadBadge" style="display: none; position: absolute; top: -8px; right: -8px; background: #dc3545; color: white; font-size: 0.65rem; border-radius: 50%; padding: 2px 6px; min-width: 18px; text-align: center;">0</span>
+        <div class="notification-dropdown" id="notificationDropdown" style="position: absolute; top: 40px; right: 0; width: 320px; max-height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; z-index: 1000; overflow: hidden; border: 1px solid #f0f0f0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #d63384; color: white; font-weight: 600; font-size: 0.85rem;">
+            <span> Notifications</span>
+            <button id="markAllReadBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 15px;">Mark all read</button>
+          </div>
+          <div class="dropdown-list" id="notificationList" style="max-height: 350px; overflow-y: auto;">
+            <div style="text-align: center; padding: 25px 16px; color: #aaa;">Loading...</div>
+          </div>
+        </div>
+      </div>
+      <button class="menu-btn" id="menuToggle">☰ Menu</button>
+    </div>
   </div>
 </nav>
-
 <!-- ── OFFCANVAS MENU ── -->
 <div class="custom-offcanvas" id="offcanvasMenu">
   <div class="offcanvas-header">
@@ -146,7 +161,7 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+<script src="{{ url_for('static', filename='javascript/notification.js') }}"></script>
 <!-- ── OFFCANVAS JS ── -->
 <script>
   const menuBtn   = document.getElementById("menuToggle");
@@ -313,5 +328,5 @@ document.addEventListener('DOMContentLoaded', () => new ChatbotWidget());
 
 {% block extra_js %}{% endblock %}
 
-</body>
+</>
 </html>
