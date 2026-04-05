@@ -7,7 +7,7 @@ import json
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs
+from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs, orders
 from firebase_admin import auth, firestore
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -323,15 +323,14 @@ def customer_dashboard():
         return "User not found", 404
     customer = doc.to_dict()
  
-    # ── Orders ──
+    # ── Orders from top-level collection (already sorted by Firestore) ──
     orders_list = []
-    for order_doc in users.document(user_id).collection("orders").stream():
+    for order_doc in orders.where("user_id", "==", user_id).order_by("created_at", direction="DESCENDING").stream():
         order = order_doc.to_dict()
-        order["id"]       = order_doc.id
-        order["notes"]    = order.get("notes", "")
+        order["id"] = order_doc.id
+        order["notes"] = order.get("notes", "")
         order["reviewed"] = order.get("reviewed", False)
- 
-        # Calculate total for premade orders
+
         if order.get("order_type") == "premade" and order.get("selected_items"):
             total = sum(
                 float(i.get("subtotal", float(i.get("price", 0)) * int(i.get("quantity", 1))))
@@ -340,38 +339,30 @@ def customer_dashboard():
             order["calculated_total"] = total
         else:
             order["calculated_total"] = order.get("amount", 0)
- 
+
         order = convert_timestamps(order)
         orders_list.append(order)
- 
-    orders_list.sort(
-        key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ),
-        reverse=True
-    )
- 
-    # ── Favorites — fetch ids + live cake data ──
-    favorite_ids    = []
-    favorites_list  = []
+        
+    # Favorites
+    favorite_ids = []
+    favorites_list = []
  
     for fav_doc in users.document(user_id).collection("favorites").stream():
         cake_id = fav_doc.id
         favorite_ids.append(cake_id)
- 
-        # fetch live cake data
         cake_doc = cakes.document(cake_id).get()
         if cake_doc.exists:
-            cake_data             = cake_doc.to_dict()
-            cake_data['id']       = cake_doc.id
-            cake_data['avg_rating']   = 0
+            cake_data = cake_doc.to_dict()
+            cake_data['id'] = cake_doc.id
+            cake_data['avg_rating'] = 0
             cake_data['review_count'] = 0
             favorites_list.append(cake_data)
  
-    # attach ratings to favorites
     if favorites_list:
         fav_id_set = {c['id'] for c in favorites_list}
         cake_ratings = {}
         for r_doc in reviews.where("is_visible", "==", True).stream():
-            r   = r_doc.to_dict()
+            r = r_doc.to_dict()
             cid = r.get("cake_id")
             if cid in fav_id_set:
                 if cid not in cake_ratings:
@@ -381,18 +372,18 @@ def customer_dashboard():
         for cake in favorites_list:
             if cake["id"] in cake_ratings:
                 data = cake_ratings[cake["id"]]
-                cake["avg_rating"]   = round(data["total"] / data["count"], 1)
+                cake["avg_rating"] = round(data["total"] / data["count"], 1)
                 cake["review_count"] = data["count"]
  
     cart_count = len(list(users.document(user_id).collection("cart").stream()))
  
     return render_template("customer_dashboard.html",
-        customer       = customer,
-        orders         = orders_list,
-        user_id        = user_id,
-        cart_count     = cart_count,
-        favorite_ids   = favorite_ids,    # ← for heart pre-fill on cakes page
-        favorites_list = favorites_list,  # ← for favorites tab
+        customer=customer,
+        orders=orders_list,
+        user_id=user_id,
+        cart_count=cart_count,
+        favorite_ids=favorite_ids,
+        favorites_list=favorites_list,
     )
 
 # ---------------- FAVORITES TOGGLE ----------------
@@ -525,8 +516,8 @@ def add_review():
 def order_receipt(order_id):
     user_id = session.get("user_id")
     
-    # Get the order
-    order_ref = users.document(user_id).collection("orders").document(order_id)
+    # Get order from top-level collection
+    order_ref = orders.document(order_id)  # ← CHANGED
     order_doc = order_ref.get()
     
     if not order_doc.exists:
@@ -534,15 +525,19 @@ def order_receipt(order_id):
         return redirect(url_for("customer_dashboard"))
     
     order = order_doc.to_dict()
+    
+    # Verify order belongs to current user
+    if order.get("user_id") != user_id:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("customer_dashboard"))
+    
     order["id"] = order_id
     order = convert_timestamps(order)
     
-    # Only allow viewing receipt for completed orders
     if order.get("status") != "Completed" and order.get("payment_status") != "Paid":
         flash("Receipt is only available for completed or paid orders.", "warning")
         return redirect(url_for("customer_dashboard"))
     
-    # Calculate total for premade orders if not already calculated
     if order.get("order_type") == "premade" and order.get("selected_items"):
         total = 0
         for item in order["selected_items"]:
@@ -672,7 +667,7 @@ def finalize_order():
         inspo_image    = None
         for i in selected_items:
             users.document(user_id).collection("cart").document(i["cake_id"]).delete()
-        custom_components = []  # empty for premade
+        custom_components = []
     else:
         selected_items = []
         item_names     = request.form.get("order_item", "")
@@ -680,13 +675,10 @@ def finalize_order():
         rush           = request.form.get("rush") == "yes"
         inspo_image    = request.form.get("inspo_image") or None
         
-        # Parse custom order string into components for vertical display
         custom_components = []
-        # Split the item string by comma
         item_parts = item_names.split(", ")
         
         for part in item_parts:
-            # Match pattern: "Component Name (₱price)"
             match = re.search(r'(.+) \(₱([\d,]+)\)', part)
             if match:
                 component_name = match.group(1).strip()
@@ -696,7 +688,6 @@ def finalize_order():
                     "price": component_price
                 })
             else:
-                # Try to match pattern without ₱ symbol (fallback)
                 match2 = re.search(r'(.+) \(([\d,]+)\)', part)
                 if match2:
                     component_name = match2.group(1).strip()
@@ -706,8 +697,9 @@ def finalize_order():
                         "price": component_price
                     })
  
-    # ── Base order data ──
+    # ── Base order data with user_id ──
     order_data = {
+        "user_id":        user_id,  # ← ADDED: link to user
         "delivery_date":  delivery_datetime,
         "item":           item_names,
         "selected_items": selected_items,
@@ -716,8 +708,8 @@ def finalize_order():
         "rush":           rush,
         "notes":          request.form.get("notes", ""),
         "payment_method": payment_method,
-        "payment_status": "Pending",   # default
-        "payment_id":     None,        # PayMongo reference
+        "payment_status": "Pending",
+        "payment_id":     None,
         "delivery_type":  delivery_type,
         "inspo_image":    inspo_image,
         "order_type":     order_type,
@@ -733,32 +725,27 @@ def finalize_order():
         "created_at": now
     }
  
-    # ========== ADD QUANTITY DEDUCTION HERE ==========
-    # Deduct cake quantity for premade orders (before saving)
+    # Deduct cake quantity for premade orders
     if order_type == "premade":
         for item in selected_items:
             cake_id = item.get("cake_id")
             quantity_ordered = item.get("quantity", 1)
-            
             cake_ref = cakes.document(cake_id)
             cake_doc = cake_ref.get()
-            
             if cake_doc.exists:
                 current_qty = cake_doc.to_dict().get("quantity", 0)
                 new_qty = current_qty - quantity_ordered
                 cake_ref.update({"quantity": new_qty})
-    # ========== END QUANTITY DEDUCTION ==========
  
-    # ── COD or Bank Transfer → save immediately ──
+    # ── COD or Bank Transfer → save immediately to top-level orders ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
-        users.document(user_id).collection("orders").add(order_data)
+        orders.add(order_data)  # ← CHANGED: save to top-level orders collection
         flash("Order placed successfully! 🎂", "success")
         return redirect(url_for("customer_dashboard"))
  
     # ── GCash / Maya / Card → PayMongo checkout ──
     line_items = build_line_items(order_type, selected_items, item_names, amount)
  
-    # Store order in session temporarily (save after payment confirmed)
     session['pending_order'] = {
         "user_id":    user_id,
         "order_data": {
@@ -768,7 +755,6 @@ def finalize_order():
         }
     }
  
-    # Create PayMongo checkout session
     base_url    = request.host_url.rstrip('/')
     success_url = f"{base_url}/payment/success"
     cancel_url  = f"{base_url}/payment/failed"
@@ -785,9 +771,7 @@ def finalize_order():
         flash("Payment service unavailable. Please try Cash on Delivery.", "danger")
         return redirect(url_for("customer_dashboard"))
  
-    # Save session_id for verification
     session['paymongo_session_id'] = checkout["session_id"]
- 
     return redirect(checkout["checkout_url"])
 # ---------------- CUSTOMER CANCEL ORDER ----------------
 @app.route("/order/cancel/<order_id>", methods=["POST"])
@@ -795,14 +779,21 @@ def finalize_order():
 def cancel_order(order_id):
     user_id = session.get("user_id")
 
-    order_ref = users.document(user_id).collection("orders").document(order_id)
+    order_ref = orders.document(order_id)  # ← CHANGED
     order_doc = order_ref.get()
 
     if not order_doc.exists:
         flash("Order not found.", "danger")
         return redirect(url_for("customer_dashboard"))
+    
+    order = order_doc.to_dict()
+    
+    # Verify order belongs to current user
+    if order.get("user_id") != user_id:
+        flash("Unauthorized access.", "danger")
+        return redirect(url_for("customer_dashboard"))
 
-    if order_doc.to_dict().get("status") != "New":
+    if order.get("status") != "New":
         flash("Order cannot be cancelled anymore.", "warning")
         return redirect(url_for("customer_dashboard"))
 
@@ -813,7 +804,19 @@ def cancel_order(order_id):
 # ================================================================
 # CAKES ROUTES
 # ================================================================
-
+@app.route("/cleanup-old-orders")
+@admin_required
+def cleanup_old_orders():
+    count = 0
+    for user_doc in users.stream():
+        user_id = user_doc.id
+        # Get all orders from subcollection
+        for order_doc in users.document(user_id).collection("orders").stream():
+            order_doc.reference.delete()
+            count += 1
+            print(f"Deleted old order {order_doc.id} from user {user_id}")
+    
+    return f"Cleaned up {count} old orders from subcollections"
 # ---------------- AVAILABLE CAKES PAGE ----------------
 @app.route("/cakes")
 def cakes_page():
@@ -999,73 +1002,80 @@ def admin_page():
 @app.route("/admin/orders")
 @admin_required
 def admin_orders():
-    orders = []
- 
-    # ── Fetch online orders (subcollection under users) ──
-    for user_doc in users.stream():
-        user_data = user_doc.to_dict()
-        for order_doc in users.document(user_doc.id).collection("orders").stream():
-            order = order_doc.to_dict()
-            order["id"]                = order_doc.id
-            order["user_id"]           = user_doc.id
-            order["notes"]             = order.get("notes", "")
-            order["inspo_image"]       = order.get("inspo_image", None)
-            order["customer_username"] = user_data.get("username", "")
-            order["order_type"]        = order.get("order_type", "custom")  # fallback for old orders
-            order["order_source"]      = order.get("order_source", "online")
-            if order.get("order_type") == "premade" and order.get("selected_items"):
-                total = 0
-                for item in order["selected_items"]:
-                    subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
-                    total += float(subtotal)
-                order["calculated_total"] = total
+    orders_list = []
+    
+    # ONE simple query instead of looping all users
+    for order_doc in orders.order_by("created_at", direction="DESCENDING").stream():  # ← CHANGED
+        order = order_doc.to_dict()
+        order["id"] = order_doc.id
+        
+        # Get user info for display
+        user_id = order.get("user_id")
+        if user_id:
+            user_doc = users.document(user_id).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                order["customer_username"] = user_data.get("username", "")
+                if "customer" not in order:
+                    order["customer"] = {
+                        "name": user_data.get("fname", ""),
+                        "contact": user_data.get("number", ""),
+                        "address": user_data.get("address", ""),
+                    }
             else:
-                order["calculated_total"] = order.get("amount", 0)
-            order = convert_timestamps(order)
-            orders.append(order)
- 
-    # ── Fetch walk-in orders (top level collection) ──
+                order["customer_username"] = "Unknown"
+        else:
+            order["customer_username"] = "Unknown"
+        
+        order["notes"] = order.get("notes", "")
+        order["inspo_image"] = order.get("inspo_image", None)
+        order["order_source"] = order.get("order_source", "online")
+        
+        if order.get("order_type") == "premade" and order.get("selected_items"):
+            total = 0
+            for item in order["selected_items"]:
+                subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
+                total += float(subtotal)
+            order["calculated_total"] = total
+        else:
+            order["calculated_total"] = order.get("amount", 0)
+        
+        order = convert_timestamps(order)
+        orders_list.append(order)
+    
+    # Fetch walk-in orders (keep as is)
     for order_doc in walkin_orders.stream():
         order = order_doc.to_dict()
-        order["id"]           = order_doc.id
-        order["user_id"]      = None
+        order["id"] = order_doc.id
+        order["user_id"] = None
         order["order_source"] = "walk-in"
-        order["notes"]        = order.get("notes", "")
-        order["inspo_image"]  = None
-        order["rush"]         = False
-        order["delivery_type"]= "Walk-in"
-        order["payment_method"]= order.get("payment_method", "Cash")
+        order["notes"] = order.get("notes", "")
+        order["inspo_image"] = None
+        order["rush"] = False
+        order["delivery_type"] = "Walk-in"
+        order["payment_method"] = order.get("payment_method", "Cash")
         order["calculated_total"] = order.get("amount", 0)
-        # Walk-in has no delivery_date so set dummy
         order["delivery_date"] = order.get("created_at") or datetime.now(PH_TZ)
- 
-        # customer dict for template compatibility
         order["customer"] = {
-            "name":      "Walk-in Customer",
-            "contact":   "N/A",
-            "address":   "N/A",
-            "occasion":  "N/A",
+            "name": "Walk-in Customer",
+            "contact": "N/A",
+            "address": "N/A",
+            "occasion": "N/A",
             "celebrant": "N/A",
-            "age":       "N/A"
+            "age": "N/A"
         }
- 
-        # Convert created_at
         created_at = order.get("created_at")
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
-        order["created_at"]   = created_at
-        order["delivery_date"] = created_at  # use same for display
- 
-        orders.append(order)
- 
-    # Sort all orders by created_at descending
-    orders.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
- 
-    return render_template("admin_orders.html", orders=orders)                            
-
+        order["created_at"] = created_at
+        order["delivery_date"] = created_at
+        orders_list.append(order)
+    
+    orders_list.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
+    return render_template("admin_orders.html", orders=orders_list)
 # ---------------- ADMIN INVENTORY ----------------
 @app.route("/admin/inventory")
 @admin_required
@@ -1103,16 +1113,28 @@ def admin_expenses():
 @admin_required
 def admin_sales():
     sales_items = []
-    for user_doc in users.stream():
-        user_data = user_doc.to_dict()
-        for order_doc in users.document(user_doc.id).collection("orders").stream():
-            order = order_doc.to_dict()
-            if order.get("status") in ["Completed", "Pickup"]:
-                order["customer_username"] = user_data.get("username", "")
-                order["id"] = order_doc.id
-                order = convert_timestamps(order)
-                sales_items.append(order)
-    sales_items.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ),reverse=True)
+    
+    # One query to top-level orders collection
+    for order_doc in orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
+    # Error with link → create index → works
+        order = order_doc.to_dict()
+        order["id"] = order_doc.id
+        
+        # Get username from users collection
+        user_id = order.get("user_id")
+        if user_id:
+            user_doc = users.document(user_id).get()
+            if user_doc.exists:
+                order["customer_username"] = user_doc.to_dict().get("username", "")
+            else:
+                order["customer_username"] = "Unknown"
+        else:
+            order["customer_username"] = "Unknown"
+        
+        order = convert_timestamps(order)
+        sales_items.append(order)
+    
+    sales_items.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
     return render_template("admin_sales.html", sales=sales_items)
 
 # ---------------- ADMIN ANALYTICS ----------------
@@ -1174,54 +1196,45 @@ def admin_analytics():
             alltime_data[key]["expenses"] += cost
  
     # ── Fetch orders ──
-    for user_doc in users.stream():
-        for order_doc in users.document(user_doc.id).collection("orders").stream():
-            order  = order_doc.to_dict()
-            status = order.get("status", "")
-            amount = float(order.get("amount", 0))
- 
-            total_orders += 1
-            if status == "Completed":
-                total_completed += 1
- 
-            # Payment method
-            payment = order.get("payment_method", "Unknown")
-            payment_counts[payment] = payment_counts.get(payment, 0) + 1
- 
-            # Best selling premade cakes
-            if order.get("order_type") == "premade":
-                for item in order.get("selected_items", []):
-                    name = item.get("cake_name", "Unknown")
-                    cake_sales[name] = cake_sales.get(name, 0) + 1
- 
-            # Convert created_at
-            created_at = order.get("created_at")
-            if isinstance(created_at, str):
-                created_at = datetime.fromisoformat(created_at)
+    for order_doc in orders.stream():  # ← CHANGED
+        order = order_doc.to_dict()
+        status = order.get("status", "")
+        amount = float(order.get("amount", 0))
+        
+        total_orders += 1
+        if status == "Completed":
+            total_completed += 1
+        
+        payment = order.get("payment_method", "Unknown")
+        payment_counts[payment] = payment_counts.get(payment, 0) + 1
+        
+        if order.get("order_type") == "premade":
+            for item in order.get("selected_items", []):
+                name = item.get("cake_name", "Unknown")
+                cake_sales[name] = cake_sales.get(name, 0) + 1
+        
+        created_at = order.get("created_at")
+        if isinstance(created_at, str):
+            created_at = datetime.fromisoformat(created_at)
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                created_at = created_at.astimezone(PH_TZ)
+        
+        if status in ["Completed", "Pickup"]:
+            total_revenue += amount
+            
             if isinstance(created_at, datetime):
-                if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-                else:
-                    created_at = created_at.astimezone(PH_TZ)
- 
-            if status in ["Completed", "Pickup"]:
-                total_revenue += amount
- 
-                if isinstance(created_at, datetime):
-                    # Weekly
-                    if created_at >= week_ago:
-                        weekly_sales[created_at.strftime("%a")] += amount
- 
-                    # Monthly (this year)
-                    if created_at.year == now.year:
-                        monthly_sales[created_at.strftime("%b")] += amount
- 
-                    # All time
-                    key = created_at.strftime("%b %Y")
-                    if key not in alltime_data:
-                        alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": created_at}
-                    alltime_data[key]["sales"] += amount
- 
+                if created_at >= week_ago:
+                    weekly_sales[created_at.strftime("%a")] += amount
+                if created_at.year == now.year:
+                    monthly_sales[created_at.strftime("%b")] += amount
+                key = created_at.strftime("%b %Y")
+                if key not in alltime_data:
+                    alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": created_at}
+                alltime_data[key]["sales"] += amount
+    
     # Weekly profit
     for day in days_order:
         weekly_profit[day] = weekly_sales[day] - weekly_expenses[day]
@@ -1292,21 +1305,31 @@ def admin_cakes():
 @admin_required
 def admin_users():
     all_users = []
+    
+    # Get all order counts in ONE query
+    order_counts = {}
+    for order_doc in orders.stream():  # ← CHANGED
+        uid = order_doc.to_dict().get("user_id")
+        if uid:
+            order_counts[uid] = order_counts.get(uid, 0) + 1
+    
     users_ref = users.order_by("created_at", direction="DESCENDING").stream()
     for user_doc in users_ref:
         user_data = user_doc.to_dict()
         user_data['uid'] = user_doc.id
-        user_data['order_count'] = len(list(users.document(user_doc.id).collection('orders').stream()))
+        user_data['order_count'] = order_counts.get(user_doc.id, 0)  # ← CHANGED: no extra query
+        
         try:
             auth_user = auth.get_user(user_doc.id)
-            user_data['disabled']       = auth_user.disabled
+            user_data['disabled'] = auth_user.disabled
             user_data['email_verified'] = auth_user.email_verified
-            user_data['created_at']     = datetime.fromtimestamp(auth_user.user_metadata.creation_timestamp / 1000, tz=PH_TZ)
+            user_data['created_at'] = datetime.fromtimestamp(auth_user.user_metadata.creation_timestamp / 1000, tz=PH_TZ)
         except:
-            user_data['disabled']       = False
+            user_data['disabled'] = False
             user_data['email_verified'] = False
-            user_data['created_at']     = None
+            user_data['created_at'] = None
         all_users.append(user_data)
+    
     return render_template("admin_users.html", all_users=all_users)
 
 # ADMIN - REVIEWS PAGE
@@ -1359,15 +1382,14 @@ def admin_logs_page():
 @admin_required
 def update_order_status(user_id, order_id):
     new_status = request.form["status"]
-    order_ref  = users.document(user_id).collection("orders").document(order_id)
-    order_doc  = order_ref.get()
+    order_ref = orders.document(order_id)  # ← CHANGED
+    order_doc = order_ref.get()
 
     if order_doc.exists:
         order_data = order_doc.to_dict()
         old_status = order_data.get("status")
         order_type = order_data.get("order_type", "custom")
 
-        # Decrease quantity when admin accepts premade order
         if new_status == "Accepted" and old_status == "New" and order_type == "premade":
             for i in order_data.get("selected_items", []):
                 cake_ref = cakes.document(i["cake_id"])
@@ -1377,7 +1399,6 @@ def update_order_status(user_id, order_id):
                     new_qty = max(0, current_qty - 1)
                     cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
 
-        # Restore quantity when admin cancels accepted premade order
         accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
         if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
             for i in order_data.get("selected_items", []):
@@ -1390,7 +1411,7 @@ def update_order_status(user_id, order_id):
     order_ref.update({"status": new_status})
     log_admin_action(
         action=f"Changed order status to '{new_status}'",
-        target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
+        target=f"Order #{order_id}",
         category="order"
     )
     return redirect(url_for("admin_orders"))
@@ -1409,10 +1430,10 @@ def edit_order(user_id, order_id):
     delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
 
     try:
-        users.document(user_id).collection("orders").document(order_id).update({
-            "item":          item,
-            "amount":        amount,
-            "notes":         notes,
+        orders.document(order_id).update({  # ← CHANGED
+            "item": item,
+            "amount": amount,
+            "notes": notes,
             "delivery_date": delivery_datetime
         })
         log_admin_action(
@@ -1653,43 +1674,32 @@ def payment_success():
     session_id    = session.get('paymongo_session_id')
     pending_order = session.get('pending_order')
     
-    print("=== PAYMENT SUCCESS HIT ===")
-    print("SESSION ID:", session_id)
-    print("PENDING ORDER EXISTS:", pending_order is not None)
-    
     if not session_id or not pending_order:
         flash("Invalid payment session.", "danger")
         return redirect(url_for("customer_dashboard"))
  
-    # Verify payment with PayMongo
     payment_result = verify_payment(session_id)
  
     if not payment_result.get("paid"):
         flash("Payment not confirmed. Please try again.", "danger")
         return redirect(url_for("customer_dashboard"))
  
-    # ── Payment confirmed → save order to Firestore ──
     user_id    = pending_order["user_id"]
     order_data = pending_order["order_data"]
  
-    # Convert ISO strings back to datetime
     order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
     order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
- 
-    # Update payment info
     order_data["payment_status"] = "Paid"
     order_data["payment_id"]     = payment_result.get("reference")
     order_data["payment_method"] = payment_result.get("payment_method", order_data["payment_method"]).upper()
  
-    # Save to Firestore
-    doc_ref  = users.document(user_id).collection("orders").add(order_data)
+    # Save to top-level orders collection
+    doc_ref = orders.add(order_data)  # ← CHANGED
     order_id = doc_ref[1].id
  
-    # Clear session
     session.pop('paymongo_session_id', None)
     session.pop('pending_order', None)
  
-    # Fetch saved order for thank you page
     saved_order            = order_data.copy()
     saved_order["id"]      = order_id
     saved_order["user_id"] = user_id
@@ -1873,6 +1883,7 @@ def get_conversation_status(user_id, conversation_id):
         
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 # ---------------- ADMIN GET CONVERSATIONS ----------------
 @app.route('/admin/conversations')
