@@ -811,19 +811,6 @@ def cancel_order(order_id):
 # ================================================================
 # CAKES ROUTES
 # ================================================================
-@app.route("/cleanup-old-orders")
-@admin_required
-def cleanup_old_orders():
-    count = 0
-    for user_doc in users.stream():
-        user_id = user_doc.id
-        # Get all orders from subcollection
-        for order_doc in users.document(user_id).collection("orders").stream():
-            order_doc.reference.delete()
-            count += 1
-            print(f"Deleted old order {order_doc.id} from user {user_id}")
-    
-    return f"Cleaned up {count} old orders from subcollections"
 # ---------------- AVAILABLE CAKES PAGE ----------------
 @app.route("/cakes")
 def cakes_page():
@@ -1004,6 +991,8 @@ def admin_page():
         total_cancelled=total_cancelled, total_rush=total_rush,
         today_count=today_count, today_deliveries=today_deliveries
     )
+    
+    
 # ---------------- ADMIN ORDERS ----------------
 @app.route("/admin/orders")
 @admin_required
@@ -1114,34 +1103,72 @@ def admin_expenses():
         exp_items.append(e)
     
     return render_template("admin_expenses.html", expenses=exp_items)
+
+
 # ---------------- ADMIN SALES ----------------
 @app.route("/admin/sales")
 @admin_required
 def admin_sales():
-    sales_items = []
+    online_sales = []
+    walkin_sales = []
     
-    # One query to top-level orders collection
-    for order_doc in orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
-    # Error with link → create index → works
-        order = order_doc.to_dict()
-        order["id"] = order_doc.id
+    # Online orders (completed)
+    for doc in orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
+        order = doc.to_dict()
+        order["id"] = doc.id
         
-        # Get username from users collection
-        user_id = order.get("user_id")
-        if user_id:
-            user_doc = users.document(user_id).get()
-            if user_doc.exists:
-                order["customer_username"] = user_doc.to_dict().get("username", "")
+        # Convert created_at to datetime if it's a string
+        created_at = order.get("created_at")
+        if isinstance(created_at, str):
+            try:
+                created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+            except:
+                created_at = datetime.now(PH_TZ)
+        elif created_at is None:
+            created_at = datetime.now(PH_TZ)
+        
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
-                order["customer_username"] = "Unknown"
-        else:
-            order["customer_username"] = "Unknown"
+                created_at = created_at.astimezone(PH_TZ)
+        order["created_at"] = created_at
         
-        order = convert_timestamps(order)
-        sales_items.append(order)
+        online_sales.append(order)
     
-    sales_items.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
-    return render_template("admin_sales.html", sales=sales_items)
+    # Walk-in orders (completed)
+    for doc in walkin_orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
+        order = doc.to_dict()
+        order["id"] = doc.id
+        
+        # Convert created_at to datetime if it's a string
+        created_at = order.get("created_at")
+        if isinstance(created_at, str):
+            try:
+                created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
+            except:
+                created_at = datetime.now(PH_TZ)
+        elif created_at is None:
+            created_at = datetime.now(PH_TZ)
+        
+        if isinstance(created_at, datetime):
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                created_at = created_at.astimezone(PH_TZ)
+
+        order["created_at"] = created_at
+
+        
+        walkin_sales.append(order)
+    
+    return render_template("admin_sales.html", 
+        online_sales=online_sales, 
+        walkin_sales=walkin_sales,
+        online_count=len(online_sales),
+        walkin_count=len(walkin_sales)
+    )
+    
 
 # ---------------- ADMIN ANALYTICS ----------------
 @app.route("/admin/analytics")
