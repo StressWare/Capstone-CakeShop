@@ -461,14 +461,21 @@ def add_review():
                         user_doc.to_dict().get("username") or \
                         "Customer"
     
-    # Check if already reviewed this order
-    order_ref = users.document(user_id).collection("orders").document(order_id)
+    # ← CHANGED: Get order from top-level orders collection
+    order_ref = orders.document(order_id)  # Changed from users.document(user_id).collection("orders")
     order_doc = order_ref.get()
+    
     if not order_doc.exists:
         flash("Order not found.", "danger")
         return redirect(url_for("customer_dashboard"))
     
     order_data = order_doc.to_dict()
+    
+    # ← ADDED: Verify order belongs to this user
+    if order_data.get("user_id") != user_id:
+        flash("Unauthorized.", "danger")
+        return redirect(url_for("customer_dashboard"))
+    
     if order_data.get("reviewed"):
         flash("You already reviewed this order.", "warning")
         return redirect(url_for("customer_dashboard"))
@@ -495,7 +502,7 @@ def add_review():
         review_data["flavor_rating"] = flavor_rating
         review_data["design_rating"] = design_rating
         review_data["overall_rating"] = overall_rating
-        review_data["rating"] = overall_rating  # For compatibility
+        review_data["rating"] = overall_rating
         
     else:
         # Premade orders: single rating
@@ -505,8 +512,8 @@ def add_review():
     # Save review
     reviews.add(review_data)
     
-    # Mark order as reviewed
-    order_ref.update({"reviewed": True})
+    # Mark order as reviewed in top-level orders collection
+    order_ref.update({"reviewed": True})  # ← Now updates top-level orders
     
     flash("Review submitted! Thank you 🎂", "success")
     return redirect(url_for("customer_dashboard"))
@@ -950,13 +957,13 @@ def remove_from_cart(cake_id):
 def admin_page():
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
 
-    orders = []
-    for user_doc in users.stream():
-        for order_doc in users.document(user_doc.id).collection("orders").stream():
-            order = order_doc.to_dict()
-            order["id"] = order_doc.id
-            order = convert_timestamps(order)
-            orders.append(order)
+    # ONE simple query to top-level orders collection
+    all_orders = []  # ← CHANGED variable name (not 'orders')
+    for order_doc in orders.stream():  # ← 'orders' is Firestore collection
+        order = order_doc.to_dict()
+        order["id"] = order_doc.id
+        order = convert_timestamps(order)
+        all_orders.append(order)
 
     total_new = total_accepted = total_pending = total_ready = 0
     total_out = total_completed = total_cancelled = total_rush = 0
@@ -964,7 +971,7 @@ def admin_page():
     today_deliveries = []
     today_date = datetime.now(PH_TZ).date()
 
-    for order in orders:
+    for order in all_orders:  # ← CHANGED to use 'all_orders'
         status = order.get("status", "")
         if status == "New":                total_new += 1
         elif status == "Accepted":         total_accepted += 1
@@ -997,7 +1004,6 @@ def admin_page():
         total_cancelled=total_cancelled, total_rush=total_rush,
         today_count=today_count, today_deliveries=today_deliveries
     )
-
 # ---------------- ADMIN ORDERS ----------------
 @app.route("/admin/orders")
 @admin_required
