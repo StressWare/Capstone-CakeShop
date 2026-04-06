@@ -143,6 +143,11 @@ def convert_timestamps(order):
         order[field] = val
     return order
 
+@app.after_request
+def add_headers(response):
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    return response
+
 # ================================================================
 # PUBLIC ROUTES
 # ================================================================
@@ -221,7 +226,9 @@ def verify_token():
         return jsonify({'error': 'No token provided'}), 400
 
     try:
-        decoded_token = auth.verify_id_token(id_token)
+        print(f"TOKEN RECEIVED (first 50 chars): {id_token[:50]}")
+        print(f"TOKEN LENGTH: {len(id_token)}")
+        decoded_token = auth.verify_id_token(id_token,  clock_skew_seconds=10)
         uid = decoded_token['uid']
         email = decoded_token.get('email', '')
         is_google = decoded_token.get('firebase', {}).get('sign_in_provider') == 'google.com'
@@ -249,11 +256,14 @@ def verify_token():
 
         return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200
 
-    except auth.InvalidIdTokenError:
+    except auth.InvalidIdTokenError as e:
+        print(f"INVALID TOKEN ERROR: {e}")  # ← add this
         return jsonify({'error': 'Invalid token'}), 401
-    except auth.ExpiredIdTokenError:
+    except auth.ExpiredIdTokenError as e:
+        print(f"EXPIRED TOKEN ERROR: {e}")  # ← add this
         return jsonify({'error': 'Token expired'}), 401
     except Exception as e:
+        print(f"OTHER ERROR: {type(e).__name__}: {e}")  # ← add this
         return jsonify({'error': str(e)}), 500
 
 # ---------------- SAVE USER DETAILS ----------------
@@ -266,7 +276,7 @@ def save_user_details():
     id_token = auth_header.split('Bearer ')[1]
 
     try:
-        decoded_token = auth.verify_id_token(id_token)
+        decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=10)
         token_uid = decoded_token['uid']
         data = request.get_json()
         uid = data.get('uid')
@@ -1552,11 +1562,6 @@ def edit_inventory(id):
         "cost": float(request.form["cost"]),
         "updated_at": now
     })
-    expenses.add({
-        "description": f"Edited inventory: {request.form['item']} - Qty: {request.form['quantity']}, Cost: ₱{request.form['cost']}",
-        "cost": float(request.form["cost"]) * int(request.form["quantity"]),
-        "date": now
-    })
     
     log_admin_action(
         action="Edited inventory item",
@@ -1575,7 +1580,11 @@ def edit_expense(id):
     expenses.document(id).update({
         "cost": new_cost
     })
-    
+    log_admin_action(
+        action="Edited expenses item",
+        target=request.form["cost"],
+        category="expense"
+    )
     flash("Expense cost updated", "success")
     return redirect(url_for("admin_expenses"))
 # ---------------- ADD CAKE ----------------
