@@ -5,7 +5,8 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(to bottom, #ffffff, #fff7fb);
+    background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+    background-attachment: fixed;
     color: #333;
     margin: 0;
     padding: 0;
@@ -21,7 +22,7 @@ body {
 }
 
 h2, h3 {
-    color: #d63384;
+    color: #ffffff;
     letter-spacing: 0.3px;
 }
 
@@ -131,10 +132,12 @@ h2, h3 {
 
 /* Form Card Style */
 .customize-section form {
-    background: #ffffff;
+    background: rgba(236, 9, 107, 0.15); /* transparent pink */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); /* for Safari */
+    border: 1px solid rgba(255, 167, 205, 0.3);
     padding: 30px;
     border-radius: 18px;
-    box-shadow: 0 10px 35px rgba(0,0,0,0.08);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -269,6 +272,20 @@ h2, h3 {
 
 .custom-file-btn:hover {
   background-color: #ffbedc;
+}
+
+
+.customize-section{
+    color: white;
+
+}
+
+.btn{
+    color: white;
+}
+
+.btn:hover{
+    color: #ff99cc;
 }
 
 /* ====== RESPONSIVE ====== */
