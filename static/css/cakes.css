@@ -244,6 +244,9 @@ body {
   background-color: #084298;
 }
 
+.modal-content{
+background-color: white;
+}
 
 
 /* Quantity selector */

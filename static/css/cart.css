@@ -298,14 +298,27 @@ footer {
 
 
 
+
     /* EMPTY STATE */
     .empty-state {
       text-align: center;
-      padding: 3rem 1rem;
-      background: #ffe6f0;
-      border: 1px solid #ffcce6;
-      border-radius: 12px;
-      color: #c71585;
+      padding: 50px 30px;
+      background: rgba(236, 9, 107, 0.15); /* transparent pink */
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* for Safari */
+      border: 1px solid rgba(255, 167, 205, 0.3);
+      border-radius: 15px;      
+      color: #ffffff;
+    }
+
+    .btn-pink {
+      background-color: #d63384;
+      border-color: #d63384;
+      color: white;
+}
+
+    .btn-pink:hover {
+      background-color:#ff0080;
     }
 
     /* CHECKOUT BAR */

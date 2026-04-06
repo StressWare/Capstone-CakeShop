@@ -261,7 +261,7 @@ h2, h3 {
   width: 30%;
   display: inline-block;
   padding: 7px;
-  background-color: #ff99cc;  /* soft pink */
+  background-color: #d63384;
   color: #fff;
   border-radius: 8px;
   cursor: pointer;
@@ -271,7 +271,7 @@ h2, h3 {
 }
 
 .custom-file-btn:hover {
-  background-color: #ffbedc;
+  background-color: #fa56a2;
 }
 
 

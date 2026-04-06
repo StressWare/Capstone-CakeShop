@@ -903,7 +903,7 @@ def add_to_cart():
     cake_name = request.form.get("cake_name")
     price     = float(request.form.get("price", 0))
     quantity  = int(request.form.get("quantity", 1))
- 
+    image = request.form.get("image") 
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
     cart_doc = cart_ref.get()
  
@@ -919,6 +919,7 @@ def add_to_cart():
             "cake_name": cake_name,
             "price":     price,
             "quantity":  quantity,
+            "image":     image,   # ✅ ADD THIS
             "added_at":  firestore.SERVER_TIMESTAMP
         })
         flash(f"{cake_name} added to cart! 🛒", "success")
