@@ -303,43 +303,146 @@ h2 {
 .category-modal {
   display: none;
   position: fixed;
-  z-index: 1000;
-  left: 0;
   top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+
+  /* smooth fade in */
+  animation: modalFade 0.25s ease forwards;
 }
 
-
-.category-modal-content {
-  background: linear-gradient(to right, #000000, #ff69b4, #ffc0cb);
-  background-attachment: fixed;  
-  margin: 8% auto;
-  padding: 30px;
-  width: 100%;
-  height: 100%;
-  max-width: 1000px;
-  border-radius: 15px;
-  position: relative;
-}
-
-.close-btn {
+/* DARK BLUR BACKGROUND (does NOT affect layout) */
+.category-modal::before {
+  content: "";
   position: absolute;
-  top: 15px;
-  right: 20px;
-  font-size: 28px;
-  cursor: pointer;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
+
+/* ===== MODAL CONTENT ONLY UPGRADE ===== */
+.category-modal-content {
+  position: relative;
+  z-index: 2;
+
+  /* KEEP YOUR EXISTING LAYOUT, only enhance visuals */
+  
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+
+  /* smooth entrance */
+  transform: scale(0.95);
+  animation: modalPop 0.28s ease forwards;
+
+  /* IMPORTANT: does NOT change layout behavior */
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  /* ✅ IMPORTANT FIX */
+  width: 90%;
+  max-width: 1200px;
+
+  max-height: 85vh;   /* limits modal height */
+  overflow-y: auto;   /* makes it scrollable */
+  
+  padding: 30px;       /* THIS is your inner spacing */
+  margin: auto;        /* keeps it centered */
+}
+
 
 .category-cards {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 25px;
-  justify-content: center;
+  display: grid;  /* CHANGE from flex → grid */
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+
+  justify-items: center;
+  align-items: center;
+
+  margin-top: 20px;
 }
 
+/* INNER FLIP */
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+/* FLIP STATE */
+.category-card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+/* FRONT & BACK */
+.card-front,
+.card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  backface-visibility: hidden;
+  overflow: hidden;
+}
+
+/* FRONT STYLE (clean premium glass) */
+.card-front {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+}
+
+/* FRONT NAME STYLE */
+.card-front-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: white;
+  text-align: center;
+  margin: 0;
+}
+
+/* IMAGE */
+.category-card-img {
+  width: 85%;
+  height: 85%;
+  object-fit: contain;
+}
+
+/* BACK PREMIUM LOOK */
+.card-back {
+  transform: rotateY(180deg);
+  background: linear-gradient(135deg, #d63384, #5a1434);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 15px;
+}
+
+/* TEXT */
+.card-back h5 {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.card-back p {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
 
 
 /* ====== AVAILABLE CAKES BUTTON ====== */
@@ -660,80 +763,95 @@ label[for="notes"] {
 
 
 
-
-/* ===== FOOTER ===== */
-
 /* ====== RESPONSIVE ====== */
+
+/* TABLET GENERAL */
+@media (max-width: 992px) {
+  .category-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* MOBILE GRID */
+@media (max-width: 600px) {
+  .category-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===== TABLET (768px) ===== */
 @media (max-width: 768px) {
-    .navbar-logo {
-        height: 175px;
-    }
 
-    .carousel-item img {
-        max-height: 250 px;
-    }
+  .navbar-logo {
+    height: 175px;
+  }
 
-    .services-row {
-        flex-direction: column;
-    }
+  .carousel-item img {
+    max-height: 250px; /* FIXED TYPO: removed space */
+  }
 
-    .service-card {
-        flex: 1 1 100%;
-    }
+  .services-row {
+    flex-direction: column;
+  }
 
-    .customize-section {
-        padding: 30px 15px;
-    }
-}
+  .service-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
 
-@media (max-width: 480px) {
-    .menu-btn {
-        font-size: 1.2rem;
-        padding: 5px 10px;
-    }
+  .customize-section {
+    padding: 30px 15px;
+  }
 
-    #orderNowBtn,
-    .modal button[type="submit"] {
-        font-size: 0.9rem;
-        padding: 10px;
-    }
-}
+  .footer-container {
+    flex-direction: column;
+    gap: 10px;
+  }
 
-
-@media screen and (max-width: 768px) { 
-  .category-circle {
-    margin-top: 5px; /* instead of 0% */
-    width: 110px;
+  .review-card-img {
     height: 150px;
-    font-size: 14px;
   }
 
-  .category-wrapper {
-    margin-top: 10px; /* reduce vertical spacing between carousel & categories */
-  }
-
-  .category-card {
-    margin-top: 5px;
-    width: 120px;
-    height: 120px;
-    font-size: 14px;
-  }
-
+  /* CATEGORY MODAL */
   .category-modal-content {
     width: 90%;
     margin: 10% auto;
     padding: 20px;
   }
 
-  .available-cakes-btn {
-    padding: 12px 25px;
-    font-size: 14px;
+  /* CATEGORY CARD FIX */
+  .category-card {
+    width: 120px;
+    height: 180px;
+  }
+
+  /* FLIP BACK TEXT FIX */
+  .card-back h5 {
+    font-size: 0.9rem;
+  }
+
+  .card-back p {
+    font-size: 0.75rem;
+    line-height: 1.2;
   }
 }
 
-@media screen and (max-width: 480px) {
+/* ===== MOBILE (480px) ===== */
+@media (max-width: 480px) {
+
+  .menu-btn {
+    font-size: 1.2rem;
+    padding: 5px 10px;
+  }
+
+  #orderNowBtn,
+  .modal button[type="submit"] {
+    font-size: 0.9rem;
+    padding: 10px;
+  }
+
   .categories-container {
-    gap: 10px;  /* smaller gap */
+    gap: 10px;
   }
 
   .category-circle {
@@ -743,51 +861,28 @@ label[for="notes"] {
   }
 
   .category-wrapper {
-    margin-top: 5px; /* push categories a little higher */
+    margin-top: 5px;
   }
 
   .category-card {
     width: 100px;
-    height: 100px;
-    font-size: 12px;
+    height: 160px;
   }
 
   .available-cakes-btn {
     padding: 10px 20px;
     font-size: 12px;
   }
-}
 
-@media (max-width: 768px) {
-  .footer-container {
-    flex-direction: column;
-    gap: 10px;
+  .review-card-img {
+    height: 120px;
   }
-}
 
-@media (max-width: 768px) {
-    .review-card-img {
-        height: 150px;
-    }
-}
+  .review-cake-name {
+    font-size: 0.85rem;
+  }
 
-@media (max-width: 480px) {
-    .review-card-img {
-        height: 120px;
-    }
-
-    .review-cake-name {
-        font-size: 0.85rem;
-    }
-
-    .review-rating-text {
-        font-size: 0.75rem;
-    }
-}
-
-@media (max-width: 768px) {
-    .service-card {
-        flex: 1 1 100%;
-        max-width: 100%;
-    }
+  .review-rating-text {
+    font-size: 0.75rem;
+  }
 }

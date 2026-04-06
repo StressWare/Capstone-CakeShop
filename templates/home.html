@@ -10,7 +10,6 @@
   .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
 </style>
 <style>
-<style>
   .custom-carousel-container {
     position: relative;
     width: 100%;
@@ -107,10 +106,14 @@
   </div>
 </section>
 
-<!-- Category Modal -->
+<!-- Category Modal-->
 <div id="categoryModal" class="category-modal">
-  <div class="category-modal-content">
+  <div class="category-modal-overlay" onclick="closeModal()"></div>
+
+  <div class="category-modal-content text-white text-center">
+    <p>Tap cards for more details</p>
     <span class="close-btn" onclick="closeModal()">&times;</span>
+    
     <div id="categoryCards" class="category-cards"></div>
   </div>
 </div>
@@ -277,22 +280,61 @@ const categories = {
 };
 
 function openCategory(category) {
-  const modal          = document.getElementById('categoryModal');
+  const modal = document.getElementById('categoryModal');
   const cardsContainer = document.getElementById('categoryCards');
   cardsContainer.innerHTML = '';
 
   categories[category].forEach(item => {
     const card = document.createElement('div');
     card.classList.add('category-card');
-    const img  = document.createElement('img');
-    img.src    = item.img;
-    img.alt    = item.name;
+
+    // INNER WRAPPER (IMPORTANT FOR FLIP)
+    const inner = document.createElement('div');
+    inner.classList.add('card-inner');
+
+    // FRONT SIDE
+    const front = document.createElement('div');
+    front.classList.add('card-front');
+
+    const img = document.createElement('img');
+    img.src = item.img;
+    img.alt = item.name;
     img.classList.add('category-card-img');
-    const name = document.createElement('p');
-    name.textContent = item.name;
-    name.classList.add('category-card-name');
-    card.appendChild(img);
-    card.appendChild(name);
+
+    // ADD NAME BACK (FIX)
+    const nameFront = document.createElement('p');
+    nameFront.textContent = item.name;
+    nameFront.classList.add('card-front-name');
+
+    front.appendChild(img);
+    front.appendChild(nameFront);
+
+    // BACK SIDE
+    const back = document.createElement('div');
+    back.classList.add('card-back');
+
+    const title = document.createElement('h5');
+    title.textContent = item.name;
+
+    const desc = document.createElement('p');
+    desc.textContent = "Premium handcrafted cake made with love and finest ingredients.";
+
+    back.appendChild(title);
+    back.appendChild(desc);
+
+    // assemble
+    inner.appendChild(front);
+    inner.appendChild(back);
+    card.appendChild(inner);
+
+    // CLICK FLIP LOGIC (ONLY ONE ACTIVE)
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.category-card.flipped')
+        .forEach(el => el.classList.remove('flipped'));
+
+      card.classList.add('flipped');
+    });
+
     cardsContainer.appendChild(card);
   });
 
