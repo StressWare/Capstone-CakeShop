@@ -9,12 +9,9 @@
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
-
   <div class="section-header">
     <h1 class="mb-2">Admin Dashboard</h1>
-    <p class="mb-0 opacity-75">Complete overview of your cake shop business</p>
   </div>
-
   <!-- STATUS OVERVIEW -->
   <section id="status-overview" class="mb-5">
     <h3 class="mb-3">Status Overview</h3>
@@ -133,29 +130,66 @@
     </div>
   </section>
 
-  <!-- Quick Links -->
-  <div class="row g-3 mt-2">
-    <div class="col-md-3">
-      <a href="/admin/orders" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <div class="fw-bold">Orders</div>
-      </a>
+  <!-- Daily Report Cards -->
+  <section id="daily-report" class="mb-5">
+    <h3 class="mb-3">Daily Sale Report</h3>
+    <div class="row g-3">
+
+      <!-- POS / Walk-in -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header bg-white d-flex align-items-center gap-2">
+            <span style="width:10px;height:10px;border-radius:50%;display:inlineblock;"></span>
+            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Walk-in</h6>
+          </div>
+          <div class="card-body">
+            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales) }}</h2>
+            <p class="text-muted small mb-3">Sales today</p>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pos_txn }}</strong></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pos_top }}</span></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash</span><strong>₱{{ "{:,.0f}".format(pos_cash) }}</strong></div>
+            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pos_ewallet) }}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Online Premade -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header bg-white d-flex align-items-center gap-2">
+            <span style="width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Premade Cake</h6>
+          </div>
+          <div class="card-body">
+            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pre_sales) }}</h2>
+            <p class="text-muted small mb-3">Sales today</p>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pre_txn }}</strong></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pre_top }}</span></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>₱{{ "{:,.0f}".format(pre_cash) }}</strong></div>
+            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pre_ewallet) }}</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Online Custom -->
+      <div class="col-md-4">
+        <div class="card h-100">
+          <div class="card-header bg-white d-flex align-items-center gap-2">
+            <span style="width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Customize Cake</h6>
+          </div>
+          <div class="card-body">
+            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_sales) }}</h2>
+            <p class="text-muted small mb-3">Sales today</p>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ cus_txn }}</strong></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>₱{{ "{:,.0f}".format(cus_cash) }}</strong></div>
+            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(cus_ewallet) }}</strong></div>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="col-md-3">
-      <a href="/admin/cakes" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <div class="fw-bold">Cakes</div>
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="/admin/inventory" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <div class="fw-bold">Inventory</div>
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="/admin/users" class="card text-center p-3 text-decoration-none text-dark shadow-sm">
-        <div class="fw-bold">Users</div>
-      </a>
-    </div>
-  </div>
+  </section>  
 
 </div>
 {% endblock %}

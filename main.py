@@ -953,24 +953,50 @@ def remove_from_cart(cake_id):
 @app.route("/admin/dashboard")
 @admin_required
 def admin_page():
+    # ---- Low Stock ----
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
 
-    # ONE simple query to top-level orders collection
-    all_orders = []  # ← CHANGED variable name (not 'orders')
-    for order_doc in orders.stream():  # ← 'orders' is Firestore collection
+    # ---- All Orders ----
+    all_orders = []
+    for order_doc in orders.stream():
         order = order_doc.to_dict()
         order["id"] = order_doc.id
         order = convert_timestamps(order)
         all_orders.append(order)
 
+    # ---- Status Counters ----
     total_new = total_accepted = total_pending = total_ready = 0
     total_out = total_completed = total_cancelled = total_rush = 0
+
+    # ---- Today's Deliveries ----
+    today_date = datetime.now(PH_TZ).date()
+    today_start = datetime.combine(today_date, datetime.min.time()).replace(tzinfo=PH_TZ)
+    today_end   = datetime.combine(today_date, datetime.max.time()).replace(tzinfo=PH_TZ)
     today_count = 0
     today_deliveries = []
-    today_date = datetime.now(PH_TZ).date()
 
-    for order in all_orders:  # ← CHANGED to use 'all_orders'
+    # ---- Daily Report: Online Premade & Custom ----
+    pre_sales = pre_txn = pre_cash = pre_ewallet = 0
+    cus_sales = cus_txn = cus_cash = cus_ewallet = 0
+    pre_items = {}
+
+    def is_today(ts):
+        return isinstance(ts, datetime) and today_start <= ts <= today_end
+
+    def classify_payment_online(method):
+        if method and "cash" in method.lower():
+            return "cash"
+        return "ewallet"
+
+    def classify_payment_walkin(method):
+        if method and method.lower() == "cash":
+            return "cash"
+        return "ewallet"
+
+    for order in all_orders:
         status = order.get("status", "")
+
+        # Status counters
         if status == "New":                total_new += 1
         elif status == "Accepted":         total_accepted += 1
         elif status == "Pending":          total_pending += 1
@@ -980,6 +1006,7 @@ def admin_page():
         elif status == "Cancelled":        total_cancelled += 1
         if order.get("rush"):              total_rush += 1
 
+        # Today's deliveries
         delivery_date = order.get("delivery_date")
         if isinstance(delivery_date, datetime) and delivery_date.date() == today_date:
             if status not in ["Completed", "Cancelled"]:
@@ -992,15 +1019,89 @@ def admin_page():
                     "rush":     order.get("rush", False)
                 })
 
+        # Daily report — online orders (filter by created_at today)
+        ts = order.get("created_at")
+        if not is_today(ts):
+            continue
+
+        otype = order.get("order_type", "")
+        amt   = order.get("amount", 0) or 0
+        pm    = classify_payment_online(order.get("payment_method"))
+
+        if otype == "premade":
+            pre_sales += amt
+            pre_txn   += 1
+            if pm == "cash": pre_cash += amt
+            else:            pre_ewallet += amt
+            for item in order.get("selected_items", []):
+                name = item.get("cake_name", "")
+                if name:
+                    pre_items[name] = pre_items.get(name, 0) + 1
+
+        elif otype == "custom":
+            cus_sales += amt
+            cus_txn   += 1
+            if pm == "cash": cus_cash += amt
+            else:            cus_ewallet += amt
+
+    pre_top = max(pre_items, key=pre_items.get) if pre_items else "—"
+
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
+    # ---- Daily Report: POS / Walk-in ----
+    pos_sales = pos_txn = pos_cash = pos_ewallet = 0
+    pos_items = {}
+
+    for doc in walkin_orders.stream():
+        w = doc.to_dict()
+        w = convert_timestamps(w)
+        ts = w.get("created_at")
+        if not is_today(ts):
+            continue
+        amt = w.get("amount", 0) or 0
+        pos_sales += amt
+        pos_txn   += 1
+        pm = classify_payment_walkin(w.get("payment_method"))
+        if pm == "cash": pos_cash += amt
+        else:            pos_ewallet += amt
+        for item in w.get("order_items", []):
+            name = item.get("cake_name", "")
+            if name:
+                pos_items[name] = pos_items.get(name, 0) + 1
+
+    pos_top = max(pos_items, key=pos_items.get) if pos_items else "—"
+
     return render_template("admin_dashboard.html",
+        # Status overview
         low_stock=low_stock,
-        total_new=total_new, total_accepted=total_accepted,
-        total_pending=total_pending, total_ready=total_ready,
-        total_out=total_out, total_completed=total_completed,
-        total_cancelled=total_cancelled, total_rush=total_rush,
-        today_count=today_count, today_deliveries=today_deliveries
+        total_new=total_new,
+        total_accepted=total_accepted,
+        total_pending=total_pending,
+        total_ready=total_ready,
+        total_out=total_out,
+        total_completed=total_completed,
+        total_cancelled=total_cancelled,
+        total_rush=total_rush,
+        # Today's deliveries
+        today_count=today_count,
+        today_deliveries=today_deliveries,
+        # Daily report — POS
+        pos_sales=pos_sales,
+        pos_txn=pos_txn,
+        pos_top=pos_top,
+        pos_cash=pos_cash,
+        pos_ewallet=pos_ewallet,
+        # Daily report — Online Premade
+        pre_sales=pre_sales,
+        pre_txn=pre_txn,
+        pre_top=pre_top,
+        pre_cash=pre_cash,
+        pre_ewallet=pre_ewallet,
+        # Daily report — Online Custom
+        cus_sales=cus_sales,
+        cus_txn=cus_txn,
+        cus_cash=cus_cash,
+        cus_ewallet=cus_ewallet,
     )
     
     
