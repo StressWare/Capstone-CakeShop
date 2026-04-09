@@ -226,8 +226,6 @@ def verify_token():
         return jsonify({'error': 'No token provided'}), 400
 
     try:
-        print(f"TOKEN RECEIVED (first 50 chars): {id_token[:50]}")
-        print(f"TOKEN LENGTH: {len(id_token)}")
         decoded_token = auth.verify_id_token(id_token,  clock_skew_seconds=10)
         uid = decoded_token['uid']
         email = decoded_token.get('email', '')
@@ -256,15 +254,15 @@ def verify_token():
 
         return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200
 
-    except auth.InvalidIdTokenError as e:
-        print(f"INVALID TOKEN ERROR: {e}")  # ← add this
+    except auth.InvalidIdTokenError:
+        app.logger.warning("Invalid ID token received")
         return jsonify({'error': 'Invalid token'}), 401
-    except auth.ExpiredIdTokenError as e:
-        print(f"EXPIRED TOKEN ERROR: {e}")  # ← add this
+    except auth.ExpiredIdTokenError:
+        app.logger.warning("Expired ID token received")
         return jsonify({'error': 'Token expired'}), 401
-    except Exception as e:
-        print(f"OTHER ERROR: {type(e).__name__}: {e}")  # ← add this
-        return jsonify({'error':  "Internal server error"}), 500
+    except Exception:
+        app.logger.exception("Unexpected error in verify_token")
+        return jsonify({'error': 'Internal server error'}), 500
 
 # ---------------- SAVE USER DETAILS ----------------
 @app.route('/save-user-details', methods=['POST'])
@@ -295,9 +293,15 @@ def save_user_details():
         })
         return jsonify({'success': True}), 200
 
-    except Exception as e:
-            app.logger.exception("Error in save_user_details")
-            return jsonify({'error': 'Internal server error'}), 500
+    except auth.InvalidIdTokenError:
+        app.logger.warning("Invalid ID token in save_user_details")
+        return jsonify({'error': 'Invalid token'}), 401
+    except auth.ExpiredIdTokenError:
+        app.logger.warning("Expired ID token in save_user_details")
+        return jsonify({'error': 'Token expired'}), 401
+    except Exception:
+        app.logger.exception("Unexpected error in save_user_details")
+        return jsonify({'error': 'Internal server error'}), 500
 
 # ---------------- COMPLETE PROFILE ----------------
 @app.route('/complete-profile', methods=['GET', 'POST'])
@@ -505,20 +509,26 @@ def add_review():
     }
     
     # For custom orders, include flavor, design, overall ratings
+    def safe_rating(field, default=5):
+        txt = request.form.get(field)
+        try:
+            return max(1, min(5, int(txt))) if txt else default
+        except ValueError:
+            return default
+
     if order_data.get("order_type") == "custom":
-        flavor_rating = int(request.form.get("flavor_rating", 5))
-        design_rating = int(request.form.get("design_rating", 5))
-        overall_rating = int(request.form.get("rating", 5))
+        flavor_rating  = safe_rating("flavor_rating")
+        design_rating  = safe_rating("design_rating")
+        overall_rating = safe_rating("rating")
         
-        review_data["flavor_rating"] = flavor_rating
-        review_data["design_rating"] = design_rating
+        review_data["flavor_rating"]  = flavor_rating
+        review_data["design_rating"]  = design_rating
         review_data["overall_rating"] = overall_rating
-        review_data["rating"] = overall_rating
+        review_data["rating"]         = overall_rating
         
     else:
         # Premade orders: single rating
-        rating = int(request.form.get("rating", 5))
-        review_data["rating"] = rating
+        review_data["rating"] = safe_rating("rating")
     
     # Save review
     reviews.add(review_data)
@@ -681,7 +691,7 @@ def finalize_order():
     if order_type == "premade":
         selected_items = json.loads(selected_json)
         item_names     = ", ".join([f"{i['cake_name']} (₱{float(i['price']):.0f})" for i in selected_items])
-        amount         = sum(float(i["price"]) for i in selected_items)
+        amount     = sum(float(i.get("subtotal", float(i["price"]) * int(i.get("quantity", 1)))) for i in selected_items)
         rush           = False
         inspo_image    = None
         for i in selected_items:
@@ -694,16 +704,19 @@ def finalize_order():
         inspo_image    = request.form.get("inspo_image") or None
 
         item_parts = item_names.split(", ")
-
         for part in item_parts:
-            if match := re.search(r'(.+) \(₱([\d,]+)\)', part):
+            part = part.strip()
+            if not part:
+                continue
+
+            if match := re.search(r'^(.+?) \(₱([\d,]+)\)$', part):
                 component_name = match[1].strip()
                 component_price = float(match[2].replace(',', ''))
                 custom_components.append({
                     "name": component_name,
                     "price": component_price
                 })
-            elif match2 := re.search(r'(.+) \(([\d,]+)\)', part):
+            elif match2 := re.search(r'^(.+?) \(([\d,]+)\)$', part):
                 component_name = match2[1].strip()
                 component_price = float(match2[2].replace(',', ''))
                 custom_components.append({
@@ -881,7 +894,7 @@ def cakes_page():
             for doc in users.document(user_id).collection("favorites").stream()
         )
     return render_template("cakes.html",
-        cakes=available_cakes,
+        cakes=available_cakes, 
         user_id=user_id,
         favorite_ids=favorite_ids
     )
@@ -1103,15 +1116,13 @@ def admin_page():
 @admin_required
 def admin_orders():
     orders_list = []
-    
+
     # ONE simple query instead of looping all users
     for order_doc in orders.order_by("created_at", direction="DESCENDING").stream():  # ← CHANGED
         order = order_doc.to_dict()
         order["id"] = order_doc.id
-        
-        # Get user info for display
-        user_id = order.get("user_id")
-        if user_id:
+
+        if user_id := order.get("user_id"):
             user_doc = users.document(user_id).get()
             if user_doc.exists:
                 user_data = user_doc.to_dict()
@@ -1126,11 +1137,11 @@ def admin_orders():
                 order["customer_username"] = "Unknown"
         else:
             order["customer_username"] = "Unknown"
-        
+
         order["notes"] = order.get("notes", "")
         order["inspo_image"] = order.get("inspo_image", None)
         order["order_source"] = order.get("order_source", "online")
-        
+
         if order.get("order_type") == "premade" and order.get("selected_items"):
             total = 0
             for item in order["selected_items"]:
@@ -1139,10 +1150,10 @@ def admin_orders():
             order["calculated_total"] = total
         else:
             order["calculated_total"] = order.get("amount", 0)
-        
+
         order = convert_timestamps(order)
         orders_list.append(order)
-    
+
     # Fetch walk-in orders (keep as is)
     for order_doc in walkin_orders.stream():
         order = order_doc.to_dict()
@@ -1173,7 +1184,7 @@ def admin_orders():
         order["created_at"] = created_at
         order["delivery_date"] = created_at
         orders_list.append(order)
-    
+
     orders_list.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
     return render_template("admin_orders.html", orders=orders_list)
 # ---------------- ADMIN INVENTORY ----------------
@@ -1534,7 +1545,8 @@ def update_order_status(user_id, order_id):
                 cake_doc = cake_ref.get()
                 if cake_doc.exists:
                     current_qty = cake_doc.to_dict().get("quantity", 0)
-                    new_qty = max(0, current_qty - 1)
+                    quantity_ordered = int(i.get("quantity", 1))
+                    new_qty = max(0, current_qty - quantity_ordered)
                     cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
 
         accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
@@ -1561,9 +1573,9 @@ def update_order_status(user_id, order_id):
         }
         
         message = status_messages.get(new_status, f"is now {new_status}")
-        
+        notify_user_id = order_data.get("user_id", user_id)
         notifications.add({
-            "user_id": user_id,
+            "user_id": notify_user_id,
             "order_id": order_id,
             "title": f"Order {new_status}",
             "message": f"Your order #{order_id[:8]} {message}",
@@ -1571,7 +1583,7 @@ def update_order_status(user_id, order_id):
             "is_read": False,
             "created_at": datetime.now(PH_TZ)
         })
-        print(f"Creating notification for user {user_id}, order {order_id}, status {new_status}")
+        print(f"Creating notification for user {notify_user_id}, order {order_id}, status {new_status}")
         log_admin_action(
             action=f"Changed order status to '{new_status}'",
             target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
@@ -1669,7 +1681,11 @@ def edit_inventory(id):
 @app.route("/expenses/edit/<id>", methods=["POST"])
 @admin_required
 def edit_expense(id):
-    new_cost = float(request.form["cost"])
+    try:
+        new_cost = float(request.form["cost"].replace(",", ""))
+    except ValueError:
+        flash("Invalid cost value. Please enter a number.", "danger")
+        return redirect(url_for("admin_expenses"))
     
     expenses.document(id).update({
         "cost": new_cost
@@ -1839,12 +1855,16 @@ def payment_success():
     
     if not session_id or not pending_order:
         flash("Invalid payment session.", "danger")
+        session.pop('paymongo_session_id', None)
+        session.pop('pending_order', None)
         return redirect(url_for("customer_dashboard"))
  
     payment_result = verify_payment(session_id)
  
     if not payment_result.get("paid"):
         flash("Payment not confirmed. Please try again.", "danger")
+        session.pop('paymongo_session_id', None)
+        session.pop('pending_order', None)
         return redirect(url_for("customer_dashboard"))
  
     user_id    = pending_order["user_id"]
@@ -1891,15 +1911,16 @@ def payment_failed():
 
 # ---------------- SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
+@login_required
 def api_send_message():
     try:
         data = request.get_json()
-        user_id = data.get('user_id')
+        user_id = session['user_id']
         message = data.get('message', '').strip()
         conversation_id = data.get('conversation_id')
         is_escalation = data.get('is_escalation', False)
 
-        if not user_id or not message:
+        if not message:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
 
         now = datetime.now(PH_TZ)
@@ -2029,6 +2050,10 @@ def admin_reply_message():
 @login_required
 def get_conversation_status(user_id, conversation_id):
     try:
+        current_user = session.get('user', {})
+        if user_id != session.get('user_id') and not current_user.get('admin'):
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
         conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
         conv_doc = conv_ref.get()
         
@@ -2097,7 +2122,7 @@ def admin_conversations():
                         "email": user_data.get("email", "No email"),
                         "last_message": last_msg,
                         "last_time": ts.strftime("%b %d %I:%M %p") if ts else "No messages",
-                        "last_time_dt": ts if ts else None,  # 👈 add this
+                        "last_time_dt": ts or None,  # 👈 add this
                         "escalated": convo_data.get('escalated', False)  # Now convo_data exists
                     })
                     
