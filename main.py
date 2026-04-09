@@ -676,10 +676,19 @@ def finalize_order():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
 
-    date_str          = request.form["delivery_date"]
-    time_str          = request.form["delivery_time"]
-    delivery_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
+    try:
+        date_str = request.form["delivery_date"]
+        time_str = request.form["delivery_time"]
+        delivery_datetime = datetime.strptime(
+            f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=PH_TZ)
+    except (KeyError, ValueError):
+        flash("Invalid delivery date or time.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if delivery_datetime < datetime.now(PH_TZ):
+        flash("Delivery date must be in the future.", "danger")
+        return redirect(url_for("customer_dashboard"))
 
     delivery_type  = request.form.get("delivery_type", "Delivery")
     address        = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
@@ -1912,7 +1921,7 @@ def payment_failed():
 # ---------------- SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
 @login_required
-def api_send_message():
+def send_message():
     try:
         data = request.get_json()
         user_id = session['user_id']
@@ -1986,10 +1995,9 @@ def api_send_message():
 
         return jsonify({'success': True, 'escalated': is_escalated})
 
-    except Exception as e:
-        print(f"Error in send_message: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
+    except Exception:
+        app.logger.exception("Error in send_message")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 # ---------------- ADMIN REPLY ----------------
 @app.route('/admin/reply-message', methods=['POST'])
 @admin_required
@@ -2040,9 +2048,9 @@ def admin_reply_message():
         
         return jsonify({'success': True})
         
-    except Exception as e:
-        print(f"Error in admin_reply: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        app.logger.exception("Error in admin_reply")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 
 # ---------------- GET CONVERSATION STATUS ----------------
@@ -2068,8 +2076,9 @@ def get_conversation_status(user_id, conversation_id):
             'escalated_by': conv_data.get('escalated_by')
         })
         
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        app.logger.exception("Error in get_conversation_status")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 
 # ---------------- ADMIN GET CONVERSATIONS ----------------
@@ -2130,7 +2139,7 @@ def admin_conversations():
                     print(f"Error processing conversation {convo_doc.id}: {e}")
                     continue
         
-        all_convos.sort(key=lambda x: x["last_time_dt"] or datetime.min, reverse=True)
+        all_convos.sort(key=lambda x: x["last_time_dt"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
         
         return render_template("admin_conversations.html", conversations=all_convos)
         
