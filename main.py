@@ -17,9 +17,15 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
+#remove ngrok intro page
 @app.after_request
 def add_ngrok_header(response):
     response.headers['ngrok-skip-browser-warning'] = 'true'
+    return response
+#google pop up delay
+@app.after_request
+def add_headers(response):
+    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
 # ================================================================
 # BLUEPRINT REGISTRATION
@@ -82,7 +88,7 @@ def admin_required(f):
     return decorated
 
 # ================================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (to avoid same repeated code)
 # ================================================================
 def log_admin_action(action, target, category="general"):
     try:
@@ -109,7 +115,10 @@ def get_faq_response(user_message):
 
 def save_uploaded_image(file, upload_type):
     """Upload image to Cloudinary, returns URL or None if invalid/too large"""
-    ext = file.filename.rsplit('.', 1)[1].lower()
+    parts = file.filename.rsplit('.', 1)
+    if len(parts) < 2 or not parts[1]:
+        return None
+    ext = parts[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
         return None
 
@@ -143,10 +152,15 @@ def convert_timestamps(order):
         order[field] = val
     return order
 
-@app.after_request
-def add_headers(response):
-    response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
-    return response
+def calculate_order_total(order):
+    """Centralized order total calculation"""
+    if order.get("order_type") == "premade" and order.get("selected_items"):
+        return sum(
+            float(i.get("subtotal", float(i.get("price", 0)) * int(i.get("quantity", 1))))
+            for i in order["selected_items"]
+        )
+    return float(order.get("amount", 0) or 0)
+
 
 # ================================================================
 # PUBLIC ROUTES
@@ -290,7 +304,7 @@ def save_user_details():
             'email':    decoded_token.get('email', ''),
             'role':     'customer',
             'created_at': firestore.SERVER_TIMESTAMP
-        })
+        },  merge=True)
         return jsonify({'success': True}), 200
 
     except auth.InvalidIdTokenError:
@@ -346,14 +360,7 @@ def customer_dashboard():
         order["notes"] = order.get("notes", "")
         order["reviewed"] = order.get("reviewed", False)
 
-        if order.get("order_type") == "premade" and order.get("selected_items"):
-            total = sum(
-                float(i.get("subtotal", float(i.get("price", 0)) * int(i.get("quantity", 1))))
-                for i in order["selected_items"]
-            )
-            order["calculated_total"] = total
-        else:
-            order["calculated_total"] = order.get("amount", 0)
+        order["calculated_total"] = calculate_order_total(order)
 
         order = convert_timestamps(order)
         orders_list.append(order)
@@ -562,18 +569,11 @@ def order_receipt(order_id):
     order["id"] = order_id
     order = convert_timestamps(order)
     
-    if order.get("status") != "Completed" and order.get("payment_status") != "Paid":
+    if order.get("status") != "Completed" or order.get("payment_status") != "Paid":
         flash("Receipt is only available for completed or paid orders.", "warning")
         return redirect(url_for("customer_dashboard"))
     
-    if order.get("order_type") == "premade" and order.get("selected_items"):
-        total = 0
-        for item in order["selected_items"]:
-            subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
-            total += float(subtotal)
-        order["calculated_total"] = total
-    else:
-        order["calculated_total"] = order.get("amount", 0)
+    order["calculated_total"] = calculate_order_total(order)
     
     return render_template("customer_receipt.html", order=order)
 
@@ -1151,14 +1151,7 @@ def admin_orders():
         order["inspo_image"] = order.get("inspo_image", None)
         order["order_source"] = order.get("order_source", "online")
 
-        if order.get("order_type") == "premade" and order.get("selected_items"):
-            total = 0
-            for item in order["selected_items"]:
-                subtotal = item.get("subtotal", item.get("price", 0) * item.get("quantity", 1))
-                total += float(subtotal)
-            order["calculated_total"] = total
-        else:
-            order["calculated_total"] = order.get("amount", 0)
+        order["calculated_total"] = calculate_order_total(order)
 
         order = convert_timestamps(order)
         orders_list.append(order)
@@ -1354,7 +1347,7 @@ def admin_analytics():
             alltime_data[key]["expenses"] += cost
  
     # ── Fetch orders ──
-    for order_doc in orders.stream():  # ← CHANGED
+    for order_doc in orders.stream():  
         order = order_doc.to_dict()
         status = order.get("status", "")
         amount = float(order.get("amount", 0))
