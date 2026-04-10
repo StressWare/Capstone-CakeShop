@@ -4,7 +4,6 @@
 {% block extra_css %}
 <link href="../static/css/style.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-<style>
   body { scroll-behavior: smooth; }
   .hero-title { font-weight: 700; }
   .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
@@ -16,6 +15,8 @@
     overflow: hidden;
     height: 400px;
     margin-bottom: 50px;
+    margin-top: -25px;
+
   }
   .custom-carousel {
     position: relative;
@@ -39,21 +40,19 @@
 {% endblock %}
 
 {% block content %}
+<section class="intro-banner">
+  <div class="intro-content">
 
-<!-- Carousel -->
-<section id="cakes" class="custom-carousel-container">
-  <div class="custom-carousel" id="cakeCarousel">
-    <div class="custom-carousel-item active">
-      <img src="../static/img/1.jpg" alt="Cake 1">
+    <div class="logo-wrapper">
+      <img src="/static/img/logo.png" alt="Mrs. Brave's Logo" class="intro-logo">
     </div>
-    <div class="custom-carousel-item">
-      <img src="../static/img/2.jpg" alt="Cake 2">
-    </div>
-    <div class="custom-carousel-item">
-      <img src="../static/img/3.jpg" alt="Cake 3">
-    </div>
-    <button class="carousel-prev" id="prevBtn">&#10094;</button>
-    <button class="carousel-next" id="nextBtn">&#10095;</button>
+
+    <h2>Freshly baked happiness made with love!</h2>
+    
+    <p>
+      Discover cakes made with love, perfect for birthdays, weddings, and every sweet moment in between.
+    </p>
+
   </div>
 </section>
 
@@ -120,7 +119,7 @@
 
 <!-- Available Cakes Button -->
 <div class="available-cakes-btn-container">
-  <a href="/cakes" class="available-cakes-btn">Available Cakes</a>
+  <a href="/cakes" class="available-cakes-btn">Order Now</a>
 </div>
 
 <!-- Top Rated Cakes -->
@@ -174,6 +173,24 @@
       <h5>Delivery</h5>
       <p>Fast and reliable delivery to your doorstep.</p>
     </div>
+  </div>
+</section>
+
+
+<!-- Carousel -->
+<section id="cakes" class="custom-carousel-container">
+  <div class="custom-carousel" id="cakeCarousel">
+    <div class="custom-carousel-item active">
+      <img src="../static/img/1.jpg" alt="Cake 1">
+    </div>
+    <div class="custom-carousel-item">
+      <img src="../static/img/2.jpg" alt="Cake 2">
+    </div>
+    <div class="custom-carousel-item">
+      <img src="../static/img/3.jpg" alt="Cake 3">
+    </div>
+    <button class="carousel-prev" id="prevBtn">&#10094;</button>
+    <button class="carousel-next" id="nextBtn">&#10095;</button>
   </div>
 </section>
 

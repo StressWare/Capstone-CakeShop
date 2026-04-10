@@ -135,6 +135,87 @@ body {
     cursor: pointer;
 }
 
+/* ===== INTRO BANNER ===== */
+.intro-banner {
+    width: 100%;
+    padding: 50px 20px 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    /* optional: gives it a premium bakery feel */
+    background: transparent;
+}
+
+/* center container */
+.intro-content {
+    max-width: 700px;
+}
+
+/* ===== LOGO ===== */
+.intro-logo {
+    width: 250px;
+    max-width: 100%;
+    height: auto;
+    margin-top: -50x;
+    margin-bottom: 40px;
+
+    /* animation */
+    animation: pulseFloat 10s ease-in-out;
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.2));
+}
+
+/* ===== TEXT ===== */
+.intro-content h2,
+.intro-content p {
+    color: #fff;
+    margin-bottom: 40px;
+}
+
+.intro-content h2 {
+    font-size: 2.20rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+}
+
+.intro-content p {
+    font-size: 0.9rem;
+    line-height: 1.3;
+    opacity: 0.60;
+}
+
+/* ===== ANIMATION ===== */
+@keyframes pulseFloat {
+    0% {
+        transform: scale(1) translateY(0px);
+    }
+    50% {
+        transform: scale(1.08) translateY(-6px);
+    }
+    100% {
+        transform: scale(1) translateY(0px);
+    }
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+    .intro-logo {
+        margin-top: -40px;
+        width: 200px;
+    }
+
+    .intro-content h2 {
+        font-size: 1.7rem;
+    }
+
+    .intro-content p {
+        font-size: 0.95rem;
+        padding: 0 10px;
+    }
+}
+
+
 
 /* ====== CAROUSEL ====== */
 .carousel-container {
@@ -208,9 +289,10 @@ h2 {
 .categories-container {
   display: flex !important;      /* horizontal layout */
   flex-wrap: wrap;
-  justify-content: center;       /* center the row */
-  gap: 30px;
+  justify-content: center;
+  gap: 20px 30px;
   margin-top: 0; /* push categories closer to carousel */
+  padding-left: 0;
 }
 
 .category-wrapper {
@@ -220,7 +302,8 @@ h2 {
   cursor: pointer;
   transition: transform 0.3s;
   margin-top: 0; /* make sure no extra vertical gap */
-
+  flex: 0 0 100px;
+  gap: 10px;
 }
 
 .category-wrapper:hover {
@@ -300,7 +383,6 @@ h2 {
 }
 
 /* ====== MODAL ====== */
-/* ====== MODAL ====== */
 .category-modal {
   display: none;
   position: fixed;
@@ -356,7 +438,8 @@ h2 {
 /* ===== GRID LAYOUT ===== */
 .category-cards {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, 160px);
+  justify-content: center;  
   gap: 18px;
   transition: all 0.3s ease;
 
@@ -468,6 +551,26 @@ h2 {
 }
 
 /* ====== AVAILABLE CAKES BUTTON ====== */
+
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 105, 180, 0.4);
+  }
+  50% {
+    transform: scale(1.03);
+    box-shadow: 0 0 20px rgba(255, 105, 180, 0.6);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(255, 105, 180, 0.4);
+  }
+}
+
+.available-cakes-btn {
+  animation: pulse 2.5s infinite;
+}
 .available-cakes-btn-container {
   text-align: center;
   margin: 50px 20px;
@@ -656,19 +759,19 @@ label[for="notes"] {
 
 /* ====== REVIEW CARDS ====== */
     /* Horizontal scroll container for reviews */
-    .top-cakes-scroll {
-        display: flex;
-        gap: 15px;              /* space between cards */
-        overflow-x: auto;       /* horizontal scroll if too many cards */
-        padding: 10px 0;
-        scroll-behavior: smooth;
-    }
+.top-cakes-scroll {
+      display: flex;
+      gap: 15px;              /* space between cards */
+      overflow-x: auto;       /* horizontal scroll if too many cards */
+      padding: 10px 0;
+      scroll-behavior: smooth;
+}
 
-    .top-cakes-scroll::-webkit-scrollbar {
+.top-cakes-scroll::-webkit-scrollbar {
         height: 6px;
     }
 
-    .top-cakes-scroll::-webkit-scrollbar-thumb {
+.top-cakes-scroll::-webkit-scrollbar-thumb {
         background-color: #d63384;
         border-radius: 3px;
     }
@@ -711,7 +814,7 @@ label[for="notes"] {
 
 /* ===== CARD ===== */
 .review-card {
-    flex: 0 0 185px;
+    flex: 0 0 160px;
     height: 290px;
     border-radius: 20px;
     overflow: hidden;
@@ -719,7 +822,7 @@ label[for="notes"] {
     background: transparent;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 6px 16px rgb(255, 124, 203, 0.1);
     display: flex;
     flex-direction: column;
     text-align: center;
@@ -805,20 +908,12 @@ label[for="notes"] {
 @media (max-width: 768px) {
 
   .navbar-logo {
-    height: 175px;
+    height: 150px;
+    margin-left: -50px;
   }
 
   .carousel-item img {
     max-height: 250px; /* FIXED TYPO: removed space */
-  }
-
-  .services-row {
-    flex-direction: column;
-  }
-
-  .service-card {
-    flex: 1 1 100%;
-    max-width: 100%;
   }
 
   .customize-section {
@@ -906,5 +1001,76 @@ label[for="notes"] {
 
   .review-rating-text {
     font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .services-row {
+    display: flex;
+    flex-wrap: nowrap;       /* FORCE SINGLE ROW */
+    overflow-x: auto;        /* allow swipe */
+    gap: 10px;
+    padding: 10px 5px;
+  }
+
+  .service-card {
+    flex: 0 0 auto;
+    width: 110px;
+    height: 110px;           /* PERFECT SQUARE */
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .service-card h5 {
+    font-size: 0.60rem;     /* FIX BIG TEXT */
+    margin: 5px 0 3px;
+    line-height: 1.1;
+  }
+
+  .service-card p {
+    font-size: 0.40rem;     /* FIX PARAGRAPH SIZE */
+    margin: 0;
+    line-height: 1;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;  /* limit text lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+
+/* ===== RATED CAKES RESPONSIVE FIX ===== */
+
+@media (max-width: 480px) {
+  .review-card {
+    flex: 0 0 120px;   /* even smaller for phones */
+    height: 217px;
+  }
+
+  .review-card-img,
+  .review-card-img-placeholder {
+    height: 100px;
+  }
+
+  .review-card-body {
+    padding: 8px 6px;
+  }
+
+  .review-cake-name {
+    font-size: 0.8rem;
+  }
+
+  .review-stars {
+    font-size: 5px;
+  }
+
+  .review-rating-text {
+    font-size: 0.3rem;
   }
 }
