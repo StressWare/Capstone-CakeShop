@@ -1,0 +1,20 @@
+{
+    "name": "Ms. Brave Cake Shop",
+    "short_name": "Brave Cakes",
+    "description": "Order custom and premade cakes from Ms. Brave Cake Shop",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#d63384",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["food", "shopping","desserts","cakes"],
+    "lang": "en"
+}
