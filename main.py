@@ -2144,11 +2144,11 @@ def admin_conversations():
 #----------------- PWA(PROGRESSIVE WEB APP) ----------------
 @app.route('/service-worker.js')
 def service_worker():
-    return app.send_static_file('static/javascript/service-worker.js')
+    return app.send_static_file('javascript/service-worker.js')
 
 @app.route('/manifest.json')
 def manifest():
-    return app.send_static_file('static/manifest.json')
+    return app.send_static_file('manifest.json')
 # ================================================================
 # RUN SERVER
 # ================================================================
