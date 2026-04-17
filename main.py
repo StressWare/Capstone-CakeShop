@@ -17,14 +17,11 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
-#remove ngrok intro page
 @app.after_request
-def add_ngrok_header(response):
+def add_common_headers(response):
+    # remove ngrok intro page
     response.headers['ngrok-skip-browser-warning'] = 'true'
-    return response
-#google pop up delay
-@app.after_request
-def add_headers(response):
+    # allow Google auth popups
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
 # ================================================================
@@ -100,8 +97,8 @@ def log_admin_action(action, target, category="general"):
             "ip_address": request.remote_addr,
             "timestamp": datetime.now(PH_TZ)
         })
-    except Exception as e:
-        print(f"[LOG ERROR] {e}")
+    except Exception:
+        app.logger.exception("[LOG ERROR] Failed to write admin log")
 
 def get_faq_response(user_message):
     """Match user message to FAQ using keyword matching"""
@@ -134,8 +131,8 @@ def save_uploaded_image(file, upload_type):
     try:
         result = cloudinary.uploader.upload(file, folder=folder, resource_type='image')
         return result['secure_url']
-    except Exception as e:
-        print(f"Cloudinary upload error: {str(e)}")
+    except Exception:
+        app.logger.exception("Cloudinary upload error")
         return None
 
 def convert_timestamps(order):
@@ -435,9 +432,9 @@ def favorites_toggle():
             })
             return jsonify({"success": True, "action": "added"})
  
-    except Exception as e:
-        print(f"[FAVORITES ERROR] {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
+    except Exception:
+        app.logger.exception("[FAVORITES ERROR] Failed to toggle favorite")
+        return jsonify({"success": False, "error": "Internal server error"}), 500
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
@@ -1620,8 +1617,9 @@ def edit_order(user_id, order_id):
             category="order"
         )
         flash('Order updated successfully!', 'success')
-    except Exception as e:
-        flash(f'Error updating order: {str(e)}', 'error')
+    except Exception:
+        app.logger.exception("Error updating order")
+        flash('An error occurred while updating the order. Please try again.', 'danger')
 
     return redirect(url_for("admin_orders"))
 
@@ -1729,8 +1727,10 @@ def add_cake():
             category="cake"
         )
         flash('Cake added!', 'success')
-    except Exception as e:
-        flash(f'Error: {str(e)}', 'danger')
+    except Exception:
+        app.logger.exception("Error adding cake")
+        flash('An error occurred while adding the cake. Please try again.', 'danger')
+
 
     return redirect(url_for('admin_cakes'))
 
@@ -1761,9 +1761,9 @@ def edit_cake(cake_id):
             category="cake"
         )
         flash('Cake updated!', 'success')
-    except Exception as e:
-        flash(f'Error: {str(e)}', 'danger')
-
+    except Exception:
+        app.logger.exception(f"Error editing cake {cake_id}")
+        flash('An error occurred while editing the cake. Please try again.', 'danger')
     return redirect(url_for('admin_cakes'))
 
 # ---------------- DELETE CAKE ----------------
@@ -1783,8 +1783,8 @@ def delete_cake(cake_id):
             public_id = '/'.join(image_url.split('/')[-3:]).rsplit('.', 1)[0]
             try:
                 cloudinary.uploader.destroy(public_id)
-            except Exception as e:
-                print(f"Cloudinary delete error: {str(e)}")
+            except Exception:
+                app.logger.exception(f"Cloudinary delete error for cake {cake_id}")
 
         cake_name = cake_doc.to_dict().get('name', cake_id)  # add this BEFORE cake_ref.delete()
         cake_ref.delete()
@@ -1794,8 +1794,9 @@ def delete_cake(cake_id):
             category="cake"
         )
         flash('Cake deleted!', 'success')
-    except Exception as e:
-        flash(f'Error: {str(e)}', 'danger')
+    except Exception:
+        app.logger.exception(f"Error deleting cake {cake_id}")
+        flash('An error occurred while deleting the cake. Please try again.', 'danger')
 
     return redirect(url_for('admin_cakes'))
 
@@ -1922,7 +1923,7 @@ def send_message():
         conversation_id = data.get('conversation_id')
         is_escalation = data.get('is_escalation', False)
 
-        if not message:
+        if not message or not conversation_id:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
 
         now = datetime.now(PH_TZ)
@@ -2128,16 +2129,16 @@ def admin_conversations():
                         "escalated": convo_data.get('escalated', False)  # Now convo_data exists
                     })
                     
-                except Exception as e:
-                    print(f"Error processing conversation {convo_doc.id}: {e}")
+                except Exception:
+                    app.logger.exception(f"Error processing conversation {convo_doc.id}")
                     continue
         
         all_convos.sort(key=lambda x: x["last_time_dt"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
         
         return render_template("admin_conversations.html", conversations=all_convos)
         
-    except Exception as e:
-        print(f"Error in admin_conversations: {str(e)}")
+    except Exception:
+        app.logger.exception("Error in admin_conversations")
         flash("Error loading conversations", "danger")
         return render_template("admin_conversations.html", conversations=[])
     
