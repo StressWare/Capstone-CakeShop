@@ -566,7 +566,7 @@ def order_receipt(order_id):
     order["id"] = order_id
     order = convert_timestamps(order)
     
-    if order.get("status") != "Completed" or order.get("payment_status") != "Paid":
+    if order.get("status") != "Completed" and order.get("payment_status") != "Paid":
         flash("Receipt is only available for completed or paid orders.", "warning")
         return redirect(url_for("customer_dashboard"))
     
@@ -1525,9 +1525,9 @@ def admin_logs_page():
 # ================================================================
 
 # ---------------- UPDATE ORDER STATUS ----------------
-@app.route("/order/status/<user_id>/<order_id>", methods=["POST"])
+@app.route("/order/status/<order_id>", methods=["POST"])
 @admin_required
-def update_order_status(user_id, order_id):
+def update_order_status(order_id):
     new_status = request.form["status"]
     order_ref = orders.document(order_id)
     order_doc = order_ref.get()
@@ -1572,7 +1572,7 @@ def update_order_status(user_id, order_id):
         }
         
         message = status_messages.get(new_status, f"is now {new_status}")
-        notify_user_id = order_data.get("user_id", user_id)
+        notify_user_id = order_data.get("user_id")
         notifications.add({
             "user_id": notify_user_id,
             "order_id": order_id,
@@ -1592,9 +1592,9 @@ def update_order_status(user_id, order_id):
     return redirect(url_for("admin_orders"))
 
 # ---------------- EDIT ORDER ----------------
-@app.route("/order/edit/<user_id>/<order_id>", methods=["POST"])
+@app.route("/order/edit/<order_id>", methods=["POST"])
 @admin_required
-def edit_order(user_id, order_id):
+def edit_order( order_id):
     item   = request.form.get("order_item")
     amount = float(request.form.get("amount"))
     notes  = request.form.get("notes", "")

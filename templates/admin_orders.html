@@ -255,7 +255,7 @@
                   {% endif %}
 
                 {% else %}
-                  <form method="POST" action="/order/status/{{ o.user_id }}/{{ o.id }}"
+                  <form method="POST" action="/order/status/{{ o.id }}"
                         onsubmit="return confirmStatus('{{ o.status }}')">
                     <select name="status" class="form-select form-select-sm mb-1">
                       {% if o.status == 'New' %}
@@ -481,7 +481,7 @@
 <div class="modal fade" id="editOrderModal{{ o.id }}" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="/order/edit/{{ o.user_id }}/{{ o.id }}" id="editOrderForm{{ o.id }}">
+      <form method="POST" action="/order/edit/{{ o.id }}" id="editOrderForm{{ o.id }}">
         <div class="modal-header">
           <h5 class="modal-title">Edit Order</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
