@@ -1226,46 +1226,46 @@ def admin_expenses():
 def admin_sales():
     online_sales = []
     walkin_sales = []
-    
+
     # Online orders (completed)
     for doc in orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
         order = doc.to_dict()
         order["id"] = doc.id
-        
+
         # Convert created_at to datetime if it's a string
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             try:
                 created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-            except:
+            except Exception:
                 created_at = datetime.now(PH_TZ)
         elif created_at is None:
             created_at = datetime.now(PH_TZ)
-        
+
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
         order["created_at"] = created_at
-        
+
         online_sales.append(order)
-    
+
     # Walk-in orders (completed)
     for doc in walkin_orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
         order = doc.to_dict()
         order["id"] = doc.id
-        
+
         # Convert created_at to datetime if it's a string
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             try:
                 created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-            except:
+            except Exception:
                 created_at = datetime.now(PH_TZ)
         elif created_at is None:
             created_at = datetime.now(PH_TZ)
-        
+
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
@@ -1274,9 +1274,9 @@ def admin_sales():
 
         order["created_at"] = created_at
 
-        
+
         walkin_sales.append(order)
-    
+
     return render_template("admin_sales.html", 
         online_sales=online_sales, 
         walkin_sales=walkin_sales,

@@ -240,7 +240,7 @@
                                         {% endif %}
                                     </div>
 
-                                    <div class="modal-footer">
+                                    <div class="modal-footer">  
                                         {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
                                         <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
                                             <i class="fas fa-receipt me-1"></i>View Receipt

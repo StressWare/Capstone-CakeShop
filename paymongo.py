@@ -11,7 +11,7 @@ PAYMONGO_SECRET_KEY = os.getenv('PAYMONGO_SECRET_KEY')
 PAYMONGO_BASE_URL   = 'https://api.paymongo.com/v1'
 
 def get_auth_header():
-    #Base64 encode secret key for PayMongo API auth
+    # Base64 encode secret key for PayMongo API auth
     encoded = base64.b64encode(f"{PAYMONGO_SECRET_KEY}:".encode()).decode()
     return {
         "Authorization": f"Basic {encoded}",
@@ -23,9 +23,8 @@ def get_auth_header():
 # CREATE CHECKOUT SESSION
 # ================================================================
 def create_checkout_session(amount, order_description, line_items, success_url, cancel_url):
-    
-    #Create a PayMongo checkout sessionReturns: {checkout_url, session_id} or None if failed
-    url  = f"{PAYMONGO_BASE_URL}/checkout_sessions"
+    # Create a PayMongo checkout session. Returns: {checkout_url, session_id} or None if failed
+    url = f"{PAYMONGO_BASE_URL}/checkout_sessions"
     payload = {
         "data": {
             "attributes": {
@@ -48,7 +47,7 @@ def create_checkout_session(amount, order_description, line_items, success_url, 
         response = requests.post(url, json=payload, headers=get_auth_header())
         data     = response.json()
 
-        if response.status_code == 200 or response.status_code == 201:
+        if response.status_code in {200, 201}:
             session_id   = data["data"]["id"]
             checkout_url = data["data"]["attributes"]["checkout_url"]
             return {
@@ -71,53 +70,52 @@ def verify_payment(session_id):
     url = f"{PAYMONGO_BASE_URL}/checkout_sessions/{session_id}"
     try:
         response = requests.get(url, headers=get_auth_header())
-        data     = response.json()
+        # Fail fast on HTTP errors
+        response.raise_for_status()
 
-        if response.status_code == 200:
-            attributes = data["data"]["attributes"]
+        # Handle JSON decode errors explicitly
+        try:
+            data = response.json()
+        except ValueError:
+            return {"error": "Invalid response from payment provider"}
 
-            # ── Check payment intent status ──
-            pi_status = attributes.get("payment_intent", {}) \
-                                  .get("attributes", {}) \
-                                  .get("status", "")
+        attributes = data.get("data", {}).get("attributes", {})
 
-            # ── Check actual payment status ──
-            payments = attributes.get("payments", [])
-            payment_status = ""
-            payment_method = "Unknown"
-            reference      = None
+        # ── Check payment intent status ──
+        pi_status = attributes.get("payment_intent", {}) \
+                              .get("attributes", {}) \
+                              .get("status", "")
 
-            if payments:
-                payment_status = payments[0].get("attributes", {}).get("status", "")
-                payment_method = payments[0].get("attributes", {}).get("source", {}).get("type", "Unknown")
-                reference      = payments[0].get("id", None)
+        # ── Check actual payment status ──
+        payments       = attributes.get("payments", [])
+        payment_status = ""
+        payment_method = "Unknown"
+        reference      = None
+        
+        if isinstance(payments, list) and payments:
+            payment_status = payments[0].get("attributes", {}).get("status", "")
+            payment_method = payments[0].get("attributes", {}).get("source", {}).get("type", "Unknown")
+            reference      = payments[0].get("id", None)
 
-            # ── Must be BOTH succeeded AND paid ──
-            is_paid = pi_status == "succeeded" and payment_status == "paid"
+        # ── Must be BOTH succeeded AND paid ──
+        is_paid = pi_status == "succeeded" and payment_status == "paid"
 
-            print(f"PI Status: {pi_status}, Payment Status: {payment_status}, Is Paid: {is_paid}")
-
-            return {
-                "paid":           is_paid,
-                "payment_method": payment_method,
-                "reference":      reference
-            }
-        else:
-            return {"paid": False}
+        return {
+            "paid":           is_paid,
+            "payment_method": payment_method,
+            "reference":      reference
+        }
 
     except Exception as e:
         print(f"PayMongo verify error: {str(e)}")
         return {"paid": False}
-    
-    
 
 
 # ================================================================
 # BUILD LINE ITEMS (for checkout session)
 # ================================================================
-def build_line_items(order_type, selected_items, order_item, amount):
-    
-    #Build line_items list for PayMongo checkout session, Returns list of line item dicts
+def build_line_items(order_type, selected_items, amount):
+    # Build line_items list for PayMongo checkout session. Returns list of line item dicts.
     line_items = []
 
     if order_type == "premade" and selected_items:
