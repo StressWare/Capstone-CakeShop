@@ -1,0 +1,298 @@
+/* ================================
+   ROOT THEME VARIABLES
+================================ */
+:root {
+  --pink-primary: #c71585;
+  --pink-alt: #d63384;
+  --pink-light: #ffe6f0;
+  --pink-soft: #fde8f1;
+  --pink-mid: #f8b8d4;
+  --pink-dark: #a0205e;
+
+  --radius: 12px;
+  --shadow: 0 2px 10px rgba(0,0,0,0.06);
+  --shadow-hover: 0 8px 24px rgba(214,51,132,0.18);
+}
+
+/* ================================
+   GLOBAL BASE STYLES
+================================ */
+body {
+  background: #f5f5f5;
+  font-family: Arial, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ================================
+   LAYOUT (SIDEBAR + MAIN)
+================================ */
+.sidebar {
+  width: 250px;
+  background-color: #630031;
+  color: white;
+  padding: 20px;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  overflow-y: auto;
+}
+
+.main-content {
+  margin-left: 250px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+  background-attachment: fixed;
+}
+
+.page-container {
+  padding: 30px;
+}
+
+/* ================================
+   CARDS (GLOBAL)
+================================ */
+.card,
+.stat-card,
+.chart-card,
+.stat-card-analytics {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--pink-primary);
+}
+
+.card-header.card-header-custom {
+  background: var(--pink-primary);
+  color: #fff;
+  border-bottom: none;
+  padding: 16px 20px;
+}
+
+/* hover cards */
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+}
+
+/* ================================
+   TABLES (GLOBAL STYLE SYSTEM)
+================================ */
+table thead {
+  background: var(--pink-primary);
+  color: #fff;
+}
+
+table tbody tr:hover {
+  background: var(--pink-light);
+}
+
+.table-danger {
+  background: #fff3cd !important;
+}
+
+/* ================================
+   FORMS / INPUTS
+================================ */
+.input-group-text {
+  background: #fff;
+  border-right: none;
+  color: var(--pink-primary);
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--pink-primary);
+  box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
+}
+
+/* ================================
+   BUTTONS
+================================ */
+.btn-info {
+  background: var(--pink-primary);
+  border-color: var(--pink-primary);
+  color: #fff;
+}
+
+.btn-info:hover {
+  background: var(--pink-dark);
+}
+
+/* ================================
+   BADGES SYSTEM
+================================ */
+.badge-primary { background: #6f42c1 !important; }
+.badge-success { background: #28a745 !important; }
+.badge-warning { background: #ffc107 !important; color: #000; }
+.badge-danger  { background: #dc3545 !important; }
+
+.badge-status-critical { background: #dc3545 !important; }
+.badge-status-low { background: #ffc107 !important; color: #000; }
+.badge-status-good { background: #28a745 !important; }
+
+.badge-visible { background: #28a745 !important; }
+.badge-hidden { background: #6c757d !important; }
+
+/* ================================
+   PAGINATION
+================================ */
+.pagination .page-link {
+  color: var(--pink-primary);
+  border-radius: 6px;
+}
+
+.pagination .page-item.active .page-link {
+  background: var(--pink-primary);
+  border-color: var(--pink-primary);
+  color: #fff;
+}
+
+/* ================================
+   TAB SYSTEM
+================================ */
+.order-tabs,
+.tab-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--pink-soft);
+  padding: 6px;
+  border-radius: 10px;
+}
+
+.order-tab-btn,
+.tab-btn {
+  border: none;
+  background: transparent;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--pink-primary);
+  border-radius: 8px;
+}
+
+.order-tab-btn.active,
+.tab-btn.active {
+  background: var(--pink-light);
+}
+
+/* ================================
+   POS SYSTEM
+================================ */
+.pos-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  padding: 16px;
+}
+
+.cake-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.cake-btn {
+  background: #fff;
+  border: 2px solid var(--pink-soft);
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.cake-btn:hover {
+  border-color: var(--pink-primary);
+  background: var(--pink-light);
+}
+
+/* ================================
+   ORDER PANEL
+================================ */
+.order-panel,
+.cakes-panel {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+.total-amount {
+  color: var(--pink-primary);
+  font-weight: bold;
+}
+
+/* ================================
+   CHAT SYSTEM
+================================ */
+.chat-messages {
+  background: #f8f9fa;
+}
+
+.msg-admin .bubble {
+  background: var(--pink-primary);
+  color: #fff;
+}
+
+.msg-customer .bubble {
+  background: var(--pink-alt);
+  color: #fff;
+}
+
+/* ================================
+   ANALYTICS / CHARTS
+================================ */
+.chart-title {
+  color: var(--pink-primary);
+  font-weight: 600;
+}
+
+/* ================================
+   INVENTORY / EXPENSE / TABLE PAGES
+================================ */
+#inventoryTable tbody tr:hover,
+#ordersTable tbody tr:hover,
+#salesTable tbody tr:hover,
+#expensesTable tbody tr:hover {
+  background: var(--pink-light);
+}
+
+/* ================================
+   SIDEBAR STATES
+================================ */
+.sidebar-menu a:hover {
+  background: #ffb6c1;
+}
+
+.sidebar-menu a.active {
+  background: #ff69b4;
+}
+
+/* ================================
+   RESPONSIVE (GLOBAL)
+================================ */
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .pos-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .cake-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}

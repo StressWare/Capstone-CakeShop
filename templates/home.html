@@ -10,14 +10,16 @@
 </style>
 <style>
   .custom-carousel-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    height: 400px;
-    margin-bottom: 50px;
-    margin-top: -25px;
+  position: relative;
+  width: calc(100% - 100px); /* total space (150 left + 150 right) */
+  margin: 0 auto; /* centers it */
+  overflow: hidden;
+  height: 400px;
+  margin-bottom: 50px;
+  margin-top: 60px;
+  border-radius: 15px; /* updated */
+}
 
-  }
   .custom-carousel {
     position: relative;
     width: 100%;
@@ -35,6 +37,17 @@
     height: 400px;
     object-fit: cover;
   }
+
+.carousel-prev,
+.carousel-next {
+  background: transparent;
+}
+
+.carousel-prev:hover,
+.carousel-next:hover {
+  color: #ffa4d2; 
+}
+
 </style>
 </style>
 {% endblock %}
@@ -128,6 +141,23 @@
   <a href="/cakes" class="available-cakes-btn">Order Now</a>
 </div>
 
+<!-- Carousel -->
+<section id="cakes" class="custom-carousel-container">
+  <div class="custom-carousel" id="cakeCarousel">
+    <div class="custom-carousel-item active">
+      <img src="../static/img/1.jpg" alt="Cake 1">
+    </div>
+    <div class="custom-carousel-item">
+      <img src="../static/img/2.jpg" alt="Cake 2">
+    </div>
+    <div class="custom-carousel-item">
+      <img src="../static/img/3.jpg" alt="Cake 3">
+    </div>
+    <button class="carousel-prev" id="prevBtn">&#10094;</button>
+    <button class="carousel-next" id="nextBtn">&#10095;</button>
+  </div>
+</section>
+
 <!-- Top Rated Cakes -->
 {% if top_cakes %}
 <section class="top-cakes-section">
@@ -183,22 +213,6 @@
 </section>
 
 
-<!-- Carousel -->
-<section id="cakes" class="custom-carousel-container">
-  <div class="custom-carousel" id="cakeCarousel">
-    <div class="custom-carousel-item active">
-      <img src="../static/img/1.jpg" alt="Cake 1">
-    </div>
-    <div class="custom-carousel-item">
-      <img src="../static/img/2.jpg" alt="Cake 2">
-    </div>
-    <div class="custom-carousel-item">
-      <img src="../static/img/3.jpg" alt="Cake 3">
-    </div>
-    <button class="carousel-prev" id="prevBtn">&#10094;</button>
-    <button class="carousel-next" id="nextBtn">&#10095;</button>
-  </div>
-</section>
 
 {% endblock %}
 
