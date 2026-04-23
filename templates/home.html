@@ -102,6 +102,12 @@
       </div>
       <span class="category-name">Cartoons</span>
     </div>
+        <div class="category-wrapper" onclick="openCategory('Others')">
+      <div class="category-circle">
+        <img src="../static/categories/Others/ot6.png" alt="Others">
+      </div>
+      <span class="category-name">Others</span>
+    </div>
   </div>
 </section>
 
@@ -224,75 +230,116 @@ setInterval(() => {
 // Categories
 const categories = {
   Girl: [
-    { name: 'Choco Lava',      img: '../static/categories/girls/girl2-removebg-preview.png' },
-    { name: 'Dark Chocolate',  img: '../static/categories/girls/girl3-removebg-preview.png' },
-    { name: 'Choco Truffle',   img: '../static/categories/girls/girl4-removebg-preview.png' },
-    { name: 'Choco Truffle',   img: '../static/categories/girls/girl5-removebg-preview.png' },
-    { name: 'Choco Truffle',   img: '../static/categories/girls/girl6-removebg-preview.png' },
-    { name: 'Choco Truffle',   img: '../static/categories/girls/girl7-removebg-preview.png' },
-    { name: 'Choco Truffle',   img: '../static/categories/girls/girl8-removebg-preview.png' }
+    { name: 'Animal Party Drip Cake',      img: '../static/categories/girls/girl2-removebg-preview.png' },
+    { name: 'Rustic Dark Chocolate Layer Cake',  img: '../static/categories/girls/girl3-removebg-preview.png' },
+    { name: 'Red & White Chocolate Drip Truffle Cake',   img: '../static/categories/girls/girl4-removebg-preview.png' },
+    { name: 'Pink Floral Celebration Truffle Cake',   img: '../static/categories/girls/girl5-removebg-preview.png' },
+    { name: 'Kids Theme Cartoon Topper Cake',   img: '../static/categories/girls/girl6-removebg-preview.png' },
+    { name: 'Rainbow Garden Fantasy Cake',   img: '../static/categories/girls/girl7-removebg-preview.png' },
+    { name: 'Unicorn Pastel Dream Cake',   img: '../static/categories/girls/girl8-removebg-preview.png' },
+    { name: 'Rainbow Candyland Celebration Cake',   img: '../static/categories/girls/girl11.png' },
+    { name: 'Floral Photo Frame Cake',   img: '../static/categories/girls/girl12.png' },
+    { name: 'Princess Castle Theme Cake',   img: '../static/categories/girls/girl13.png' },
+    { name: 'Elegant Pink Ruffle Cake',   img: '../static/categories/girls/girl14.png' },
+    { name: 'Red Rose Anniversary Cake',   img: '../static/categories/girls/girl15.png' }
   ],
   Boy: [
-    { name: 'Choco Lava',     img: '../static/categories/boys/boy2-removebg-preview.png' },
-    { name: 'Dark Chocolate', img: '../static/categories/boys/boy3-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy4-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy5-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy6-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy7-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy8-removebg-preview.png' },
-    { name: 'Choco Truffle',  img: '../static/categories/boys/boy9-removebg-preview.png' }
+    { name: 'Jungle Safari Birthday Cake',     img: '../static/categories/boys/boy2-removebg-preview.png' },
+    { name: 'Animal Safari Tier Cake', img: '../static/categories/boys/boy3-removebg-preview.png' },
+    { name: 'Minecraft Theme Block Cake',  img: '../static/categories/boys/boy4-removebg-preview.png' },
+    { name: 'Underwater Mermaid Theme Cake',  img: '../static/categories/boys/boy5-removebg-preview.png' },
+    { name: 'Baby Whale Ocean Cake',  img: '../static/categories/boys/boy6-removebg-preview.png' },
+    { name: 'Construction Site Theme Cake',  img: '../static/categories/boys/boy7-removebg-preview.png' },
+    { name: 'Safari Animals Name Cake',  img: '../static/categories/boys/boy8-removebg-preview.png' },
+    { name: 'Toy Car Theme Cake',  img: '../static/categories/boys/boy9-removebg-preview.png' },
+    { name: 'Beach Wave & Coconut Cake',  img: '../static/categories/boys/boy11.png' },
+    { name: 'Monster Truck Multi-Tier Cake',  img: '../static/categories/boys/boy12.png' },
+    { name: 'Monster Truck Multi-Tier Cake',  img: '../static/categories/boys/boy13.png' },
+    { name: 'Kids Alphabet Party Cake',  img: '../static/categories/boys/boy14.png' },
+    { name: 'Toy Soldier Theme Cake',  img: '../static/categories/boys/boy15.png' }
   ],
   Birthdays: [
-    { name: 'Choco Lava',    img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
-    { name: 'Dark Chocolate',img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b6-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b8-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/bdaycakes/b9-removebg-preview.png' }
+    { name: 'Elegant Lavender 60th Birthday Cake',    img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
+    { name: 'Coral Mermaid Theme Cake',img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
+    { name: 'Firefighter Helmet Theme Cake', img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
+    { name: 'Golden 90th Celebration Cake', img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
+    { name: 'Floral Butterfly Garden Cake', img: '../static/categories/bdaycakes/b6-removebg-preview.png' },
+    { name: 'Tropical Cartoon Theme Cake', img: '../static/categories/bdaycakes/b7-removebg-preview.png' },
+    { name: 'Baby Blue First Birthday Cake', img: '../static/categories/bdaycakes/b8-removebg-preview.png' },
+    { name: 'Underwater Treasure Theme Cake', img: '../static/categories/bdaycakes/b9-removebg-preview.png' },
+    { name: 'Ocean Adventure Theme Cake', img: '../static/categories/bdaycakes/b14.png' },
+    { name: 'Gold Glam Chocolate Drip Cake', img: '../static/categories/bdaycakes/b15.png' },
+    { name: 'Yellow Floral Birthday Cake', img: '../static/categories/bdaycakes/b16.png' },
+    { name: 'Confetti Two-Tier Birthday Cake', img: '../static/categories/bdaycakes/b17.png' },
+    { name: 'Navy Blue Gold Drip Cake', img: '../static/categories/bdaycakes/b18.png' }
   ],
   Christening: [
-    { name: 'Choco Lava',    img: '../static/categories/christening/ch1-removebg-preview.png' },
-    { name: 'Dark Chocolate',img: '../static/categories/christening/ch3-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch4-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch10-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch6-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch8-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/christening/ch9-removebg-preview.png' }
+    { name: 'Blue Ocean Theme Choco Lava Cake',    img: '../static/categories/christening/ch1-removebg-preview.png' },
+    { name: 'White & Gold Drip Dark Chocolate Cake',img: '../static/categories/christening/ch3-removebg-preview.png' },
+    { name: 'Baby Moon Theme Choco Truffle Cake', img: '../static/categories/christening/ch4-removebg-preview.png' },
+    { name: 'Elegant White Baptism Choco Truffle Cake', img: '../static/categories/christening/ch10-removebg-preview.png' },
+    { name: 'Minimal Cross Blessing Choco Truffle Cake', img: '../static/categories/christening/ch6-removebg-preview.png' },
+    { name: 'Angel Wings Celebration Choco Truffle Cake', img: '../static/categories/christening/ch7-removebg-preview.png' },
+    { name: 'Blue Holy Cross Floral Choco Truffle Cake', img: '../static/categories/christening/ch8-removebg-preview.png' },
+    { name: 'Pink Floral Cross Choco Truffle Cake', img: '../static/categories/christening/ch9-removebg-preview.png' },
+    { name: 'Blue Ombre First Holy Communion Choco Truffle Cake', img: '../static/categories/christening/ch11.png' }
   ],
   Ordinary: [
-    { name: 'Choco Lava',    img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
-    { name: 'Dark Chocolate',img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c4-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c5-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c6-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c7-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c8-removebg-preview.png' },
-    { name: 'Choco Truffle', img: '../static/categories/ordinarycakes/c9-removebg-preview.png' }
+    { name: 'Green Floral Choco Lava Cake',    img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
+    { name: 'Purple Rosette Dark Chocolate Cake',img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
+    { name: 'Cherry Topped Cream Choco Truffle Cake', img: '../static/categories/ordinarycakes/c4-removebg-preview.png' },
+    { name: 'Chocolate Drip Cookie Crunch Choco Truffle Cake', img: '../static/categories/ordinarycakes/c5-removebg-preview.png' },
+    { name: 'Caramel Drip Nutty Choco Truffle Cake', img: '../static/categories/ordinarycakes/c6-removebg-preview.png' },
+    { name: 'Orange Rosette Celebration Choco Truffle Cake', img: '../static/categories/ordinarycakes/c7-removebg-preview.png' },
+    { name: 'Pink Sprinkle Ring Choco Truffle Cake', img: '../static/categories/ordinarycakes/c8-removebg-preview.png' },
+    { name: 'Chocolate Rosette Drip Choco Truffle Cake', img: '../static/categories/ordinarycakes/c9-removebg-preview.png' },
+    { name: 'Caramel Swirl Glaze Choco Truffle Cake', img: '../static/categories/ordinarycakes/c11.png' },
+    { name: 'Peach Floral Cream Choco Truffle Cake', img: '../static/categories/ordinarycakes/c12.png' },
+    { name: 'Daisy Garden Theme Choco Truffle Cake', img: '../static/categories/ordinarycakes/c13.png' },
+    { name: 'Oreo Drip Choco Truffle Cake', img: '../static/categories/ordinarycakes/c14.png' },
+    { name: 'Sky Blue Minimal Sprinkle Choco Truffle Cake', img: '../static/categories/ordinarycakes/c15.png' }
+
   ],
   Holiday: [
-    { name: 'Festive Choco Lava',            img: '../static/categories/holiday/H1.png' },
-    { name: 'Holiday Dark Chocolate',        img: '../static/categories/holiday/H2.png' },
-    { name: 'Snowy Choco Truffle',           img: '../static/categories/holiday/H3.png' },
-    { name: 'Red Velvet Celebration',        img: '../static/categories/holiday/H4.png' },
-    { name: 'Winter Delight Cake',           img: '../static/categories/holiday/H5.png' },
-    { name: 'Festive Sprinkle Cake',         img: '../static/categories/holiday/H6.png' },
-    { name: 'Premium Chocolate Celebration', img: '../static/categories/holiday/H7.png' },
-    { name: 'Golden Glow Cake',              img: '../static/categories/holiday/h8-removebg-preview.png' }
+    { name: 'Heart Balloon Anniversary Choco Lava Cake',            img: '../static/categories/holiday/H1.png' },
+    { name: 'Kids Celebration Theme Dark Chocolate Cake',        img: '../static/categories/holiday/H2.png' },
+    { name: 'Purple New Year Celebration Choco Truffle Cake',           img: '../static/categories/holiday/H3.png' },
+    { name: 'Red & White Floral Heart Red Velvet Cake',        img: '../static/categories/holiday/H4.png' },
+    { name: 'Purple Heart Topper Celebration Cake',           img: '../static/categories/holiday/H5.png' },
+    { name: 'Pink Drip Candy Sprinkle Celebration Cake',         img: '../static/categories/holiday/H6.png' },
+    { name: 'White Chocolate Drip “Happy Anniversary” Cake', img: '../static/categories/holiday/H7.png' },
+    { name: 'Christmas House Theme Celebration Cake',              img: '../static/categories/holiday/H8.png' },
+    { name: 'Festive Gift Box Theme Celebration Cake',              img: '../static/categories/holiday/H9.png' }
   ],
   Cartoons: [
-    { name: 'Mickey Choco Delight',    img: '../static/categories/Cartoons/1.png' },
-    { name: 'Minion Truffle',          img: '../static/categories/Cartoons/2.png' },
-    { name: 'SpongeBob Surprise',      img: '../static/categories/Cartoons/3.png' },
-    { name: 'Peppa Pig Chocolate',     img: '../static/categories/Cartoons/4.png' },
-    { name: 'Tom & Jerry Truffle',     img: '../static/categories/Cartoons/5.png' },
-    { name: 'Frozen Fantasy Cake',     img: '../static/categories/Cartoons/6.png' },
-    { name: 'Pokemon Pikachu Cake',    img: '../static/categories/Cartoons/7.png' },
-    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/8.png' },
-    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/9.png' },
-    { name: 'Looney Tunes Chocolate',  img: '../static/categories/Cartoons/10.png' }
+    { name: 'Magic Mouse Choco Delight',    img: '../static/categories/Cartoons/1.png' },
+    { name: 'Banana Buddy Truffle Cake',          img: '../static/categories/Cartoons/2.png' },
+    { name: 'Ocean Square Adventure Cake',      img: '../static/categories/Cartoons/3.png' },
+    { name: 'Pink Piggy Chocolate Party',     img: '../static/categories/Cartoons/4.png' },
+    { name: 'Cat & Mouse Truffle Fun',     img: '../static/categories/Cartoons/5.png' },
+    { name: 'Snow Queen Fantasy Cake',     img: '../static/categories/Cartoons/6.png' },
+    { name: 'Electric Mouse Celebration Cake',    img: '../static/categories/Cartoons/7.png' },
+    { name: 'Cartoon Rainbow Chocolate Cake',  img: '../static/categories/Cartoons/8.png' },
+    { name: 'Toon Party Dream Cake',  img: '../static/categories/Cartoons/9.png' },
+    { name: 'Purple Toon Chocolate Delight',  img: '../static/categories/Cartoons/10.png' },
+    { name: 'Cartoon Fiesta Celebration Cake',  img: '../static/categories/Cartoons/11.png' },
+    { name: 'Toon Carnival Chocolate Tower',  img: '../static/categories/Cartoons/13.png' },
+    { name: 'Blue Sky Celebration Cake',  img: '../static/categories/Cartoons/15.png' },
+    { name: 'Enchanted Princess Party Cake',  img: '../static/categories/Cartoons/16.png' },
+    { name: 'Whimsical Tower Fantasy Cake',  img: '../static/categories/Cartoons/17.png' }
+  ],
+  Others:[
+    { name: 'Dapper Mouse Chocolate Charm',    img: '../static/categories/others/ot1.png' },
+    { name: 'Rainbow Fantasy Mouse Cake',    img: '../static/categories/others/ot2.png' },
+    { name: 'Fairy Garden Celebration Cake',    img: '../static/categories/others/ot3.png' },
+    { name: 'Birthday Star Celebration Cake',    img: '../static/categories/others/ot4.png' },
+    { name: 'Music Beat Party Cake',    img: '../static/categories/others/ot5.png' },
+    { name: 'Tropical Island Delight Cake',    img: '../static/categories/others/ot6.png' },
+    { name: 'Sweetheart Sprinkle Mouse Cake',    img: '../static/categories/others/ot7.png' },
+    { name: 'Nautical Captain Celebration Cake',    img: '../static/categories/others/ot8.png' },
+    { name: 'Royal Prince Drum Cake',    img: '../static/categories/others/ot9.png' },
+    { name: 'Blush Princess Dream Cake',    img: '../static/categories/others/ot10.png' },
+    { name: 'Adventure Map Fantasy Cake',    img: '../static/categories/others/ot11.png' },
   ]
 };
 
