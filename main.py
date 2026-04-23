@@ -2074,7 +2074,30 @@ def get_conversation_status(user_id, conversation_id):
         app.logger.exception("Error in get_conversation_status")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
-
+@app.route('/admin/delete-conversation', methods=['POST'])
+@admin_required
+def delete_conversation():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        conversation_id = data.get('conversation_id')
+        
+        if not user_id or not conversation_id:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+        
+        # Delete the conversation document
+        conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
+        conv_ref.delete()
+        
+        # Optional: Delete all messages in subcollection
+        messages = conv_ref.collection("messages").stream()
+        for msg in messages:
+            msg.reference.delete()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        app.logger.exception("Error deleting conversation")
+        return jsonify({'success': False, 'error': str(e)}), 500
 # ---------------- ADMIN GET CONVERSATIONS ----------------
 @app.route('/admin/conversations')
 @admin_required
@@ -2155,10 +2178,10 @@ def manifest():
 # ================================================================
 if __name__ == "__main__":
     #indi pag kaksa ang comment pang live server lng na
-    
+    '''
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-    
+    '''
     app.run(debug=True)

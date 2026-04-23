@@ -3,154 +3,813 @@
 
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-<link href="../static/css/customization.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink:    #f472b6;
+    --pink-d:  #db2777;
+    --cream:   #fdf6f0;
+    --brown:   #7c3f1e;
+    --gold:    #d97706;
+    --border:  rgba(0,0,0,0.08);
+  }
+
+  body { background: var(--cream); font-family: 'DM Sans', sans-serif; }
+
+  .customize-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--brown);
+    margin: 0 0 4px;
+  }
+  .page-sub {
+    font-size: 13px;
+    color: #a07060;
+    margin: 0 0 24px;
+  }
+
+  .layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  /* --- FORM PANEL --- */
+  .form-panel {
+    flex: 1;
+    min-width: 0;
+    background: #fff;
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+  }
+
+  .step-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--pink-d);
+    margin: 0 0 6px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--brown);
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .field { margin-bottom: 16px; }
+  .field > label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b4f3a;
+    margin-bottom: 5px;
+  }
+
+  select, textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e5d5c5;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    background: #fffcf9;
+    color: #3d2010;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a07060' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+  select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+  }
+  textarea {
+    background-image: none;
+    resize: vertical;
+  }
+
+  .addon-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .addon-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid #e5d5c5;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    font-size: 12px;
+    color: #5a3a25;
+  }
+  .addon-item:hover { border-color: var(--pink); background: #fff5f9; }
+  .addon-item input { margin: 0; accent-color: var(--pink-d); }
+
+  .custom-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px dashed #d4a090;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pink-d);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .custom-file-btn:hover { background: #fff0f5; }
+
+  .rush-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #6b4f3a;
+    margin: 4px 0;
+  }
+  .rush-row input { accent-color: var(--pink-d); }
+
+  .price-box {
+    margin: 20px 0 0;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #fff0f5, #fdf6f0);
+    border: 1px solid #f9c5d5;
+    border-radius: 10px;
+    font-size: 20px;
+    font-family: 'Playfair Display', serif;
+    color: var(--brown);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .price-box span { color: var(--pink-d); font-weight: 600; }
+
+  .btn-checkout {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    background: var(--pink-d);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    text-align: center;
+    text-decoration: none;
+  }
+  .btn-checkout:hover { background: #be185d; }
+  .btn-checkout:active { transform: scale(0.98); }
+
+  /* --- 3D PREVIEW PANEL --- */
+  .preview-panel {
+    width: 360px;
+    min-width: 320px;
+    position: sticky;
+    top: 20px;
+  }
+  .preview-card {
+    background: #fff;
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .preview-header {
+    padding: 14px 18px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .preview-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    color: var(--brown);
+  }
+  .preview-hint {
+    font-size: 11px;
+    color: #c09080;
+  }
+
+  /* FIX: canvas must have explicit height; width comes from JS after layout */
+  #cake-canvas {
+    display: block;
+    width: 100%;
+    height: 340px;
+  }
+
+  .preview-badges {
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: #fff0f5;
+    color: var(--pink-d);
+    border: 1px solid #fcc;
+    transition: all 0.2s;
+  }
+
+  @media (max-width: 720px) {
+    .layout { flex-direction: column-reverse; }
+    .preview-panel { width: 100%; min-width: 0; position: static; }
+    #cake-canvas { height: 280px; }
+    .addon-grid { grid-template-columns: 1fr; }
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <section class="customize-section">
-  <form method="POST" action="/order" enctype="multipart/form-data">
-    <h3>Step 1: Customize Your Cake</h3>
-    <hr>
+  <p class="page-title">Design Your Cake</p>
+  <p class="page-sub">Every selection updates your 3D preview in real time. Drag the cake to rotate it.</p>
 
-    <label for="cakeType">Cake Flavors</label>
-    <select id="cakeType">
-      <option value="0">Chocolate</option>
-      <option value="0">Vanilla</option>
-      <option value="0">Red Velvet</option>
-      <option value="0">Ube</option>
-      <option value="0">Strawberry</option>
-      <option value="0">Mocha</option>
-    </select>
+  <div class="layout">
 
-    <label for="cakeSize">Cake Size</label>
-    <select id="cakeSize">
-      <option value="1600">6 inches (₱1,600)</option>
-      <option value="2300">8 inches (₱2,300)</option>
-      <option value="400">10 inches (₱400)</option>
-      <option value="600">12 inches (₱600)</option>
-    </select>
+    <!-- ===== FORM ===== -->
+    <div class="form-panel">
+      <form method="POST" action="/order" enctype="multipart/form-data">
+        <p class="step-label">Step 1</p>
+        <p class="section-title">Customize Your Cake</p>
 
-    <label for="layers">Layers</label>
-    <select id="layers">
-      <option value="0">Single Layer (₱0)</option>
-      <option value="300">Double Layer (₱300)</option>
-      <option value="600">Triple Layer (₱600)</option>
-    </select>
+        <div class="field">
+          <label for="cakeType">Cake Flavor</label>
+          <select id="cakeType" name="cakeType">
+            <option value="chocolate|0">Chocolate</option>
+            <option value="vanilla|0">Vanilla</option>
+            <option value="redvelvet|0">Red Velvet</option>
+            <option value="ube|0">Ube</option>
+            <option value="strawberry|0">Strawberry</option>
+            <option value="mocha|0">Mocha</option>
+          </select>
+        </div>
 
-    <label for="design">Icing Type</label>
-    <select id="design">
-      <option value="1000">Fondant (₱1,000)</option>
-      <option value="800">Icing (₱800)</option>
-    </select>
+        <div class="field">
+          <label for="cakeShape">Cake Shape</label>
+          <select id="cakeShape" name="cakeShape">
+            <option value="circle">Circle (Round)</option>
+            <option value="rectangle">Rectangle (Sheet)</option>
+          </select>
+        </div>
 
-    <label for="toppers">Toppers</label>
-    <select id="toppers">
-      <option value="150">1 set (₱150)</option>
-      <option value="250">Set of 3 (₱250)</option>
-    </select>
+        <div class="field">
+          <label for="design">Icing Type</label>
+          <select id="design" name="design">
+            <option value="fondant|3500">Fondant (₱3,500)</option>
+            <option value="buttercream|2000">Buttercream (₱2,000)</option>
+          </select>
+        </div>
 
-    <label>Add-ons</label>
-    <div>
-      <input type="checkbox" class="addons" value="100" id="filling">
-      <label for="filling">Cake Filling (₱100)</label>
+        <div class="field">
+          <label for="cakeSize">Cake Size</label>
+          <select id="cakeSize" name="cakeSize">
+            <option value="6|1600">6 inches (₱1,600)</option>
+            <option value="8|2300">8 inches (₱2,300)</option>
+            <option value="10|400">10 inches (₱400)</option>
+            <option value="12|600">12 inches (₱600)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="layers">Layers</label>
+          <select id="layers" name="layers">
+            <option value="1|0">Single Layer (₱0)</option>
+            <option value="2|300">Double Layer (₱300)</option>
+            <option value="3|600">Triple Layer (₱600)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="toppers">Toppers</label>
+          <select id="toppers" name="toppers">
+            <option value="1|150">1 set (₱150)</option>
+            <option value="3|250">Set of 3 (₱250)</option>
+            <option value="0|0">None</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="candles">Candles</label>
+          <select id="candles" name="candles">
+            <option value="0">None</option>
+            <option value="1">1 candle</option>
+            <option value="3">3 candles</option>
+            <option value="5">5 candles</option>
+            <option value="7">7 candles</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Add-ons</label>
+          <div class="addon-grid">
+            <label class="addon-item">
+              <input type="checkbox" class="addons" value="100" id="filling" name="filling">
+              Cake Filling (₱100)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" class="addons" value="700" id="cupcake" name="cupcake">
+              Cupcake dozen (₱700)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" class="addons" value="250" id="ediblepaper" name="ediblepaper">
+              Edible Paper (₱250)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" class="addons" value="450" id="fondanttoppers" name="fondanttoppers">
+              Fondant Toppers (₱450)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" id="sprinkles">
+              Sprinkles (visual)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" id="drip">
+              Choco Drip (visual)
+            </label>
+            <label class="addon-item">
+              <input type="checkbox" id="flowers">
+              Sugar Flowers (visual)
+            </label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="notes">Special Instructions</label>
+          <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
+        </div>
+
+        <div class="field">
+          <label class="custom-file-btn" for="image">
+            <i class="bi bi-upload"></i> Upload Reference Image
+          </label>
+          <input type="file" name="image" id="image" accept="image/*"
+                 onchange="checkFileSize(this)" hidden>
+          <small style="display:block;margin-top:4px;font-size:11px;color:#a07060;">Optional — max 2MB</small>
+        </div>
+
+        <div class="rush-row">
+          <input type="checkbox" name="rush" value="yes" id="rush">
+          <label for="rush">Rush Order</label>
+        </div>
+
+        <div class="price-box">
+          Total: ₱<span id="totalPrice">0.00</span>
+        </div>
+
+        <input type="hidden" name="order_item" id="orderItem">
+        <input type="hidden" name="amount"     id="orderAmount">
+
+        {% if customer %}
+          <button type="submit" class="btn-checkout" onclick="updateOrderData()">
+            Proceed to Checkout &rarr;
+          </button>
+        {% else %}
+          <a href="/authentication" class="btn-checkout">Login to Order</a>
+        {% endif %}
+      </form>
     </div>
-    <div>
-      <input type="checkbox" class="addons" value="700" id="cupcake">
-      <label for="cupcake">Cupcake (dozen) (₱700)</label>
-    </div>
-    <div>
-      <input type="checkbox" class="addons" value="250" id="ediblepaper">
-      <label for="ediblepaper">Edible Paper (₱250)</label>
-    </div>
-    <div>
-      <input type="checkbox" class="addons" value="450" id="fondanttoppers">
-      <label for="fondanttoppers">Fondant Toppers (per character) (₱450)</label>
-    </div>
 
-    <label for="notes">Special Instructions</label>
-    <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..."></textarea>
-
-    <label for="image" class="custom-file-btn">
-      <i class="bi bi-upload"></i> Upload Cake Image
-    </label>
-    <input type="file" name="image" id="image" accept="image/*"
-           onchange="checkFileSize(this)" hidden>
-    <small>Upload an image of your desired cake (optional) — Max 2MB</small>
-
-    <label>
-      <input type="checkbox" name="rush" value="yes"> Rush Order
-    </label>
-
-    <div class="price-box">
-      Total: ₱<span id="totalPrice">0</span>
+    <!-- ===== 3D PREVIEW ===== -->
+    <div class="preview-panel">
+      <div class="preview-card">
+        <div class="preview-header">
+          <span class="preview-title">Live Preview</span>          
+          <span class="preview-hint">drag to rotate</span>
+        </div>
+        <canvas id="cake-canvas"></canvas>
+        <div class="preview-badges" id="badges"></div>
+      </div>
     </div>
 
-    <input type="hidden" name="order_item" id="orderItem">
-    <input type="hidden" name="amount"     id="orderAmount">
-
-    {% if customer %}
-      <button type="submit" onclick="updateOrderData()">Proceed to Checkout</button>
-    {% else %}
-      <a href="/authentication" class="btn">Login to Order</a>
-    {% endif %}
-  </form>
+  </div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
 <script>
+/* =========================================================
+   PRICING HELPERS
+   ========================================================= */
+function getParts(selectId) {
+  const val = document.getElementById(selectId).value;
+  const parts = val.split('|');
+  return { label: document.getElementById(selectId).selectedOptions[0].text, price: parseFloat(parts[1]) || 0 };
+}
+
 function calculateTotal() {
-  const cakePrice    = parseFloat(document.getElementById("cakeType").value) || 0;
-  const designPrice  = parseFloat(document.getElementById("design").value)   || 0;
-  const sizePrice    = parseFloat(document.getElementById("cakeSize").value)  || 0;
-  const layersPrice  = parseFloat(document.getElementById("layers").value)    || 0;
-  const toppersPrice = parseFloat(document.getElementById("toppers").value)   || 0;
+  const design  = getParts('design').price;
+  const size    = getParts('cakeSize').price;
+  const layers  = getParts('layers').price;
+  const toppers = getParts('toppers').price;
 
-  let addonsTotal = 0;
-  document.querySelectorAll(".addons:checked").forEach(a => {
-    addonsTotal += parseFloat(a.value) || 0;
-  });
+  let addons = 0;
+  document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
 
-  const total = cakePrice + designPrice + sizePrice + layersPrice + toppersPrice + addonsTotal;
-  document.getElementById("totalPrice").innerText = total.toFixed(2);
+  const total = design + size + layers + toppers + addons;
+  document.getElementById('totalPrice').innerText = total.toFixed(2);
   return total;
 }
 
 function updateOrderData() {
-  const total  = calculateTotal();
-  document.getElementById("orderAmount").value = total.toFixed(2);
+  const total = calculateTotal();
+  document.getElementById('orderAmount').value = total.toFixed(2);
 
-  const cake    = document.getElementById("cakeType").selectedOptions[0].text;
-  const design  = document.getElementById("design").selectedOptions[0].text;
-  const size    = document.getElementById("cakeSize").selectedOptions[0].text;
-  const layers  = document.getElementById("layers").selectedOptions[0].text;
-  const toppers = document.getElementById("toppers").selectedOptions[0].text;
+  const cake    = document.getElementById('cakeType').selectedOptions[0].text;
+  const design  = getParts('design').label;
+  const size    = getParts('cakeSize').label;
+  const layers  = getParts('layers').label;
+  const toppers = getParts('toppers').label;
 
-  let addons = [];
-  document.querySelectorAll(".addons:checked").forEach(a => {
-    addons.push(a.nextElementSibling.innerText.trim());
+  let addonsArr = [];
+  document.querySelectorAll('.addons:checked').forEach(a => {
+    addonsArr.push(a.parentElement.innerText.trim());
   });
 
-  let description = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
-  if (addons.length > 0) description += `, Add-ons: ${addons.join(", ")}`;
-
-  document.getElementById("orderItem").value = description;
+  let desc = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
+  if (addonsArr.length) desc += `, Add-ons: ${addonsArr.join(', ')}`;
+  document.getElementById('orderItem').value = desc;
 }
-
-document.getElementById("cakeType").addEventListener("change", calculateTotal);
-document.getElementById("design").addEventListener("change",   calculateTotal);
-document.getElementById("cakeSize").addEventListener("change", calculateTotal);
-document.getElementById("layers").addEventListener("change",   calculateTotal);
-document.getElementById("toppers").addEventListener("change",  calculateTotal);
-document.querySelectorAll(".addons").forEach(a => a.addEventListener("change", calculateTotal));
-
-calculateTotal();
 
 function checkFileSize(input) {
   if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
     alert('File too large! Maximum size is 2MB.');
     input.value = '';
   }
-} 
+}
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+function updateBadges() {
+  const flavor  = document.getElementById('cakeType').selectedOptions[0].text.split(' ')[0];
+  const icing   = document.getElementById('design').selectedOptions[0].text.split(' ')[0];
+  const size    = document.getElementById('cakeSize').selectedOptions[0].text.split(' ')[0];
+  const layers  = document.getElementById('layers').selectedOptions[0].text.split(' ')[0];
+  const candles = document.getElementById('candles').value;
+
+  let tags = [flavor, icing, size, layers + ' layer'];
+  if (parseInt(candles) > 0) tags.push(candles + ' candle' + (candles > 1 ? 's' : ''));
+  if (document.getElementById('sprinkles').checked) tags.push('Sprinkles');
+  if (document.getElementById('drip').checked)      tags.push('Choco drip');
+  if (document.getElementById('flowers').checked)   tags.push('Flowers');
+
+  document.getElementById('badges').innerHTML = tags
+    .map(t => `<span class="badge">${t}</span>`).join('');
+}
+
+/* =========================================================
+   THREE.JS CAKE — initialized AFTER page load so canvas has real dimensions
+   ========================================================= */
+window.addEventListener('load', function () {
+
+  const FLAVORS = {
+    chocolate:  { base: 0x4a2c0a, frost: 0x7b4f2e },
+    vanilla:    { base: 0xfff3c4, frost: 0xfde8a0 },
+    redvelvet:  { base: 0x8B0000, frost: 0xffffff },
+    ube:        { base: 0x6a0dad, frost: 0xd4a0e8 },
+    strawberry: { base: 0xff6b81, frost: 0xffb3bb },
+    mocha:      { base: 0x5c3317, frost: 0xa0826d },
+  };
+
+  const canvas = document.getElementById('cake-canvas');
+
+  /* ---- FIX: read real layout width AFTER page has rendered ---- */
+  const W = canvas.parentElement.clientWidth || 360;
+  const H = 340;
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.shadowMap.enabled = true;
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+  camera.position.set(0, 3.2, 7.5);
+  camera.lookAt(0, 1.2, 0);
+
+  scene.add(new THREE.AmbientLight(0xfff5ee, 0.65));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+  sun.position.set(5, 10, 7);
+  sun.castShadow = true;
+  scene.add(sun);
+  const fill2 = new THREE.DirectionalLight(0xffe0cc, 0.25);
+  fill2.position.set(-4, 2, -4);
+  scene.add(fill2);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  let rotY = 0, dragging = false, lastX = 0, autoRotate = true;
+
+  canvas.addEventListener('mousedown', e => { dragging = true; autoRotate = false; lastX = e.clientX; });
+  window.addEventListener('mouseup',   () => { dragging = false; });
+  canvas.addEventListener('mousemove', e => { if (dragging) { rotY += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
+  canvas.addEventListener('touchstart', e => { dragging = true; autoRotate = false; lastX = e.touches[0].clientX; }, { passive: true });
+  window.addEventListener('touchend',   () => { dragging = false; });
+  canvas.addEventListener('touchmove',  e => { if (dragging) { rotY += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
+
+  function hex(h) { return new THREE.Color(h); }
+
+  function buildCake() {
+    while (group.children.length) group.remove(group.children[0]);
+
+    const flavorKey    = document.getElementById('cakeType').value.split('|')[0];
+    const icingKey     = document.getElementById('design').value.split('|')[0];
+    const sizeIn       = parseInt(document.getElementById('cakeSize').value.split('|')[0]);
+    const numLayers    = parseInt(document.getElementById('layers').value.split('|')[0]);
+    const toppersN     = parseInt(document.getElementById('toppers').value.split('|')[0]);
+    const candlesN     = parseInt(document.getElementById('candles').value);
+    const hasSprinkles = document.getElementById('sprinkles').checked;
+    const hasDrip      = document.getElementById('drip').checked;
+    const hasFlowers   = document.getElementById('flowers').checked;
+
+    const colors = FLAVORS[flavorKey] || FLAVORS.vanilla;
+    const shape  = document.getElementById('cakeShape').value; // 'circle' or 'rectangle'
+    const r      = 0.55 + (sizeIn - 6) * 0.07;  // used for circle radius & rect half-width
+    const layerH = 0.72;
+    const frostH = 0.13;
+    const SPRINKLE_COLS = [0xff4455, 0x44aaff, 0xffdd00, 0x44cc66, 0xff88ee];
+    const CANDLE_COLS   = [0xffffff, 0xff6699, 0x66aaff, 0xffdd00, 0xff8844, 0xbb66ff, 0x44ccaa];
+    const TOPPER_COLS   = [0xf9a825, 0xe91e63, 0x1565c0];
+
+    // Rectangle dimensions: wider than tall (sheet cake proportions)
+    const rectW = (r + 0.3) * 2;   // full width
+    const rectD = (r - 0.1) * 2;   // full depth
+
+    let y = 0;
+    for (let i = 0; i < numLayers; i++) {
+      const ri  = r - i * 0.13;           // shrinks per tier (circle)
+      const rw  = rectW - i * 0.18;       // shrinks per tier (rect width)
+      const rd  = rectD - i * 0.14;       // shrinks per tier (rect depth)
+      const shinyFrost = icingKey === 'fondant' ? 90 : 18;
+
+      const cakeM  = new THREE.MeshPhongMaterial({ color: hex(colors.base),  shininess: 25 });
+      const frostM = new THREE.MeshPhongMaterial({ color: hex(colors.frost), shininess: shinyFrost });
+
+      if (shape === 'circle') {
+        // --- CIRCLE cake body ---
+        const cake = new THREE.Mesh(new THREE.CylinderGeometry(ri, ri + 0.01, layerH, 52), cakeM);
+        cake.position.y = y + layerH / 2;
+        cake.castShadow = true;
+        group.add(cake);
+
+        // Frosting top disc
+        const frost = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.012, ri + 0.018, frostH, 52), frostM);
+        frost.position.y = y + layerH + frostH / 2;
+        group.add(frost);
+
+        // Frosting side band
+        const side = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.018, ri + 0.018, layerH, 52, 1, true), frostM);
+        side.position.y = y + layerH / 2;
+        group.add(side);
+
+        // Sprinkles on top
+        if (hasSprinkles) {
+          for (let s = 0; s < 28; s++) {
+            const sp = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.012, 0.012, 0.07, 6),
+              new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
+            );
+            const ang = Math.random() * Math.PI * 2, rad = Math.random() * ri * 0.82;
+            sp.position.set(Math.cos(ang) * rad, y + layerH + frostH + 0.01, Math.sin(ang) * rad);
+            sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
+            group.add(sp);
+          }
+        }
+
+        // Chocolate drip
+        if (hasDrip && i === 0) {
+          const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
+          for (let d = 0; d < 12; d++) {
+            const ang  = (d / 12) * Math.PI * 2;
+            const dlen = 0.16 + Math.random() * 0.14;
+            const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 8), dripM);
+            drip.position.set(Math.cos(ang) * (ri - 0.01), y + layerH - dlen / 2 + 0.06, Math.sin(ang) * (ri - 0.01));
+            group.add(drip);
+          }
+        }
+
+        // Sugar flowers
+        if (hasFlowers) {
+          const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
+          for (let f = 0; f < 5; f++) {
+            const ang  = (f / 5) * Math.PI * 2 + i * 0.5;
+            const frad = ri * 0.62;
+            const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 12),
+              new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
+            petal.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.025, Math.sin(ang) * frad);
+            petal.rotation.x = -Math.PI / 2;
+            group.add(petal);
+            const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 12),
+              new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
+            centre.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.03, Math.sin(ang) * frad);
+            centre.rotation.x = -Math.PI / 2;
+            group.add(centre);
+          }
+        }
+
+      } else {
+        // --- RECTANGLE cake body ---
+        const cake = new THREE.Mesh(new THREE.BoxGeometry(rw, layerH, rd), cakeM);
+        cake.position.y = y + layerH / 2;
+        cake.castShadow = true;
+        group.add(cake);
+
+        // Frosting top slab (slightly larger)
+        const frost = new THREE.Mesh(new THREE.BoxGeometry(rw + 0.04, frostH, rd + 0.04), frostM);
+        frost.position.y = y + layerH + frostH / 2;
+        group.add(frost);
+
+        // Frosting sides (4 thin slabs around the cake)
+        const sideThick = 0.035;
+        // Front & back
+        [1, -1].forEach(sign => {
+          const s = new THREE.Mesh(new THREE.BoxGeometry(rw + sideThick * 2, layerH, sideThick), frostM);
+          s.position.set(0, y + layerH / 2, sign * (rd / 2 + sideThick / 2));
+          group.add(s);
+        });
+        // Left & right
+        [1, -1].forEach(sign => {
+          const s = new THREE.Mesh(new THREE.BoxGeometry(sideThick, layerH, rd), frostM);
+          s.position.set(sign * (rw / 2 + sideThick / 2), y + layerH / 2, 0);
+          group.add(s);
+        });
+
+        // Sprinkles on top
+        if (hasSprinkles) {
+          for (let s = 0; s < 32; s++) {
+            const sp = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.012, 0.012, 0.07, 6),
+              new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
+            );
+            sp.position.set(
+              (Math.random() - 0.5) * rw * 0.85,
+              y + layerH + frostH + 0.01,
+              (Math.random() - 0.5) * rd * 0.85
+            );
+            sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
+            group.add(sp);
+          }
+        }
+
+        // Chocolate drip along edges
+        if (hasDrip && i === 0) {
+          const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
+          const edges = [];
+          for (let e = 0; e < 8; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, rd / 2]);
+          for (let e = 0; e < 8; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, -rd / 2]);
+          for (let e = 0; e < 6; e++) edges.push([rw / 2,  (Math.random() - 0.5) * rd * 0.9]);
+          for (let e = 0; e < 6; e++) edges.push([-rw / 2, (Math.random() - 0.5) * rd * 0.9]);
+          edges.forEach(([ex, ez]) => {
+            const dlen = 0.14 + Math.random() * 0.14;
+            const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 8), dripM);
+            drip.position.set(ex, y + layerH - dlen / 2 + 0.06, ez);
+            group.add(drip);
+          });
+        }
+
+        // Sugar flowers
+        if (hasFlowers) {
+          const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
+          for (let f = 0; f < 6; f++) {
+            const fx = (Math.random() - 0.5) * rw * 0.7;
+            const fz = (Math.random() - 0.5) * rd * 0.7;
+            const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 12),
+              new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
+            petal.position.set(fx, y + layerH + frostH + 0.025, fz);
+            petal.rotation.x = -Math.PI / 2;
+            group.add(petal);
+            const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 12),
+              new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
+            centre.position.set(fx, y + layerH + frostH + 0.03, fz);
+            centre.rotation.x = -Math.PI / 2;
+            group.add(centre);
+          }
+        }
+      }
+
+      y += layerH + frostH;
+    }
+
+    // topR used for placing candles/toppers — use half-width for rect
+    const topR = shape === 'circle'
+      ? r - (numLayers - 1) * 0.13
+      : (rectW - (numLayers - 1) * 0.18) / 2 * 0.75;
+    const topY = y;
+
+    // Toppers
+    if (toppersN > 0) {
+      for (let t = 0; t < toppersN; t++) {
+        const ang  = (t / toppersN) * Math.PI * 2;
+        const trad = toppersN === 1 ? 0 : topR * 0.48;
+        const top  = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8),
+          new THREE.MeshPhongMaterial({ color: hex(TOPPER_COLS[t % 3]), shininess: 60 }));
+        top.position.set(Math.cos(ang) * trad, topY + 0.15, Math.sin(ang) * trad);
+        group.add(top);
+      }
+    }
+
+    // Candles
+    if (candlesN > 0) {
+      const candleR = candlesN === 1 ? 0 : topR * 0.58;
+      for (let c = 0; c < candlesN; c++) {
+        const ang = (c / candlesN) * Math.PI * 2;
+        const cx  = Math.cos(ang) * candleR, cz = Math.sin(ang) * candleR;
+
+        const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.38, 10),
+          new THREE.MeshPhongMaterial({ color: hex(CANDLE_COLS[c % CANDLE_COLS.length]) }));
+        candle.position.set(cx, topY + 0.19, cz);
+        group.add(candle);
+
+        const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.07, 6),
+          new THREE.MeshBasicMaterial({ color: 0x1a1a1a }));
+        wick.position.set(cx, topY + 0.415, cz);
+        group.add(wick);
+
+        const flameGeo = new THREE.SphereGeometry(0.052, 8, 8);
+        flameGeo.scale(0.55, 1.5, 0.55);
+        const flame = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+        flame.position.set(cx, topY + 0.495, cz);
+        flame.userData = { isFlame: true, baseY: topY + 0.495, ox: cx, oz: cz };
+        group.add(flame);
+      }
+    }
+
+    const totalH = topY;
+    group.position.y = -(totalH / 2) - 0.3;
+  }
+
+  /* Animation loop */
+  let t = 0;
+  (function animate() {
+    requestAnimationFrame(animate);
+    t += 0.04;
+    if (autoRotate) rotY += 0.007;
+    group.rotation.y = rotY;
+    group.children.forEach(obj => {
+      if (obj.userData.isFlame) {
+        obj.position.y = obj.userData.baseY + Math.sin(t * 5 + obj.userData.ox * 12) * 0.012;
+        obj.scale.x = 0.55 + Math.sin(t * 6) * 0.05;
+      }
+    });
+    renderer.render(scene, camera);
+  })();
+
+  /* Wire up all controls */
+  function onAnyChange() {
+    calculateTotal();
+    buildCake();
+    updateBadges();
+  }
+
+  ['cakeType','cakeShape','design','cakeSize','layers','toppers','candles'].forEach(id =>
+    document.getElementById(id).addEventListener('change', onAnyChange)
+  );
+  document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
+  ['sprinkles','drip','flowers'].forEach(id =>
+    document.getElementById(id).addEventListener('change', onAnyChange)
+  );
+
+  /* Init */
+  buildCake();
+  calculateTotal();
+  updateBadges();
+
+  /* Resize handler */
+  window.addEventListener('resize', () => {
+    const w = canvas.parentElement.clientWidth;
+    const h = 340;
+    renderer.setSize(w, h);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  });
+
+}); // end window.addEventListener('load', ...)
 </script>
 {% endblock %}
