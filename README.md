@@ -52,7 +52,7 @@ A web application built for Mrs. Braves Cakeshop in Iloilo City. It handles onli
 | Database | Firebase Firestore |
 | Authentication | Firebase Authentication |
 | Image Storage | Cloudinary |
-| Payments | PayMongo (sandbox) |
+| Payments | PayMongo |
 | Map | Leaflet.js + OpenStreetMap |
 | 3D / Visual | Three.js |
 | Tunneling (dev) | ngrok / pyngrok |
@@ -134,7 +134,5 @@ Delivery is limited to Iloilo City only. The map uses Leaflet.js with OpenStreet
 
 ## Notes
 
-- PayMongo is currently in sandbox mode. Webhook integration is planned for future testing.
 - Firebase frontend config is included in templates. Client-side Firebase keys are safe to expose; security is handled through Firestore Rules and Firebase Authentication.
-- Never share your `serviceAccountKey.json` or `.env` file.
 - ngrok is used during development to expose a live URL for testing.
