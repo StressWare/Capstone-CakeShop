@@ -4,10 +4,12 @@ from functools import wraps
 import re
 import os
 import json
+import hmac
+import hashlib
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs, orders, notifications
+from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders
 from firebase_admin import auth, firestore
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -17,6 +19,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
+PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
 @app.after_request
 def add_common_headers(response):
     # remove ngrok intro page
@@ -148,7 +151,11 @@ def convert_timestamps(order):
                 val = val.astimezone(PH_TZ)
         order[field] = val
     return order
-
+def _today_range():
+    now = datetime.now(PH_TZ)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    end = start + timedelta(days=1)
+    return start, end
 def calculate_order_total(order):
     """Centralized order total calculation"""
     if order.get("order_type") == "premade" and order.get("selected_items"):
@@ -665,7 +672,6 @@ def order_cake():
         min_date       = min_date,
     )
  
-
 # ---------------- PLACE ORDER (SAVE TO FIRESTORE) ----------------
 @app.route("/place-order", methods=["POST"])
 @login_required
@@ -732,7 +738,7 @@ def finalize_order():
 
     # ── Base order data with user_id ──
     order_data = {
-        "user_id":        user_id,  # ← ADDED: link to user
+        "user_id":        user_id,
         "delivery_date":  delivery_datetime,
         "item":           item_names,
         "selected_items": selected_items,
@@ -772,21 +778,14 @@ def finalize_order():
 
     # ── COD or Bank Transfer → save immediately to top-level orders ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
-        orders.add(order_data)  # ← CHANGED: save to top-level orders collection
+        orders.add(order_data)
         flash("Order placed successfully! 🎂", "success")
         return redirect(url_for("customer_dashboard"))
 
     # ── GCash / Maya / Card → PayMongo checkout ──
-    line_items = build_line_items(order_type, selected_items, item_names, amount)
+    line_items = build_line_items(order_type, selected_items, amount)
 
-    session['pending_order'] = {
-        "user_id":    user_id,
-        "order_data": {
-            **order_data,
-            "delivery_date": delivery_datetime.isoformat(),
-            "created_at":    now.isoformat()
-        }
-    }
+    # ↓↓↓ REMOVED session['pending_order'] ↓↓↓
 
     base_url    = request.host_url.rstrip('/')
     success_url = f"{base_url}/payment/success"
@@ -804,6 +803,15 @@ def finalize_order():
         flash("Payment service unavailable. Please try Cash on Delivery.", "danger")
         return redirect(url_for("customer_dashboard"))
 
+    # ↓↓↓ CHANGED: save to Firestore instead of session ↓↓↓
+    pending_orders.document(checkout["session_id"]).set({
+        "user_id": user_id,
+        "order_data": {
+            **order_data,
+            "delivery_date": delivery_datetime.isoformat(),
+            "created_at":    now.isoformat()
+        }
+    })
     session['paymongo_session_id'] = checkout["session_id"]
     return redirect(checkout["checkout_url"])
 # ---------------- CUSTOMER CANCEL ORDER ----------------
@@ -1064,7 +1072,15 @@ def admin_page():
     pos_sales = pos_txn = pos_cash = pos_ewallet = 0
     pos_items = {}
 
-    for doc in walkin_orders.stream():
+    try:
+        start_ts, end_ts = _today_range()
+        walkin_stream = walkin_orders.where("created_at", ">=", start_ts).where(
+            "created_at", "<", end_ts
+        ).stream()
+    except Exception:
+        walkin_stream = walkin_orders.stream()
+
+    for doc in walkin_stream:
         w = doc.to_dict()
         w = convert_timestamps(w)
         ts = w.get("created_at")
@@ -1848,57 +1864,148 @@ def toggle_review(review_id):
     flash("Review visibility updated!", "success")
     return redirect(url_for("admin_reviews"))
 # ================================================================
-# NEW: /payment/success
+# PAYMENT ROUTES
 # ================================================================
+# ---------------- PAYMENT WEBHOOK ----------------
+@app.route("/paymongo/webhook", methods=["POST"])
+def paymongo_webhook():
+    raw_body = request.get_data()
+    signature_header = request.headers.get("Paymongo-Signature", "")
+
+    # Verify signature
+    if PAYMONGO_WEBHOOK_SECRET:
+        try:
+            parts = dict(p.split("=", 1) for p in signature_header.split(","))
+            timestamp = parts.get("t", "")
+            # use "te" for test mode, "li" for live mode
+            received_sig = parts.get("te") or parts.get("li", "")
+
+            # Build the string to sign: timestamp + "." + raw_body
+            signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
+
+            expected = hmac.new(
+                PAYMONGO_WEBHOOK_SECRET.encode(),
+                signed_payload.encode(),
+                hashlib.sha256
+            ).hexdigest()
+
+            if not hmac.compare_digest(expected, received_sig):
+                app.logger.warning("Invalid PayMongo webhook signature")
+                return jsonify({"status": "invalid signature"}), 400
+
+        except Exception as e:
+            app.logger.warning(f"Webhook signature verification error: {e}")
+            return jsonify({"status": "signature error"}), 400
+    payload = request.get_json(force=True)
+
+    event_type = payload.get("data", {}).get("attributes", {}).get("type")
+    data = payload.get("data", {}).get("attributes", {}).get("data", {})
+
+    if event_type == "checkout_session.payment.paid":
+        session_id = data.get("id")
+        attributes = data.get("attributes", {})
+
+        # Get pending order from Firestore
+        pending_ref = pending_orders.document(session_id)
+        pending_doc = pending_ref.get()
+
+        if not pending_doc.exists:
+            return jsonify({"status": "order not found"}), 404
+
+        pending = pending_doc.to_dict()
+        order_data = pending["order_data"]
+
+        # Get payment details
+        payments = attributes.get("payments", [])
+        payment_method = "Unknown"
+        payment_id = None
+        if payments:
+            payment_method = payments[0].get("attributes", {}).get("source", {}).get("type", "Unknown").upper()
+            payment_id = payments[0].get("id")
+
+        # Update order data
+        order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
+        order_data["created_at"] = datetime.fromisoformat(order_data["created_at"])
+        order_data["payment_status"] = "Paid"
+        order_data["payment_id"] = payment_id
+        order_data["payment_method"] = payment_method
+        order_data["paymongo_session_id"] = session_id 
+        # Save to orders collection
+        orders.add(order_data)
+
+        # Delete pending order
+        pending_ref.delete()
+    #no balance/insufficienet fund/card declined, etc
+    elif event_type == "payment.failed":
+        if session_id := data.get("attributes", {}).get("checkout_session_id"):
+            pending_orders.document(session_id).delete()
+            app.logger.info(f"Deleted pending order due to failed payment: {session_id}")
+    return jsonify({"status": "ok"}), 200
+# ---------------- PAYMENT SUCCESS ----------------
 @app.route("/payment/success")
 @login_required
 def payment_success():
-    session_id    = session.get('paymongo_session_id')
-    pending_order = session.get('pending_order')
-    
-    if not session_id or not pending_order:
+    session_id = session.get('paymongo_session_id')
+
+    if not session_id:
         flash("Invalid payment session.", "danger")
-        session.pop('paymongo_session_id', None)
-        session.pop('pending_order', None)
         return redirect(url_for("customer_dashboard"))
- 
+
+    # Check if webhook already processed it
+    completed = orders.where("paymongo_session_id", "==", session_id).limit(1).stream()
+    if order_doc := next(completed, None):
+        # Webhook already handled it
+        saved_order = order_doc.to_dict()
+        saved_order["id"] = order_doc.id
+        session.pop('paymongo_session_id', None)
+        return render_template("payment_success.html", order=saved_order, payment_result={"paid": True})
+
+    # Webhook hasn't fired yet, fall back to polling
     payment_result = verify_payment(session_id)
- 
+
     if not payment_result.get("paid"):
         flash("Payment not confirmed. Please try again.", "danger")
         session.pop('paymongo_session_id', None)
-        session.pop('pending_order', None)
         return redirect(url_for("customer_dashboard"))
- 
-    user_id    = pending_order["user_id"]
-    order_data = pending_order["order_data"]
- 
+
+    # Get pending order from Firestore
+    pending_ref = pending_orders.document(session_id)
+    pending_doc = pending_ref.get()
+
+    if not pending_doc.exists:
+        flash("Order data not found. Please contact support.", "danger")
+        session.pop('paymongo_session_id', None)
+        return redirect(url_for("customer_dashboard"))
+
+    pending = pending_doc.to_dict()
+    order_data = pending["order_data"]
+
     order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
     order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
     order_data["payment_status"] = "Paid"
     order_data["payment_id"]     = payment_result.get("reference")
     order_data["payment_method"] = payment_result.get("payment_method", order_data["payment_method"]).upper()
- 
-    # Save to top-level orders collection
-    doc_ref = orders.add(order_data)  # ← CHANGED
+    order_data["paymongo_session_id"] = session_id
+
+    # Save to orders
+    doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
- 
+
+    # Delete pending order
+    pending_ref.delete()
+
     session.pop('paymongo_session_id', None)
-    session.pop('pending_order', None)
- 
-    saved_order            = order_data.copy()
-    saved_order["id"]      = order_id
-    saved_order["user_id"] = user_id
- 
+
+    saved_order = order_data.copy()
+    saved_order["id"] = order_id
+
     return render_template("payment_success.html",
-        order          = saved_order,
-        payment_result = payment_result
+        order=saved_order,
+        payment_result=payment_result
     )
  
- 
-# ================================================================
-# NEW: /payment/failed
-# ================================================================
+
+# ---------------- PAYMENT FAILED ----------------
 @app.route("/payment/failed")
 @login_required
 def payment_failed():
