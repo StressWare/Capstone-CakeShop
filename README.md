@@ -71,9 +71,9 @@ Capstone-CakeShop/
 ├── firebase.py         # Firebase Admin SDK initialization
 ├── paymongo.py         # PayMongo payment logic
 ├── pos.py              # POS system routes
-├── set-admin.py        # Admin setup script (gitignored)
 ├── requirements.txt    # Python dependencies
 ├── .env                # Environment variables (gitignored)
+├── .gitignore          # Files to ignore when pushing to GitHub
 └── .env.example        # Environment variable template
 ```
 
