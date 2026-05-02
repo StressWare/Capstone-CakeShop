@@ -39,9 +39,16 @@ A web application built for Mrs. Braves Cakeshop in Iloilo City. It handles onli
 
 ## Tech Stack
 
-| Layer | Technology |
+| Category | Technology |
 |---|---|
-| Backend | Python, Flask |
+| Language | Python |
+| Framework | Flask |
+| Frontend | HTML, CSS, JavaScript |
+
+## Libraries & APIs
+
+| Category | Technology |
+|---|---|
 | Database | Firebase Firestore |
 | Authentication | Firebase Authentication |
 | Image Storage | Cloudinary |
