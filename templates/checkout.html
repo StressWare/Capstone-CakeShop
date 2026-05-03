@@ -349,7 +349,43 @@
       ? '<i class="fas fa-lock me-2"></i>Proceed to Payment'
       : '<i class="fas fa-check me-2"></i>Place Order';
   }
-
+  var addressTimeout;
+  document.getElementById('addressInput').addEventListener('input', function() {
+    clearTimeout(addressTimeout);
+    var query = this.value.trim();
+    if (query.length < 4) return;
+    addressTimeout = setTimeout(function() {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' Iloilo Philippines')}&format=json&limit=1`)
+        .then(r => r.json())
+        .then(results => {
+          if (results.length > 0) {
+            var lat = parseFloat(results[0].lat);
+            var lon = parseFloat(results[0].lon);
+            if (deliveryMap && deliveryMarker) {
+              deliveryMap.setView([lat, lon], 16);
+              deliveryMarker.setLatLng([lat, lon]);
+            }
+            document.getElementById('latInput').value = lat;
+            document.getElementById('lngInput').value = lon;
+          }
+        })
+        .catch(() => {});
+    }, 600);
+  });
+  
+  // ── Validate lat/lng before submit for delivery orders ──
+  document.querySelector('form').addEventListener('submit', function(e) {
+    var deliveryType = document.getElementById('deliveryTypeInput').value;
+    if (deliveryType === 'Delivery') {
+      var lat = document.getElementById('latInput').value;
+      var lng = document.getElementById('lngInput').value;
+      if (!lat || !lng) {
+        e.preventDefault();
+        alert('Please select your delivery location on the map.');
+        document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  });
   window.addEventListener('load', function() { initDeliveryMap(); });
 </script>
 {% endblock %}

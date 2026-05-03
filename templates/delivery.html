@@ -1,0 +1,376 @@
+{# 
+  FILE: templates/delivery.html
+  NEW FILE - Place in your templates/ folder
+  Public delivery page for riders - no login required
+  Accessible via /delivery/<token>
+#}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delivery — Ms. Brave Cake Shop</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --pink: #d63384;
+      --pink-dark: #a0205e;
+      --pink-light: #fde8f1;
+      --pink-mid: #f8b8d4;
+      --green: #198754;
+      --card-radius: 16px;
+      --shadow: 0 4px 24px rgba(214,51,132,0.12);
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9f0f5;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    /* HEADER */
+    .header {
+      background: linear-gradient(135deg, #d63384, #a0205e);
+      color: white;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(160,32,94,0.3);
+    }
+    .header-icon { font-size: 1.6rem; }
+    .header-text h1 { font-size: 1.1rem; font-weight: 700; }
+    .header-text p { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
+
+    /* STATUS BADGE */
+    .status-bar {
+      background: white;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--pink-light);
+      font-size: 0.82rem;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.78rem;
+    }
+    .status-out { background: #fff3cd; color: #856404; }
+    .status-delivered { background: #d1e7dd; color: #0f5132; }
+
+    /* EXPIRED PAGE */
+    .expired-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .expired-icon { font-size: 4rem; margin-bottom: 16px; }
+    .expired-container h2 { color: var(--pink-dark); font-size: 1.3rem; margin-bottom: 8px; }
+    .expired-container p { color: #888; font-size: 0.9rem; }
+
+    /* MAP */
+    #deliveryMap {
+      height: 280px;
+      width: 100%;
+    }
+
+    /* CARDS */
+    .card {
+      background: white;
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow);
+      margin: 16px;
+      overflow: hidden;
+    }
+    .card-header {
+      background: linear-gradient(135deg, #d63384, #a0205e);
+      color: white;
+      padding: 12px 18px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 16px 18px; }
+
+    /* INFO ROWS */
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid #fce8f3;
+      font-size: 0.88rem;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #888; font-weight: 500; min-width: 110px; }
+    .info-value { color: #222; font-weight: 600; text-align: right; flex: 1; }
+
+    /* ORDER ITEMS */
+    .order-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #fce8f3;
+      font-size: 0.88rem;
+    }
+    .order-item:last-child { border-bottom: none; }
+    .item-name { font-weight: 600; color: #333; }
+    .item-price { color: var(--pink); font-weight: 700; }
+
+    /* TOTAL */
+    .total-row {
+      background: var(--pink-light);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-weight: 700;
+    }
+    .total-row .amount { color: var(--pink-dark); font-size: 1.1rem; }
+
+    /* ADDRESS HIGHLIGHT */
+    .address-box {
+      background: #fff8e1;
+      border: 1.5px solid #ffe082;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: #5d4037;
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+
+    /* DELIVERY TIME HIGHLIGHT */
+    .time-box {
+      background: var(--pink-light);
+      border: 1.5px solid var(--pink-mid);
+      border-radius: 10px;
+      padding: 12px 14px;
+      text-align: center;
+      margin-top: 8px;
+    }
+    .time-box .time-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .time-box .time-value { font-size: 1.1rem; font-weight: 700; color: var(--pink-dark); margin-top: 2px; }
+
+    /* PAYMENT BADGE */
+    .payment-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .payment-cod { background: #fff3cd; color: #856404; }
+    .payment-paid { background: #d1e7dd; color: #0f5132; }
+
+    /* MAP LEGEND */
+    .map-legend {
+      display: flex;
+      gap: 16px;
+      padding: 8px 16px;
+      background: white;
+      font-size: 0.78rem;
+      border-bottom: 1px solid #fce8f3;
+    }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-shop { background: #d63384; }
+    .dot-customer { background: #0d6efd; }
+  </style>
+</head>
+<body>
+
+{% if expired %}
+  <!-- EXPIRED PAGE -->
+  <div class="header">
+    <div class="header-icon">🎂</div>
+    <div class="header-text">
+      <h1>Ms. Brave Cake Shop</h1>
+      <p>Delivery Details</p>
+    </div>
+  </div>
+  <div class="expired-container">
+    <div class="expired-icon">✅</div>
+    <h2>Delivery Completed</h2>
+    <p>This delivery has already been completed.<br>This link is no longer active.</p>
+  </div>
+
+{% else %}
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">🎂</div>
+    <div class="header-text">
+      <h1>Ms. Brave Cake Shop</h1>
+      <p>Delivery Details</p>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="status-bar">
+    <span style="color:#666;">Order Status</span>
+    <span class="status-badge {{ 'status-delivered' if order.status == 'Delivered' else 'status-out' }}">
+      {{ order.status }}
+    </span>
+  </div>
+
+  <!-- MAP -->
+  <div id="deliveryMap"></div>
+  <div class="map-legend">
+    <div class="legend-item"><div class="legend-dot dot-shop"></div> Shop</div>
+    <div class="legend-item"><div class="legend-dot dot-customer"></div> Customer</div>
+  </div>
+
+  <!-- DELIVERY TIME -->
+  <div class="card">
+    <div class="card-header">⏰ Delivery Schedule</div>
+    <div class="card-body">
+      <div class="time-box">
+        <div class="time-label">Deliver By</div>
+        <div class="time-value">{{ order.delivery_date.strftime('%B %d, %Y — %I:%M %p') }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER INFO -->
+  <div class="card">
+    <div class="card-header">👤 Customer Information</div>
+    <div class="card-body">
+      <div class="info-row">
+        <span class="info-label">Name</span>
+        <span class="info-value">{{ order.customer.name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Contact</span>
+        <span class="info-value">{{ order.customer.contact }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Address</span>
+        <span class="info-value" style="text-align:right;">—</span>
+      </div>
+      <div class="address-box">{{ order.customer.address }}</div>
+    </div>
+  </div>
+
+  <!-- ORDER SUMMARY -->
+  <div class="card">
+    <div class="card-header">🎂 Order Summary</div>
+    <div class="card-body">
+      {% if order.order_type == 'premade' and order.selected_items %}
+        {% for item in order.selected_items %}
+        <div class="order-item">
+          <div>
+            <div class="item-name">{{ item.cake_name }}</div>
+            {% if item.get('quantity', 1) > 1 %}
+              <div style="font-size:0.78rem; color:#888;">× {{ item.get('quantity', 1) }}</div>
+            {% endif %}
+          </div>
+          <div class="item-price">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
+        </div>
+        {% endfor %}
+      {% elif order.order_type == 'custom' and order.custom_components %}
+        {% for component in order.custom_components %}
+        <div class="order-item">
+          <div class="item-name">{{ component.name }}</div>
+          <div class="item-price">₱{{ "%.2f"|format(component.price|float) }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="order-item">
+          <div class="item-name">{{ order.item }}</div>
+          <div class="item-price">₱{{ "%.2f"|format(order.amount|float) }}</div>
+        </div>
+      {% endif %}
+
+      <div class="total-row">
+        <span>Total Amount</span>
+        <span class="amount">₱{{ "%.2f"|format(order.amount|float) }}</span>
+      </div>
+
+      <div class="info-row" style="margin-top:12px;">
+        <span class="info-label">Payment</span>
+        <span class="info-value">
+          <span class="payment-badge {{ 'payment-paid' if order.payment_status == 'Paid' else 'payment-cod' }}">
+            {{ order.payment_method }}
+            {% if order.payment_status == 'Paid' %} ✅{% endif %}
+          </span>
+        </span>
+      </div>
+
+      {% if order.notes %}
+      <div class="address-box" style="margin-top:12px; background:#f3e5f5; border-color:#ce93d8; color:#4a148c;">
+        <strong>📝 Special Instructions:</strong><br>{{ order.notes }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+{% endif %}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+{% if not expired %}
+<script>
+  const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
+  const CUSTOMER = {
+    lat: {{ order.customer.lat or 10.7202 }},
+    lng: {{ order.customer.lng or 122.5621 }}
+  };
+
+  var map = L.map('deliveryMap').setView([CUSTOMER.lat, CUSTOMER.lng], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  // Shop marker (pink)
+  var shopIcon = L.divIcon({
+    html: '<div style="background:#d63384; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    className: ''
+  });
+
+  // Customer marker (blue)
+  var customerIcon = L.divIcon({
+    html: '<div style="background:#0d6efd; width:18px; height:18px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    className: ''
+  });
+
+  L.marker([SHOP.lat, SHOP.lng], { icon: shopIcon })
+    .addTo(map)
+    .bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao');
+
+  L.marker([CUSTOMER.lat, CUSTOMER.lng], { icon: customerIcon })
+    .addTo(map)
+    .bindPopup('<strong>{{ order.customer.name }}</strong><br>{{ order.customer.address }}')
+    .openPopup();
+
+  // Fit map to show both markers
+  var bounds = L.latLngBounds(
+    [SHOP.lat, SHOP.lng],
+    [CUSTOMER.lat, CUSTOMER.lng]
+  );
+  map.fitBounds(bounds, { padding: [40, 40] });
+</script>
+{% endif %}
+</body>
+</html>

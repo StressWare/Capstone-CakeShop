@@ -1,0 +1,336 @@
+
+{% extends 'admin_base.html' %}
+{% block title %}Delivery Management – Ms. Brave Cake Shop{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --pink-primary: #d63384;
+    --pink-light: #fde8f1;
+    --pink-mid: #f8b8d4;
+    --pink-dark: #a0205e;
+    --pink-gradient: linear-gradient(135deg, #d63384 0%, #a0205e 100%);
+    --card-radius: 14px;
+    --shadow-soft: 0 4px 24px rgba(214,51,132,0.10);
+  }
+
+  .card.shadow-sm {
+    border: none;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+    border-top: 4px solid var(--pink-primary) !important;
+  }
+
+  .card-header-custom {
+    background: var(--pink-gradient) !important;
+    color: #fff !important;
+    padding: 16px 24px;
+    border-bottom: none;
+  }
+
+  .card-header-custom h4 { font-weight: 700; font-size: 1.15rem; }
+
+  /* DELIVERY CARDS */
+  .delivery-card {
+    background: white;
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow-soft);
+    border: 1px solid #fce8f3;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: box-shadow 0.2s;
+  }
+  .delivery-card:hover { box-shadow: 0 8px 32px rgba(214,51,132,0.18); }
+
+  .delivery-card-header {
+    background: var(--pink-gradient);
+    color: white;
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .delivery-card-header .order-id { font-size: 0.78rem; opacity: 0.85; }
+  .delivery-card-header .customer-name { font-weight: 700; font-size: 1rem; }
+
+  .delivery-card-body { padding: 0; }
+
+  /* MAP */
+  .delivery-map {
+    height: 200px;
+    width: 100%;
+  }
+
+  /* INFO SECTION */
+  .delivery-info {
+    padding: 14px 18px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .info-item { font-size: 0.82rem; }
+  .info-item .label { color: #888; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px; }
+  .info-item .value { font-weight: 600; color: #333; margin-top: 2px; }
+
+  .address-box {
+    background: #fff8e1;
+    border: 1.5px solid #ffe082;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: #5d4037;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  /* ACTIONS */
+  .delivery-actions {
+    padding: 12px 18px;
+    border-top: 1px solid #fce8f3;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn-copy-link {
+    background: var(--pink-gradient);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-copy-link:hover { opacity: 0.88; }
+  .btn-copy-link.copied { background: linear-gradient(135deg, #198754, #0f5132); }
+
+  .btn-view-order {
+    background: white;
+    color: var(--pink-primary);
+    border: 1.5px solid var(--pink-mid);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-view-order:hover {
+    background: var(--pink-light);
+    border-color: var(--pink-primary);
+    color: var(--pink-dark);
+  }
+
+  /* STATUS BADGE */
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .status-out { background: #fff3cd; color: #856404; }
+  .status-delivered { background: #d1e7dd; color: #0f5132; }
+
+  /* RUSH BADGE */
+  .rush-badge {
+    background: #dc3545;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #c07090;
+  }
+  .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; }
+
+  /* STATS BAR */
+  .stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 20px;
+    box-shadow: var(--shadow-soft);
+    border-left: 4px solid var(--pink-primary);
+    flex: 1;
+    min-width: 140px;
+  }
+  .stat-card .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--pink-dark); }
+  .stat-card .stat-label { font-size: 0.75rem; color: #888; margin-top: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4 px-4">
+  <div class="card shadow-sm">
+    <div class="card-header card-header-custom">
+      <h4 class="mb-0"> Delivery Management</h4>
+    </div>
+    <div class="card-body">
+
+      <!-- STATS -->
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-number">{{ orders|length }}</div>
+          <div class="stat-label">Active Deliveries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">{{ orders|selectattr('rush')|list|length }}</div>
+          <div class="stat-label">Rush Orders</div>
+        </div>
+      </div>
+
+      {% if orders %}
+        <div class="row">
+          {% for o in orders %}
+          <div class="col-lg-6">
+            <div class="delivery-card">
+
+              <!-- CARD HEADER -->
+              <div class="delivery-card-header">
+                <div>
+                  <div class="customer-name">
+                    {{ o.customer.name }}
+                    {% if o.rush %}<span class="rush-badge ms-2">RUSH</span>{% endif %}
+                  </div>
+                  <div class="order-id">{{ o.created_at.strftime('%b %d, %Y') }}</div>
+                </div>
+                <span class="status-badge {{ 'status-delivered' if o.status == 'Delivered' else 'status-out' }}">
+                  {{ o.status }}
+                </span>
+              </div>
+
+              <!-- MAP -->
+              {% if o.customer.lat and o.customer.lng %}
+              <div id="map-{{ o.id }}" class="delivery-map"></div>
+              {% else %}
+              <div style="height:80px; background:#fce8f3; display:flex; align-items:center; justify-content:center; color:#c07090; font-size:0.82rem;">
+                📍 No map coordinates available
+              </div>
+              {% endif %}
+
+              <!-- INFO -->
+              <div class="delivery-info">
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="label">Contact</div>
+                    <div class="value">{{ o.customer.contact }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Deliver By</div>
+                    <div class="value">{{ o.delivery_date.strftime('%b %d — %I:%M %p') }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Payment</div>
+                    <div class="value">{{ o.payment_method }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">Amount</div>
+                    <div class="value" style="color:#d63384;">₱{{ "%.2f"|format(o.amount|float) }}</div>
+                  </div>
+                </div>
+                <div class="address-box">
+                  📍 {{ o.customer.address }}
+                </div>
+              </div>
+
+              <!-- ACTIONS -->
+              <div class="delivery-actions">
+                <button class="btn-copy-link" onclick="copyDeliveryLink('{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}', this)">
+                  <i class="fas fa-link"></i> Copy Delivery Link
+                </button>
+                <a href="/admin/orders" class="btn-view-order">
+                  <i class="fas fa-list"></i> View in Order List
+                </a>
+              </div>
+
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="empty-state">
+          <i class="fas fa-truck"></i>
+          No active deliveries right now
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
+
+  // Initialize maps for each delivery card
+  {% for o in orders %}
+    {% if o.customer.lat and o.customer.lng %}
+    (function() {
+      var map = L.map('map-{{ o.id }}', { zoomControl: false, dragging: false, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+
+      var shopIcon = L.divIcon({
+        html: '<div style="background:#d63384; width:12px; height:12px; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>',
+        iconSize: [12, 12], iconAnchor: [6, 6], className: ''
+      });
+      var customerIcon = L.divIcon({
+        html: '<div style="background:#0d6efd; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 2px 4px rgba(0,0,0,0.3);"></div>',
+        iconSize: [14, 14], iconAnchor: [7, 7], className: ''
+      });
+
+      L.marker([SHOP.lat, SHOP.lng], { icon: shopIcon }).addTo(map);
+      L.marker([{{ o.customer.lat }}, {{ o.customer.lng }}], { icon: customerIcon }).addTo(map);
+
+      map.fitBounds([
+        [SHOP.lat, SHOP.lng],
+        [{{ o.customer.lat }}, {{ o.customer.lng }}]
+      ], { padding: [20, 20] });
+    })();
+    {% endif %}
+  {% endfor %}
+
+  // Copy delivery link
+  function copyDeliveryLink(url, btn) {
+    navigator.clipboard.writeText(url).then(function() {
+      btn.classList.add('copied');
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<i class="fas fa-link"></i> Copy Delivery Link';
+      }, 2000);
+    });
+  }
+</script>
+{% endblock %}

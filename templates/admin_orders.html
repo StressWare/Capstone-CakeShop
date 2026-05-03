@@ -239,6 +239,12 @@
                 <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
                   View
                 </button>
+                {% if o.status == 'Out for Delivery' and o.delivery_type == 'Delivery' and o.delivery_token %}
+                <button class="btn btn-sm btn-outline-success mt-1 w-100"
+                        onclick="copyLink('{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}', this)">
+                  <i class="fas fa-link"></i> Copy Link
+                </button>
+                {% endif %}
               </td>
               <td>
                 {% if o.order_source == 'walk-in' %}
@@ -657,5 +663,18 @@
       if (id) calculateEditTotal(id);
     }
   });
+  function copyLink(url, btn) {
+    navigator.clipboard.writeText(url).then(function() {
+      var original = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      btn.classList.remove('btn-outline-success');
+      btn.classList.add('btn-success');
+      setTimeout(function() {
+        btn.innerHTML = original;
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-success');
+      }, 2000);
+    });
+  }
 </script>
 {% endblock %}

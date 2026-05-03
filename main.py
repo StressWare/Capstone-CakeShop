@@ -6,6 +6,7 @@ import os
 import json
 import hmac
 import hashlib
+import secrets
 import cloudinary
 import cloudinary.uploader
 import firebase
@@ -356,7 +357,7 @@ def customer_dashboard():
         return "User not found", 404
     customer = doc.to_dict()
  
-    # ── Orders from top-level collection (already sorted by Firestore) ──
+    # ── Orders from top-level collection 
     orders_list = []
     for order_doc in orders.where("user_id", "==", user_id).order_by("created_at", direction="DESCENDING").stream():
         order = order_doc.to_dict()
@@ -487,7 +488,6 @@ def add_review():
                         user_doc.to_dict().get("username") or \
                         "Customer"
     
-    # ← CHANGED: Get order from top-level orders collection
     order_ref = orders.document(order_id)  # Changed from users.document(user_id).collection("orders")
     order_doc = order_ref.get()
     
@@ -753,13 +753,16 @@ def finalize_order():
         "inspo_image":    inspo_image,
         "order_type":     order_type,
         "custom_components": custom_components,
+        "delivery_token": secrets.token_urlsafe(16),  
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),
             "address":   address,
             "occasion":  request.form.get("occasion", ""),
             "celebrant": request.form.get("celebrant", ""),
-            "age":       request.form.get("age", "")
+            "age":       request.form.get("age", ""),
+            "lat":       float(request.form.get("lat")) if request.form.get("lat") else None,
+            "lng":       float(request.form.get("lng")) if request.form.get("lng") else None,
         },
         "created_at": now
     }
@@ -841,7 +844,29 @@ def cancel_order(order_id):
     order_ref.update({"status": "Cancelled"})
     flash("Order cancelled successfully.", "info")
     return redirect(url_for("customer_dashboard"))
-
+# ================================================================
+# DELIVERY ROUTES
+# ================================================================
+@app.route("/delivery/<token>")
+def delivery_page(token):
+    # Find order by delivery_token
+    results = orders.where("delivery_token", "==", token).limit(1).stream()
+    order_doc = next(results, None)
+ 
+    if not order_doc:
+        return render_template("delivery.html", expired=True)
+ 
+    order = order_doc.to_dict()
+    order["id"] = order_doc.id
+ 
+    # Convert timestamps
+    order = convert_timestamps(order)
+ 
+    # If order is completed, show expired page
+    if order.get("status") == "Completed":
+        return render_template("delivery.html", expired=True)
+ 
+    return render_template("delivery.html", order=order, expired=False)
 # ================================================================
 # CAKES ROUTES
 # ================================================================
@@ -857,7 +882,7 @@ def cakes_page():
         cake_data['reviews'] = []
         available_cakes.append(cake_data)
 
-    # Fetch reviews with Firestore ordering (no lambda)
+    # Fetch reviews with Firestore ordering 
     cake_ratings = {}
     cake_reviews = {}
 
@@ -1202,6 +1227,27 @@ def admin_orders():
 
     orders_list.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
     return render_template("admin_orders.html", orders=orders_list)
+# ---------------- ADMIN DELIVERY ----------------
+@app.route("/admin/delivery")
+@admin_required
+def admin_delivery():
+    # Get all Out for Delivery orders
+    active_deliveries = []
+ 
+    delivery_docs = orders.where("status", "==", "Out for Delivery").where("delivery_type", "==", "Delivery").stream()
+ 
+    for doc in delivery_docs:
+        order = doc.to_dict()
+        order["id"] = doc.id
+        order = convert_timestamps(order)
+        active_deliveries.append(order)
+ 
+    # Sort by delivery_date
+    active_deliveries.sort(
+        key=lambda x: x.get("delivery_date") or datetime.min.replace(tzinfo=PH_TZ)
+    )
+ 
+    return render_template("admin_delivery.html", orders=active_deliveries)
 # ---------------- ADMIN INVENTORY ----------------
 @app.route("/admin/inventory")
 @admin_required
@@ -1349,7 +1395,7 @@ def admin_analytics():
             if date_val >= week_ago:
                 weekly_expenses[date_val.strftime("%a")] += cost
  
-            # Monthly (this year)
+            # Monthly 
             if date_val.year == now.year:
                 monthly_expenses[date_val.strftime("%b")] += cost
  
@@ -1407,7 +1453,7 @@ def admin_analytics():
     for m in months:
         monthly_profit[m] = monthly_sales[m] - monthly_expenses[m]
  
-    # All time profit + sort chronologically
+    # All time profit 
     for key in alltime_data:
         alltime_data[key]["profit"] = alltime_data[key]["sales"] - alltime_data[key]["expenses"]
  
@@ -1470,9 +1516,9 @@ def admin_cakes():
 def admin_users():
     all_users = []
 
-    # Get all order counts in ONE query
+    # Get all order counts 
     order_counts = {}
-    for order_doc in orders.stream():  # ← CHANGED
+    for order_doc in orders.stream():  
         if uid := order_doc.to_dict().get("user_id"):
             order_counts[uid] = order_counts.get(uid, 0) + 1
 
@@ -1480,7 +1526,7 @@ def admin_users():
     for user_doc in users_ref:
         user_data = user_doc.to_dict()
         user_data['uid'] = user_doc.id
-        user_data['order_count'] = order_counts.get(user_doc.id, 0)  # ← CHANGED: no extra query
+        user_data['order_count'] = order_counts.get(user_doc.id, 0)  
 
         try:
             auth_user = auth.get_user(user_doc.id)
@@ -1495,7 +1541,7 @@ def admin_users():
 
     return render_template("admin_users.html", all_users=all_users)
 
-# ADMIN - REVIEWS PAGE
+# ---------------- ADMIN REVIEWS PAGE----------------
 @app.route("/admin/reviews")
 @admin_required
 def admin_reviews():
@@ -1515,7 +1561,7 @@ def admin_reviews():
         all_reviews.append(r)
  
     return render_template("admin_reviews.html", reviews=all_reviews)
-
+# ---------------- ADMIN LOGS PAGE----------------
 @app.route("/admin/logs")
 @admin_required
 def admin_logs_page():
@@ -1553,7 +1599,7 @@ def update_order_status(order_id):
         old_status = order_data.get("status")
         order_type = order_data.get("order_type", "custom")
 
-        # Quantity deduction logic (keep your existing code)
+        # Quantity deduction logic 
         if new_status == "Accepted" and old_status == "New" and order_type == "premade":
             for i in order_data.get("selected_items", []):
                 cake_ref = cakes.document(i["cake_id"])
