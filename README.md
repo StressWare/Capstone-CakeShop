@@ -79,36 +79,7 @@ Capstone-CakeShop/
 
 ---
 
-## Setup and Installation
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/StressWare/Capstone-CakeShop.git
-cd Capstone-CakeShop
-```
-
-### 2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Set up environment variables
-```bash
-copy .env.example .env
-```
-Fill in your actual credentials in the `.env` file.
-
-### 4. Add Firebase service account
-- Download your `serviceAccountKey.json` from the Firebase Console
-- Place it inside the `firebase/` folder
-- Set `FIREBASE_KEY_PATH=firebase/serviceAccountKey.json` in your `.env`
-
-### 5. Run the app
-```bash
-python main.py
-```
-
----
 
 ## Environment Variables
 
