@@ -1,0 +1,21 @@
+{
+    "id": "/delivery",
+    "name": "Ms. Brave Cake Shop — Delivery",
+    "short_name": "Brave Delivery",
+    "description": "Delivery details for Ms. Brave Cake Shop riders",
+    "start_url": "/delivery",
+    "display": "standalone",
+    "background_color": "#f9f0f5",
+    "theme_color": "#d63384",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "categories": ["navigation", "delivery"],
+    "lang": "en"
+}

@@ -1,9 +1,4 @@
-{# 
-  FILE: templates/delivery.html
-  NEW FILE - Place in your templates/ folder
-  Public delivery page for riders - no login required
-  Accessible via /delivery/<token>
-#}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery — Ms. Brave Cake Shop</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="manifest" href="/manifest-delivery.json">
+  <meta name="theme-color" content="#d63384">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker-delivery.js')
+        .then(() => console.log('Delivery SW registered'))
+        .catch(err => console.warn('Delivery SW failed:', err));
+    }
+</script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 

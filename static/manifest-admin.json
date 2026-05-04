@@ -1,0 +1,21 @@
+{
+    "id": "/admin/dashboard",
+    "name": "Ms. Brave Cake Shop — Admin",
+    "short_name": "Brave Admin",
+    "description": "Admin dashboard for Ms. Brave Cake Shop",
+    "start_url": "/admin/dashboard",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#d63384",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/static/img/logo.png",
+            "sizes": "any",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "categories": ["business", "productivity"],
+    "lang": "en"
+}

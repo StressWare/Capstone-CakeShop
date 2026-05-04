@@ -2326,6 +2326,22 @@ def service_worker():
 @app.route('/manifest.json')
 def manifest():
     return app.send_static_file('manifest.json')
+
+@app.route('/manifest-admin.json')
+def manifest_admin():
+    return app.send_static_file('manifest-admin.json')
+ 
+@app.route('/manifest-delivery.json')
+def manifest_delivery():
+    return app.send_static_file('manifest-delivery.json')
+ 
+@app.route('/service-worker-admin.js')
+def service_worker_admin():
+    return app.send_static_file('javascript/service-worker-admin.js')
+ 
+@app.route('/service-worker-delivery.js')
+def service_worker_delivery():
+    return app.send_static_file('javascript/service-worker-delivery.js')
 # ================================================================
 # RUN SERVER
 # ================================================================
