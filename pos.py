@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 import json
 from db import walkin_orders, cakes
 
@@ -109,3 +109,88 @@ def pos_receipt(order_id):
     order['created_at'] = created_at
 
     return render_template('admin_pos_receipt.html', order=order)
+
+@pos_bp.route('/pos/history')
+def pos_history():
+    current_user = session.get('user')
+    if not current_user or not current_user.get('admin'):
+        return redirect(url_for('auth_page'))
+ 
+    now = datetime.now(PH_TZ)
+    today = now.date()
+ 
+    # ── Get date filter from query param ──
+    date_param = request.args.get('date', '')
+ 
+    if date_param.startswith('week_'):
+        # This week — from start of week to today
+        start_str = date_param.replace('week_', '')
+        try:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+        except:
+            start_date = today - timedelta(days=today.weekday())
+        end_date = today
+        selected_date = f"Week of {start_date.strftime('%b %d')} – {end_date.strftime('%b %d, %Y')}"
+ 
+    elif date_param:
+        # Specific date
+        try:
+            start_date = datetime.strptime(date_param, '%Y-%m-%d').date()
+            end_date = start_date
+            selected_date = start_date.strftime('%B %d, %Y')
+        except:
+            start_date = today
+            end_date = today
+            selected_date = today.strftime('%B %d, %Y')
+    else:
+        # Default: today
+        start_date = today
+        end_date = today
+        selected_date = today.strftime('%B %d, %Y')
+ 
+    # ── Build date range ──
+    start_dt = datetime.combine(start_date, datetime.min.time()).replace(tzinfo=PH_TZ)
+    end_dt   = datetime.combine(end_date, datetime.max.time()).replace(tzinfo=PH_TZ)
+ 
+    # ── Fetch walkin_orders in range ──
+    orders_list = []
+    try:
+        docs = walkin_orders.where(
+            'created_at', '>=', start_dt
+        ).where(
+            'created_at', '<=', end_dt
+        ).order_by('created_at', direction='DESCENDING').stream()
+ 
+        for doc in docs:
+            order = doc.to_dict()
+            order['id'] = doc.id
+ 
+            # Convert timestamp
+            created_at = order.get('created_at')
+            if isinstance(created_at, datetime):
+                if created_at.tzinfo is None:
+                    created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    created_at = created_at.astimezone(PH_TZ)
+            order['created_at'] = created_at
+ 
+            orders_list.append(order)
+    except Exception as e:
+        print(f"Error fetching pos history: {e}")
+ 
+    # ── Compute summary stats ──
+    total_sales = sum(o.get('amount', 0) for o in orders_list)
+    total_txn   = len(orders_list)
+    total_cash  = sum(o.get('amount', 0) for o in orders_list if o.get('payment_method', '').lower() == 'cash')
+    total_gcash = sum(o.get('amount', 0) for o in orders_list if o.get('payment_method', '').lower() == 'gcash')
+ 
+    return render_template(
+        'admin_pos_history.html',
+        orders        = orders_list,
+        total_sales   = total_sales,
+        total_txn     = total_txn,
+        total_cash    = total_cash,
+        total_gcash   = total_gcash,
+        selected_date = selected_date,
+        now           = now.strftime('%B %d, %Y %I:%M %p')
+    )

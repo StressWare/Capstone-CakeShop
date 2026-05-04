@@ -13,16 +13,59 @@
     --shadow-soft:    0 4px 24px rgba(214,51,132,0.10);
     --shadow-hover:   0 8px 32px rgba(214,51,132,0.18);
   }
+
   .card.shadow-sm {
     border: none; border-radius: var(--card-radius);
     box-shadow: var(--shadow-soft); overflow: hidden;
     border-top: 4px solid var(--pink-primary) !important;
   }
+
   .card-header-custom {
     background: var(--pink-gradient) !important;
     color: #fff !important; padding: 16px 24px; border-bottom: none;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .card-header-custom h4 { font-weight: 700; letter-spacing: 0.3px; font-size: 1.15rem; }
+
+  .card-header-custom h4 { font-weight: 700; letter-spacing: 0.3px; font-size: 1.15rem; margin: 0; }
+
+  /* LIVE INDICATOR */
+  .live-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; font-weight: 600; opacity: 0.9;
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+    animation: pulse-green 2s infinite;
+  }
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+  }
+  @keyframes spin {
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  /* NEW ORDER BANNER */
+  #newOrderBanner {
+    display: none;
+    background: linear-gradient(135deg, #4ade80, #16a34a);
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.88rem;
+    cursor: pointer;
+    animation: slideDown 0.3s ease;
+  }
+  @keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* TABS */
   .order-tabs {
     display: flex; gap: 4px; background: #fce8f3;
     border-radius: 12px; padding: 5px; margin-bottom: 20px;
@@ -38,26 +81,46 @@
   .order-tab-btn:hover:not(.active) { color: var(--pink-primary); background: rgba(255,255,255,0.55); }
   .tab-count { background: #f5c2dc; border-radius: 10px; padding: 1px 8px; font-size: 0.72rem; font-weight: 700; color: #a0205e; }
   .order-tab-btn.active .tab-count { background: var(--pink-light); color: var(--pink-primary); }
+
+  /* FILTERS */
   .input-group-text.bg-white { border-right: none; color: var(--pink-primary); }
   .form-control:focus, .form-select:focus { border-color: var(--pink-mid); box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.15); }
+
+  /* TABLE */
   #ordersTable thead.table-dark { background: var(--pink-gradient) !important; --bs-table-bg: transparent; --bs-table-color: #fff; }
   #ordersTable thead.table-dark th { background: transparent !important; color: #fff !important; font-size: 0.8rem; letter-spacing: 0.4px; text-transform: uppercase; border-bottom: none; padding: 13px 12px; }
   #ordersTable tbody tr { transition: background 0.15s; }
   #ordersTable tbody tr:hover { background: #fff5fa !important; }
   #ordersTable tbody td { vertical-align: middle; font-size: 0.87rem; padding: 11px 12px; border-color: #fce8f3; }
   .table-danger { background-color: #fff0f5 !important; }
+
+  /* NEW ROW HIGHLIGHT */
+  .row-new-flash {
+    animation: flashNew 10s ease;
+  }
+  @keyframes flashNew {
+    0% { background: #d1fae5 !important; }
+    100% { background: transparent; }
+  }
+
+  /* BADGES */
   .badge-custom  { background: #6f42c1 !important; }
   .badge-premade { background: #0d6efd !important; }
-  .badge-walkin  { background: var(--pink-primary) !important; }
+
+  /* BUTTONS */
   .btn-outline-info { border-color: var(--pink-mid); color: var(--pink-primary); font-size: 0.78rem; padding: 4px 12px; border-radius: 7px; font-weight: 600; transition: all 0.18s; }
   .btn-outline-info:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
   #ordersTable .form-select-sm { border-color: #f5c2dc; border-radius: 7px; font-size: 0.8rem; margin-bottom: 5px; }
   #ordersTable .form-select-sm:focus { border-color: var(--pink-primary); box-shadow: 0 0 0 0.15rem rgba(214,51,132,0.15); }
   #ordersTable .btn-primary.btn-sm { background: var(--pink-gradient); border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.2px; transition: opacity 0.18s; }
   #ordersTable .btn-primary.btn-sm:hover { opacity: 0.88; }
+
+  /* PAGINATION */
   .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
   .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
   .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
+
+  /* MODALS */
   .modal-header.bg-primary { background: var(--pink-gradient) !important; }
   .modal-header.bg-success { background: linear-gradient(135deg, #198754, #0f5132) !important; }
   .modal-header.bg-danger  { background: linear-gradient(135deg, #dc3545, #9a1827) !important; }
@@ -67,48 +130,38 @@
   .price-box { background: var(--pink-light); border: 1.5px solid var(--pink-mid); border-radius: 9px; padding: 10px 16px; font-weight: 700; color: var(--pink-dark); font-size: 1rem; }
   #emptyTabMsg { color: #c07090; }
   .card-body { padding: 22px 24px; }
-  .modal-content,
-.modal-body,
-.modal-header,
-.modal-title,
-.modal-body p,
-.modal-body span,
-.modal-body small,
-.modal-body strong,
-.modal-body label,
-.modal-body h6 {
 
-  color: #000000 !important;
-}
+  .modal-content, .modal-body, .modal-header, .modal-title,
+  .modal-body p, .modal-body span, .modal-body small,
+  .modal-body strong, .modal-body label, .modal-body h6 {
+    color: #000000 !important;
+  }
+  .modal-body .text-muted { color: #000000 !important; }
 
-/* override Bootstrap muted text inside modal only */
-.modal-body .text-muted {
-  color: #000000 !important;
-}
-
-
-
-  /* Order items list in modal */
+  /* ORDER ITEMS */
   .order-item-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px 0;
-    border-bottom: 1px solid #f5f5f5;
-    font-size: 0.88rem;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid #f5f5f5; font-size: 0.88rem;
   }
   .order-item-line:last-child { border-bottom: none; }
   .order-item-line .name { font-weight: 500; color: #333; }
   .order-item-line .meta { color: #888; font-size: 0.8rem; }
   .order-item-line .sub  { font-weight: 600; color: #d63384; }
+
+  /* LOADING */
+  .table-loading {
+    text-align: center; padding: 40px; color: #c07090;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
+
 <div class="container-fluid my-4 px-4">
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
       <h4 class="mb-0">Order Management</h4>
+
     </div>
     <div class="card-body">
 
@@ -122,9 +175,6 @@
         </button>
         <button class="order-tab-btn" onclick="switchOrderTab('premade', this)">
           Online - Premade <span class="tab-count" id="count-premade">0</span>
-        </button>
-        <button class="order-tab-btn" onclick="switchOrderTab('walkin', this)">
-          Walk-in <span class="tab-count" id="count-walkin">0</span>
         </button>
       </div>
 
@@ -177,126 +227,20 @@
               <th>Update Status</th>
             </tr>
           </thead>
-          <tbody>
-            {% for o in orders %}
-            <tr class="{% if o.rush %}table-danger{% endif %}"
-                data-type="{{ 'walkin' if o.order_source == 'walk-in' else o.order_type or 'unknown' }}">
-              <td>
-                <small>{{ o.created_at.strftime('%b %d, %Y') }}</small><br>
-                <small class="text-muted">{{ o.created_at.strftime('%I:%M %p') }}</small>
-              </td>
-              <td>
-                {% if o.order_source == 'walk-in' %}
-                  <span class="badge badge-walkin">Walk-in</span>
-                {% elif o.order_type == 'custom' %}
-                  <span class="badge badge-custom">Custom</span>
-                {% elif o.order_type == 'premade' %}
-                  <span class="badge badge-premade">Premade</span>
-                {% else %}
-                  <span class="badge bg-secondary">Online</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if o.order_source == 'walk-in' %}
-                  <strong>Walk-in Customer</strong><br>
-                  <small class="text-muted">POS</small>
-                {% else %}
-                  <strong>{{ o.customer.name }}</strong>
-                  {% if o.rush %}<span class="badge bg-danger ms-1">RUSH</span>{% endif %}
-                  <br><small class="text-muted">{{ o.customer.contact }}</small>
-                {% endif %}
-              </td>
-              <td>
-                <span class="text-truncate d-inline-block" style="max-width:200px;" title="{{ o.item }}">{{ o.item }}</span>
-              </td>
-              <td>
-                {% if o.order_source == 'walk-in' %}
-                  <small class="text-muted">N/A</small>
-                {% else %}
-                  <small>{{ o.delivery_date.strftime('%b %d, %Y') }}</small><br>
-                  <small class="text-muted">{{ o.delivery_date.strftime('%I:%M %p') }}</small>
-                {% endif %}
-              </td>
-              <td>
-                <span class="badge
-                  {% if o.status == 'New' %}bg-secondary
-                  {% elif o.status == 'Accepted' %}bg-info
-                  {% elif o.status == 'Pending' %}bg-warning text-dark
-                  {% elif o.status == 'Ready' %}bg-primary
-                  {% elif o.status == 'Out for Delivery' %}bg-dark
-                  {% elif o.status == 'Completed' %}bg-success
-                  {% elif o.status == 'Cancelled' %}bg-danger
-                  {% endif %}">{{ o.status }}</span>
-              </td>
-              <td>
-                {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' or (o.status == 'Completed' and o.payment_method == 'Cash on Delivery') %}
-                  <span class="badge bg-success">✅ Paid</span>
-                {% else %}
-                  <span class="badge bg-warning text-dark">⏳ Pending</span>
-                {% endif %}
-              </td>
-              <td>
-                <button class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#details{{ o.id }}">
-                  View
-                </button>
-                {% if o.status == 'Out for Delivery' and o.delivery_type == 'Delivery' and o.delivery_token %}
-                <button class="btn btn-sm btn-outline-success mt-1 w-100"
-                        onclick="copyLink('{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}', this)">
-                  <i class="fas fa-link"></i> Copy Link
-                </button>
-                {% endif %}
-              </td>
-              <td>
-                {% if o.order_source == 'walk-in' %}
-                  <span class="badge bg-success p-2">Walk in Customer</span>
-
-                {% elif o.status in ['Completed', 'Cancelled'] %}
-                  {% if o.status == 'Completed' %}
-                    <span class="badge bg-success p-2">✅ Completed</span>
-                    {% if o.payment_method == 'Cash on Delivery' %}
-                      <br><span class="badge bg-success mt-1">💰 COD Paid</span>
-                    {% endif %}
-                  {% else %}
-                    <span class="badge bg-danger p-2">❌ Cancelled</span>
-                  {% endif %}
-
-                {% else %}
-                  <form method="POST" action="/order/status/{{ o.id }}"
-                        onsubmit="return confirmStatus('{{ o.status }}')">
-                    <select name="status" class="form-select form-select-sm mb-1">
-                      {% if o.status == 'New' %}
-                        <option value="New" selected>New</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Cancelled">Cancelled</option>
-                      {% elif o.status == 'Accepted' %}
-                        <option value="Accepted" selected>Accepted</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Cancelled">Cancelled</option>
-                      {% elif o.status == 'Pending' %}
-                        <option value="Pending" selected>Pending</option>
-                        <option value="Ready">Ready</option>
-                        <option value="Cancelled">Cancelled</option>
-                      {% elif o.status == 'Ready' %}
-                        <option value="Ready" selected>Ready</option>
-                        <option value="Out for Delivery">Out for Delivery</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      {% elif o.status == 'Out for Delivery' %}
-                        <option value="Out for Delivery" selected>Out for Delivery</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                      {% endif %}
-                    </select>
-                    <button class="btn btn-primary btn-sm w-100">
-                      <i class="fas fa-sync-alt"></i> Update
-                    </button>
-                  </form>
-                {% endif %}
+          <tbody id="ordersTableBody">
+            <tr>
+              <td colspan="9" class="table-loading">
+                
+                <div style="text-align:center; padding: 40px;">
+                  <img src="/static/img/chathead.jpg" 
+                      alt="Loading..." 
+                      style="width: 60px; height: 60px; border-radius: 50%; 
+                              animation: spin 1s linear infinite;">
+                  <p class="mt-2 mb-0" style="color: var(--pink-primary);">Loading orders...</p>
+                </div>
+                <p class="mt-2 mb-0">Loading orders...</p>
               </td>
             </tr>
-            {% else %}
-            <tr><td colspan="9" class="text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3 d-block"></i>No orders yet</td></tr>
-            {% endfor %}
           </tbody>
         </table>
       </div>
@@ -311,169 +255,18 @@
   </div>
 </div>
 
-<!-- DETAILS MODALS -->
-{% for o in orders %}
-<div class="modal fade" id="details{{ o.id }}" tabindex="-1">
+<!-- SINGLE DETAILS MODAL -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header {% if o.rush %}bg-danger text-white{% elif o.order_source == 'walk-in' %}bg-success text-white{% else %}bg-primary text-white{% endif %}">
-        <h5 class="modal-title">
-          Order Details
-          {% if o.rush %}<span class="badge bg-white text-danger ms-2">RUSH</span>{% endif %}
-          {% if o.order_source == 'walk-in' %}<span class="badge bg-white text-success ms-2">WALK-IN</span>{% endif %}
-        </h5>
+      <div class="modal-header bg-primary text-white" id="detailsModalHeader">
+        <h5 class="modal-title" id="detailsModalTitle">Order Details</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <div class="row">
-          <div class="col-md-6">
-            <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
-
-            <!-- Items display with quantity/subtotal -->
-            <p class="mb-1"><strong>Order:</strong></p>
-                        {% if o.order_type == 'premade' and o.selected_items %}
-              <!-- PREMADE ORDERS - Vertical list -->
-              <div class="mb-2">
-                {% for item in o.selected_items %}
-                <div class="order-item-line">
-                  <div>
-                    <div class="name">{{ item.cake_name }}</div>
-                    <div class="meta">
-                      ₱{{ "%.2f"|format(item.price|float) }}
-                      {% if item.get('quantity', 1) > 1 %}
-                        × {{ item.get('quantity', 1) }}
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
-                </div>
-                {% endfor %}
-              </div>
-              
-            {% elif o.order_type == 'custom' and o.custom_components %}
-              <!-- CUSTOM ORDERS WITH COMPONENTS - Vertical list -->
-              <div class="mb-2">
-                {% for component in o.custom_components %}
-                <div class="order-item-line">
-                  <div>
-                    <div class="name">{{ component.name }}</div>
-                    <div class="meta">
-                      ₱{{ "%.2f"|format(component.price|float) }}
-                    </div>
-                  </div>
-                  <div class="sub">₱{{ "%.2f"|format(component.price|float) }}</div>
-                </div>
-                {% endfor %}
-              </div>
-              
-            {% else %}
-              <!-- FALLBACK for old orders -->
-              <p class="ms-2 mb-2">{{ o.item }}</p>
-            {% endif %}
-
-            {% if o.order_source != 'walk-in' %}
-            <p class="mb-2"><strong>Delivery Date:</strong><br>
-              <span class="ms-4">{{ o.delivery_date.strftime('%B %d, %Y - %I:%M %p') }}</span></p>
-            {% endif %}
-
-            <p class="mb-2"><strong>Status:</strong><br>
-              <span class="ms-4">
-                <span class="badge
-                  {% if o.status == 'New' %}bg-secondary
-                  {% elif o.status == 'Accepted' %}bg-info
-                  {% elif o.status == 'Pending' %}bg-warning text-dark
-                  {% elif o.status == 'Ready' %}bg-primary
-                  {% elif o.status == 'Out for Delivery' %}bg-dark
-                  {% elif o.status == 'Completed' %}bg-success
-                  {% elif o.status == 'Cancelled' %}bg-danger{% endif %}">
-                  {{ o.status }}
-                </span>
-              </span>
-            </p>
-
-            {% if o.order_source != 'walk-in' %}
-            <p class="mb-2"><strong>Delivery Type:</strong><br>
-              <span class="ms-4">
-                {% if o.delivery_type == 'Pickup' %}
-                  <span class="badge bg-warning text-dark">Pick Up</span>
-                {% else %}
-                  <span class="badge bg-info text-dark">Delivery</span>
-                {% endif %}
-              </span>
-            </p>
-            {% endif %}
-
-            <p class="mb-2"><strong>Payment Method:</strong><br>
-              <span class="ms-4">{{ o.payment_method or 'N/A' }}</span></p>
-
-            <p class="mb-2"><strong>Payment Status:</strong><br>
-              <span class="ms-4">
-                {% if o.order_source == 'walk-in' or o.payment_status == 'Paid' %}
-                  <span class="badge bg-success">Paid</span>
-                  {% if o.payment_id %}
-                    <small class="text-muted ms-1" style="font-size:0.72rem;">Ref: {{ o.payment_id[:16] }}...</small>
-                  {% endif %}
-                {% else %}
-                  <span class="badge bg-warning text-dark">Pending</span>
-                {% endif %}
-              </span>
-            </p>
-
-            <p class="mb-2"><strong>Amount:</strong><br>
-              <span class="ms-4 fw-bold text-success">₱{{ "%.2f"|format(o.calculated_total) }}</span></p>
-            <p class="mb-2"><strong>Ordered On:</strong><br>
-              <span class="ms-4">{% if o.created_at %}{{ o.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</span></p>
-          </div>
-
-          <div class="col-md-6">
-            {% if o.order_source == 'walk-in' %}
-              <h6 class="text-muted mb-3">WALK-IN DETAILS</h6>
-              <p class="mb-2"><strong>Order Source:</strong><br><span class="ms-4">Walk-in (POS)</span></p>
-              {% if o.cash_received %}
-              <p class="mb-2"><strong>Cash Received:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.cash_received) }}</span></p>
-              <p class="mb-2"><strong>Change:</strong><br><span class="ms-4">₱{{ "%.2f"|format(o.change) }}</span></p>
-              {% endif %}
-            {% else %}
-              <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
-              <p class="mb-2"><strong>Name:</strong><br><span class="ms-4">{{ o.customer.name }}</span></p>
-              <p class="mb-2"><strong>Contact:</strong><br><span class="ms-4">{{ o.customer.contact }}</span></p>
-              <p class="mb-2"><strong>Address:</strong><br><span class="ms-4">{{ o.customer.address }}</span></p>
-            {% endif %}
-          </div>
-        </div>
-
-        {% if o.order_source != 'walk-in' %}
-        <hr>
-        <div class="row">
-          <div class="col-md-6"><p class="mb-2"><strong>Occasion:</strong><br><span class="ms-4">{{ o.customer.occasion or 'N/A' }}</span></p></div>
-          <div class="col-md-6"><p class="mb-2"><strong>Celebrant:</strong><br><span class="ms-4">{{ o.customer.celebrant or 'N/A' }}</span></p></div>
-          <div class="col-md-6"><p class="mb-2"><strong>Age:</strong><br><span class="ms-4">{{ o.customer.age or 'N/A' }}</span></p></div>
-        </div>
-        {% endif %}
-
-        {% if o.notes %}
-        <hr>
-        <div class="alert alert-info mb-0">
-          <h6 class="alert-heading">Special Instructions</h6>
-          <p class="mb-0">{{ o.notes }}</p>
-        </div>
-        {% endif %}
-
-        {% if o.inspo_image %}
-        <hr>
-        <div class="mb-3">
-          <h6 class="text-muted mb-3"><i class="fas fa-image me-2"></i>CAKE INSPO IMAGE</h6>
-          <img src="{{ o.inspo_image }}" alt="Cake inspo" class="img-fluid rounded"
-               style="max-width:300px; max-height:300px; object-fit:cover;">
-        </div>
-        {% endif %}
+      <div class="modal-body" id="detailsModalBody">
+        <!-- JS fills this -->
       </div>
-      <div class="modal-footer">
-        {% if o.order_source != 'walk-in' and o.order_type == 'custom' and o.status not in ['Completed', 'Cancelled'] %}
-        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editOrderModal{{ o.id }}">
-          <i class="fas fa-edit me-2"></i>Edit
-        </button>
-        {% endif %}
+      <div class="modal-footer" id="detailsModalFooter">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
           <i class="fas fa-times me-2"></i>Close
         </button>
@@ -482,59 +275,58 @@
   </div>
 </div>
 
-<!-- EDIT ORDER MODAL -->
-{% if o.order_source != 'walk-in' %}
-<div class="modal fade" id="editOrderModal{{ o.id }}" tabindex="-1">
+<!-- SINGLE EDIT MODAL -->
+<div class="modal fade" id="editOrderModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="/order/edit/{{ o.id }}" id="editOrderForm{{ o.id }}">
+      <form method="POST" id="editOrderForm">
         <div class="modal-header">
           <h5 class="modal-title">Edit Order</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <label>Cake Type</label>
-          <select id="editCakeType{{ o.id }}" name="cake_type" class="form-select edit-cake-type" data-order-id="{{ o.id }}">
-            <option value="800" {% if 'Chocolate' in o.item %}selected{% endif %}>Chocolate (₱800)</option>
-            <option value="850" {% if 'Vanilla' in o.item %}selected{% endif %}>Vanilla (₱850)</option>
-            <option value="900" {% if 'Red Velvet' in o.item %}selected{% endif %}>Red Velvet (₱900)</option>
+          <select id="editCakeType" name="cake_type" class="form-select edit-cake-type">
+            <option value="800">Chocolate (₱800)</option>
+            <option value="850">Vanilla (₱850)</option>
+            <option value="900">Red Velvet (₱900)</option>
           </select>
           <label class="mt-3">Design</label>
-          <select id="editDesign{{ o.id }}" name="design" class="form-select edit-design" data-order-id="{{ o.id }}">
-            <option value="0"   {% if 'Simple' in o.item %}selected{% endif %}>Simple (₱0)</option>
-            <option value="300" {% if 'Themed' in o.item %}selected{% endif %}>Themed (₱300)</option>
-            <option value="500" {% if 'Luxury' in o.item %}selected{% endif %}>Luxury (₱500)</option>
+          <select id="editDesign" name="design" class="form-select edit-design">
+            <option value="0">Simple (₱0)</option>
+            <option value="300">Themed (₱300)</option>
+            <option value="500">Luxury (₱500)</option>
           </select>
           <label class="mt-3">Cake Size</label>
-          <select id="editSize{{ o.id }}" name="cake_size" class="form-select edit-size" data-order-id="{{ o.id }}">
-            <option value="0"   {% if '6 inches' in o.item %}selected{% endif %}>6 inches (₱0)</option>
-            <option value="200" {% if '8 inches' in o.item %}selected{% endif %}>8 inches (+₱200)</option>
-            <option value="400" {% if '10 inches' in o.item %}selected{% endif %}>10 inches (+₱400)</option>
-            <option value="600" {% if '12 inches' in o.item %}selected{% endif %}>12 inches (+₱600)</option>
+          <select id="editSize" name="cake_size" class="form-select edit-size">
+            <option value="0">6 inches (₱0)</option>
+            <option value="200">8 inches (+₱200)</option>
+            <option value="400">10 inches (+₱400)</option>
+            <option value="600">12 inches (+₱600)</option>
           </select>
           <label class="mt-3">Layers</label>
-          <select id="editLayers{{ o.id }}" name="layers" class="form-select edit-layers" data-order-id="{{ o.id }}">
-            <option value="0"   {% if 'Single Layer' in o.item %}selected{% endif %}>Single Layer (₱0)</option>
-            <option value="300" {% if 'Double Layer' in o.item %}selected{% endif %}>Double Layer (+₱300)</option>
-            <option value="600" {% if 'Triple Layer' in o.item %}selected{% endif %}>Triple Layer (+₱600)</option>
+          <select id="editLayers" name="layers" class="form-select edit-layers">
+            <option value="0">Single Layer (₱0)</option>
+            <option value="300">Double Layer (+₱300)</option>
+            <option value="600">Triple Layer (+₱600)</option>
           </select>
           <label class="mt-3">Toppings</label>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Sprinkles' in o.item %}checked{% endif %}><label class="form-check-label" for="editSprinkles{{ o.id }}">Sprinkles (₱100)</label></div>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Fruits' in o.item %}checked{% endif %}><label class="form-check-label" for="editFruits{{ o.id }}">Fruits (₱150)</label></div>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip{{ o.id }}" data-order-id="{{ o.id }}" {% if 'Chocolate Drip' in o.item %}checked{% endif %}><label class="form-check-label" for="editChocoDrip{{ o.id }}">Chocolate Drip (₱200)</label></div>
-          <label for="editNotes{{ o.id }}" class="mt-3">Special Instructions</label>
-          <textarea name="notes" id="editNotes{{ o.id }}" class="form-control" rows="2">{{ o.notes or '' }}</textarea>
-          <label for="editDeliveryDate{{ o.id }}" class="mt-3">Delivery Date</label>
-          <input type="date" name="delivery_date" id="editDeliveryDate{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%Y-%m-%d') }}" required>
-          <label for="editDeliveryTime{{ o.id }}" class="mt-3">Delivery Time</label>
-          <input type="time" name="delivery_time" id="editDeliveryTime{{ o.id }}" class="form-control" value="{{ o.delivery_date.strftime('%H:%M') }}" required>
-          <div class="price-box mt-3">New Total: ₱<span id="editTotalPrice{{ o.id }}">{{ o.amount }}</span></div>
-          <input type="hidden" name="order_item" id="editOrderItem{{ o.id }}">
-          <input type="hidden" name="amount" id="editAmount{{ o.id }}" value="{{ o.amount }}">
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles"><label class="form-check-label" for="editSprinkles">Sprinkles (₱100)</label></div>
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits"><label class="form-check-label" for="editFruits">Fruits (₱150)</label></div>
+          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip"><label class="form-check-label" for="editChocoDrip">Chocolate Drip (₱200)</label></div>
+          <label for="editNotes" class="mt-3">Special Instructions</label>
+          <textarea name="notes" id="editNotes" class="form-control" rows="2"></textarea>
+          <label for="editDeliveryDate" class="mt-3">Delivery Date</label>
+          <input type="date" name="delivery_date" id="editDeliveryDate" class="form-control" required>
+          <label for="editDeliveryTime" class="mt-3">Delivery Time</label>
+          <input type="time" name="delivery_time" id="editDeliveryTime" class="form-control" required>
+          <div class="price-box mt-3">New Total: ₱<span id="editTotalPrice">0</span></div>
+          <input type="hidden" name="order_item" id="editOrderItem">
+          <input type="hidden" name="amount" id="editAmount">
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning" onclick="updateEditOrderData('{{ o.id }}')">
+          <button type="submit" class="btn btn-warning" onclick="updateEditOrderData()">
             <i class="fas fa-save me-2"></i>Save
           </button>
         </div>
@@ -542,139 +334,473 @@
     </div>
   </div>
 </div>
-{% endif %}
-{% endfor %}
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  var currentTab    = 'all';
-  var currentOrders = 1;
-  var ordersPerPage = 6;
+(function() {
+  'use strict';
 
-  function switchOrderTab(tab, btn) {
-    currentTab = tab; currentOrders = 1;
-    document.querySelectorAll('.order-tab-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    updateOrdersDisplay();
+  // ── State ──
+  let db = null;
+  let allOrders = [];         // full list from Firestore
+  let currentTab = 'all';
+  let currentPage = 1;
+  const ordersPerPage = 6;
+  let isFirstLoad = true;
+  let unsubscribe = null;
+
+  // ── Wait for Firebase ──
+  function waitForFirebase() {
+    return new Promise(resolve => {
+      if (typeof firebase !== 'undefined' && firebase.firestore) return resolve();
+      const check = setInterval(() => {
+        if (typeof firebase !== 'undefined' && firebase.firestore) { clearInterval(check); resolve(); }
+      }, 300);
+    });
   }
 
-  function updateOrdersDisplay() {
-    var searchValue = document.getElementById('searchOrders').value.toLowerCase();
-    var statusValue = document.getElementById('statusFilter').value;
-    var rushValue   = document.getElementById('rushFilter').value;
-    var allRows     = document.querySelectorAll('#ordersTable tbody tr');
-    var visibleRows = [];
+  // ── Init ──
+  async function init() {
+      await waitForFirebase();
+      db = firebase.firestore();
 
-    allRows.forEach(function(row) {
-      var text    = row.textContent.toLowerCase();
-      var rowType = row.getAttribute('data-type') || 'unknown';
-      var matchTab = currentTab === 'all' ||
-                     (currentTab === 'custom'  && rowType === 'custom')  ||
-                     (currentTab === 'premade' && rowType === 'premade') ||
-                     (currentTab === 'walkin'  && rowType === 'walkin');
-      var matchSearch = text.includes(searchValue);
-      var statusBadge = row.querySelector('td:nth-child(6) .badge');
-      var matchStatus = !statusValue || (statusBadge && statusBadge.textContent.trim() === statusValue);
-      var isRush      = row.classList.contains('table-danger');
-      var matchRush   = !rushValue || (rushValue === 'yes' && isRush) || (rushValue === 'no' && !isRush);
-      if (matchTab && matchSearch && matchStatus && matchRush) visibleRows.push(row);
+      // Wait for auth — needed for Firestore rules
+      await new Promise(resolve => {
+          firebase.auth().onAuthStateChanged(resolve);
+      });
+
+      setupFilters();
+      listenToOrders();
+  }
+
+  // ── onSnapshot listener ──
+  function listenToOrders() {
+    if (unsubscribe) unsubscribe();
+
+    unsubscribe = db.collection('orders')
+      .orderBy('created_at', 'desc')
+      .onSnapshot(snapshot => {
+
+        snapshot.docChanges().forEach(change => {
+          const data = change.doc.data();
+          const id = change.doc.id;
+          const order = { ...data, id };
+
+          if (change.type === 'added') {
+              allOrders.unshift(order);
+              if (!isFirstLoad) {
+                  setTimeout(() => {
+                      const row = document.querySelector(`tr[data-id="${id}"]`);
+                      if (row) row.classList.add('row-new-flash');
+                  }, 100);
+              }
+          }
+
+          if (change.type === 'modified') {
+              const idx = allOrders.findIndex(o => o.id === id);
+              if (idx !== -1) allOrders[idx] = order;
+          }
+
+          if (change.type === 'removed') {
+              allOrders = allOrders.filter(o => o.id !== id);
+          }
+      });
+
+        isFirstLoad = false;
+        currentPage = 1;
+        // Sort by created_at descending order
+        allOrders.sort((a, b) => {
+            const dateA = toDate(a.created_at);
+            const dateB = toDate(b.created_at);
+            return dateB - dateA;
+        });
+        renderTable();
+
+      }, err => {
+        console.error('onSnapshot error:', err);
+        document.getElementById('ordersTableBody').innerHTML = `
+          <tr><td colspan="9" class="text-center text-danger py-4">
+            <i class="fas fa-exclamation-triangle me-2"></i>Error loading orders. Please refresh.
+          </td></tr>`;
+      });
+  }
+
+  // ── Render Table ──
+  function renderTable() {
+    const search = document.getElementById('searchOrders').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const rushFilter = document.getElementById('rushFilter').value;
+
+    // Filter
+    let filtered = allOrders.filter(o => {
+      const matchTab = currentTab === 'all' ||
+        (currentTab === 'custom' && o.order_type === 'custom') ||
+        (currentTab === 'premade' && o.order_type === 'premade');
+
+      const searchText = [
+        o.customer?.name, o.customer?.contact, o.item,
+        o.status, o.payment_method
+      ].join(' ').toLowerCase();
+      const matchSearch = searchText.includes(search);
+
+      const matchStatus = !statusFilter || o.status === statusFilter;
+      const matchRush = !rushFilter ||
+        (rushFilter === 'yes' && o.rush) ||
+        (rushFilter === 'no' && !o.rush);
+
+      return matchTab && matchSearch && matchStatus && matchRush;
     });
 
-    updateTabCounts(allRows);
+    // Update tab counts
+    updateTabCounts();
 
-    var totalPages = Math.ceil(visibleRows.length / ordersPerPage);
-    var start      = (currentOrders - 1) * ordersPerPage;
+    // Pagination
+    const totalPages = Math.ceil(filtered.length / ordersPerPage);
+    if (currentPage > totalPages) currentPage = 1;
+    const start = (currentPage - 1) * ordersPerPage;
+    const pageOrders = filtered.slice(start, start + ordersPerPage);
 
-    allRows.forEach(row => row.style.display = 'none');
-    visibleRows.forEach(function(row, i) {
-      if (i >= start && i < start + ordersPerPage) row.style.display = '';
-    });
+    const tbody = document.getElementById('ordersTableBody');
 
-    var emptyMsg = document.getElementById('emptyTabMsg');
-    if (visibleRows.length === 0) {
-      emptyMsg.style.display = 'block';
-      var labels = { all:'No orders yet', custom:'No customized orders found', premade:'No premade orders found', walkin:'No walk-in orders found' };
+    if (filtered.length === 0) {
+      tbody.innerHTML = '';
+      document.getElementById('emptyTabMsg').style.display = 'block';
+      const labels = { all: 'No orders yet', custom: 'No customized orders found', premade: 'No premade orders found' };
       document.getElementById('emptyTabText').textContent = labels[currentTab] || 'No orders found';
     } else {
-      emptyMsg.style.display = 'none';
+      document.getElementById('emptyTabMsg').style.display = 'none';
+      tbody.innerHTML = pageOrders.map(o => renderRow(o)).join('');
     }
 
-    updatePaginationButtons('ordersPagination', currentOrders, totalPages, function(page) {
-      currentOrders = page; updateOrdersDisplay();
+    updatePaginationButtons('ordersPagination', currentPage, totalPages, page => {
+      currentPage = page;
+      renderTable();
     });
   }
 
-  function updateTabCounts(allRows) {
-    var counts = { all:0, custom:0, premade:0, walkin:0 };
-    allRows.forEach(function(row) {
-      var t = row.getAttribute('data-type') || 'unknown';
-      counts.all++;
-      if (t === 'custom')  counts.custom++;
-      if (t === 'premade') counts.premade++;
-      if (t === 'walkin')  counts.walkin++;
-    });
-    document.getElementById('count-all').textContent     = counts.all;
-    document.getElementById('count-custom').textContent  = counts.custom;
-    document.getElementById('count-premade').textContent = counts.premade;
-    document.getElementById('count-walkin').textContent  = counts.walkin;
+  // ── Render Single Row ──
+  function renderRow(o) {
+    const createdAt = toDate(o.created_at);
+    const deliveryDate = toDate(o.delivery_date);
+    const isRush = o.rush ? 'table-danger' : '';
+
+    const dateOrdered = createdAt
+      ? `<small>${formatDate(createdAt)}</small><br><small class="text-muted">${formatTime(createdAt)}</small>`
+      : '<small class="text-muted">N/A</small>';
+
+    const typeBadge = o.order_type === 'custom'
+      ? `<span class="badge badge-custom">Custom</span>`
+      : `<span class="badge badge-premade">Premade</span>`;
+
+    const customerCell = `
+      <strong>${esc(o.customer?.name || '')}</strong>
+      ${o.rush ? '<span class="badge bg-danger ms-1">RUSH</span>' : ''}
+      <br><small class="text-muted">${esc(o.customer?.contact || '')}</small>`;
+
+    const itemCell = `<span class="text-truncate d-inline-block" style="max-width:200px;" title="${esc(o.item || '')}">${esc(o.item || '')}</span>`;
+
+    const deliveryCell = deliveryDate
+      ? `<small>${formatDate(deliveryDate)}</small><br><small class="text-muted">${formatTime(deliveryDate)}</small>`
+      : '<small class="text-muted">N/A</small>';
+
+    const statusBadge = getStatusBadge(o.status);
+
+    const paymentCell = o.payment_status === 'Paid'
+      ? `<span class="badge bg-success">✅ Paid</span>`
+      : `<span class="badge bg-warning text-dark">⏳ Pending</span>`;
+
+    const detailsCell = `
+      <button class="btn btn-sm btn-outline-info" onclick="showDetails('${o.id}')">View</button>
+      ${o.status === 'Out for Delivery' && o.delivery_type === 'Delivery' && o.delivery_token
+        ? `<button class="btn btn-sm btn-outline-success mt-1 w-100" onclick="copyLink('${window.location.origin}/delivery/${o.delivery_token}', this)">
+             <i class="fas fa-link"></i> Copy Link
+           </button>`
+        : ''}`;
+
+    const updateCell = getUpdateCell(o);
+
+    return `
+      <tr class="${isRush}" data-id="${o.id}" data-type="${o.order_type || 'unknown'}">
+        <td>${dateOrdered}</td>
+        <td>${typeBadge}</td>
+        <td>${customerCell}</td>
+        <td>${itemCell}</td>
+        <td>${deliveryCell}</td>
+        <td>${statusBadge}</td>
+        <td>${paymentCell}</td>
+        <td>${detailsCell}</td>
+        <td>${updateCell}</td>
+      </tr>`;
   }
 
-  function calculateEditTotal(orderId) {
-    var total = (parseFloat(document.getElementById(`editCakeType${orderId}`).value) || 0)
-              + (parseFloat(document.getElementById(`editDesign${orderId}`).value) || 0)
-              + (parseFloat(document.getElementById(`editSize${orderId}`).value) || 0)
-              + (parseFloat(document.getElementById(`editLayers${orderId}`).value) || 0);
-    document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
-      total += parseFloat(t.value) || 0;
-    });
-    document.getElementById(`editTotalPrice${orderId}`).innerText = total.toFixed(2);
-    document.getElementById(`editAmount${orderId}`).value = total.toFixed(2);
+  // ── Status Badge ──
+  function getStatusBadge(status) {
+    const map = {
+      'New': 'bg-secondary', 'Accepted': 'bg-info',
+      'Pending': 'bg-warning text-dark', 'Ready': 'bg-primary',
+      'Out for Delivery': 'bg-dark', 'Completed': 'bg-success',
+      'Cancelled': 'bg-danger'
+    };
+    return `<span class="badge ${map[status] || 'bg-secondary'}">${status || 'Unknown'}</span>`;
   }
 
-  function updateEditOrderData(orderId) {
-    var cake   = document.getElementById(`editCakeType${orderId}`).selectedOptions[0].text;
-    var design = document.getElementById(`editDesign${orderId}`).selectedOptions[0].text;
-    var size   = document.getElementById(`editSize${orderId}`).selectedOptions[0].text;
-    var layers = document.getElementById(`editLayers${orderId}`).selectedOptions[0].text;
-    var toppings = [];
-    document.querySelectorAll(`.edit-topping[data-order-id="${orderId}"]:checked`).forEach(t => {
-      toppings.push(document.querySelector(`label[for="${t.id}"]`).innerText.trim().split('(')[0].trim());
+  // ── Update Status Cell ──
+  function getUpdateCell(o) {
+    if (o.status === 'Completed') {
+      return `<span class="badge bg-success p-2">✅ Completed</span>
+              ${o.payment_method === 'Cash on Delivery' ? '<br><span class="badge bg-success mt-1">💰 COD Paid</span>' : ''}`;
+    }
+    if (o.status === 'Cancelled') {
+      return `<span class="badge bg-danger p-2">❌ Cancelled</span>`;
+    }
+
+    const options = {
+      'New':              ['New', 'Accepted', 'Cancelled'],
+      'Accepted':         ['Accepted', 'Pending', 'Cancelled'],
+      'Pending':          ['Pending', 'Ready', 'Cancelled'],
+      'Ready':            ['Ready', 'Out for Delivery', 'Completed', 'Cancelled'],
+      'Out for Delivery': ['Out for Delivery', 'Completed', 'Cancelled'],
+    };
+
+    const opts = options[o.status] || [o.status];
+    const selectOptions = opts.map(s =>
+      `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`
+    ).join('');
+
+    return `
+      <form method="POST" action="/order/status/${o.id}" onsubmit="return confirmStatus('${o.status}')">
+        <select name="status" class="form-select form-select-sm mb-1">${selectOptions}</select>
+        <button class="btn btn-primary btn-sm w-100">
+          <i class="fas fa-sync-alt"></i> Update
+        </button>
+      </form>`;
+  }
+
+  // ── Show Details Modal ──
+  window.showDetails = function(orderId) {
+    const o = allOrders.find(x => x.id === orderId);
+    if (!o) return;
+
+    const header = document.getElementById('detailsModalHeader');
+    const title = document.getElementById('detailsModalTitle');
+    const body = document.getElementById('detailsModalBody');
+    const footer = document.getElementById('detailsModalFooter');
+
+    // Header color
+    header.className = 'modal-header text-white ' + (o.rush ? 'bg-danger' : 'bg-primary');
+    title.innerHTML = `Order Details
+      ${o.rush ? '<span class="badge bg-white text-danger ms-2">RUSH</span>' : ''}`;
+
+    // Items HTML
+    let itemsHtml = '';
+    if (o.order_type === 'premade' && o.selected_items?.length) {
+      itemsHtml = o.selected_items.map(item => `
+        <div class="order-item-line">
+          <div>
+            <div class="name">${esc(item.cake_name)}</div>
+            <div class="meta">₱${parseFloat(item.price).toFixed(2)}${item.quantity > 1 ? ` × ${item.quantity}` : ''}</div>
+          </div>
+          <div class="sub">₱${parseFloat(item.subtotal || item.price).toFixed(2)}</div>
+        </div>`).join('');
+    } else if (o.order_type === 'custom' && o.custom_components?.length) {
+      itemsHtml = o.custom_components.map(c => `
+        <div class="order-item-line">
+          <div>
+            <div class="name">${esc(c.name)}</div>
+            <div class="meta">₱${parseFloat(c.price).toFixed(2)}</div>
+          </div>
+          <div class="sub">₱${parseFloat(c.price).toFixed(2)}</div>
+        </div>`).join('');
+    } else {
+      itemsHtml = `<p class="ms-2 mb-2">${esc(o.item || '')}</p>`;
+    }
+
+    const deliveryDate = toDate(o.delivery_date);
+    const createdAt = toDate(o.created_at);
+
+    body.innerHTML = `
+      <div class="row">
+        <div class="col-md-6">
+          <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
+          <p class="mb-1"><strong>Order:</strong></p>
+          <div class="mb-2">${itemsHtml}</div>
+          ${deliveryDate ? `<p class="mb-2"><strong>Delivery Date:</strong><br><span class="ms-4">${formatDateFull(deliveryDate)}</span></p>` : ''}
+          <p class="mb-2"><strong>Status:</strong><br><span class="ms-4">${getStatusBadge(o.status)}</span></p>
+          <p class="mb-2"><strong>Delivery Type:</strong><br><span class="ms-4">
+            ${o.delivery_type === 'Pickup'
+              ? '<span class="badge bg-warning text-dark">Pick Up</span>'
+              : '<span class="badge bg-info text-dark">Delivery</span>'}
+          </span></p>
+          <p class="mb-2"><strong>Payment Method:</strong><br><span class="ms-4">${esc(o.payment_method || 'N/A')}</span></p>
+          <p class="mb-2"><strong>Payment Status:</strong><br><span class="ms-4">
+            ${o.payment_status === 'Paid'
+              ? `<span class="badge bg-success">Paid</span>${o.payment_id ? `<small class="text-muted ms-1" style="font-size:0.72rem;">Ref: ${o.payment_id.substring(0,16)}...</small>` : ''}`
+              : '<span class="badge bg-warning text-dark">Pending</span>'}
+          </span></p>
+          <p class="mb-2"><strong>Amount:</strong><br><span class="ms-4 fw-bold text-success">₱${parseFloat(o.amount || 0).toFixed(2)}</span></p>
+          <p class="mb-2"><strong>Ordered On:</strong><br><span class="ms-4">${createdAt ? formatDateFull(createdAt) : 'N/A'}</span></p>
+        </div>
+        <div class="col-md-6">
+          <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
+          <p class="mb-2"><strong>Name:</strong><br><span class="ms-4">${esc(o.customer?.name || '')}</span></p>
+          <p class="mb-2"><strong>Contact:</strong><br><span class="ms-4">${esc(o.customer?.contact || '')}</span></p>
+          <p class="mb-2"><strong>Address:</strong><br><span class="ms-4">${esc(o.customer?.address || '')}</span></p>
+        </div>
+      </div>
+      <hr>
+      <div class="row">
+        <div class="col-md-6"><p class="mb-2"><strong>Occasion:</strong><br><span class="ms-4">${esc(o.customer?.occasion || 'N/A')}</span></p></div>
+        <div class="col-md-6"><p class="mb-2"><strong>Celebrant:</strong><br><span class="ms-4">${esc(o.customer?.celebrant || 'N/A')}</span></p></div>
+        <div class="col-md-6"><p class="mb-2"><strong>Age:</strong><br><span class="ms-4">${esc(o.customer?.age || 'N/A')}</span></p></div>
+      </div>
+      ${o.notes ? `<hr><div class="alert alert-info mb-0"><h6 class="alert-heading">Special Instructions</h6><p class="mb-0">${esc(o.notes)}</p></div>` : ''}
+      ${o.inspo_image ? `<hr><div class="mb-3"><h6 class="text-muted mb-3"><i class="fas fa-image me-2"></i>CAKE INSPO IMAGE</h6><img src="${o.inspo_image}" alt="Cake inspo" class="img-fluid rounded" style="max-width:300px;max-height:300px;object-fit:cover;"></div>` : ''}
+    `;
+
+    // Footer — show edit button for custom orders not completed/cancelled
+    footer.innerHTML = `
+      ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
+        ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
+        : ''}
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
+
+    new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+  };
+
+  // ── Show Edit Modal ──
+  window.showEdit = function(orderId) {
+    const o = allOrders.find(x => x.id === orderId);
+    if (!o) return;
+
+    // Set form action
+    document.getElementById('editOrderForm').action = `/order/edit/${o.id}`;
+
+    // Pre-select values based on item string
+    const item = o.item || '';
+    document.getElementById('editCakeType').value = item.includes('Chocolate') ? '800' : item.includes('Vanilla') ? '850' : '900';
+    document.getElementById('editDesign').value = item.includes('Themed') ? '300' : item.includes('Luxury') ? '500' : '0';
+    document.getElementById('editSize').value = item.includes('8 inches') ? '200' : item.includes('10 inches') ? '400' : item.includes('12 inches') ? '600' : '0';
+    document.getElementById('editLayers').value = item.includes('Double Layer') ? '300' : item.includes('Triple Layer') ? '600' : '0';
+    document.getElementById('editSprinkles').checked = item.includes('Sprinkles');
+    document.getElementById('editFruits').checked = item.includes('Fruits');
+    document.getElementById('editChocoDrip').checked = item.includes('Chocolate Drip');
+    document.getElementById('editNotes').value = o.notes || '';
+
+    const deliveryDate = toDate(o.delivery_date);
+    if (deliveryDate) {
+      document.getElementById('editDeliveryDate').value = deliveryDate.toISOString().split('T')[0];
+      document.getElementById('editDeliveryTime').value = deliveryDate.toTimeString().substring(0,5);
+    }
+
+    calculateEditTotal();
+    new bootstrap.Modal(document.getElementById('editOrderModal')).show();
+  };
+
+  // ── Calculate Edit Total ──
+  window.calculateEditTotal = function() {
+    let total = parseFloat(document.getElementById('editCakeType').value || 0)
+              + parseFloat(document.getElementById('editDesign').value || 0)
+              + parseFloat(document.getElementById('editSize').value || 0)
+              + parseFloat(document.getElementById('editLayers').value || 0);
+    document.querySelectorAll('.edit-topping:checked').forEach(t => total += parseFloat(t.value) || 0);
+    document.getElementById('editTotalPrice').textContent = total.toFixed(2);
+    document.getElementById('editAmount').value = total.toFixed(2);
+  };
+
+  // ── Update Edit Order Data (for form submit) ──
+  window.updateEditOrderData = function() {
+    const cake   = document.getElementById('editCakeType').selectedOptions[0].text;
+    const design = document.getElementById('editDesign').selectedOptions[0].text;
+    const size   = document.getElementById('editSize').selectedOptions[0].text;
+    const layers = document.getElementById('editLayers').selectedOptions[0].text;
+    const toppings = [];
+    document.querySelectorAll('.edit-topping:checked').forEach(t => {
+      toppings.push(document.querySelector(`label[for="${t.id}"]`).textContent.trim().split('(')[0].trim());
     });
-    var desc = `${cake}, ${size}, ${layers}, ${design}`;
+    let desc = `${cake}, ${size}, ${layers}, ${design}`;
     if (toppings.length) desc += `, Toppings: ${toppings.join(', ')}`;
-    document.getElementById(`editOrderItem${orderId}`).value = desc;
+    document.getElementById('editOrderItem').value = desc;
+  };
+
+  // ── Tab counts ──
+  function updateTabCounts() {
+    const counts = { all: 0, custom: 0, premade: 0 };
+    allOrders.forEach(o => {
+      counts.all++;
+      if (o.order_type === 'custom') counts.custom++;
+      if (o.order_type === 'premade') counts.premade++;
+    });
+    document.getElementById('count-all').textContent = counts.all;
+    document.getElementById('count-custom').textContent = counts.custom;
+    document.getElementById('count-premade').textContent = counts.premade;
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('searchOrders').addEventListener('keyup', () => { currentOrders = 1; updateOrdersDisplay(); });
-    document.getElementById('statusFilter').addEventListener('change', () => { currentOrders = 1; updateOrdersDisplay(); });
-    document.getElementById('rushFilter').addEventListener('change',   () => { currentOrders = 1; updateOrdersDisplay(); });
-    updateOrdersDisplay();
-    document.querySelectorAll('[id^="editOrderForm"]').forEach(form => {
-      var id = form.id.replace('editOrderForm', '');
-      if (id) calculateEditTotal(id);
-    });
-  });
+  // ── Tab switch ──
+  window.switchOrderTab = function(tab, btn) {
+    currentTab = tab;
+    currentPage = 1;
+    document.querySelectorAll('.order-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTable();
+  };
 
-  document.addEventListener("change", function(e) {
+  // ── Filters ──
+  function setupFilters() {
+    document.getElementById('searchOrders').addEventListener('keyup', () => { currentPage = 1; renderTable(); });
+    document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+    document.getElementById('rushFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+  }
+
+  // ── Edit modal change listeners ──
+  document.addEventListener('change', e => {
     if (['edit-cake-type','edit-design','edit-size','edit-layers','edit-topping'].some(c => e.target.classList.contains(c))) {
-      var id = e.target.getAttribute("data-order-id");
-      if (id) calculateEditTotal(id);
+      calculateEditTotal();
     }
   });
-  function copyLink(url, btn) {
-    navigator.clipboard.writeText(url).then(function() {
-      var original = btn.innerHTML;
+
+
+  // ── Copy Link ──
+  window.copyLink = function(url, btn) {
+    navigator.clipboard.writeText(url).then(() => {
+      const original = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-      btn.classList.remove('btn-outline-success');
-      btn.classList.add('btn-success');
-      setTimeout(function() {
+      btn.classList.replace('btn-outline-success', 'btn-success');
+      setTimeout(() => {
         btn.innerHTML = original;
-        btn.classList.remove('btn-success');
-        btn.classList.add('btn-outline-success');
+        btn.classList.replace('btn-success', 'btn-outline-success');
       }, 2000);
     });
+  };
+
+  // ── Helpers ──
+  function toDate(val) {
+    if (!val) return null;
+    if (val.toDate) return val.toDate(); // Firestore Timestamp
+    if (val instanceof Date) return val;
+    if (val._seconds) return new Date(val._seconds * 1000);
+    return new Date(val);
   }
+
+  function formatDate(d) {
+    return d.toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' });
+  }
+
+  function formatTime(d) {
+    return d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDateFull(d) {
+    return d.toLocaleDateString('en-PH', { month: 'long', day: '2-digit', year: 'numeric' })
+      + ' - ' + formatTime(d);
+  }
+
+  function esc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+})();
 </script>
 {% endblock %}

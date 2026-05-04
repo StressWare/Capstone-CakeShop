@@ -1162,71 +1162,9 @@ def admin_page():
 @app.route("/admin/orders")
 @admin_required
 def admin_orders():
-    orders_list = []
-
-    # ONE simple query instead of looping all users
-    for order_doc in orders.order_by("created_at", direction="DESCENDING").stream():  # ← CHANGED
-        order = order_doc.to_dict()
-        order["id"] = order_doc.id
-
-        if user_id := order.get("user_id"):
-            user_doc = users.document(user_id).get()
-            if user_doc.exists:
-                user_data = user_doc.to_dict()
-                order["customer_username"] = user_data.get("username", "")
-                if "customer" not in order:
-                    order["customer"] = {
-                        "name": user_data.get("fname", ""),
-                        "contact": user_data.get("number", ""),
-                        "address": user_data.get("address", ""),
-                    }
-            else:
-                order["customer_username"] = "Unknown"
-        else:
-            order["customer_username"] = "Unknown"
-
-        order["notes"] = order.get("notes", "")
-        order["inspo_image"] = order.get("inspo_image", None)
-        order["order_source"] = order.get("order_source", "online")
-
-        order["calculated_total"] = calculate_order_total(order)
-
-        order = convert_timestamps(order)
-        orders_list.append(order)
-
-    # Fetch walk-in orders (keep as is)
-    for order_doc in walkin_orders.stream():
-        order = order_doc.to_dict()
-        order["id"] = order_doc.id
-        order["user_id"] = None
-        order["order_source"] = "walk-in"
-        order["notes"] = order.get("notes", "")
-        order["inspo_image"] = None
-        order["rush"] = False
-        order["delivery_type"] = "Walk-in"
-        order["payment_method"] = order.get("payment_method", "Cash")
-        order["calculated_total"] = order.get("amount", 0)
-        order["delivery_date"] = order.get("created_at") or datetime.now(PH_TZ)
-        order["customer"] = {
-            "name": "Walk-in Customer",
-            "contact": "N/A",
-            "address": "N/A",
-            "occasion": "N/A",
-            "celebrant": "N/A",
-            "age": "N/A"
-        }
-        created_at = order.get("created_at")
-        if isinstance(created_at, datetime):
-            if created_at.tzinfo is None:
-                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-            else:
-                created_at = created_at.astimezone(PH_TZ)
-        order["created_at"] = created_at
-        order["delivery_date"] = created_at
-        orders_list.append(order)
-
-    orders_list.sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
-    return render_template("admin_orders.html", orders=orders_list)
+    # No more Firestore fetching here!
+    # onSnapshot in the frontend handles everything
+    return render_template("admin_orders.html")
 # ---------------- ADMIN DELIVERY ----------------
 @app.route("/admin/delivery")
 @admin_required

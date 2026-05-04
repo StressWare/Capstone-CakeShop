@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Transaction History – Ms. Brave Cake Shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body { background: #f5f5f5; font-family: 'Segoe UI', sans-serif; }
+
+    .history-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    /* HEADER BAR */
+    .history-header {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(214,51,132,0.08);
+      border-top: 4px solid #d63384;
+    }
+
+    .history-header-title {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .history-header-title h5 {
+      margin: 0; font-weight: 700; color: #333; font-size: 1rem;
+    }
+
+    .history-header-actions {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+
+    .btn-back {
+      background: white; color: #888; border: 1px solid #eee;
+      border-radius: 8px; padding: 8px 14px; font-size: 0.83rem;
+      font-weight: 600; cursor: pointer; text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { background: #fdecea; color: #e53935; border-color: #fdecea; }
+
+    .btn-download {
+      background: #d63384; color: white; border: none;
+      border-radius: 8px; padding: 8px 14px; font-size: 0.83rem;
+      font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: opacity 0.2s;
+    }
+    .btn-download:hover { opacity: 0.88; }
+
+    /* DATE FILTER */
+    .date-filter-bar {
+      background: white; border-radius: 12px;
+      padding: 12px 20px; margin-bottom: 16px;
+      display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+      box-shadow: 0 2px 8px rgba(214,51,132,0.06);
+    }
+
+    .date-filter-bar label {
+      font-size: 0.8rem; font-weight: 600; color: #888; margin-right: 4px;
+    }
+
+    .date-btn {
+      padding: 6px 14px; border: 1.5px solid #f0e0eb;
+      border-radius: 20px; background: white; color: #888;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .date-btn.active { background: #d63384; color: white; border-color: #d63384; }
+    .date-btn:hover:not(.active) { background: #fdf0f5; border-color: #d63384; color: #d63384; }
+
+    .custom-date-input {
+      padding: 6px 12px; border: 1.5px solid #f0e0eb;
+      border-radius: 20px; font-size: 0.8rem; color: #555;
+      outline: none; transition: border-color 0.2s;
+    }
+    .custom-date-input:focus { border-color: #d63384; }
+
+    /* SUMMARY CARDS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: white; border-radius: 12px;
+      padding: 16px; box-shadow: 0 2px 8px rgba(214,51,132,0.08);
+      border-left: 4px solid #d63384;
+    }
+
+    .summary-card .s-label {
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #aaa; margin-bottom: 6px;
+    }
+
+    .summary-card .s-value {
+      font-size: 1.3rem; font-weight: 700; color: #a0205e;
+    }
+
+    .summary-card .s-sub {
+      font-size: 0.72rem; color: #bbb; margin-top: 2px;
+    }
+
+    /* TABLE */
+    .history-table-wrap {
+      background: white; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(214,51,132,0.08);
+      overflow: hidden;
+    }
+
+    .history-table-wrap table { margin: 0; }
+
+    
+
+    .history-table tbody td {
+      font-size: 0.85rem; padding: 10px 12px;
+      border-color: #fce8f3; vertical-align: middle;
+    }
+
+    .history-table tbody tr:hover { background: #fff5fa; }
+
+    .item-pill {
+      display: inline-block; background: #fde8f1;
+      color: #a0205e; border-radius: 10px;
+      padding: 2px 8px; font-size: 0.75rem; font-weight: 600;
+      margin: 2px;
+    }
+
+    .payment-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+    .payment-cash  { background: #d1fae5; color: #065f46; }
+    .payment-gcash { background: #dbeafe; color: #1e40af; }
+
+    .empty-state {
+      text-align: center; padding: 60px 20px; color: #ccc;
+    }
+
+    /* PDF REPORT (hidden on screen) */
+    #pdfReport {
+      display: none;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 30px;
+      background: white;
+      color: #333;
+    }
+
+    .pdf-header {
+      text-align: center;
+      border-bottom: 2px solid #d63384;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .pdf-header h2 { color: #d63384; font-size: 1.4rem; margin: 0 0 4px; }
+    .pdf-header p  { color: #888; font-size: 0.82rem; margin: 2px 0; }
+
+    .pdf-summary {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; margin-bottom: 20px;
+    }
+
+    .pdf-summary-card {
+      background: #fde8f1; border-radius: 8px;
+      padding: 10px; text-align: center;
+    }
+
+    .pdf-summary-card .pdf-label { font-size: 0.7rem; color: #888; }
+    .pdf-summary-card .pdf-value { font-size: 1rem; font-weight: 700; color: #a0205e; }
+
+    .pdf-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .pdf-table th { background: #d63384; color: white; padding: 8px; text-align: left; }
+    .pdf-table td { padding: 7px 8px; border-bottom: 1px solid #fce8f3; }
+    .pdf-table tr:nth-child(even) { background: #fdf0f5; }
+
+    .pdf-footer {
+      margin-top: 20px; text-align: center;
+      font-size: 0.72rem; color: #aaa;
+      border-top: 1px solid #eee; padding-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div style="position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:9999;min-width:300px;">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show text-center">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="history-wrapper">
+
+  <!-- HEADER -->
+  <div class="history-header">
+    <div class="history-header-title">
+      
+      <h5>POS Transaction History</h5>
+    </div>
+    <div class="history-header-actions">
+      <button class="btn-download" onclick="downloadPDF()">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </button>
+      <a href="/pos" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to POS
+      </a>
+    </div>
+  </div>
+
+  <!-- DATE FILTER -->
+  <div class="date-filter-bar">
+    <label>Filter:</label>
+    <button class="date-btn {% if filter_type == 'today' %}active{% endif %}" onclick="setFilter('today', this)">Today</button>
+    <button class="date-btn {% if filter_type == 'yesterday' %}active{% endif %}" onclick="setFilter('yesterday', this)">Yesterday</button>
+    <button class="date-btn {% if filter_type == 'week' %}active{% endif %}" onclick="setFilter('week', this)">This Week</button>
+    <input type="date" class="custom-date-input" id="customDate"
+           value="{{ custom_date or '' }}"
+           onchange="setFilter('custom', null)"
+           placeholder="Pick a date">
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="s-label">Total Sales</div>
+      <div class="s-value">₱{{ "%.2f"|format(total_sales) }}</div>
+      <div class="s-sub">{{ total_txn }} transaction{{ 's' if total_txn != 1 }}</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-label">Transactions</div>
+      <div class="s-value">{{ total_txn }}</div>
+      <div class="s-sub">Walk-in orders</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-label">Cash Sales</div>
+      <div class="s-value">₱{{ "%.2f"|format(total_cash) }}</div>
+      <div class="s-sub">Cash payments</div>
+    </div>
+    <div class="summary-card">
+      <div class="s-label">GCash Sales</div>
+      <div class="s-value">₱{{ "%.2f"|format(total_gcash) }}</div>
+      <div class="s-sub">GCash payments</div>
+    </div>
+  </div>
+
+  <!-- TRANSACTION TABLE -->
+  <div class="history-table-wrap">
+    <table class="table history-table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Items Ordered</th>
+          <th>Payment</th>
+          <th>Amount</th>
+          <th>Cash Received</th>
+          <th>Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if orders %}
+          {% for o in orders %}
+          <tr>
+            <td>
+              <small style="font-weight:600;">{{ o.created_at.strftime('%I:%M %p') }}</small><br>
+              <small style="color:#aaa;">{{ o.created_at.strftime('%b %d, %Y') }}</small>
+            </td>
+            <td>
+              {% for item in o.order_items %}
+                <span class="item-pill">{{ item.cake_name }} x{{ item.quantity }}</span>
+              {% endfor %}
+            </td>
+            <td>
+              <span class="payment-badge {{ 'payment-gcash' if o.payment_method == 'GCash' else 'payment-cash' }}">
+                {{ o.payment_method }}
+              </span>
+            </td>
+            <td><strong style="color:#d63384;">₱{{ "%.2f"|format(o.amount) }}</strong></td>
+            <td>₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
+            <td>₱{{ "%.2f"|format(o.change or 0) }}</td>
+          </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
+                No transactions found for this period
+              </div>
+            </td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- PDF REPORT (hidden, used only for PDF generation) -->
+<div id="pdfReport">
+  <div class="pdf-header">
+    <h2>Mrs. Braves Cake Shop</h2>
+    <p>POS Transaction Report</p>
+    <p>{{ selected_date }}</p>
+  </div>
+
+  <div class="pdf-summary">
+    <div class="pdf-summary-card">
+      <div class="pdf-label">Total Sales</div>
+      <div class="pdf-value">₱{{ "%.2f"|format(total_sales) }}</div>
+    </div>
+    <div class="pdf-summary-card">
+      <div class="pdf-label">Transactions</div>
+      <div class="pdf-value">{{ total_txn }}</div>
+    </div>
+    <div class="pdf-summary-card">
+      <div class="pdf-label">Cash</div>
+      <div class="pdf-value">₱{{ "%.2f"|format(total_cash) }}</div>
+    </div>
+    <div class="pdf-summary-card">
+      <div class="pdf-label">GCash</div>
+      <div class="pdf-value">₱{{ "%.2f"|format(total_gcash) }}</div>
+    </div>
+  </div>
+
+  <table class="pdf-table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Items</th>
+        <th>Payment</th>
+        <th>Amount</th>
+        <th>Cash Received</th>
+        <th>Change</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if orders %}
+        {% for o in orders %}
+        <tr>
+          <td>{{ o.created_at.strftime('%I:%M %p') }}</td>
+          <td>{% for item in o.order_items %}{{ item.cake_name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+          <td>{{ o.payment_method }}</td>
+          <td>₱{{ "%.2f"|format(o.amount) }}</td>
+          <td>₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
+          <td>₱{{ "%.2f"|format(o.change or 0) }}</td>
+        </tr>
+        {% endfor %}
+      {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#aaa;">No transactions</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+
+  <div class="pdf-footer">
+    Generated on {{ now }} · Mrs. Braves Cake Shop POS System
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function setFilter(type, btn) {
+    if (btn) {
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    let date = '';
+    const today = new Date();
+
+    if (type === 'today') {
+      date = formatDate(today);
+    } else if (type === 'yesterday') {
+      const y = new Date(today);
+      y.setDate(y.getDate() - 1);
+      date = formatDate(y);
+    } else if (type === 'week') {
+      const start = new Date(today);
+      start.setDate(today.getDate() - today.getDay());
+      date = 'week_' + formatDate(start);
+    } else if (type === 'custom') {
+      date = document.getElementById('customDate').value;
+      if (!date) return;
+      document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+    }
+
+    window.location.href = '/pos/history?date=' + date;
+  }
+
+  function formatDate(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function downloadPDF() {
+    const report = document.getElementById('pdfReport');
+    report.style.display = 'block';
+
+    const filename = `MrsBraves_POS_{{ selected_date | replace(' ', '_') | replace(',', '') }}.pdf`;
+
+    const opt = {
+      margin:      [10, 10, 10, 10],
+      filename:    filename,
+      image:       { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(report).save().then(() => {
+      report.style.display = 'none';
+    });
+  }
+</script>
+</body>
+</html>

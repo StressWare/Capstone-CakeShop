@@ -464,6 +464,12 @@
         try {
             await waitForFirebase();
             adminDb = firebase.firestore();
+
+            // Wait for auth
+            await new Promise(resolve => {
+                firebase.auth().onAuthStateChanged(resolve);
+            });
+
             cacheDOM();
             setupEvents();
             console.log('✅ Admin Chat Initialized');
