@@ -2280,15 +2280,22 @@ def service_worker_admin():
 @app.route('/service-worker-delivery.js')
 def service_worker_delivery():
     return app.send_static_file('javascript/service-worker-delivery.js')
+@app.route('/manifest-pos.json')
+def manifest_pos():
+    return app.send_static_file('manifest-pos.json')
+
+@app.route('/service-worker-pos.js')
+def service_worker_pos():
+    return app.send_static_file('javascript/service-worker-pos.js')
 # ================================================================
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
     #indi pag kaksa ang comment pang live server lng na
-    
+    '''
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-    
+    '''
     app.run(debug=True)

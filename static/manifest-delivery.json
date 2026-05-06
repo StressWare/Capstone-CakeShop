@@ -1,9 +1,10 @@
 {
     "id": "/delivery",
-    "name": "Ms. Brave Cake Shop — Delivery",
-    "short_name": "Brave Delivery",
-    "description": "Delivery details for Ms. Brave Cake Shop riders",
+    "name": "Mrs. Braves Cake Shop — Delivery",
+    "short_name": "Mrs. Braves Delivery",
+    "description": "Delivery details for Mrs. Braves Cake Shop riders",
     "start_url": "/delivery",
+    "scope": "/delivery",
     "display": "standalone",
     "background_color": "#f9f0f5",
     "theme_color": "#d63384",

@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#d63384">
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker-delivery.js')
+      navigator.serviceWorker.register('/service-worker-delivery.js', { scope: '/delivery' })
         .then(() => console.log('Delivery SW registered'))
         .catch(err => console.warn('Delivery SW failed:', err));
     }

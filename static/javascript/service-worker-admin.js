@@ -48,7 +48,6 @@ self.addEventListener('fetch', event => {
         '/order',
         '/place-order',
         '/payment',
-        '/pos',
         '/delivery',
         '/verify-token',
         '/send-message',
