@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link href="../static/css/customer_dashboard.css" rel="stylesheet">
+<link href="../static/css/customer_dashboard_responsive.css" rel="stylesheet">
 <link href="../static/css/chatbot.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 {% endblock %}
@@ -53,14 +54,14 @@
     <div id="ordersTab">
         <section id="orders">
             <h2 class="mb-3">Order History</h2>
-            <div class="row mb-4">
-                <div class="col-md-6">
+            <div class="row mb-4 g-2">
+                <div class="col-12 col-md-6">
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                         <input type="text" id="searchOrders" class="form-control" placeholder="Search by item, order ID...">
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <select id="statusFilter" class="form-select">
                         <option value="">All Status</option>
                         <option value="New">New</option>
@@ -72,7 +73,7 @@
                         <option value="Cancelled">Cancelled</option>
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <select id="typeFilter" class="form-select">
                         <option value="">All Types</option>
                         <option value="premade">Premade</option>
@@ -134,19 +135,19 @@
                                     <div class="modal-body">
                                         <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Order Info</h6>
                                         <div class="row g-2 mb-4">
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Order ID:</strong></p>
                                                 <small class="text-muted">{{ order.id }}</small>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Ordered On:</strong></p>
                                                 <p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Delivery Date:</strong></p>
                                                 <p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Delivery Type:</strong></p>
                                                 <p>
                                                     {% if order.delivery_type == 'Pickup' %}
@@ -156,18 +157,18 @@
                                                     {% endif %}
                                                 </p>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Payment Method:</strong></p>
                                                 <p>{{ order.payment_method or 'N/A' }}</p>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Rush Order:</strong></p>
                                                 <p>
                                                     {% if order.rush %}<span class="badge bg-danger">⚡ Yes</span>
                                                     {% else %}<span class="badge bg-secondary">No</span>{% endif %}
                                                 </p>
                                             </div>
-                                            <div class="col-6">
+                                            <div class="col-6 col-sm-6">
                                                 <p class="mb-1"><strong>Status:</strong></p>
                                                 <p>{{ order.status }}</p>
                                             </div>
@@ -188,7 +189,7 @@
                                                 <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
                                             </div>
                                             {% endfor %}
-                                            
+
                                         {% elif order.order_type == 'custom' and order.custom_components %}
                                             {% for component in order.custom_components %}
                                             <div class="order-item-row">
@@ -199,7 +200,7 @@
                                                 <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
                                             </div>
                                             {% endfor %}
-                                            
+
                                         {% else %}
                                             <p>{{ order.item }}</p>
                                         {% endif %}
@@ -208,24 +209,24 @@
                                         <hr>
                                         <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Delivery Info</h6>
                                         <div class="row g-2">
-                                            <div class="col-6">
+                                            <div class="col-12 col-sm-6">
                                                 <p class="mb-1"><strong>Address:</strong></p>
                                                 <p>{{ order.customer.address or 'N/A' }}</p>
                                             </div>
                                             {% if order.customer.occasion %}
-                                            <div class="col-6">
+                                            <div class="col-12 col-sm-6">
                                                 <p class="mb-1"><strong>Occasion:</strong></p>
                                                 <p>{{ order.customer.occasion }}</p>
                                             </div>
                                             {% endif %}
                                             {% if order.customer.celebrant %}
-                                            <div class="col-6">
+                                            <div class="col-12 col-sm-6">
                                                 <p class="mb-1"><strong>Celebrant:</strong></p>
                                                 <p>{{ order.customer.celebrant }}</p>
                                             </div>
                                             {% endif %}
                                             {% if order.customer.age %}
-                                            <div class="col-6">
+                                            <div class="col-12 col-sm-6">
                                                 <p class="mb-1"><strong>Age:</strong></p>
                                                 <p>{{ order.customer.age }}</p>
                                             </div>
@@ -240,7 +241,7 @@
                                         {% endif %}
                                     </div>
 
-                                    <div class="modal-footer">  
+                                    <div class="modal-footer">
                                         {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
                                         <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
                                             <i class="fas fa-receipt me-1"></i>View Receipt
@@ -398,7 +399,6 @@
             {% for cake in favorites_list %}
             <div class="fav-card" id="fav-card-{{ cake.id }}">
 
-                <!-- Image -->
                 {% if cake.image %}
                     <img src="{{ cake.image }}" alt="{{ cake.name }}" class="fav-card-img">
                 {% else %}
@@ -406,12 +406,9 @@
                 {% endif %}
 
                 <div class="fav-card-body">
-                    <div class="fav-card-name">{{ cake.name }}
-                        
-                    </div>
+                    <div class="fav-card-name">{{ cake.name }}</div>
                     <div class="fav-card-price">₱{{ "%.2f"|format(cake.price) }}</div>
 
-                    <!-- Rating -->
                     <div class="fav-card-rating">
                         {% if cake.review_count > 0 %}
                             {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
@@ -421,7 +418,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- Stock -->
                     <div class="fav-card-stock">
                         {% if cake.quantity > 0 %}
                             {{ cake.quantity }} left
@@ -432,7 +428,6 @@
 
                     {% if cake.quantity > 0 %}
                     <div class="fav-btn-group">
-                        <!-- Order Now -->
                         <form method="POST" action="/order/cake">
                             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                             <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -443,7 +438,6 @@
                                 <i class="fas fa-bolt me-1"></i> Order Now
                             </button>
                         </form>
-                        <!-- Add to Cart -->
                         <form method="POST" action="/cart/add">
                             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                             <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -457,7 +451,6 @@
                     </div>
                     {% endif %}
 
-                    <!-- Remove from favorites -->
                     <button class="btn-unfav mt-2"
                             onclick="removeFavorite('{{ cake.id }}', '{{ cake.name }}')">
                         Remove from Favorites
@@ -545,7 +538,6 @@ async function removeFavorite(cakeId, cakeName) {
             const card = document.getElementById('fav-card-' + cakeId);
             if (card) card.remove();
 
-            // show empty state if no more favorites
             const grid = document.querySelector('.favorites-grid');
             if (grid && grid.children.length === 0) {
                 grid.outerHTML = `<div class="fav-empty">

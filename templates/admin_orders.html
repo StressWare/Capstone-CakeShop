@@ -14,6 +14,11 @@
     --shadow-hover:   0 8px 32px rgba(214,51,132,0.18);
   }
 
+  /* ── BASE LAYOUT ── */
+  html, body {
+    height: 100%;
+  }
+
   .card.shadow-sm {
     border: none; border-radius: var(--card-radius);
     box-shadow: var(--shadow-soft); overflow: hidden;
@@ -48,6 +53,7 @@
     0%   { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+
   /* NEW ORDER BANNER */
   #newOrderBanner {
     display: none;
@@ -152,16 +158,273 @@
   .table-loading {
     text-align: center; padding: 40px; color: #c07090;
   }
+
+  /* ════════════════════════════════════════════════
+     RESPONSIVE — TABLET (≤ 991px)
+  ════════════════════════════════════════════════ */
+  @media (max-width: 991px) {
+
+    .container-fluid.mt-4.mb-0.px-4, .container-fluid.my-4.px-4 {
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      margin-top: 16px !important;
+      margin-bottom: 16px !important;
+    }
+
+    .card-body {
+      padding: 16px 14px;
+    }
+
+    /* Tabs wrap nicely */
+    .order-tabs {
+      gap: 3px;
+      padding: 4px;
+    }
+    .order-tab-btn {
+      padding: 7px 12px;
+      font-size: 0.78rem;
+    }
+
+    /* Filter row stacks */
+    .row.mb-3 > .col-md-6 {
+      width: 100%;
+    }
+    .row.mb-3 .row.g-2 > .col-md-6 {
+      width: 50%;
+    }
+
+    /* Table: hide less critical columns on tablet */
+    #ordersTable thead th:nth-child(2),
+    #ordersTable tbody td:nth-child(2) {
+      display: none; /* Type badge — visible in customer cell via renderRow tweak */
+    }
+
+    #ordersTable thead th,
+    #ordersTable tbody td {
+      font-size: 0.78rem;
+      padding: 9px 8px;
+    }
+
+    /* Pagination center on tablet */
+    #ordersPagination {
+      justify-content: center !important;
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     RESPONSIVE — MOBILE (≤ 575px)
+  ════════════════════════════════════════════════ */
+  @media (max-width: 575px) {
+
+    /* ── Page / card layout ── */
+    .container-fluid.mt-4.mb-0.px-4, .container-fluid.my-4.px-4 {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      margin-top: 10px !important;
+      margin-bottom: 10px !important;
+    }
+
+    .card-body {
+      padding: 12px 10px;
+    }
+
+    .card-header-custom {
+      padding: 12px 14px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+    .card-header-custom h4 {
+      font-size: 1rem;
+    }
+
+    /* ── Tabs: scroll horizontally, no wrap ── */
+    .order-tabs {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin-bottom: 14px;
+      gap: 3px;
+    }
+    .order-tabs::-webkit-scrollbar { display: none; }
+    .order-tab-btn {
+      white-space: nowrap;
+      padding: 7px 10px;
+      font-size: 0.74rem;
+      flex-shrink: 0;
+    }
+    .tab-count {
+      padding: 1px 6px;
+      font-size: 0.68rem;
+    }
+
+    /* ── Filters ── */
+    .row.mb-3 > .col-md-6,
+    .row.mb-3 .row.g-2 > .col-md-6 {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .row.mb-3 .row.g-2 {
+      row-gap: 8px;
+    }
+
+    /* ── Table: collapse to key columns ── */
+    /* Hide: Type, Delivery Date, Payment on very small screens */
+    #ordersTable thead th:nth-child(2),
+    #ordersTable tbody td:nth-child(2),
+    #ordersTable thead th:nth-child(5),
+    #ordersTable tbody td:nth-child(5),
+    #ordersTable thead th:nth-child(7),
+    #ordersTable tbody td:nth-child(7) {
+      display: none;
+    }
+
+    #ordersTable thead th,
+    #ordersTable tbody td {
+      font-size: 0.72rem;
+      padding: 8px 6px;
+    }
+
+    /* Make update-status cell more compact */
+    #ordersTable .form-select-sm {
+      font-size: 0.72rem;
+    }
+    #ordersTable .btn-primary.btn-sm {
+      font-size: 0.72rem;
+      padding: 4px 6px;
+    }
+
+    /* Item truncation tighter */
+    #ordersTable .text-truncate {
+      max-width: 100px !important;
+    }
+
+    /* ── Pagination ── */
+    #ordersPagination {
+      justify-content: center !important;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+    .pagination .page-link {
+      font-size: 0.75rem;
+      padding: 5px 9px;
+    }
+
+    /* ── Empty state ── */
+    #emptyTabMsg {
+      padding: 30px 10px !important;
+    }
+
+    /* ── Edit modal: stack selects ── */
+    #editOrderForm .mt-3 {
+      margin-top: 10px !important;
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     MODAL — PROPERLY SIZED & CENTERED ON MOBILE
+     From screenshot: modal-lg stretches nearly full
+     screen on mobile with no visible side margins.
+     Fix: override modal-lg width on small screens,
+     use position:fixed centering via top/left/transform
+     which works regardless of Bootstrap padding-right
+     injection or wrapper overflow settings.
+  ════════════════════════════════════════════════ */
+
+  /* On mobile: ditch modal-lg sizing, use fixed centering */
+  @media (max-width: 575px) {
+    #orderDetailsModal .modal-dialog,
+    #editOrderModal .modal-dialog {
+      /* Override Bootstrap's modal-lg (800px) entirely */
+      width: calc(100vw - 32px) !important;
+      max-width: calc(100vw - 32px) !important;
+      /* Fixed centering: works even when Bootstrap adds padding-right */
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      margin: 0 !important;
+    }
+
+    /* Cap modal height so it doesn't fill the full screen */
+    #orderDetailsModal .modal-content,
+    #editOrderModal .modal-content {
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Modal body scrolls internally */
+    #orderDetailsModal .modal-body,
+    #editOrderModal .modal-body {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+    }
+
+    /* Details two-column → single column */
+    #detailsModalBody .row > .col-md-6 { width: 100% !important; }
+
+    .modal-header  { padding: 12px 14px; }
+    .modal-body    { padding: 14px 12px; }
+    .modal-footer  { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+    .modal-footer .btn { flex: 1 1 auto; min-width: 100px; }
+    .modal-title   { font-size: 0.95rem !important; }
+  }
+
+  /* Tablet */
+  @media (min-width: 576px) and (max-width: 991px) {
+    #orderDetailsModal .modal-dialog,
+    #editOrderModal .modal-dialog {
+      max-width: 88% !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    #orderDetailsModal .modal-body,
+    #editOrderModal .modal-body {
+      max-height: 68vh;
+      overflow-y: auto;
+    }
+  }
+
+  /* ════════════════════════════════════════════════
+     NO EMPTY SCROLL SPACE BELOW THE PAGE
+     From screenshot: large grey area below Close button.
+     Cause: admin_base wrapper has min-height or
+     padding-bottom. Kill it at every selector level.
+  ════════════════════════════════════════════════ */
+
+  .container-fluid.mt-4.mb-0.px-4 {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  /* All common admin template wrapper selectors */
+  #layoutSidenav_content,
+  #content-wrapper,
+  .content-wrapper,
+  .main-content,
+  .main-panel,
+  .page-wrapper,
+  #page-wrapper,
+  #wrapper {
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .table-responsive {
+    min-height: 0 !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<div class="container-fluid my-4 px-4">
+<div class="container-fluid mt-4 mb-0 px-4">
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
       <h4 class="mb-0">Order Management</h4>
-
     </div>
     <div class="card-body">
 
@@ -230,7 +493,6 @@
           <tbody id="ordersTableBody">
             <tr>
               <td colspan="9" class="table-loading">
-                
                 <div style="text-align:center; padding: 40px;">
                   <img src="/static/img/chathead.jpg" 
                       alt="Loading..." 
@@ -238,7 +500,6 @@
                               animation: spin 1s linear infinite;">
                   <p class="mt-2 mb-0" style="color: var(--pink-primary);">Loading orders...</p>
                 </div>
-                <p class="mt-2 mb-0">Loading orders...</p>
               </td>
             </tr>
           </tbody>
@@ -257,7 +518,7 @@
 
 <!-- SINGLE DETAILS MODAL -->
 <div class="modal fade" id="orderDetailsModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header bg-primary text-white" id="detailsModalHeader">
         <h5 class="modal-title" id="detailsModalTitle">Order Details</h5>
@@ -277,7 +538,7 @@
 
 <!-- SINGLE EDIT MODAL -->
 <div class="modal fade" id="editOrderModal" tabindex="-1">
-  <div class="modal-dialog modal-lg">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
       <form method="POST" id="editOrderForm">
         <div class="modal-header">
@@ -339,12 +600,52 @@
 
 {% block extra_js %}
 <script>
+/* ── Fix 1: Prevent pinch-zoom ──
+   admin_base.html has <meta name="viewport" content="width=device-width, initial-scale=1">
+   We update it to also block user scaling. */
+(function() {
+  var vp = document.querySelector('meta[name="viewport"]');
+  if (vp) {
+    vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+  }
+})();
+
+/* ── Fix 2: No empty space below page ──
+   admin_base.html wraps content in .main-content with no explicit height.
+   body.bg-light fills 100vh making it appear there is blank space.
+   We set body and .main-content to fit-content height. */
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.style.height = 'auto';
+  document.body.style.minHeight = '0';
+  var mc = document.querySelector('.main-content');
+  if (mc) {
+    mc.style.paddingBottom = '0';
+    mc.style.minHeight = '0';
+  }
+});
+
+/* ── Fix 3: Modal body padding-right ──
+   Bootstrap 5 adds padding-right to <body> when opening a modal
+   to compensate for the removed scrollbar. This shifts .main-content
+   and makes the modal appear off-center.
+   We zero it out immediately after Bootstrap sets it. */
+document.addEventListener('show.bs.modal', function() {
+  requestAnimationFrame(function() {
+    document.body.style.paddingRight = '0px';
+    document.body.style.overflow = 'hidden';
+  });
+});
+document.addEventListener('hidden.bs.modal', function() {
+  document.body.style.paddingRight = '';
+  document.body.style.overflow = '';
+});
+
 (function() {
   'use strict';
 
   // ── State ──
   let db = null;
-  let allOrders = [];         // full list from Firestore
+  let allOrders = [];
   let currentTab = 'all';
   let currentPage = 1;
   const ordersPerPage = 6;
@@ -366,7 +667,6 @@
       await waitForFirebase();
       db = firebase.firestore();
 
-      // Wait for auth — needed for Firestore rules
       await new Promise(resolve => {
           firebase.auth().onAuthStateChanged(resolve);
       });
@@ -410,7 +710,6 @@
 
         isFirstLoad = false;
         currentPage = 1;
-        // Sort by created_at descending order
         allOrders.sort((a, b) => {
             const dateA = toDate(a.created_at);
             const dateB = toDate(b.created_at);
@@ -433,7 +732,6 @@
     const statusFilter = document.getElementById('statusFilter').value;
     const rushFilter = document.getElementById('rushFilter').value;
 
-    // Filter
     let filtered = allOrders.filter(o => {
       const matchTab = currentTab === 'all' ||
         (currentTab === 'custom' && o.order_type === 'custom') ||
@@ -453,10 +751,8 @@
       return matchTab && matchSearch && matchStatus && matchRush;
     });
 
-    // Update tab counts
     updateTabCounts();
 
-    // Pagination
     const totalPages = Math.ceil(filtered.length / ordersPerPage);
     if (currentPage > totalPages) currentPage = 1;
     const start = (currentPage - 1) * ordersPerPage;
@@ -588,12 +884,10 @@
     const body = document.getElementById('detailsModalBody');
     const footer = document.getElementById('detailsModalFooter');
 
-    // Header color
     header.className = 'modal-header text-white ' + (o.rush ? 'bg-danger' : 'bg-primary');
     title.innerHTML = `Order Details
       ${o.rush ? '<span class="badge bg-white text-danger ms-2">RUSH</span>' : ''}`;
 
-    // Items HTML
     let itemsHtml = '';
     if (o.order_type === 'premade' && o.selected_items?.length) {
       itemsHtml = o.selected_items.map(item => `
@@ -659,7 +953,6 @@
       ${o.inspo_image ? `<hr><div class="mb-3"><h6 class="text-muted mb-3"><i class="fas fa-image me-2"></i>CAKE INSPO IMAGE</h6><img src="${o.inspo_image}" alt="Cake inspo" class="img-fluid rounded" style="max-width:300px;max-height:300px;object-fit:cover;"></div>` : ''}
     `;
 
-    // Footer — show edit button for custom orders not completed/cancelled
     footer.innerHTML = `
       ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
         ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
@@ -674,10 +967,8 @@
     const o = allOrders.find(x => x.id === orderId);
     if (!o) return;
 
-    // Set form action
     document.getElementById('editOrderForm').action = `/order/edit/${o.id}`;
 
-    // Pre-select values based on item string
     const item = o.item || '';
     document.getElementById('editCakeType').value = item.includes('Chocolate') ? '800' : item.includes('Vanilla') ? '850' : '900';
     document.getElementById('editDesign').value = item.includes('Themed') ? '300' : item.includes('Luxury') ? '500' : '0';
@@ -709,7 +1000,7 @@
     document.getElementById('editAmount').value = total.toFixed(2);
   };
 
-  // ── Update Edit Order Data (for form submit) ──
+  // ── Update Edit Order Data ──
   window.updateEditOrderData = function() {
     const cake   = document.getElementById('editCakeType').selectedOptions[0].text;
     const design = document.getElementById('editDesign').selectedOptions[0].text;
@@ -760,7 +1051,6 @@
     }
   });
 
-
   // ── Copy Link ──
   window.copyLink = function(url, btn) {
     navigator.clipboard.writeText(url).then(() => {
@@ -777,7 +1067,7 @@
   // ── Helpers ──
   function toDate(val) {
     if (!val) return null;
-    if (val.toDate) return val.toDate(); // Firestore Timestamp
+    if (val.toDate) return val.toDate();
     if (val instanceof Date) return val;
     if (val._seconds) return new Date(val._seconds * 1000);
     return new Date(val);

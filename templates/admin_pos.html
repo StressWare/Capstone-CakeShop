@@ -128,6 +128,116 @@
       cursor:pointer; width:100%; transition:all 0.2s;
     }
     .btn-clear:hover { background:#fdecea; color:#e53935; border-color:#fdecea; }
+
+
+    /* =========================
+   RESPONSIVE DESIGN
+   ========================= */
+
+/* TABLET (iPad / medium screens) */
+@media (max-width: 1024px) {
+  .pos-wrapper {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .cakes-panel,
+  .order-panel {
+    height: auto;
+    max-height: none;
+  }
+
+  .cake-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .pos-wrapper {
+    grid-template-columns: 1fr;
+    padding: 10px;
+    height: auto;
+  }
+
+  /* Panels stacked cleanly */
+  .cakes-panel,
+  .order-panel {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+  }
+
+  /* Reduce cake card density */
+  .cake-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .cake-btn {
+    padding: 10px;
+  }
+
+  .cake-img {
+    width: 65px;
+    height: 65px;
+  }
+
+  .cake-emoji {
+    font-size: 2rem;
+  }
+
+  .cake-name {
+    font-size: 0.75rem;
+  }
+
+  .cake-price {
+    font-size: 0.8rem;
+  }
+
+  /* Order panel spacing */
+  .order-panel {
+    margin-top: 12px;
+  }
+
+  .order-items {
+    max-height: 300px;
+  }
+
+  /* Make buttons easier to tap */
+  .btn-place,
+  .btn-clear {
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .pay-btn {
+    font-size: 0.8rem;
+    padding: 8px;
+  }
+}
+
+/* SMALL MOBILE */
+@media (max-width: 480px) {
+
+  .cake-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .panel-title {
+    font-size: 0.9rem;
+  }
+
+  .total-amount {
+    font-size: 1.1rem;
+  }
+}
+
   </style>
 </head>
 <body>

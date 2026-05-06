@@ -2285,10 +2285,10 @@ def service_worker_delivery():
 # ================================================================
 if __name__ == "__main__":
     #indi pag kaksa ang comment pang live server lng na
-    '''
+    
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-    '''
+    
     app.run(debug=True)

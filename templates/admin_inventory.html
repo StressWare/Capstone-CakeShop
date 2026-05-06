@@ -55,7 +55,7 @@
 
   /* ── BUTTONS ── */
   .btn-info {
-    background-color: #c71585;
+    background-color: #c71585;  
     border-color: #c71585;
     color: #fff;
   }
@@ -81,6 +81,83 @@
   .btn-close-white {
     filter: invert(1);
   }
+
+
+
+/* ── RESPONSIVE FIX (TABLET & MOBILE) ── */
+@media (max-width: 992px) {
+  /* prevent horizontal scrolling */
+  body, html {
+    overflow-x: hidden;
+  }
+
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-left: -5px;
+    margin-right: -8px;
+
+  }
+
+  /* form becomes stacked */
+  form.row {
+    flex-direction: column;
+  }
+
+  form.row .col-md-4,
+  form.row .col-md-3,
+  form.row .col-md-2 {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+
+  form.row .d-flex {
+    width: 100%;
+  }
+
+  /* make button full width and aligned */
+  form button {
+    width: 100%;
+  }
+
+  /* reduce card padding slightly for fit view */
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  /* tighter mobile spacing */
+  .card-header h4 {
+    font-size: 1.1rem;
+  }
+
+  .form-label {
+    font-size: 0.9rem;
+  }
+
+  .table-responsive {
+    font-size: 0.85rem;
+  }
+
+  .input-group {
+    flex-wrap: wrap;
+  }
+
+  .input-group-text {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-control, .form-select {
+    font-size: 0.9rem;
+  }
+}
+
+
+
 </style>
 {% endblock %}
 

@@ -3,6 +3,30 @@
 
 {% block extra_css %}
 <style>
+
+  .table-pink th{
+    background-color: #c71585;
+    color: white;
+  }
+
+  /* ── DATE + TIME HORIZONTAL FIX ── */
+  .date-time {
+    display: flex;
+    align-items: flex-end;
+    white-space: nowrap;
+    padding-top: 2px;
+    margin-top: 27px;
+    margin-right: 10px;
+    }
+
+
+
+    #reviewsTable td:nth-child(2),
+    #reviewsTable td:nth-child(4),
+    #reviewsTable td:nth-child(5) {
+      padding-left: 22px !important;
+      padding-right: 22px !important;
+    }
   /* ── STAR DISPLAY ── */
   .star-display { color: #ffc107; font-size: 0.9rem; }
 
@@ -15,22 +39,22 @@
   }
 
   /* ── STATUS BADGES ── */
-  .badge-visible   { background: #28a745 !important; } /* green */
-  .badge-hidden    { background: #6c757d !important; } /* gray */
+  .badge-visible   { background: #28a745 !important; }
+  .badge-hidden    { background: #6c757d !important; }
 
-  /* ── CARD HEADER CUSTOMIZATION ── */
+  /* ── CARD HEADER ── */
   .card-header.card-header-custom {
-    border-top: 4px solid #c71585; /* pink top border */
-    background: #fffefe; /* light pink background */
+    border-top: 4px solid #c71585;
+    background: #fffefe;
     color: #c71585;
   }
 
-  /* ── TABLE HOVER PINK ACCENT ── */
+  /* ── TABLE HOVER ── */
   #reviewsTable tbody tr:hover {
-    background-color: #fff0f6; /* very light pink on hover */
+    background-color: #fff0f6;
   }
 
-  /* ── INPUT & SELECT FOCUS ── */
+  /* ── INPUT FOCUS ── */
   #searchReviews:focus,
   #visibilityFilter:focus,
   #ratingFilter:focus {
@@ -43,17 +67,134 @@
     background-color: #c71585;
     border-color: #c71585;
   }
+
+  /* ════════════════════════════════════════════════
+     NO EMPTY SCROLL SPACE BELOW THE PAGE
+  ════════════════════════════════════════════════ */
+  .container-fluid.mt-4.mb-0.px-4 {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  #layoutSidenav_content,
+  #content-wrapper,
+  .content-wrapper,
+  .main-content,
+  .main-panel,
+  .page-wrapper,
+  #page-wrapper,
+  #wrapper {
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .table-responsive {
+    min-height: 0 !important;
+  }
+
+  /* ════════════════════════════════════════════════
+     RESPONSIVE — TABLET (≤ 991px)
+  ════════════════════════════════════════════════ */
+  @media (max-width: 991px) {
+
+    .container-fluid.mt-4.mb-0.px-4 {
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      margin-top: 16px !important;
+    }
+
+    .card-header.card-header-custom {
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .row.mb-3 > .col-md-6 { width: 100%; }
+    .row.mb-3 > .col-md-3 { width: 50%; }
+
+    #reviewsTable thead th,
+    #reviewsTable tbody td {
+      font-size: 0.78rem;
+      padding: 9px 8px;
+    }
+
+    .review-comment { max-width: 160px; }
+
+    #reviewsPagination { justify-content: center !important; }
+  }
+
+  /* ════════════════════════════════════════════════
+     RESPONSIVE — MOBILE (≤ 575px)
+  ════════════════════════════════════════════════ */
+  @media (max-width: 575px) {
+
+    .container-fluid.mt-4.mb-0.px-4 {
+      padding-left: 8px !important;
+      padding-right: 8px !important;
+      margin-top: 50px !important;
+    }
+
+    .card-header.card-header-custom {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 6px;
+      padding: 12px 14px;
+    }
+
+    .card-header.card-header-custom h4 { font-size: 1rem; }
+
+    .card-body { padding: 12px 10px !important; }
+
+    .row.mb-3 > .col-md-6,
+    .row.mb-3 > .col-md-3 {
+      width: 100% !important;
+      margin-bottom: 8px;
+    }
+
+    #reviewsTable thead th:nth-child(3),
+    #reviewsTable tbody td:nth-child(3),
+    #reviewsTable thead th:nth-child(6),
+    #reviewsTable tbody td:nth-child(6) {
+      display: none;
+    }
+
+    #reviewsTable thead th,
+    #reviewsTable tbody td {
+      font-size: 0.72rem;
+      padding: 8px 5px;
+    }
+
+    .review-comment { max-width: 90px; }
+
+    .star-display { font-size: 0.75rem; }
+
+    #reviewsTable .btn-sm {
+      font-size: 0.7rem;
+      padding: 3px 7px;
+    }
+
+    #reviewsPagination {
+      justify-content: center !important;
+      flex-wrap: wrap;
+      gap: 2px;
+    }
+
+    .pagination .page-link {
+      font-size: 0.75rem;
+      padding: 5px 9px;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid my-4 px-4">
+<div class="container-fluid mt-4 mb-0 px-4">
 
   <div class="card shadow-sm">
     <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
-      <h4 class="mb-0"></i>Review Management</h4>
+      <h4 class="mb-0">Review Management</h4>
       <span class="badge bg-primary">{{ reviews|length }} total</span>
     </div>
+
     <div class="card-body">
 
       <!-- FILTERS -->
@@ -86,7 +227,7 @@
       <!-- TABLE -->
       <div class="table-responsive">
         <table class="table table-hover align-middle" id="reviewsTable">
-          <thead class="table-dark">
+          <thead class="table-pink">
             <tr>
               <th>Date</th>
               <th>Cake</th>
@@ -97,27 +238,36 @@
               <th>Action</th>
             </tr>
           </thead>
+
           <tbody>
             {% for r in reviews %}
             <tr data-visibility="{{ 'visible' if r.is_visible else 'hidden' }}"
                 data-rating="{{ r.rating }}">
-              <td>
-                <small>{{ r.created_at.strftime('%b %d, %Y') if r.created_at else 'N/A' }}</small><br>
-                <small class="text-muted">{{ r.created_at.strftime('%I:%M %p') if r.created_at else '' }}</small>
+
+              <!-- ✅ FIXED DATE + TIME -->
+              <td class="date-time">
+                <small>{{ r.created_at.strftime('%b %d, %Y') if r.created_at else 'N/A' }}</small>
+                <small class="text-muted ms-2">
+                  {{ r.created_at.strftime('%I:%M %p') if r.created_at else '' }}
+                </small>
               </td>
+
               <td><strong>{{ r.cake_name }}</strong></td>
               <td>{{ r.reviewer_name }}</td>
+
               <td>
                 <span class="star-display">
                   {% for i in range(r.rating) %}⭐{% endfor %}
                 </span>
                 <small class="text-muted">({{ r.rating }}/5)</small>
               </td>
+
               <td>
                 <span class="review-comment" title="{{ r.comment }}">
                   {{ r.comment or '—' }}
                 </span>
               </td>
+
               <td>
                 {% if r.is_visible %}
                   <span class="badge badge-visible">Visible</span>
@@ -125,6 +275,7 @@
                   <span class="badge badge-hidden">Hidden</span>
                 {% endif %}
               </td>
+
               <td>
                 <form method="POST" action="/admin/review/toggle/{{ r.id }}">
                   {% if r.is_visible %}
@@ -138,6 +289,7 @@
                   {% endif %}
                 </form>
               </td>
+
             </tr>
             {% else %}
             <tr>
@@ -154,6 +306,7 @@
       <nav class="mt-3">
         <ul class="pagination justify-content-end mb-0" id="reviewsPagination"></ul>
       </nav>
+
     </div>
   </div>
 </div>
@@ -161,47 +314,88 @@
 
 {% block extra_js %}
 <script>
-  var currentPage   = 1;
-  var itemsPerPage  = 10;
-
-  function updateDisplay() {
-    var searchValue     = document.getElementById('searchReviews').value.toLowerCase();
-    var visibilityValue = document.getElementById('visibilityFilter').value;
-    var ratingValue     = document.getElementById('ratingFilter').value;
-    var allRows         = document.querySelectorAll('#reviewsTable tbody tr');
-    var visibleRows     = [];
-
-    allRows.forEach(function(row) {
-      var text       = row.textContent.toLowerCase();
-      var visibility = row.getAttribute('data-visibility');
-      var rating     = row.getAttribute('data-rating');
-
-      var matchSearch     = text.includes(searchValue);
-      var matchVisibility = !visibilityValue || visibility === visibilityValue;
-      var matchRating     = !ratingValue || rating === ratingValue;
-
-      if (matchSearch && matchVisibility && matchRating) visibleRows.push(row);
-    });
-
-    var totalPages = Math.ceil(visibleRows.length / itemsPerPage);
-    var start      = (currentPage - 1) * itemsPerPage;
-
-    allRows.forEach(row => row.style.display = 'none');
-    visibleRows.forEach(function(row, i) {
-      if (i >= start && i < start + itemsPerPage) row.style.display = '';
-    });
-
-    updatePaginationButtons('reviewsPagination', currentPage, totalPages, function(page) {
-      currentPage = page;
-      updateDisplay();
-    });
+/* ── Fix 1: Prevent pinch-zoom ── */
+(function() {
+  var vp = document.querySelector('meta[name="viewport"]');
+  if (vp) {
+    vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
   }
+})();
 
-  document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('searchReviews').addEventListener('keyup',       () => { currentPage = 1; updateDisplay(); });
-    document.getElementById('visibilityFilter').addEventListener('change',   () => { currentPage = 1; updateDisplay(); });
-    document.getElementById('ratingFilter').addEventListener('change',       () => { currentPage = 1; updateDisplay(); });
+/* ── Fix 2: No empty space below page ── */
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.style.height = 'auto';
+  document.body.style.minHeight = '0';
+  var mc = document.querySelector('.main-content');
+  if (mc) {
+    mc.style.paddingBottom = '0';
+    mc.style.minHeight = '0';
+  }
+});
+
+/* ── Fix 3: Bootstrap modal padding ── */
+document.addEventListener('show.bs.modal', function() {
+  requestAnimationFrame(function() {
+    document.body.style.paddingRight = '0px';
+    document.body.style.overflow = 'hidden';
+  });
+});
+document.addEventListener('hidden.bs.modal', function() {
+  document.body.style.paddingRight = '';
+  document.body.style.overflow = '';
+});
+
+/* ── Original JS ── */
+var currentPage = 1;
+var itemsPerPage = 10;
+
+function updateDisplay() {
+  var searchValue = document.getElementById('searchReviews').value.toLowerCase();
+  var visibilityValue = document.getElementById('visibilityFilter').value;
+  var ratingValue = document.getElementById('ratingFilter').value;
+  var allRows = document.querySelectorAll('#reviewsTable tbody tr');
+  var visibleRows = [];
+
+  allRows.forEach(function(row) {
+    var text = row.textContent.toLowerCase();
+    var visibility = row.getAttribute('data-visibility');
+    var rating = row.getAttribute('data-rating');
+
+    var matchSearch = text.includes(searchValue);
+    var matchVisibility = !visibilityValue || visibility === visibilityValue;
+    var matchRating = !ratingValue || rating === ratingValue;
+
+    if (matchSearch && matchVisibility && matchRating) visibleRows.push(row);
+  });
+
+  var totalPages = Math.ceil(visibleRows.length / itemsPerPage);
+  var start = (currentPage - 1) * itemsPerPage;
+
+  allRows.forEach(row => row.style.display = 'none');
+  visibleRows.forEach(function(row, i) {
+    if (i >= start && i < start + itemsPerPage) row.style.display = '';
+  });
+
+  updatePaginationButtons('reviewsPagination', currentPage, totalPages, function(page) {
+    currentPage = page;
     updateDisplay();
   });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('searchReviews').addEventListener('keyup', function() {
+    currentPage = 1; updateDisplay();
+  });
+
+  document.getElementById('visibilityFilter').addEventListener('change', function() {
+    currentPage = 1; updateDisplay();
+  });
+
+  document.getElementById('ratingFilter').addEventListener('change', function() {
+    currentPage = 1; updateDisplay();
+  });
+
+  updateDisplay();
+});
 </script>
 {% endblock %}

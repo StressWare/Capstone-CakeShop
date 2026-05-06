@@ -3,8 +3,13 @@
 
 {% block extra_css %}
 <style>
-  /* PINK THEME ADDITIONS (DESIGN ONLY, NO LOGIC CHANGES) */
 
+  #usersTable tbody td:nth-child(1),
+  #usersTable tbody td:nth-child(2),
+  #usersTable tbody td:nth-child(3) {
+    background-color: #fff0f6;
+    border-right: none;
+  }
   /* ── CARD CUSTOMIZATION ── */
   .card-header.card-header-custom {
     border-top: 4px solid #d63384; /* pink top border */
@@ -81,7 +86,7 @@
 
       <div class="table-responsive">
         <table class="table table-hover align-middle" id="usersTable">
-          <thead class="table-dark">
+          <thead class="table-pink">
             <tr><th>Name</th><th>Email</th><th>Phone</th><th>Orders</th><th>Verified</th><th>Status</th><th>Registered</th><th>Action</th></tr>
           </thead>
           <tbody>

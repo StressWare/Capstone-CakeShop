@@ -84,6 +84,136 @@
     background-color: #c71585;
     color: #fff;
   }
+
+
+
+/* =========================
+   RESPONSIVE DESIGN
+   SALES PAGE
+   ========================= */
+
+/* TABLET */
+@media (max-width: 1024px) {
+
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .card {
+    border-radius: 10px;
+  }
+
+  .order-tabs {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .order-tab-btn {
+    flex: 1;
+    min-width: 160px;
+    text-align: center;
+  }
+
+  #salesTable th,
+  #salesTable td {
+    font-size: 0.9rem;
+  }
+}
+
+/* MOBILE */
+@media (max-width: 768px) {
+
+  .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* Header spacing */
+  .section-header h1 {
+    font-size: 1.3rem;
+    text-align: left;
+    margin-left: 2px;
+  }
+
+  /* Tabs become scrollable instead of wrapping messy */
+  .order-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 5px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .order-tab-btn {
+    flex: 0 0 auto;
+    min-width: 140px;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  /* Search bar stacks nicely */
+  .input-group {
+    flex-direction: row;
+  }
+
+  .form-control {
+    font-size: 0.9rem;
+  }
+
+  /* Table becomes more compact */
+  #salesTable {
+    font-size: 0.85rem;
+  }
+
+  #salesTable thead th {
+    font-size: 0.85rem;
+    padding: 10px 6px;
+  }
+
+  #salesTable td {
+    padding: 10px 6px;
+  }
+
+  /* Amount column emphasis stays readable */
+  .fw-bold.text-success {
+    font-size: 0.9rem;
+  }
+
+  /* Pagination center fix */
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center !important;
+    gap: 4px;
+  }
+
+  .page-link {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* SMALL MOBILE */
+@media (max-width: 480px) {
+
+  .order-tab-btn {
+    min-width: 120px;
+    font-size: 0.8rem;
+  }
+
+  #salesTable {
+    font-size: 0.8rem;
+  }
+
+  .input-group-text {
+    padding: 6px 10px;
+  }
+
+  .form-control {
+    font-size: 0.85rem;
+  }
+}
+
+
 </style>
 {% endblock %}
 

@@ -3,7 +3,143 @@
 
 {% block extra_css %}
 <style>
- 
+ /* ===== GENERAL RESPONSIVENESS ===== */
+body {
+  overflow-x: hidden;
+}
+
+.container-fluid {
+  max-width: 1400px;
+  margin: auto;
+}
+
+/* ===== CARD IMPROVEMENTS ===== */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+/* ===== STAT CARDS ===== */
+.stat-card {
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.stat-card h2 {
+  font-size: clamp(18px, 2.5vw, 26px);
+}
+
+.stat-card h6 {
+  font-size: clamp(10px, 1.5vw, 13px);
+}
+
+/* ===== TEXT SCALING ===== */
+h1 {
+  font-size: clamp(20px, 4vw, 32px);
+}
+
+h3 {
+  font-size: clamp(16px, 3vw, 22px);
+}
+
+h5 {
+  font-size: clamp(14px, 2.5vw, 18px);
+}
+
+p, small {
+  font-size: clamp(12px, 2vw, 14px);
+}
+
+/* ===== FLEX WRAPPING FIX ===== */
+.d-flex {
+  flex-wrap: wrap;
+}
+
+/* ===== BADGES ===== */
+.badge {
+  font-size: clamp(10px, 2vw, 12px);
+  white-space: nowrap;
+}
+
+/* ===== TODAY ORDERS SCROLL FIX ===== */
+.card-body[style*="overflow-y"] {
+  scrollbar-width: thin;
+}
+
+/* ===== TABLET (≤ 992px) ===== */
+@media (max-width: 992px) {
+
+  /* Stack main columns */
+  #status-overview .col-md-7,
+  #status-overview .col-md-5 {
+    width: 100%;
+  }
+
+  /* Adjust stat cards */
+  .stat-card {
+    min-height: 20px;
+    max-width: 100px;
+  }
+
+}
+
+/* ===== MOBILE (≤ 768px) ===== */
+@media (max-width: 768px) {
+
+  .container-fluid {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Make stat cards 2 per row */
+  #status-overview .col-6 {
+    width: 50%;
+  }
+
+  /* Reduce card padding */
+  .card-body {
+    padding: 0.75rem;
+  }
+
+  /* Fix delivery items stacking */
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 5px;
+  }
+
+}
+
+/* ===== SMALL MOBILE (≤ 480px) ===== */
+@media (max-width: 480px) {
+
+  /* Stat cards full width */
+  #status-overview .col-6 {
+    width: 30%;
+  }
+
+  /* Reduce headings more */
+  h1 {
+    font-size: 20px;
+  }
+
+  h3 {
+    font-size: 16px;
+  }
+
+  /* Reduce spacing */
+  .container-fluid {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+}
 </style>
 {% endblock %}
 

@@ -132,9 +132,9 @@ h2, h3 {
 
 /* Form Card Style */
 .customize-section form {
-    background: rgba(236, 9, 107, 0.15); /* transparent pink */
+    background: rgba(236, 9, 107, 0.15);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px); /* for Safari */
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 167, 205, 0.3);
     padding: 30px;
     border-radius: 18px;
@@ -258,39 +258,36 @@ h2, h3 {
 }
 
 .custom-file-btn {
-  width: 30%;
-  display: inline-block;
-  padding: 7px;
-  background-color: #d63384;
-  color: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background 0.3s;
-  margin-bottom: 0.3rem;
+    width: 30%;
+    display: inline-block;
+    padding: 7px;
+    background-color: #d63384;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+    margin-bottom: 0.3rem;
 }
 
 .custom-file-btn:hover {
-  background-color: #fa56a2;
+    background-color: #fa56a2;
 }
 
-
-.customize-section{
-    color: white;
-
-}
-
-.btn{
+.customize-section {
     color: white;
 }
 
-.btn:hover{
+.btn {
+    color: white;
+}
+
+.btn:hover {
     color: #ff99cc;
 }
 
-/* ====== RESPONSIVE ====== */
+/* ====== GENERAL RESPONSIVE ====== */
 @media (max-width: 768px) {
-
     .navbar-logo {
         height: 150px;
     }
@@ -305,7 +302,6 @@ h2, h3 {
 }
 
 @media (max-width: 480px) {
-
     .menu-btn {
         font-size: 1rem;
         padding: 5px 12px;
@@ -315,5 +311,264 @@ h2, h3 {
     .modal button[type="submit"] {
         font-size: 0.9rem;
         padding: 10px;
+    }
+}
+
+/* ==============================================
+   RESPONSIVE DASHBOARD
+   Ms. Brave Cake Shop — Mobile + Tablet
+   ============================================== */
+
+/* ===== EXTRA SAFETY: prevent horizontal scroll ===== */
+body, html {
+    overflow-x: hidden;
+}
+
+/* ===== ALL SCREENS: tighter orders table ===== */
+.custom-table {
+    font-size: 0.82rem;
+}
+
+.custom-table thead th,
+.custom-table tbody td {
+    padding: 0.45rem 0.6rem;
+    vertical-align: middle;
+}
+
+.custom-table .badge {
+    font-size: 0.68rem;
+    padding: 0.28em 0.5em;
+}
+
+.custom-table .btn-sm {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+}
+
+/* ===== TABLET (≤ 992px) ===== */
+@media (max-width: 992px) {
+    .profile-card-enhanced {
+        max-width: 300px;
+        width: 30%;
+        margin: 0 auto;
+    }
+
+    .custom-table {
+        font-size: 0.8rem;
+    }
+
+    .custom-table thead th,
+    .custom-table tbody td {
+        padding: 0.4rem 0.55rem;
+    }
+
+    .favorites-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+}
+
+/* ===== TABLET (≤ 768px) ===== */
+@media (max-width: 767.98px) {
+    .container.mt-5.pt-5 {
+        padding-top: 1rem !important;
+        margin-top: 3.5rem !important;
+    }
+
+    #orders h2,
+    #favoritesTab h2 {
+        font-size: 1.3rem;
+    }
+
+    .profile-card-enhanced {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        max-width: 100%;
+        width: 100%;
+    }
+
+    .profile-avatar {
+        margin-bottom: 0;
+    }
+
+    .profile-info {
+        width: 100%;
+    }
+
+    .profile-info p {
+        font-size: 0.9rem;
+        margin-bottom: 0.35rem;
+    }
+
+    .profile-action {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+
+    .profile-action .btn {
+        width: 100%;
+    }
+
+    .dashboard-nav-icons {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+
+    .nav-icon {
+        flex: 1;
+        justify-content: center;
+        font-size: 0.8rem;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-icon i {
+        font-size: 1.25rem;
+    }
+
+    #searchOrders,
+    #statusFilter,
+    #typeFilter {
+        font-size: 0.875rem;
+    }
+
+    .table-wrapper {
+        -webkit-overflow-scrolling: touch;
+        overflow-x: auto;
+        border-radius: 0.5rem;
+    }
+
+    .custom-table {
+        min-width: 540px;
+        font-size: 0.78rem;
+    }
+
+    .custom-table thead th,
+    .custom-table tbody td {
+        white-space: nowrap;
+        padding: 0.35rem 0.5rem;
+    }
+}
+
+/* ===== MOBILE (≤ 576px) ===== */
+@media (max-width: 575.98px) {
+    .container {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .profile-card-enhanced {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .profile-avatar i {
+        font-size: 3rem !important;
+    }
+
+    .nav-icon {
+        flex: 1 1 100%;
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    #orders .row.mb-4 {
+        flex-direction: column;
+    }
+
+    .table-wrapper {
+        overflow-x: auto;
+    }
+
+    .custom-table {
+        min-width: 600px;
+    }
+
+    /* Favorites: single column */
+    .favorites-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    .fav-card {
+        width: 100%;
+    }
+
+    .fav-card-img {
+        max-height: 180px;
+        object-fit: cover;
+        width: 100%;
+    }
+
+    /* Favorite & modal footer buttons stack vertically */
+    .fav-btn-group {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .fav-btn-group form,
+    .fav-btn-group form .btn {
+        width: 100%;
+    }
+
+    .btn-unfav {
+        width: 100%;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+
+    .modal-footer .btn,
+    .modal-footer a.btn,
+    .modal-footer form {
+        width: 100%;
+    }
+
+    .modal-footer form .btn {
+        width: 100%;
+    }
+
+    .modal-body .row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .order-item-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    #ordersPagination {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.2rem;
+    }
+
+    #ordersPagination .page-link {
+        padding: 0.3rem 0.55rem;
+        font-size: 0.8rem;
+    }
+
+    .btn,
+    .btn-sm {
+        font-size: 0.85rem;
+        padding: 8px 10px;
     }
 }
