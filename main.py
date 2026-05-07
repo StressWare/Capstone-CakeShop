@@ -1293,27 +1293,27 @@ def admin_analytics():
     week_ago = now - timedelta(days=7)
     days_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     months     = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
- 
+
     # ── Weekly ──
     weekly_sales    = {day: 0 for day in days_order}
     weekly_expenses = {day: 0 for day in days_order}
-    weekly_profit   = {day: 0 for day in days_order}
- 
+
     # ── Monthly (this year) ──
     monthly_sales    = {m: 0 for m in months}
     monthly_expenses = {m: 0 for m in months}
-    monthly_profit   = {m: 0 for m in months}
- 
+
     # ── All time (by year-month) ──
     alltime_data = {}  # "Jan 2025" → {sales, expenses, profit}
- 
+
     # ── Summary cards ──
     total_revenue   = 0
+    total_expenses  = 0
     total_orders    = 0
     total_completed = 0
     payment_counts  = {}
-    cake_sales      = {}
- 
+    premade_sales   = {}
+    custom_sales    = {}
+
     # ── Fetch expenses ──
     for doc in expenses.stream():
         e = doc.to_dict()
@@ -1325,42 +1325,47 @@ def admin_analytics():
                 date_val = date_val.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 date_val = date_val.astimezone(PH_TZ)
- 
+
         cost = float(e.get("cost", 0))
- 
+        total_expenses += cost
+
         if isinstance(date_val, datetime):
             # Weekly
             if date_val >= week_ago:
                 weekly_expenses[date_val.strftime("%a")] += cost
- 
-            # Monthly 
+
+            # Monthly
             if date_val.year == now.year:
                 monthly_expenses[date_val.strftime("%b")] += cost
- 
+
             # All time
             key = date_val.strftime("%b %Y")
             if key not in alltime_data:
                 alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": date_val}
             alltime_data[key]["expenses"] += cost
- 
+
     # ── Fetch orders ──
-    for order_doc in orders.stream():  
+    for order_doc in orders.stream():
         order = order_doc.to_dict()
         status = order.get("status", "")
         amount = float(order.get("amount", 0))
-        
+
         total_orders += 1
         if status == "Completed":
             total_completed += 1
-        
+
         payment = order.get("payment_method", "Unknown")
         payment_counts[payment] = payment_counts.get(payment, 0) + 1
-        
-        if order.get("order_type") == "premade":
+
+        order_type = order.get("order_type", "")
+
+        # Track premade cake sales
+        if order_type == "premade":
             for item in order.get("selected_items", []):
                 name = item.get("cake_name", "Unknown")
-                cake_sales[name] = cake_sales.get(name, 0) + 1
-        
+                premade_sales[name] = premade_sales.get(name, 0) + 1
+
+
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at)
@@ -1369,10 +1374,10 @@ def admin_analytics():
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
-        
+
         if status in ["Completed", "Pickup"]:
             total_revenue += amount
-            
+
             if isinstance(created_at, datetime):
                 if created_at >= week_ago:
                     weekly_sales[created_at.strftime("%a")] += amount
@@ -1382,60 +1387,68 @@ def admin_analytics():
                 if key not in alltime_data:
                     alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": created_at}
                 alltime_data[key]["sales"] += amount
-    
-    # Weekly profit
+
+    # ── Compute profits — floor at 0 per period to avoid negative display ──
+    weekly_profit = {}
     for day in days_order:
-        weekly_profit[day] = weekly_sales[day] - weekly_expenses[day]
- 
-    # Monthly profit
+        raw = weekly_sales[day] - weekly_expenses[day]
+        weekly_profit[day] = max(0, raw)
+
+    monthly_profit = {}
     for m in months:
-        monthly_profit[m] = monthly_sales[m] - monthly_expenses[m]
- 
-    # All time profit 
+        raw = monthly_sales[m] - monthly_expenses[m]
+        monthly_profit[m] = max(0, raw)
+
     for key in alltime_data:
-        alltime_data[key]["profit"] = alltime_data[key]["sales"] - alltime_data[key]["expenses"]
- 
-    alltime_sorted = sorted(alltime_data.items(), key=lambda x: x[1]["sort"])
-    alltime_labels      = [k for k, v in alltime_sorted]
-    alltime_sales_vals  = [v["sales"] for k, v in alltime_sorted]
-    alltime_expense_vals= [v["expenses"] for k, v in alltime_sorted]
-    alltime_profit_vals = [v["profit"] for k, v in alltime_sorted]
- 
-    # Top 3 cakes
-    top_cakes       = sorted(cake_sales.items(), key=lambda x: x[1], reverse=True)[:3]
-    top_cake_names  = [c[0] for c in top_cakes]
-    top_cake_counts = [c[1] for c in top_cakes]
- 
+        raw = alltime_data[key]["sales"] - alltime_data[key]["expenses"]
+        alltime_data[key]["profit"] = max(0, raw)
+
+    alltime_sorted       = sorted(alltime_data.items(), key=lambda x: x[1]["sort"])
+    alltime_labels       = [k for k, v in alltime_sorted]
+    alltime_sales_vals   = [v["sales"]    for k, v in alltime_sorted]
+    alltime_expense_vals = [v["expenses"] for k, v in alltime_sorted]
+    alltime_profit_vals  = [v["profit"]   for k, v in alltime_sorted]
+
+    # Top 3 premade cakes
+    top_premade       = sorted(premade_sales.items(), key=lambda x: x[1], reverse=True)[:3]
+    top_premade_names  = [c[0] for c in top_premade]
+    top_premade_counts = [c[1] for c in top_premade]
+
+    # Net profit (all time)
+    net_profit = total_revenue - total_expenses
+
     # Stats
     completion_rate = round((total_completed / total_orders * 100), 1) if total_orders > 0 else 0
-    avg_order_value = round(total_revenue / total_completed, 2) if total_completed > 0 else 0
- 
+    avg_order_value = round(total_revenue / total_completed, 2)        if total_completed > 0 else 0
+
     return render_template("admin_analytics.html",
-        now             = now,
+        now              = now,
         # Weekly
-        weekly_sales    = weekly_sales,
-        weekly_expenses = weekly_expenses,
-        weekly_profit   = weekly_profit,
-        days_order      = days_order,
+        weekly_sales     = weekly_sales,
+        weekly_expenses  = weekly_expenses,
+        weekly_profit    = weekly_profit,
+        days_order       = days_order,
         # Monthly
-        monthly_sales   = monthly_sales,
-        monthly_expenses= monthly_expenses,
-        monthly_profit  = monthly_profit,
-        months          = months,
+        monthly_sales    = monthly_sales,
+        monthly_expenses = monthly_expenses,
+        monthly_profit   = monthly_profit,
+        months           = months,
         # All time
-        alltime_labels      = alltime_labels,
-        alltime_sales_vals  = alltime_sales_vals,
-        alltime_expense_vals= alltime_expense_vals,
-        alltime_profit_vals = alltime_profit_vals,
+        alltime_labels       = alltime_labels,
+        alltime_sales_vals   = alltime_sales_vals,
+        alltime_expense_vals = alltime_expense_vals,
+        alltime_profit_vals  = alltime_profit_vals,
         # Summary cards
-        total_revenue   = total_revenue,
-        total_orders    = total_orders,
-        completion_rate = completion_rate,
-        avg_order_value = avg_order_value,
+        total_revenue    = total_revenue,
+        total_expenses   = total_expenses,
+        net_profit       = net_profit,
+        total_orders     = total_orders,
+        completion_rate  = completion_rate,
+        avg_order_value  = avg_order_value,
         # Charts
-        top_cake_names  = top_cake_names,
-        top_cake_counts = top_cake_counts,
-        payment_counts  = payment_counts,
+        top_premade_names  = top_premade_names,
+        top_premade_counts = top_premade_counts,
+        payment_counts     = payment_counts,
     )
 # ---------------- ADMIN CAKES ----------------
 @app.route("/admin/cakes")
@@ -2292,10 +2305,10 @@ def service_worker_pos():
 # ================================================================
 if __name__ == "__main__":
     #indi pag kaksa ang comment pang live server lng na
-    
+    '''
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-    
+    '''
     app.run(debug=True)

@@ -4,3 +4,4 @@ __pycache__/
 firebase/serviceAccountKey.json
 .env
 set-admin.py
+wipe-orders.py

@@ -4,9 +4,8 @@
 {% block extra_css %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <style>
-  /* ── SUMMARY CARDS ── */
   .stat-card-analytics {
-    background: #ffffff; /* keep white */
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px 24px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.06);
@@ -16,9 +15,11 @@
   .stat-value  { font-size:1.6rem; font-weight:700; color:#c71585; }
   .stat-sub    { font-size:0.78rem; color:#888; margin-top:4px; }
 
-  /* ── CHART CARD ── */
+  .stat-value.profit  { color: #28a745; }
+  .stat-value.expense { color: #dc3545; }
+
   .chart-card {
-    background: #ffffff; /* keep white */
+    background: #ffffff;
     border-radius: 12px;
     padding: 20px 24px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.06);
@@ -36,11 +37,10 @@
     margin-bottom:16px; margin-top:8px;
   }
 
-  /* ── TAB SWITCHER ── */
   .tab-switcher {
     display: flex;
     gap: 4px;
-    background: #f8f2f8; /* very light pink */
+    background: #f8f2f8;
     border-radius: 10px;
     padding: 4px;
   }
@@ -56,47 +56,93 @@
     transition: all 0.2s ease;
   }
   .tab-btn.active {
-    background: #ffe6f0; /* subtle pink highlight */
+    background: #ffe6f0;
     color: #c71585;
     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   }
   .tab-btn:hover:not(.active) { color: #aa6da0; }
 
-  /* ── CHART ANIMATION ── */
-  .chart-wrapper {
-    position: relative;
-    overflow: hidden;
+  .chart-wrapper { position: relative; overflow: hidden; }
+  #mainChartDiv { transition: opacity 0.3s ease, transform 0.3s ease; }
+
+  /* Export button */
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1.5px solid #c71585;
+    border-radius: 8px;
+    background: transparent;
+    color: #c71585;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
   }
-  #mainChartDiv {
-    transition: opacity 0.3s ease, transform 0.3s ease;
-  }
-  #mainChartDiv.fade-out {
+  .btn-export:hover { background: #ffe6f0; color: #c71585; }
+
+  /* Tooltip for truncated names */
+  [data-tooltip] { position: relative; cursor: help; }
+  [data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
     opacity: 0;
-    transform: translateX(20px);
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 999;
   }
-  #mainChartDiv.fade-in {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  [data-tooltip]:hover::after { opacity: 1; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
 
-  <div class="section-header">
-    <h1 class="mb-2">Analytics</h1>
-    <p class="mb-0 opacity-75">Business performance overview</p>
+  <div class="section-header d-flex align-items-center justify-content-between mb-2">
+    <div>
+      <h1 class="mb-1">Analytics</h1>
+      <p class="mb-0 opacity-75">Business performance overview</p>
+    </div>
+    <button class="btn-export" onclick="exportCSV()">
+       Export CSV
+    </button>
   </div>
 
-  <!-- ── SUMMARY CARDS ── -->
-  <div class="section-label">All Time Summary</div>
+  <!-- SUMMARY CARDS -->
+  <div class="section-label mt-3">All Time Summary</div>
   <div class="row g-3 mb-4">
     <div class="col-md-3 col-sm-6">
       <div class="stat-card-analytics" style="border-color:#c71585;">
         <div class="stat-label">Total Revenue</div>
         <div class="stat-value">₱{{ "%.2f"|format(total_revenue) }}</div>
         <div class="stat-sub">From completed orders</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#dc3545;">
+        <div class="stat-label">Total Expenses</div>
+        <div class="stat-value expense">₱{{ "%.2f"|format(total_expenses) }}</div>
+        <div class="stat-sub">All recorded expenses</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:{% if net_profit >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+        <div class="stat-label">Net Profit</div>
+        <div class="stat-value {% if net_profit >= 0 %}profit{% else %}expense{% endif %}">
+          ₱{{ "%.2f"|format(net_profit) }}
+        </div>
+        <div class="stat-sub">Revenue minus expenses</div>
       </div>
     </div>
     <div class="col-md-3 col-sm-6">
@@ -110,7 +156,7 @@
       <div class="stat-card-analytics" style="border-color:#c71585;">
         <div class="stat-label">Completion Rate</div>
         <div class="stat-value">{{ completion_rate }}%</div>
-        <div class="stat-sub">Orders completed</div>
+        <div class="stat-sub">{{ total_completed }} of {{ total_orders }} completed</div>
       </div>
     </div>
     <div class="col-md-3 col-sm-6">
@@ -122,12 +168,11 @@
     </div>
   </div>
 
-  <!-- ── MAIN ANIMATED CHART ── -->
+  <!-- MAIN CHART -->
   <div class="section-label">Sales vs Expenses vs Profit</div>
   <div class="chart-card">
     <div class="chart-title">
       <span id="chartTitleText">Weekly Overview</span>
-      <!-- Tab Switcher -->
       <div class="tab-switcher">
         <button class="tab-btn active" onclick="switchTab('weekly', this)">Weekly</button>
         <button class="tab-btn" onclick="switchTab('monthly', this)">Monthly</button>
@@ -139,24 +184,24 @@
     </div>
   </div>
 
-  <!-- ── BOTTOM ROW ── -->
+  <!-- BOTTOM ROW -->
   <div class="section-label">Detailed Breakdown</div>
   <div class="row g-3">
 
     <!-- Monthly Revenue Bar -->
-    <div class="col-lg-5 col-md-12">
+    <div class="col-lg-4 col-md-12">
       <div class="chart-card h-100">
         <div class="chart-title">Monthly Revenue ({{ now.year }})</div>
         <div id="monthlyRevenueChart" style="width:100%; height:260px;"></div>
       </div>
     </div>
 
-    <!-- Top 3 Cakes -->
+    <!-- Top 3 Premade Cakes -->
     <div class="col-lg-4 col-md-6">
       <div class="chart-card h-100">
         <div class="chart-title">Top 3 Premade Cakes</div>
-        {% if top_cake_names %}
-          <div id="topCakesChart" style="width:100%; height:260px;"></div>
+        {% if top_premade_names %}
+          <div id="topPremadeChart" style="width:100%; height:260px;"></div>
         {% else %}
           <div class="text-center text-muted py-5">No premade cake orders yet</div>
         {% endif %}
@@ -164,11 +209,19 @@
     </div>
 
     <!-- Payment Methods -->
-    <div class="col-lg-3 col-md-6">
+    <div class="col-lg-4 col-md-6">
       <div class="chart-card h-100">
         <div class="chart-title">Payment Methods</div>
         {% if payment_counts %}
           <div id="paymentChart" style="width:100%; height:260px;"></div>
+          <!-- Full legend below chart — no pagination -->
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            {% for method, count in payment_counts.items() %}
+              <span class="badge bg-light text-dark" style="font-size:0.78rem;">
+                {{ method }}: {{ count }}
+              </span>
+            {% endfor %}
+          </div>
         {% else %}
           <div class="text-center text-muted py-5">No orders yet</div>
         {% endif %}
@@ -230,9 +283,9 @@
     var options = {
       curveType: 'function',
       legend: { position: 'bottom' },
-      colors: ['#c71585', '#ff85c1', '#aa6da0'],
+      colors: ['#c71585', '#ff85c1', '#28a745'],
       hAxis: { textStyle: { fontSize: 11 } },
-      vAxis: { format: '₱#,###', textStyle: { fontSize: 11 } },
+      vAxis: { format: '₱#,###', textStyle: { fontSize: 11 }, minValue: 0 },
       chartArea: { width: '85%', height: '68%' },
       backgroundColor: 'transparent',
       lineWidth: 3,
@@ -266,6 +319,7 @@
   function initCharts() {
     drawMainChart(weeklyData, true);
 
+    // Monthly Revenue
     var monthlyRevData = new google.visualization.DataTable();
     monthlyRevData.addColumn('string', 'Month');
     monthlyRevData.addColumn('number', 'Revenue');
@@ -278,29 +332,54 @@
         colors: ['#c71585'],
         chartArea: { width: '80%', height: '65%' },
         backgroundColor: 'transparent',
-        vAxis: { format: '₱#,###' },
+        vAxis: { format: '₱#,###', minValue: 0 },
         animation: { startup: true, duration: 600, easing: 'out' }
       }
     );
 
-    {% if top_cake_names %}
-    var cakesData = new google.visualization.DataTable();
-    cakesData.addColumn('string', 'Cake');
-    cakesData.addColumn('number', 'Orders');
-    {% for i in range(top_cake_names|length) %}
-    cakesData.addRow(['{{ top_cake_names[i] }}', {{ top_cake_counts[i] }}]);
+    // Top 3 Premade Cakes
+    {% if top_premade_names %}
+    var premadeData = new google.visualization.DataTable();
+    premadeData.addColumn('string', 'Cake');
+    premadeData.addColumn('number', 'Orders');
+    {% for i in range(top_premade_names|length) %}
+    premadeData.addRow(['{{ top_premade_names[i] }}', {{ top_premade_counts[i] }}]);
     {% endfor %}
-    new google.visualization.BarChart(document.getElementById('topCakesChart')).draw(
-      cakesData, {
+    new google.visualization.BarChart(document.getElementById('topPremadeChart')).draw(
+      premadeData, {
         legend: { position: 'none' },
         colors: ['#ff85c1'],
-        chartArea: { width: '70%', height: '65%' },
+        chartArea: { width: '65%', height: '65%' },
         backgroundColor: 'transparent',
+        hAxis: { minValue: 0 },
+        tooltip: { trigger: 'focus' },
         animation: { startup: true, duration: 600, easing: 'out' }
       }
     );
     {% endif %}
 
+    // Top 3 Custom Cakes
+    {% if top_custom_names %}
+    var customData = new google.visualization.DataTable();
+    customData.addColumn('string', 'Cake');
+    customData.addColumn('number', 'Orders');
+    {% for i in range(top_custom_names|length) %}
+    customData.addRow(['{{ top_custom_names[i] }}', {{ top_custom_counts[i] }}]);
+    {% endfor %}
+    new google.visualization.BarChart(document.getElementById('topCustomChart')).draw(
+      customData, {
+        legend: { position: 'none' },
+        colors: ['#c71585'],
+        chartArea: { width: '65%', height: '65%' },
+        backgroundColor: 'transparent',
+        hAxis: { minValue: 0 },
+        tooltip: { trigger: 'focus' },
+        animation: { startup: true, duration: 600, easing: 'out' }
+      }
+    );
+    {% endif %}
+
+    // Payment Methods — donut, no pagination
     {% if payment_counts %}
     var payData = new google.visualization.DataTable();
     payData.addColumn('string', 'Method');
@@ -310,15 +389,33 @@
     {% endfor %}
     new google.visualization.PieChart(document.getElementById('paymentChart')).draw(
       payData, {
-        legend: { position: 'bottom' },
-        chartArea: { width: '90%', height: '65%' },
+        legend: { position: 'none' },
+        chartArea: { width: '90%', height: '80%' },
         backgroundColor: 'transparent',
         colors: ['#c71585', '#ff85c1', '#aa6da0', '#ffb6c1'],
         pieHole: 0.4,
+        tooltip: { trigger: 'focus' },
         animation: { startup: true, duration: 600, easing: 'out' }
       }
     );
     {% endif %}
+  }
+
+  // ── Export CSV ──
+  function exportCSV() {
+    var rows = [['Period', 'Sales', 'Expenses', 'Profit']];
+    var data = currentTab === 'weekly' ? weeklyData : currentTab === 'monthly' ? monthlyData : alltimeData;
+    for (var i = 0; i < data.labels.length; i++) {
+      rows.push([data.labels[i], data.sales[i], data.expenses[i], data.profit[i]]);
+    }
+    var csv = rows.map(r => r.join(',')).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'analytics_' + currentTab + '_{{ now.strftime("%Y%m%d") }}.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 </script>
 {% endblock %}
