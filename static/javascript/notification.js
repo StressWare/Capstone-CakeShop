@@ -18,40 +18,43 @@ function initNotifications() {
     console.log('Initializing notifications for user:', userId);
     
     const db = firebase.firestore();
-    
-    unsubscribeNotifications = db.collection("notifications")
-        .where("user_id", "==", userId)
-        .orderBy("created_at", "desc")
-        .limit(20)
-        .onSnapshot((snapshot) => {
-            // Get ALL notifications from the snapshot
-            const allNotifications = [];
-            let unreadCount = 0;
-            
-            snapshot.forEach((doc) => {
-                const notif = doc.data();
-                notif.id = doc.id;
-                if (!notif.is_read) unreadCount++;
-                allNotifications.push(notif);
-            });
-            
-            // Show toast for newly added notifications only
-            if (!isFirstLoad) {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added') {
-                        const notif = change.doc.data();
-                        showToastNotification(notif.title, notif.message);
-                    }
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) return;
+        
+        unsubscribeNotifications = db.collection("notifications")
+            .where("user_id", "==", userId)
+            .orderBy("created_at", "desc")
+            .limit(20)
+            .onSnapshot((snapshot) => {
+                // Get ALL notifications from the snapshot
+                const allNotifications = [];
+                let unreadCount = 0;
+                
+                snapshot.forEach((doc) => {
+                    const notif = doc.data();
+                    notif.id = doc.id;
+                    if (!notif.is_read) unreadCount++;
+                    allNotifications.push(notif);
                 });
-            }
-            
-            isFirstLoad = false;
-            
-            updateUnreadBadge(unreadCount);
-            renderNotifications(allNotifications);
-        }, (error) => {
-            console.error('Notification listener error:', error);
-        });
+                
+                // Show toast for newly added notifications only
+                if (!isFirstLoad) {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const notif = change.doc.data();
+                            showToastNotification(notif.title, notif.message);
+                        }
+                    });
+                }
+                
+                isFirstLoad = false;
+                
+                updateUnreadBadge(unreadCount);
+                renderNotifications(allNotifications);
+            }, (error) => {
+                console.error('Notification listener error:', error);
+            });
+    });
 }
 
 function updateUnreadBadge(count) {
