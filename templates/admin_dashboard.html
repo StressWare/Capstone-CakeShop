@@ -4,208 +4,134 @@
 {% block extra_css %}
 <style>
  /* ===== GENERAL RESPONSIVENESS ===== */
-body {
-  overflow-x: hidden;
-}
-
-.container-fluid {
-  max-width: 1400px;
-  margin: auto;
-}
+body { overflow-x: hidden; }
+.container-fluid { max-width: 1400px; margin: auto; }
 
 /* ===== CARD IMPROVEMENTS ===== */
-.card {
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
+.card { border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+.card-body { padding: 1rem; }
 
-.card-body {
-  padding: 1rem;
+/* ===== PAGE HEADER ===== */
+.section-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;
 }
+.section-header h1 { margin: 0; }
+.dashboard-date { font-size: 13px; color: #6c757d; margin-top: 4px; }
+
+/* ===== HEADER ACTIONS ===== */
+.header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.low-stock-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fef2f2; color: #dc3545;
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid #fecaca;
+}
+.low-stock-badge svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.btn-refresh {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #ffffff; color: #374151;
+  border: 1px solid #d1d5db;
+  padding: 6px 12px; border-radius: 8px;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-refresh:hover { background: #f9fafb; border-color: #6B1A3A; color: #6B1A3A; }
+.btn-refresh svg { width: 14px; height: 14px; flex-shrink: 0; }
 
 /* ===== STAT CARDS ===== */
-.stat-card {
-  min-height: 80px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.stat-card h2 {
-  font-size: clamp(18px, 2.5vw, 26px);
-}
-
-.stat-card h6 {
-  font-size: clamp(10px, 1.5vw, 13px);
-}
+.stat-card { min-height: 80px; display: flex; flex-direction: column; justify-content: center; }
+.stat-card h2 { font-size: clamp(18px, 2.5vw, 26px); }
+.stat-card h6 { font-size: clamp(10px, 1.5vw, 13px); }
 
 /* ===== TEXT SCALING ===== */
-h1 {
-  font-size: clamp(20px, 4vw, 32px);
-}
-
-h3 {
-  font-size: clamp(16px, 3vw, 22px);
-}
-
-h5 {
-  font-size: clamp(14px, 2.5vw, 18px);
-}
-
-p, small {
-  font-size: clamp(12px, 2vw, 14px);
-}
+h1 { font-size: clamp(20px, 4vw, 32px); }
+h3 { font-size: clamp(16px, 3vw, 22px); }
+h5 { font-size: clamp(14px, 2.5vw, 18px); }
+p, small { font-size: clamp(12px, 2vw, 14px); }
 
 /* ===== FLEX WRAPPING FIX ===== */
-.d-flex {
-  flex-wrap: wrap;
-}
+.d-flex { flex-wrap: wrap; }
 
 /* ===== BADGES ===== */
-.badge {
-  font-size: clamp(10px, 2vw, 12px);
-  white-space: nowrap;
-}
+.badge { font-size: clamp(10px, 2vw, 12px); white-space: nowrap; }
 
 /* ===== TODAY ORDERS SCROLL FIX ===== */
-.card-body[style*="overflow-y"] {
-  scrollbar-width: thin;
-}
+.card-body[style*="overflow-y"] { scrollbar-width: thin; }
 
 /* ===== TABLET (≤ 992px) ===== */
 @media (max-width: 992px) {
-
-  /* Stack main columns */
-  #status-overview .col-md-7,
-  #status-overview .col-md-5 {
-    width: 100%;
-  }
-
-  /* Adjust stat cards */
-  .stat-card {
-    min-height: 20px;
-    max-width: 100px;
-  }
-
+  #status-overview .col-md-7, #status-overview .col-md-5 { width: 100%; }
+  .stat-card { min-height: 20px; max-width: 100px; }
 }
 
 /* ===== MOBILE (≤ 768px) ===== */
 @media (max-width: 768px) {
-
-  .container-fluid {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  /* Make stat cards 2 per row */
-  #status-overview .col-6 {
-    width: 50%;
-  }
-
-  /* Reduce card padding */
-  .card-body {
-    padding: 0.75rem;
-  }
-
-  /* Fix delivery items stacking */
-  .d-flex.justify-content-between {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 5px;
-  }
-
+  .container-fluid { padding-left: 12px; padding-right: 12px; }
+  #status-overview .col-6 { width: 50%; }
+  .card-body { padding: 0.75rem; }
+  .d-flex.justify-content-between { flex-direction: column; align-items: flex-start !important; gap: 5px; }
+  .section-header { flex-direction: column; align-items: flex-start; }
 }
 
 /* ===== SMALL MOBILE (≤ 480px) ===== */
 @media (max-width: 480px) {
-
-  /* Stat cards full width */
-  #status-overview .col-6 {
-    width: 30%;
-  }
-
-  /* Reduce headings more */
-  h1 {
-    font-size: 20px;
-  }
-
-  h3 {
-    font-size: 16px;
-  }
-
-  /* Reduce spacing */
-  .container-fluid {
-    padding-left: 8px;
-    padding-right: 8px;
-  }
-
+  #status-overview .col-6 { width: 30%; }
+  h1 { font-size: 20px; }
+  h3 { font-size: 16px; }
+  .container-fluid { padding-left: 8px; padding-right: 8px; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
+
+  <!-- PAGE HEADER -->
   <div class="section-header">
-    <h1 class="mb-2">Admin Dashboard</h1>
+    <div>
+      <h1>Dashboard</h1>
+      <div class="dashboard-date" id="dashboard-date"></div>
+    </div>
+    <div class="header-actions">
+      {% if low_stock %}
+      <div class="low-stock-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        {{ low_stock|length }} low stock item{{ 's' if low_stock|length > 1 else '' }}
+      </div>
+      {% endif %}
+      <button class="btn-refresh" onclick="location.reload()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
   </div>
+
   <!-- STATUS OVERVIEW -->
   <section id="status-overview" class="mb-5">
     <h3 class="mb-3">Status Overview</h3>
     <div class="row g-3">
-
-      <!-- LEFT: Stat Cards + Low Stock -->
       <div class="col-md-7">
         <div class="row g-2">
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">NEW</h6>
-              <h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">ACCEPTED</h6>
-              <h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">PENDING</h6>
-              <h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">READY</h6>
-              <h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">OUT</h6>
-              <h2 class="mb-0 fw-bold">{{ total_out }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">COMPLETED</h6>
-              <h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">CANCEL</h6>
-              <h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2>
-            </div>
-          </div>
-          <div class="col-6 col-md-3">
-            <div class="card stat-card text-center p-2">
-              <h6 class="mb-0 small">RUSH</h6>
-              <h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2>
-            </div>
-          </div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">NEW</h6><h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">ACCEPTED</h6><h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">PENDING</h6><h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">READY</h6><h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">OUT</h6><h2 class="mb-0 fw-bold">{{ total_out }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">COMPLETED</h6><h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">CANCEL</h6><h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2></div></div>
+          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">RUSH</h6><h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2></div></div>
 
-          <!-- Low Stock -->
           <div class="col-12 mt-3">
             <div class="card">
               <div class="card-body py-2">
@@ -214,9 +140,7 @@ p, small {
                   {% if low_stock %}
                     <div class="d-flex flex-wrap gap-2">
                       {% for i in low_stock %}
-                        <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">
-                          {{ i.item }}: {{ i.quantity }} left
-                        </span>
+                        <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">{{ i.item }}: {{ i.quantity }} left</span>
                       {% endfor %}
                     </div>
                   {% else %}
@@ -229,12 +153,9 @@ p, small {
         </div>
       </div>
 
-      <!-- RIGHT: Today's Deliveries -->
       <div class="col-md-5">
         <div class="card h-100">
-          <div class="card-header bg-white">
-            <h5 class="mb-0">Today's Orders ({{ today_count }})</h5>
-          </div>
+          <div class="card-header bg-white"><h5 class="mb-0">Today's Orders ({{ today_count }})</h5></div>
           <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
             {% if today_deliveries %}
               {% for delivery in today_deliveries %}
@@ -245,15 +166,7 @@ p, small {
                   <strong class="d-block">{{ delivery.customer }}</strong>
                   <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
                 </div>
-                <span class="badge
-                  {% if delivery.status == 'New' %}bg-secondary
-                  {% elif delivery.status == 'Accepted' %}bg-info
-                  {% elif delivery.status == 'Pending' %}bg-warning text-dark
-                  {% elif delivery.status == 'Ready' %}bg-primary
-                  {% elif delivery.status == 'Out for Delivery' %}bg-dark
-                  {% endif %}">
-                  {{ delivery.status }}
-                </span>
+                <span class="badge {% if delivery.status == 'New' %}bg-secondary{% elif delivery.status == 'Accepted' %}bg-info{% elif delivery.status == 'Pending' %}bg-warning text-dark{% elif delivery.status == 'Ready' %}bg-primary{% elif delivery.status == 'Out for Delivery' %}bg-dark{% endif %}">{{ delivery.status }}</span>
               </div>
               {% endfor %}
             {% else %}
@@ -262,20 +175,25 @@ p, small {
           </div>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- Daily Report Cards -->
+  <!-- Daily Report -->
   <section id="daily-report" class="mb-5">
-    <h3 class="mb-3">Daily Sale Report</h3>
-    <div class="row g-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <h3 class="mb-0">Daily Sale Report</h3>
+      <div class="d-flex gap-2">
+        <button class="btn btn-danger btn-sm" onclick="downloadPDF()"> Download PDF</button>
+        <button class="btn btn-success btn-sm" onclick="downloadCSV()"> Download CSV</button>
+      </div>
+    </div>
 
-      <!-- POS / Walk-in -->
+    <div class="row g-3">
+      <!-- Walk-in -->
       <div class="col-md-4">
         <div class="card h-100">
           <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;display:inlineblock;"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:#c084fc;display:inline-block;"></span>
             <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Walk-in</h6>
           </div>
           <div class="card-body">
@@ -293,7 +211,7 @@ p, small {
       <div class="col-md-4">
         <div class="card h-100">
           <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>
             <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Premade Cake</h6>
           </div>
           <div class="card-body">
@@ -301,7 +219,7 @@ p, small {
             <p class="text-muted small mb-3">Sales today</p>
             <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pre_txn }}</strong></div>
             <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pre_top }}</span></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>₱{{ "{:,.0f}".format(pre_cash) }}</strong></div>
+            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>{{ "{:,.0f}".format(pre_cash) }}</strong></div>
             <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pre_ewallet) }}</strong></div>
           </div>
         </div>
@@ -311,7 +229,7 @@ p, small {
       <div class="col-md-4">
         <div class="card h-100">
           <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;display:inline-block;"></span>
+            <span style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block;"></span>
             <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Customize Cake</h6>
           </div>
           <div class="card-body">
@@ -323,9 +241,76 @@ p, small {
           </div>
         </div>
       </div>
-
     </div>
-  </section>  
+
+    <!-- TOTAL BAR -->
+    <div class="card mt-3">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+          <h6 class="text-muted mb-1">Total Sales Today</h6>
+          <div class="d-flex gap-3 small text-muted">
+            <span>Walk-in: <strong class="text-dark">₱{{ "{:,.0f}".format(pos_sales) }}</strong></span>
+            <span>Premade: <strong class="text-dark">₱{{ "{:,.0f}".format(pre_sales) }}</strong></span>
+            <span>Custom: <strong class="text-dark">₱{{ "{:,.0f}".format(cus_sales) }}</strong></span>
+          </div>
+        </div>
+        <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales + pre_sales + cus_sales) }}</h2>
+      </div>
+    </div>
+  </section>
 
 </div>
+
+<!-- html2pdf.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
+
+function downloadPDF() {
+  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const content = document.createElement('div');
+  content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
+  content.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
+      <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
+      <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})}</p></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#6B1A3A;color:#fff;">
+        <th style="padding:10px 12px;text-align:left;border-radius:4px 0 0 4px;">Channel</th>
+        <th style="padding:10px 12px;text-align:right;">Total Sales</th>
+        <th style="padding:10px 12px;text-align:right;">Transactions</th>
+        <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
+        <th style="padding:10px 12px;text-align:right;border-radius:0 4px 4px 0;">Bank / E-wallet</th>
+      </tr></thead>
+      <tbody>
+        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
+        <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
+        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
+        <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;border-radius:0 0 0 4px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">${pos_sales + pre_sales + cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn + pre_txn + cus_txn}</td><td style="padding:10px 12px;text-align:right;">${pos_cash + pre_cash + cus_cash}</td><td style="padding:10px 12px;text-align:right;border-radius:0 0 4px 0;">₱${pos_ewallet + pre_ewallet + cus_ewallet}</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
+  const opt = { margin: 12, filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+  html2pdf().set(opt).from(content).save();
+}
+
+function downloadCSV() {
+  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const rows = [
+    ['Ms. Brave Cake Shop - Daily Sale Report'], [`Date: ${today}`], [],
+    ['Channel', 'Total Sales (PHP)', 'Transactions', 'Top Item', 'Cash / COD (PHP)', 'Bank / E-wallet (PHP)'],
+    ['Walk-in', '${pos_sales}', '${pos_txn}', '${pos_top}', '${pos_cash}', '${pos_ewallet}'],
+    ['Online Premade Cake', '${pre_sales}', '${pre_txn}', '${pre_top}', '${pre_cash}', '${pre_ewallet}'],
+    ['Online Customize Cake', '${cus_sales}', '${cus_txn}', '', '${cus_cash}', '${cus_ewallet}'],
+    [], ['TOTAL', '${pos_sales + pre_sales + cus_sales}', '${pos_txn + pre_txn + cus_txn}', '', '${pos_cash + pre_cash + cus_cash}', '${pos_ewallet + pre_ewallet + cus_ewallet}'],
+  ];
+  const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob); const a = document.createElement('a');
+  a.href = url; a.download = `daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
+}
+</script>
 {% endblock %}
