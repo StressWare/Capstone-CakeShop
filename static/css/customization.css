@@ -1,231 +1,270 @@
-/* ====== GENERAL STYLES ====== */
+/* =========================================================
+   BASE STYLES
+========================================================= */
 * {
     box-sizing: border-box;
 }
 
 body {
+    margin: 0;
+    padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
     background-attachment: fixed;
-    color: #333;
-    margin: 0;
-    padding: 0;
-    scroll-behavior: smooth;
+    color: #fff;
     overflow-x: hidden;
-    position: relative;
+    scroll-behavior: smooth;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 15px;
-}
-
-h2, h3 {
-    color: #ffffff;
-    letter-spacing: 0.3px;
-}
-
-/* ====== NAVBAR ====== */
+/* =========================================================
+   NAVBAR
+========================================================= */
 .navbar {
     position: fixed;
     top: 0;
     width: 100%;
     height: 70px;
     background: linear-gradient(90deg, #000, #1a1a1a);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
     z-index: 999;
     padding: 0 30px;
-    display: flex;
-    align-items: center;
 }
 
-.navbar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-.navbar-logo {
-    margin-top: 20px;
-    height: 170px;
-    width: 220px;
-    object-fit: contain;
-    transition: transform 0.4s ease;
-}
-
-.navbar-logo:hover {
-    transform: scale(1.05);
-}
-
-/* ====== MENU BUTTON ====== */
-.menu-btn {
-    font-size: 1.4rem;
-    background: transparent;
-    border: 2px solid #d63384;
-    color: #d63384;
-    border-radius: 10px;
-    padding: 6px 18px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.menu-btn:hover {
-    background: #d63384;
-    color: #fff;
-    transform: translateY(-2px);
-}
-
-/* ====== OFFCANVAS MENU ====== */
-.offcanvas {
-    position: fixed;
-    top: 0;
-    right: -280px;
-    width: 280px;
-    height: 100%;
-    background: #fff0f5;
-    box-shadow: -6px 0 20px rgba(0,0,0,0.2);
-    transition: 0.5s ease;
-    z-index: 998;
-    padding: 25px;
-}
-
-.offcanvas.active {
-    right: 0;
-}
-
-.offcanvas-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.offcanvas-body a {
-    display: block;
-    text-decoration: none;
-    color: #d63384;
-    font-weight: 600;
-    margin-bottom: 18px;
-    transition: all 0.3s ease;
-}
-
-.offcanvas-body a:hover {
-    color: #a71d65;
-    padding-left: 8px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    cursor: pointer;
-}
-
-/* ====== CUSTOMIZATION FORM ====== */
+/* =========================================================
+   PAGE LAYOUT (CUSTOMIZE SECTION)
+========================================================= */
 .customize-section {
-    padding: 70px 15px;
-    max-width: 700px;
+    max-width: 1100px;
     margin: auto;
+    padding: 70px 15px;
 }
 
-/* Form Card Style */
-.customize-section form {
+.layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* =========================================================
+   FORM PANEL (LEFT SIDE)
+========================================================= */
+.form-panel {
+    flex: 1;
     background: rgba(236, 9, 107, 0.15);
     backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 167, 205, 0.3);
-    padding: 30px;
-    border-radius: 18px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    transition: transform 0.3s ease;
+    border-radius: 16px;
+    padding: 24px;
 }
 
-.customize-section form:hover {
-    transform: translateY(-3px);
-}
-
-/* Form Inputs */
-.customize-section label {
+/* Titles */
+.page-title {
+    font-size: 28px;
     font-weight: 600;
-    margin-top: 10px;
-    font-size: 14px;
+    margin-bottom: 4px;
 }
 
-.customize-section select,
-.customize-section input[type="number"],
-.customize-section input[type="text"],
-.customize-section input[type="date"],
-.customize-section input[type="time"],
-.customize-section textarea {
+.page-sub {
+    font-size: 13px;
+    opacity: 0.9;
+    margin-bottom: 24px;
+}
+
+.step-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    opacity: 0.8;
+}
+
+.section-title {
+    font-size: 18px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    padding-bottom: 10px;
+}
+
+/* =========================================================
+   FORM FIELDS
+========================================================= */
+.field {
+    margin-bottom: 16px;
+}
+
+.field label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+select,
+textarea {
     width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    font-size: 15px;
-    transition: all 0.3s ease;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 13px;
     outline: none;
 }
 
-.customize-section select:focus,
-.customize-section input:focus,
-.customize-section textarea:focus {
+select {
+    background: #fffaf7;
+    color: #3d2010;
+}
+
+textarea {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    resize: vertical;
+}
+
+select:focus,
+textarea:focus {
     border-color: #d63384;
-    box-shadow: 0 0 0 3px rgba(214,51,132,0.15);
 }
 
-/* Checkbox */
-.customize-section input[type="checkbox"] {
-    accent-color: #d63384;
-    margin-right: 6px;
+/* =========================================================
+   ADD-ONS GRID
+========================================================= */
+.addon-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
-/* Toppings spacing */
-.customize-section form div {
+.addon-item {
     display: flex;
     align-items: center;
-    gap: 5px;
-}
-
-/* Price Box */
-.price-box {
-    margin: 25px 0;
-    padding: 18px;
-    text-align: center;
-    font-size: 1.6rem;
-    font-weight: bold;
-    background: linear-gradient(45deg, #fff0f5, #ffe6f2);
-    border-radius: 12px;
-    color: #d63384;
-}
-
-/* ====== BUTTONS ====== */
-#orderNowBtn,
-.customize-section button[type="submit"],
-.modal button[type="submit"] {
-    width: 100%;
-    padding: 14px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    background-color: #d63384;
-    border: none;
-    border-radius: 12px;
+    gap: 8px;
+    padding: 8px 10px;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    font-size: 12px;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-#orderNowBtn:hover,
-.customize-section button[type="submit"]:hover,
-.modal button[type="submit"]:hover {
-    transform: scale(1.03);
-    opacity: 0.9;
+.addon-item:hover {
+    background: rgba(255,255,255,0.05);
 }
 
-/* ====== MODAL ====== */
+.addon-item input {
+    accent-color: #db2777;
+}
+
+/* =========================================================
+   FILE UPLOAD BUTTON
+========================================================= */
+.custom-file-btn {
+    display: inline-flex;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px dashed #db2777;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #db2777;
+}
+
+/* =========================================================
+   PRICE BOX
+========================================================= */
+.price-box {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fff0f5, #fdf6f0);
+    color: #7c3f1e;
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+}
+
+/* =========================================================
+   CHECKOUT BUTTON
+========================================================= */
+.btn-checkout {
+    width: 100%;
+    padding: 13px;
+    margin-top: 14px;
+    background: #db2777;
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-checkout:hover {
+    background: #be185d;
+}
+
+/* =========================================================
+   RUSH ROW
+========================================================= */
+.rush-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+/* =========================================================
+   PREVIEW PANEL (RIGHT SIDE)
+========================================================= */
+.preview-panel {
+    width: 360px;
+    position: sticky;
+    top: 20px;
+}
+
+.preview-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.preview-header {
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.preview-title {
+    color: #7c3f1e;
+    font-family: 'Playfair Display', serif;
+}
+
+.preview-hint {
+    font-size: 11px;
+    color: #999;
+}
+
+#cake-canvas {
+    width: 100%;
+    height: 340px;
+    display: block;
+}
+
+/* =========================================================
+   BADGES
+========================================================= */
+.preview-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px 14px;
+}
+
+.badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: #fff0f5;
+    color: #db2777;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
 .modal {
     position: fixed;
     inset: 0;
@@ -233,7 +272,6 @@ h2, h3 {
     background: rgba(0,0,0,0.4);
     justify-content: center;
     align-items: center;
-    z-index: 1000;
 }
 
 .modal.active {
@@ -244,331 +282,29 @@ h2, h3 {
     background: #fff0f5;
     padding: 25px;
     border-radius: 18px;
-    width: 90%;
     max-width: 600px;
-    position: relative;
 }
 
-.modal-close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    font-size: 1.8rem;
-    cursor: pointer;
-}
-
-.custom-file-btn {
-    width: 30%;
-    display: inline-block;
-    padding: 7px;
-    background-color: #d63384;
-    color: #fff;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.3s;
-    margin-bottom: 0.3rem;
-}
-
-.custom-file-btn:hover {
-    background-color: #fa56a2;
-}
-
-.customize-section {
-    color: white;
-}
-
-.btn {
-    color: white;
-}
-
-.btn:hover {
-    color: #ff99cc;
-}
-
-/* ====== GENERAL RESPONSIVE ====== */
-@media (max-width: 768px) {
-    .navbar-logo {
-        height: 150px;
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+@media (max-width: 720px) {
+    .layout {
+        flex-direction: column;
     }
 
-    .customize-section {
-        padding: 40px 15px;
+    .preview-panel {
+        width: 100%;
+        position: static;
     }
 
-    .menu-btn {
-        font-size: 1.2rem;
+    .addon-grid {
+        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 480px) {
-    .menu-btn {
-        font-size: 1rem;
-        padding: 5px 12px;
-    }
-
-    #orderNowBtn,
-    .modal button[type="submit"] {
-        font-size: 0.9rem;
-        padding: 10px;
-    }
-}
-
-/* ==============================================
-   RESPONSIVE DASHBOARD
-   Ms. Brave Cake Shop — Mobile + Tablet
-   ============================================== */
-
-/* ===== EXTRA SAFETY: prevent horizontal scroll ===== */
-body, html {
-    overflow-x: hidden;
-}
-
-/* ===== ALL SCREENS: tighter orders table ===== */
-.custom-table {
-    font-size: 0.82rem;
-}
-
-.custom-table thead th,
-.custom-table tbody td {
-    padding: 0.45rem 0.6rem;
-    vertical-align: middle;
-}
-
-.custom-table .badge {
-    font-size: 0.68rem;
-    padding: 0.28em 0.5em;
-}
-
-.custom-table .btn-sm {
-    padding: 0.2rem 0.55rem;
-    font-size: 0.75rem;
-}
-
-/* ===== TABLET (≤ 992px) ===== */
-@media (max-width: 992px) {
-    .profile-card-enhanced {
-        max-width: 300px;
-        width: 30%;
-        margin: 0 auto;
-    }
-
-    .custom-table {
-        font-size: 0.8rem;
-    }
-
-    .custom-table thead th,
-    .custom-table tbody td {
-        padding: 0.4rem 0.55rem;
-    }
-
-    .favorites-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 15px;
-    }
-}
-
-/* ===== TABLET (≤ 768px) ===== */
-@media (max-width: 767.98px) {
-    .container.mt-5.pt-5 {
-        padding-top: 1rem !important;
-        margin-top: 3.5rem !important;
-    }
-
-    #orders h2,
-    #favoritesTab h2 {
-        font-size: 1.3rem;
-    }
-
-    .profile-card-enhanced {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: 1rem;
-        padding: 1.25rem;
-        max-width: 100%;
-        width: 100%;
-    }
-
-    .profile-avatar {
-        margin-bottom: 0;
-    }
-
-    .profile-info {
-        width: 100%;
-    }
-
-    .profile-info p {
-        font-size: 0.9rem;
-        margin-bottom: 0.35rem;
-    }
-
-    .profile-action {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-    }
-
-    .profile-action .btn {
-        width: 100%;
-    }
-
-    .dashboard-nav-icons {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-
-    .nav-icon {
-        flex: 1;
-        justify-content: center;
-        font-size: 0.8rem;
-        padding: 0.5rem 0.25rem;
-    }
-
-    .nav-icon i {
-        font-size: 1.25rem;
-    }
-
-    #searchOrders,
-    #statusFilter,
-    #typeFilter {
-        font-size: 0.875rem;
-    }
-
-    .table-wrapper {
-        -webkit-overflow-scrolling: touch;
-        overflow-x: auto;
-        border-radius: 0.5rem;
-    }
-
-    .custom-table {
-        min-width: 540px;
-        font-size: 0.78rem;
-    }
-
-    .custom-table thead th,
-    .custom-table tbody td {
-        white-space: nowrap;
-        padding: 0.35rem 0.5rem;
-    }
-}
-
-/* ===== MOBILE (≤ 576px) ===== */
-@media (max-width: 575.98px) {
-    .container {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-
-    .profile-card-enhanced {
-        padding: 15px;
-        border-radius: 12px;
-    }
-
-    .profile-avatar i {
-        font-size: 3rem !important;
-    }
-
-    .nav-icon {
-        flex: 1 1 100%;
-        padding: 12px;
-        font-size: 0.9rem;
-    }
-
-    #orders .row.mb-4 {
-        flex-direction: column;
-    }
-
-    .table-wrapper {
-        overflow-x: auto;
-    }
-
-    .custom-table {
-        min-width: 600px;
-    }
-
-    /* Favorites: single column */
-    .favorites-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1rem;
-    }
-
-    .fav-card {
-        width: 100%;
-    }
-
-    .fav-card-img {
-        max-height: 180px;
-        object-fit: cover;
-        width: 100%;
-    }
-
-    /* Favorite & modal footer buttons stack vertically */
-    .fav-btn-group {
-        flex-direction: column;
-        gap: 0.4rem;
-    }
-
-    .fav-btn-group form,
-    .fav-btn-group form .btn {
-        width: 100%;
-    }
-
-    .btn-unfav {
-        width: 100%;
-    }
-
-    .modal-dialog {
-        margin: 0.5rem;
-        max-width: calc(100% - 1rem);
-    }
-
-    .modal-content {
-        border-radius: 12px;
-    }
-
-    .modal-footer {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.4rem;
-    }
-
-    .modal-footer .btn,
-    .modal-footer a.btn,
-    .modal-footer form {
-        width: 100%;
-    }
-
-    .modal-footer form .btn {
-        width: 100%;
-    }
-
-    .modal-body .row > [class*="col-"] {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-
-    .order-item-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-
-    #ordersPagination {
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 0.2rem;
-    }
-
-    #ordersPagination .page-link {
-        padding: 0.3rem 0.55rem;
-        font-size: 0.8rem;
-    }
-
-    .btn,
-    .btn-sm {
-        font-size: 0.85rem;
-        padding: 8px 10px;
+    .page-title {
+        font-size: 22px;
     }
 }

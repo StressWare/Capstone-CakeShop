@@ -149,7 +149,7 @@
 /* title */
 .footer-left h2 {
     color: white;
-    font-size: 18px;
+    font-size: 11px;
     margin: 0;
 }
 
@@ -157,7 +157,7 @@
 .footer-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 20px;
 }
 
 /* text */
@@ -166,7 +166,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 11px;
 }
 
 /* facebook icon */
