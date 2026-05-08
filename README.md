@@ -56,48 +56,12 @@ A web application built for Mrs. Brave's Cakeshop in Iloilo City. It handles onl
 | Payments | PayMongo |
 | Map | Leaflet.js + OpenStreetMap |
 | 3D Preview | Three.js |
+| PDF Generation | html2pdf.js |
 | Rate Limiting | flask-limiter |
 | Tunneling (dev) | ngrok / pyngrok |
 
 ---
 
-## Project Structureshboard
-- Dashboard and analytics overview
-- Sales and expenses tracking
-- Inventory management
-- Cake availability management
-- Order list and management
-- User management
-- Reviews management
-- Activity logs
-- Conversations — respond to escalated customer chats
-
-### POS System
-- Separate POS for processing walk-in orders in-store
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|---|---|
-| Language | Python |
-| Framework | Flask |
-| Frontend | HTML, CSS, JavaScript |
-
-## Libraries & APIs
-
-| Category | Technology |
-|---|---|
-| Database | Firebase Firestore |
-| Authentication | Firebase Authentication |
-| Image Storage | Cloudinary |
-| Payments | PayMongo |
-| Map | Leaflet.js + OpenStreetMap |
-| 3D / Visual | Three.js |
-| Tunneling (dev) | ngrok / pyngrok |
-
----
 
 
 ## Map Coverage
