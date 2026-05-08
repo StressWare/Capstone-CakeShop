@@ -961,6 +961,7 @@ def cancel_order(order_id):
 # DELIVERY ROUTES
 # ================================================================
 @app.route("/delivery/<token>")
+@limiter.limit("30 per minute")
 def delivery_page(token):
     # Find order by delivery_token
     results = orders.where("delivery_token", "==", token).limit(1).stream()
@@ -1074,31 +1075,39 @@ def add_to_cart():
     user_id   = session.get("user_id")
     cake_id   = request.form.get("cake_id")
     cake_name = request.form.get("cake_name")
-    price     = float(request.form.get("price", 0))
     quantity  = int(request.form.get("quantity", 1))
-    image = request.form.get("image") 
+    image     = request.form.get("image")
+
+    # ── Fetch real price from Firestore ──
+    cake_doc = cakes.document(cake_id).get()
+    if not cake_doc.exists:
+        flash("Cake not found.", "danger")
+        return redirect(url_for("cakes_page"))
+
+    cake_data  = cake_doc.to_dict()
+    real_price = float(cake_data.get("price", 0))
+    image      = image or cake_data.get("image")
+
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
     cart_doc = cart_ref.get()
- 
+
     if cart_doc.exists:
-        # add to existing quantity
         existing_qty = cart_doc.to_dict().get("quantity", 1)
         new_qty      = existing_qty + quantity
         cart_ref.update({"quantity": new_qty})
-        flash(f"{cake_name} quantity updated to {new_qty} in cart! 🛒", "success")
+        flash(f"{cake_data.get('name', cake_name)} quantity updated to {new_qty} in cart! 🛒", "success")
     else:
         cart_ref.set({
             "cake_id":   cake_id,
-            "cake_name": cake_name,
-            "price":     price,
+            "cake_name": cake_data.get("name", cake_name),
+            "price":     real_price,
             "quantity":  quantity,
-            "image":     image,   # ✅ ADD THIS
+            "image":     image,
             "added_at":  firestore.SERVER_TIMESTAMP
         })
-        flash(f"{cake_name} added to cart! 🛒", "success")
- 
-    return redirect(url_for("cakes_page"))
+        flash(f"{cake_data.get('name', cake_name)} added to cart! 🛒", "success")
 
+    return redirect(url_for("cakes_page"))
 # ---------------- REMOVE FROM CART ----------------
 @app.route("/cart/remove/<cake_id>", methods=["POST"])
 @login_required
