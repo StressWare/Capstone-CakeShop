@@ -326,7 +326,30 @@
       {% endif %}
     </div>
   </div>
-
+  <div class="card" style="margin: 16px;">
+    <div class="card-body" style="text-align: center; padding: 20px;">
+        <button id="deliveredBtn" onclick="notifyDelivered()" style="
+            background: linear-gradient(135deg, #198754, #146c43);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px 32px;
+            font-size: 1rem;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(25,135,84,0.3);
+        ">
+            ✅ I've Delivered This Order
+        </button>
+        <p id="deliveredMsg" style="display:none; color:#198754; font-weight:600; margin-top:12px;">
+            🎉 Owner has been notified!
+        </p>
+        <p id="deliveredErr" style="display:none; color:#dc3545; font-weight:600; margin-top:12px;">
+            ⚠️ Failed to notify. Please try again.
+        </p>
+    </div>
+  </div>
 {% endif %}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -374,6 +397,34 @@
     [CUSTOMER.lat, CUSTOMER.lng]
   );
   map.fitBounds(bounds, { padding: [40, 40] });
+</script>
+<script>
+  async function notifyDelivered() {
+      const btn = document.getElementById('deliveredBtn');
+      const msg = document.getElementById('deliveredMsg');
+      const err = document.getElementById('deliveredErr');
+
+      btn.disabled = true;
+      btn.textContent = 'Notifying...';
+
+      try {
+          const token = "{{ order.delivery_token }}";
+          const res = await fetch(`/delivery/${token}/notify`, { method: 'POST' });
+
+          if (res.ok) {
+              btn.style.display = 'none';
+              msg.style.display = 'block';
+          } else {
+              btn.disabled = false;
+              btn.textContent = "✅ I've Delivered This Order";
+              err.style.display = 'block';
+          }
+      } catch (e) {
+          btn.disabled = false;
+          btn.textContent = "✅ I've Delivered This Order";
+          err.style.display = 'block';
+      }
+  }
 </script>
 {% endif %}
 </body>

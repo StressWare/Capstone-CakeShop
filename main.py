@@ -3,8 +3,8 @@ from extensions import limiter
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
-                     calculate_order_total, _today_range, FAQ, 
-                     get_faq_response, save_uploaded_image, ALLOWED_EXTENSIONS)
+                     calculate_order_total, _today_range, 
+                     get_faq_response, save_uploaded_image, delete_uploaded_image)
 from decorators import login_required, admin_required
 import re
 import os
@@ -13,8 +13,8 @@ import hmac
 import hashlib
 import secrets
 import firebase
-from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders
-from firebase_admin import auth, firestore
+from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens
+from firebase_admin import auth, firestore, messaging
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
@@ -874,6 +874,88 @@ def delivery_page(token):
         return render_template("delivery.html", expired=True)
  
     return render_template("delivery.html", order=order, expired=False)
+
+@app.route("/delivery/<token>/notify", methods=["POST"])
+@limiter.limit("5 per minute")  # tight limit — rider should only tap once
+def notify_delivery(token):
+    try:
+        # 1. Look up order by delivery_token (same as your existing route)
+        results = orders.where("delivery_token", "==", token).limit(1).stream()
+        order_doc = next(results, None)
+
+        if not order_doc:
+            return {"error": "Order not found"}, 404
+
+        order = order_doc.to_dict()
+
+        # 2. Guard: don't notify if already completed
+        if order.get("status") == "Completed":
+            return {"error": "Order already completed"}, 400
+
+        # 3. Get all admin FCM tokens from Firestore
+        admin_tokens_doc = fcm_tokens.document("admins").get()
+
+        if not admin_tokens_doc.exists:
+            return {"error": "No admin tokens found"}, 500
+
+        tokens = list(admin_tokens_doc.to_dict().values())
+
+        if not tokens:
+            return {"error": "No admin tokens registered"}, 500
+
+        # 4. Build FCM message
+        order_id = order_doc.id
+        customer_name = order.get("customer", {}).get("name", "Customer")
+
+        notification = messaging.Notification(
+            title="🛵 Order Delivered!",
+            body=f"{customer_name}'s order has been delivered. Tap to mark as completed."
+        )
+
+        # 5. Send to all admin tokens via MulticastMessage
+        fcm_message = messaging.MulticastMessage(
+            tokens=tokens,
+            notification=notification,
+            data={
+                "order_id": order_id,
+                "type": "delivery_complete"
+            },
+            webpush=messaging.WebpushConfig(
+                notification=messaging.WebpushNotification(
+                    icon="/static/img/logo.png",
+                    badge="/static/img/logo.png",
+                )
+            )
+        )
+
+        response = messaging.send_multicast(fcm_message)
+        print(f"[FCM] Sent to {response.success_count}/{len(tokens)} admins")
+
+        # 6. Clean up invalid tokens (FCM tells us which ones failed)
+        if response.failure_count > 0:
+            failed_tokens = set()
+            for idx, result in enumerate(response.responses):
+                if not result.success:
+                    failed_tokens.add(tokens[idx])
+
+            if failed_tokens:
+                # Remove invalid tokens from Firestore
+                admin_ref = fcm_tokens.document("admins")
+                admin_data = admin_tokens_doc.to_dict()
+                updates = {
+                    uid: firestore.DELETE_FIELD
+                    for uid, tok in admin_data.items()
+                    if tok in failed_tokens
+                }
+                if updates:
+                    admin_ref.update(updates)
+                    print(f"[FCM] Removed {len(updates)} invalid token(s)")
+
+        return {"success": True, "notified": response.success_count}, 200
+
+    except Exception as e:
+        print(f"[FCM] Notify error: {e}")
+        return {"error": str(e)}, 500
 # ================================================================
 # CAKES ROUTES
 # ================================================================
@@ -1807,14 +1889,9 @@ def delete_cake(cake_id):
             return redirect(url_for('admin_cakes'))
 
         image_url = cake_doc.to_dict().get('image')
-        if image_url and 'cloudinary.com' in image_url:
-            public_id = '/'.join(image_url.split('/')[-3:]).rsplit('.', 1)[0]
-            try:
-                cloudinary.uploader.destroy(public_id)
-            except Exception:
-                app.logger.exception(f"Cloudinary delete error for cake {cake_id}")
+        delete_uploaded_image(image_url)  # ← replaces the 6 lines
 
-        cake_name = cake_doc.to_dict().get('name', cake_id)  # add this BEFORE cake_ref.delete()
+        cake_name = cake_doc.to_dict().get('name', cake_id)
         cake_ref.delete()
         log_admin_action(
             action="Deleted cake",
@@ -2316,6 +2393,10 @@ def manifest_pos():
 @app.route('/service-worker-pos.js')
 def service_worker_pos():
     return app.send_static_file('javascript/service-worker-pos.js')
+
+@app.route('/service-worker-firebase-messaging.js')
+def service_worker_firebase_messaging():
+    return app.send_static_file('javascript/service-worker-firebase-messaging.js')
 # ================================================================
 # RUN SERVER
 # ================================================================

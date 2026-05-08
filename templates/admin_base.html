@@ -10,107 +10,105 @@
 
     <!-- ✅ UPDATED / FIXED RESPONSIVE SIDEBAR CSS -->
     <style>
-    /* ===== SIDEBAR BASE ===== */
-    .sidebar {
-      width: 250px;
-      height: 100vh;
-      position: fixed;
-      left: 0;
-      top: 0;
-      background: #1e293b;
-      color: #fff;
-      transition: all 0.3s ease;
-      z-index: 1200;
-      overflow-y: auto;
+        /* ===== SIDEBAR BASE ===== */
+        .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        background: #1e293b;
+        color: #fff;
+        transition: all 0.3s ease;
+        z-index: 1200;
+        overflow-y: auto;
 
-      /* 🔥 FORCE VISIBILITY */
-      visibility: visible !important;
-      opacity: 1 !important;
-      display: block !important;
-    }
+        /* 🔥 FORCE VISIBILITY */
+        visibility: visible !important;
+        opacity: 1 !important;
+        display: block !important;
+        }
 
-    /* ===== MAIN CONTENT SHIFT ===== */
-    .main-content {
-      margin-left: 250px;
-      transition: all 0.3s ease;
-    }
+        /* ===== MAIN CONTENT SHIFT ===== */
+        .main-content {
+        margin-left: 250px;
+        transition: all 0.3s ease;
+        }
 
-    /* ===== TOGGLE BUTTON ===== */
-    .sidebar-toggle-btn {
-      position: fixed;
-      top: 15px;
-      left: 15px;
-      z-index: 1300;
-      background: #d63384;
-      border: none;
-      color: #fff;
-      padding: 10px 12px;
-      border-radius: 8px;
-      font-size: 18px;
-    }
+        /* ===== TOGGLE BUTTON ===== */
+        .sidebar-toggle-btn {
+        position: fixed;
+        top: 15px;
+        left: 15px;
+        z-index: 1300;
+        background: #d63384;
+        border: none;
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 8px;
+        font-size: 18px;
+        }
 
-    /* ===== OVERLAY ===== */
-    .sidebar-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.4);
-      z-index: 1100;
-      display: none;
-    }
+        /* ===== OVERLAY ===== */
+        .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.4);
+        z-index: 1100;
+        display: none;
+        }
 
-    /* ===== TABLET ===== */
-    @media (max-width: 992px) {
-      .sidebar {
-        width: 220px;
-      }
+        /* ===== TABLET ===== */
+        @media (max-width: 992px) {
+        .sidebar {
+            width: 220px;
+        }
 
-      .main-content {
-        margin-left: 0;
-      }
-    }
-
-
+        .main-content {
+            margin-left: 0;
+        }
+        }
 
 
 
-    @media (max-width: 768px) {
-
-  .sidebar {
-    left: auto !important;
-    right: 0 !important;
-
-    /* hidden OFF SCREEN to the RIGHT */
-    transform: translateX(100%) !important;
-
-    transition: transform 0.3s ease;
-
-    position: fixed !important;
-  }
-
-  .sidebar.active {
-    transform: translateX(0) !important;
-  }
-
-  .sidebar-overlay.active {
-    display: block !important;
-  }
-
-  .main-content {
-    margin-left: 0 !important;
-  }
-
-  /* button stays visible on right */
-  .sidebar-toggle-btn {
-    left: auto;
-    right: 15px;
-  }
-}
-    
 
 
+        @media (max-width: 768px) {
+
+        .sidebar {
+            left: auto !important;
+            right: 0 !important;
+
+            /* hidden OFF SCREEN to the RIGHT */
+            transform: translateX(100%) !important;
+
+            transition: transform 0.3s ease;
+
+            position: fixed !important;
+        }
+
+        .sidebar.active {
+            transform: translateX(0) !important;
+        }
+
+        .sidebar-overlay.active {
+            display: block !important;
+        }
+
+        .main-content {
+            margin-left: 0 !important;
+        }
+
+        /* button stays visible on right */
+        .sidebar-toggle-btn {
+            left: auto;
+            right: 15px;
+        }
+        }
+            
 
 
 
@@ -122,17 +120,20 @@
 
 
 
-    /* ===== SMALL MOBILE ===== */
-    @media (max-width: 480px) {
-      .sidebar {
-        width: 200px;
-      }
-    }
+
+
+        /* ===== SMALL MOBILE ===== */
+        @media (max-width: 480px) {
+        .sidebar {
+            width: 200px;
+        }
+        }
     </style>
 
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
     <script>
         try {
@@ -289,6 +290,53 @@
         }, 5000);
     </script>
 
+    <script>
+    (async function registerAdminFCMToken() {
+        try {
+            // 1. Wait for auth state
+            firebase.auth().onAuthStateChanged(async (user) => {
+                if (!user) return;
+
+                // 2. Check admin custom claim
+                const idTokenResult = await user.getIdTokenResult();
+                if (!idTokenResult.claims.admin) return;
+
+                // 3. Register FCM messaging service worker
+                const swReg = await navigator.serviceWorker.register('/service-worker-firebase-messaging.js');
+
+                // 4. Get messaging instance
+                const messaging = firebase.messaging();
+
+                // 5. Request permission + get token
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.warn('[FCM] Notification permission denied');
+                    return;
+                }
+
+                const token = await messaging.getToken({
+                    vapidKey: 'BIlhY4rDBY7ZcedYvAqLYStQOC-_ySz1Daq3Dd4ZVgO4HJynJMCByWy0vsfDcebJKbxOxta9irjDD53jcc-ddg',
+                    serviceWorkerRegistration: swReg
+                });
+
+                if (!token) {
+                    console.warn('[FCM] No token received');
+                    return;
+                }
+
+                // 6. Save token to Firestore under fcm_tokens/admins/{uid}
+                const db = firebase.firestore();
+                await db.collection('fcm_tokens').doc('admins').set({
+                    [user.uid]: token
+                }, { merge: true });  // merge so other admins' tokens are not overwritten
+
+                console.log('[FCM] Admin token saved:', token);
+            });
+        } catch (err) {
+            console.error('[FCM] Token registration failed:', err);
+        }
+    })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

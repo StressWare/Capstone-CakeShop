@@ -1,15 +1,3 @@
-"""from pymongo import MongoClient
-
-
-client = MongoClient("mongodb+srv://jualsolamilloui_db_user:j0Xie1TJ3YULCvUte@cluster0.m5in6am.mongodb.net/?appName=Cluster0")
-
-
-db = client["cake_shop_db"]
-sales = db["sales"]
-expenses = db["expenses"]
-inventory = db["inventory"]
-users = db["users"]
-"""
 
 from firebase_admin import firestore
 
@@ -29,3 +17,4 @@ orders = db.collection("orders")
 notifications = db.collection("notifications")
 pending_orders = db.collection("pending_orders")
 custom_cake_price = db.collection("custom_cake_price")
+fcm_tokens = db.collection("fcm_tokens")

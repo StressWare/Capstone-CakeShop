@@ -77,6 +77,14 @@ def save_uploaded_image(file, upload_type):
     except Exception:
         current_app.logger.exception("Cloudinary upload error")
         return None
+    
+def delete_uploaded_image(image_url):
+    if image_url and 'cloudinary.com' in image_url:
+        public_id = '/'.join(image_url.split('/')[-3:]).rsplit('.', 1)[0]
+        try:
+            cloudinary.uploader.destroy(public_id)
+        except Exception:
+            current_app.logger.exception("Cloudinary delete error")
 
 def convert_timestamps(order):
     for field in ['created_at', 'delivery_date']:
