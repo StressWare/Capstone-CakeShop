@@ -40,32 +40,45 @@ class ChatbotWidget {
     }
     
     async getOrCreateConversationId() {
-        let convId = localStorage.getItem(`chatbot_conversation_${this.userId}`);
-        console.log('Existing conversation ID:', convId);
-        
-        if (!convId) {
-            convId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            console.log('Created new conversation ID:', convId);
-            
-            try {
-                const db = firebase.firestore();
-                await db.collection('users')
-                    .doc(this.userId)
-                    .collection('conversations')
-                    .doc(convId)
-                    .set({
-                        created_at: firebase.firestore.FieldValue.serverTimestamp(),
-                        last_updated: firebase.firestore.FieldValue.serverTimestamp(),
-                        escalated: false
-                    });
-                
-                localStorage.setItem(`chatbot_conversation_${this.userId}`, convId);
-                console.log('✅ Conversation saved to Firestore');
-            } catch (error) {
-                console.error('❌ Error creating conversation:', error);
-            }
+        const db = firebase.firestore();
+
+        // 1. Check Firestore first — works on any device
+        const snapshot = await db.collection('users')
+            .doc(this.userId)
+            .collection('conversations')
+            .orderBy('created_at', 'desc')
+            .limit(1)
+            .get();
+
+        if (!snapshot.empty) {
+            const convId = snapshot.docs[0].id;
+            localStorage.setItem(`chatbot_conversation_${this.userId}`, convId); // keep local in sync
+            console.log('✅ Found existing conversation:', convId);
+            this.conversationId = convId;
+            return;
         }
-        
+
+        // 2. Nothing in Firestore → create new
+        const convId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        console.log('Created new conversation ID:', convId);
+
+        try {
+            await db.collection('users')
+                .doc(this.userId)
+                .collection('conversations')
+                .doc(convId)
+                .set({
+                    created_at:   firebase.firestore.FieldValue.serverTimestamp(),
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp(),
+                    escalated:    false
+                });
+
+            localStorage.setItem(`chatbot_conversation_${this.userId}`, convId);
+            console.log('✅ New conversation saved to Firestore');
+        } catch (error) {
+            console.error('❌ Error creating conversation:', error);
+        }
+
         this.conversationId = convId;
     }
     

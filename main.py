@@ -1,4 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 import re
@@ -10,7 +13,7 @@ import secrets
 import cloudinary
 import cloudinary.uploader
 import firebase
-from db import sales, expenses, inventory, users, cakes, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders
+from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders
 from firebase_admin import auth, firestore
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -18,8 +21,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://" #change to redis uri in deployment
+)
+@app.errorhandler(RateLimitExceeded)
+def handle_rate_limit(e):
+    if request.is_json or request.path.startswith('/verify') or request.path.startswith('/save'):
+        return jsonify({"error": "Too many requests. Please slow down."}), 429
+    flash("Too many attempts. Please wait a moment.", "danger")
+    return redirect(url_for("customer_dashboard")), 429
 PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
 @app.after_request
 def add_common_headers(response):
@@ -237,6 +253,7 @@ def logout():
 
 # ---------------- VERIFY TOKEN ----------------
 @app.route('/verify-token', methods=['POST'])
+@limiter.limit("10 per minute")
 def verify_token():
     data = request.get_json()
     id_token = data.get('idToken')
@@ -285,6 +302,7 @@ def verify_token():
 
 # ---------------- SAVE USER DETAILS ----------------
 @app.route('/save-user-details', methods=['POST'])
+@limiter.limit("10 per minute")
 def save_user_details():
     auth_header = request.headers.get('Authorization')
     if not auth_header or not auth_header.startswith('Bearer '):
@@ -324,6 +342,7 @@ def save_user_details():
 
 # ---------------- COMPLETE PROFILE ----------------
 @app.route('/complete-profile', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def complete_profile():
     user_id = session.get('user_id')
     if not user_id:
@@ -587,6 +606,7 @@ def order_receipt(order_id):
 
 # ---------------- CUSTOMIZATION ORDER ----------------
 @app.route("/order", methods=["POST"])
+@limiter.limit("5 per minute")
 @login_required
 def place_order():
     user_id = session.get("user_id")
@@ -601,13 +621,41 @@ def place_order():
         inspo_image = None
 
     customer_doc = users.document(user_id).get()
-    customer = customer_doc.to_dict() if customer_doc.exists else {}
-    min_date = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+    customer     = customer_doc.to_dict() if customer_doc.exists else {}
+    min_date     = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+
+    # ── Recompute amount from Firestore ──
+    try:
+        icing_key   = request.form.get("design", "").split("|")[0]
+        size_key    = request.form.get("cakeSize", "").split("|")[0]
+        layers_key  = request.form.get("layers", "").split("|")[0]
+        toppers_key = request.form.get("toppers", "").split("|")[0]
+
+        icing_prices   = custom_cake_price.document("icing").get().to_dict()   or {}
+        size_prices    = custom_cake_price.document("size").get().to_dict()     or {}
+        layers_prices  = custom_cake_price.document("layers").get().to_dict()   or {}
+        toppers_prices = custom_cake_price.document("toppers").get().to_dict()  or {}
+        addon_prices   = custom_cake_price.document("addons").get().to_dict()   or {}
+
+        amount  = 0.0
+        amount += float(icing_prices.get(icing_key, 0))
+        amount += float(size_prices.get(size_key, 0))
+        amount += float(layers_prices.get(layers_key, 0))
+        amount += float(toppers_prices.get(toppers_key, 0))
+
+        for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
+            if request.form.get(addon_key):
+                amount += float(addon_prices.get(addon_key, 0))
+
+    except Exception as e:
+        app.logger.exception("Error computing custom cake price")
+        flash("Unable to compute order price. Please try again.", "danger")
+        return redirect(url_for('customize'))
 
     return render_template('checkout.html',
         order_type     = 'custom',
         order_item     = request.form.get('order_item'),
-        amount         = request.form.get('amount'),
+        amount         = amount,          # ← server computed
         notes          = request.form.get('notes', ''),
         rush           = request.form.get('rush', ''),
         inspo_image    = inspo_image,
@@ -619,51 +667,62 @@ def place_order():
 # ---------------- PREMADE ORDER ----------------
 @app.route("/order/cake", methods=["POST"])
 @login_required
+@limiter.limit("5 per minute")
 def order_cake():
     user_id = session.get("user_id")
- 
+
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
     min_date     = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
- 
+
     selected_json  = request.form.get('selected_items', '[]')
     selected_items = json.loads(selected_json)
- 
+
     if selected_items:
-        # coming from cart — already has quantity + subtotal
+        # coming from cart — recompute price from Firestore, ignore client price
         for i in selected_items:
-            i['quantity'] = int(i.get('quantity', 1))
-            i['subtotal'] = float(i['price']) * i['quantity']
-            
-            # Get image URL from cakes collection if not present
-            if 'image_url' not in i and i.get('cake_id'):
-                cake_doc = cakes.document(i['cake_id']).get()
-                if cake_doc.exists:
-                    cake_data = cake_doc.to_dict()
-                    i['image_url'] = cake_data.get('image', None)
-            
-        amount = sum(float(i['subtotal']) for i in selected_items)
+            cake_id  = i.get('cake_id')
+            quantity = int(i.get('quantity', 1))
+
+            cake_doc = cakes.document(cake_id).get()
+            if not cake_doc.exists:
+                flash("Cake not found.", "danger")
+                return redirect(url_for("customer_dashboard"))
+
+            cake_data         = cake_doc.to_dict()
+            real_price        = float(cake_data.get('price', 0))  # ← server price
+
+            i['quantity']  = quantity
+            i['price']     = real_price                           # ← overwrite client price
+            i['subtotal']  = real_price * quantity                # ← recomputed
+            i['cake_name'] = cake_data.get('name', i.get('cake_name', ''))
+            i['image_url'] = cake_data.get('image', i.get('image_url', None))
+
+        amount = sum(i['subtotal'] for i in selected_items)
+
     else:
-        # coming from Order Now on cakes page
-        quantity = int(request.form.get('quantity', 1))
-        price    = float(request.form.get('price', 0))
+        # coming from Order Now — recompute price from Firestore
         cake_id  = request.form.get('cake_id')
-        cake_name = request.form.get('cake_name')
-        
-        # Get cake details including image from database
+        quantity = int(request.form.get('quantity', 1))
+
         cake_doc = cakes.document(cake_id).get()
-        cake_data = cake_doc.to_dict() if cake_doc.exists else {}
-        
+        if not cake_doc.exists:
+            flash("Cake not found.", "danger")
+            return redirect(url_for("customer_dashboard"))
+
+        cake_data  = cake_doc.to_dict()
+        real_price = float(cake_data.get('price', 0))  # ← server price, ignore client
+
         selected_items = [{
             'cake_id':   cake_id,
-            'cake_name': cake_name,
-            'price':     price,
+            'cake_name': cake_data.get('name', ''),    # ← from server too
+            'price':     real_price,
             'quantity':  quantity,
-            'subtotal':  price * quantity,
-            'image_url': cake_data.get('image', None)  # This is the Cloudinary URL
+            'subtotal':  real_price * quantity,
+            'image_url': cake_data.get('image', None)
         }]
-        amount = price * quantity
- 
+        amount = real_price * quantity
+
     return render_template('checkout.html',
         order_type     = 'premade',
         selected_items = selected_items,
@@ -672,9 +731,10 @@ def order_cake():
         min_date       = min_date,
     )
  
-# ---------------- PLACE ORDER (SAVE TO FIRESTORE) ----------------
+# ---------------- PLACE ORDER (FINALIZE OF BOTH PREMADE  OR  CUSTOM) ----------------
 @app.route("/place-order", methods=["POST"])
 @login_required
+@limiter.limit("5 per minute")
 def finalize_order():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
@@ -702,18 +762,70 @@ def finalize_order():
     custom_components = []
     if order_type == "premade":
         selected_items = json.loads(selected_json)
-        item_names     = ", ".join([f"{i['cake_name']} (₱{float(i['price']):.0f})" for i in selected_items])
-        amount     = sum(float(i.get("subtotal", float(i["price"]) * int(i.get("quantity", 1)))) for i in selected_items)
+        amount         = 0.0
+        normalized     = []
+
+        for i in selected_items:
+            cake_id  = i.get("cake_id")
+            quantity = int(i.get("quantity", 1))
+
+            cake_doc = cakes.document(cake_id).get()
+            if not cake_doc.exists:
+                flash("One or more cakes no longer exist.", "danger")
+                return redirect(url_for("customer_dashboard"))
+
+            cake_data  = cake_doc.to_dict()
+            real_price = float(cake_data.get("price", 0))  # ← server price
+            subtotal   = real_price * quantity
+            amount    += subtotal
+
+            normalized.append({
+                **i,
+                "price":     real_price,   # ← overwrite client price
+                "subtotal":  subtotal,     # ← recomputed
+                "cake_name": cake_data.get("name", i.get("cake_name", "")),
+            })
+
+        selected_items = normalized
+        item_names     = ", ".join([f"{i['cake_name']} (₱{i['price']:.0f})" for i in selected_items])
         rush           = False
         inspo_image    = None
+
         for i in selected_items:
             users.document(user_id).collection("cart").document(i["cake_id"]).delete()
+    # NEW — recomputes from Firestore
     else:
         selected_items = []
         item_names     = request.form.get("order_item", "")
-        amount         = float(request.form.get("amount", 0))
         rush           = request.form.get("rush") == "yes"
         inspo_image    = request.form.get("inspo_image") or None
+
+        try:
+            icing_key   = request.form.get("design", "").split("|")[0]
+            size_key    = request.form.get("cakeSize", "").split("|")[0]
+            layers_key  = request.form.get("layers", "").split("|")[0]
+            toppers_key = request.form.get("toppers", "").split("|")[0]
+
+            icing_prices   = custom_cake_price.document("icing").get().to_dict()   or {}
+            size_prices    = custom_cake_price.document("size").get().to_dict()     or {}
+            layers_prices  = custom_cake_price.document("layers").get().to_dict()   or {}
+            toppers_prices = custom_cake_price.document("toppers").get().to_dict()  or {}
+            addon_prices   = custom_cake_price.document("addons").get().to_dict()   or {}
+
+            amount  = 0.0
+            amount += float(icing_prices.get(icing_key, 0))
+            amount += float(size_prices.get(size_key, 0))
+            amount += float(layers_prices.get(layers_key, 0))
+            amount += float(toppers_prices.get(toppers_key, 0))
+
+            for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
+                if request.form.get(addon_key):
+                    amount += float(addon_prices.get(addon_key, 0))
+
+        except Exception:
+            app.logger.exception("Error recomputing custom price in place-order")
+            flash("Unable to verify order price. Please try again.", "danger")
+            return redirect(url_for('customize'))
 
         item_parts = item_names.split(", ")
         for part in item_parts:
@@ -820,6 +932,7 @@ def finalize_order():
 # ---------------- CUSTOMER CANCEL ORDER ----------------
 @app.route("/order/cancel/<order_id>", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def cancel_order(order_id):
     user_id = session.get("user_id")
 

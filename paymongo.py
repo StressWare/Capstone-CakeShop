@@ -1,9 +1,10 @@
 import requests
 import os
 import base64
+import logging
 from dotenv import load_dotenv
 load_dotenv()
-
+logger = logging.getLogger(__name__)
 # ================================================================
 # PAYMONGO CONFIG
 # ================================================================
@@ -55,11 +56,11 @@ def create_checkout_session(amount, order_description, line_items, success_url, 
                 "checkout_url": checkout_url
             }
         else:
-            print(f"PayMongo error: {data}")
+            logger.error(f"PayMongo checkout error: {data}")
             return None
 
     except Exception as e:
-        print(f"PayMongo create_checkout_session error: {str(e)}")
+        logger.exception("PayMongo create_checkout_session failed")
         return None
 
 
@@ -107,7 +108,7 @@ def verify_payment(session_id):
         }
 
     except Exception as e:
-        print(f"PayMongo verify error: {str(e)}")
+        logger.exception("PayMongo verify_payment failed")
         return {"paid": False}
 
 
