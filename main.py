@@ -1,17 +1,17 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
+from extensions import limiter
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
-from functools import wraps
+from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
+                     calculate_order_total, _today_range, FAQ, 
+                     get_faq_response, save_uploaded_image, ALLOWED_EXTENSIONS)
+from decorators import login_required, admin_required
 import re
 import os
 import json
 import hmac
 import hashlib
 import secrets
-import cloudinary
-import cloudinary.uploader
 import firebase
 from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders
 from firebase_admin import auth, firestore
@@ -24,12 +24,7 @@ app = Flask(__name__)
 
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
-limiter = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://" #change to redis uri in deployment
-)
+limiter.init_app(app)
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
     if request.is_json or request.path.startswith('/verify') or request.path.startswith('/save'):
@@ -44,149 +39,16 @@ def add_common_headers(response):
     # allow Google auth popups
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
-# ================================================================
+
 # BLUEPRINT REGISTRATION
-# ================================================================
 from pos import pos_bp
 app.register_blueprint(pos_bp)
 
-# ================================================================
-# CLOUDINARY CONFIG
-# ================================================================
-cloudinary.config(
-    cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key    = os.getenv('CLOUDINARY_API_KEY'),
-    api_secret = os.getenv('CLOUDINARY_API_SECRET')
-)
-
-# ================================================================
-# CONSTANTS
-# ================================================================
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
-PH_TZ = timezone(timedelta(hours=8))
-
-# ================================================================
-# FAQ DATA
-# ================================================================
-FAQ = {
-    "how to order": "📝 To place an order with Ms. Brave Cake Shop:\n\n1. Click 'Order Now' on our homepage\n2. Select your cake design and flavor\n3. Choose delivery date and time\n4. Fill in recipient details\n5. Review and confirm your order\n6. Choose payment method\n\nThat's it! We'll confirm your order shortly.",
-    "delivery time": "🚚 Our delivery times:\n\n⏱️ Standard Delivery: 2-3 business days\n⚡ Rush Delivery: 24 hours (available for ₱150 extra)\n\n📍 Delivery areas: Metro and nearby provinces\n🎁 Free delivery for orders ₱2000 and above\n\nDelivery is available 10 AM - 6 PM daily.",
-    "customization": "🎨 Yes! We offer full customization:\n\n🍰 Flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry, and more\n🧁 Frosting: Buttercream, Cream Cheese, Chocolate Ganache\n🎂 Design: Custom designs, personalized messages, themed decorations\n👶 Special requests: Sugar-free, dairy-free, vegan options available\n\nPlease mention your preferences in the order notes!",
-    "payment methods": "💳 We accept multiple payment methods:\n\n💵 Cash on Delivery (COD)\n📱 GCash & PayMaya\n🏦 Bank Transfer (BPI, BDO, Metrobank)\n💰 Online Payment (Debit/Credit Card)\n\nPayment must be settled before delivery. We send a QR code or bank details after confirmation.",
-    "return policy": "🔄 Return & Refund Policy:\n\n❌ Non-returnable items: Baked goods due to perishability\n✅ Refund eligibility: Only if cake is damaged or incorrect upon delivery\n🕐 Timeline: Report issues within 24 hours of delivery\n💰 Refund process: Full refund or replacement (customer's choice)\n\nPlease message us immediately with photos if there's an issue!",
-    "default": "😊 I'm not sure about that question. Please click one of the FAQ buttons above or contact the owner directly using the 'Chat with Owner' button. Thank you!"
-}
-
-# ================================================================
-# DECORATORS
-# ================================================================
-
-def login_required(f):
-    """Protects customer routes - redirects to login if not logged in"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        if not session.get('user_id'):
-            flash('Please login first!', 'warning')
-            return redirect(url_for('auth_page'))
-        return f(*args, **kwargs)
-    return decorated
-
-def admin_required(f):
-    """Protects admin routes - checks admin custom claim"""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        current_user = session.get('user')
-        if not current_user:
-            flash('Please login first!', 'warning')
-            return redirect(url_for('auth_page'))
-        if not current_user.get('admin'):
-            return render_template('403.html'), 403
-        return f(*args, **kwargs)
-    return decorated
-
-# ================================================================
-# HELPER FUNCTIONS (to avoid same repeated code)
-# ================================================================
-def log_admin_action(action, target, category="general"):
-    try:
-        admin_logs.add({
-            "action": action,
-            "target": target,
-            "category": category,
-            "admin_name": session["user"]["name"],
-            "ip_address": request.remote_addr,
-            "timestamp": datetime.now(PH_TZ)
-        })
-    except Exception:
-        app.logger.exception("[LOG ERROR] Failed to write admin log")
-
-def get_faq_response(user_message):
-    """Match user message to FAQ using keyword matching"""
-    user_message_lower = user_message.lower()
-    for faq_key, faq_answer in FAQ.items():
-        if faq_key != "default":
-            keywords = faq_key.split()
-            if any(keyword in user_message_lower for keyword in keywords):
-                return faq_answer
-    return FAQ.get("default", "I'm not sure. Please contact us directly!")
-
-def save_uploaded_image(file, upload_type):
-    """Upload image to Cloudinary, returns URL or None if invalid/too large"""
-    parts = file.filename.rsplit('.', 1)
-    if len(parts) < 2 or not parts[1]:
-        return None
-    ext = parts[1].lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        return None
-
-    file.seek(0, 2)
-    file_size = file.tell()
-    file.seek(0)
-
-    if file_size > 2 * 1024 * 1024:
-        return None
-
-    folder = 'cake_shop/cakes' if upload_type == 'cake' else 'cake_shop/orders'
-
-    try:
-        result = cloudinary.uploader.upload(file, folder=folder, resource_type='image')
-        return result['secure_url']
-    except Exception:
-        app.logger.exception("Cloudinary upload error")
-        return None
-
-def convert_timestamps(order):
-    """Convert Firestore timestamps to PH timezone datetime"""
-    for field in ['created_at', 'delivery_date']:
-        val = order.get(field)
-        if isinstance(val, str):
-            val = datetime.fromisoformat(val)
-        if isinstance(val, datetime):
-            if val.tzinfo is None:
-                val = val.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-            else:
-                val = val.astimezone(PH_TZ)
-        order[field] = val
-    return order
-def _today_range():
-    now = datetime.now(PH_TZ)
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=1)
-    return start, end
-def calculate_order_total(order):
-    """Centralized order total calculation"""
-    if order.get("order_type") == "premade" and order.get("selected_items"):
-        return sum(
-            float(i.get("subtotal", float(i.get("price", 0)) * int(i.get("quantity", 1))))
-            for i in order["selected_items"]
-        )
-    return float(order.get("amount", 0) or 0)
 
 
 # ================================================================
 # PUBLIC ROUTES
 # ================================================================
-
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
@@ -342,24 +204,39 @@ def save_user_details():
 
 # ---------------- COMPLETE PROFILE ----------------
 @app.route('/complete-profile', methods=['GET', 'POST'])
-@limiter.limit("10 per minute")
+@login_required
 def complete_profile():
     user_id = session.get('user_id')
     if not user_id:
         return redirect(url_for('auth_page'))
 
     if request.method == 'POST':
+        fname    = (request.form.get('fname') or '').strip()
+        username = (request.form.get('username') or '').strip()
+        number   = (request.form.get('number') or '').strip()
+        address  = (request.form.get('address') or '').strip()
+
+        # same limits as /customer/edit
+        if not username or len(username) > 50:
+            flash('Invalid username length.', 'danger')
+            return redirect(url_for('complete_profile'))
+
+        if not fname or len(fname) > 100:
+            flash('Invalid full name length.', 'danger')
+            return redirect(url_for('complete_profile'))
+
         users.document(user_id).update({
-            'fname':    request.form.get('fname'),
-            'username': request.form.get('username'),
-            'number':   request.form.get('number'),
-            'address':  request.form.get('address'),
+            "fname":    fname,
+            "username": username,
+            "number":   number,
+            "address":  address
         })
         return redirect(url_for('customer_dashboard'))
 
     doc = users.document(user_id).get()
     customer = doc.to_dict()
     return render_template('complete_profile.html', customer=customer)
+
 
 # ================================================================
 # CUSTOMER ROUTES
@@ -467,13 +344,29 @@ def favorites_toggle():
 @app.route("/customer/edit", methods=["POST"])
 @login_required
 def edit_customer_profile():
-    user_id = session.get("user_id")
+    user_id  = session.get("user_id")
+
+    username = (request.form.get("username") or "").strip()
+    number   = (request.form.get("contact") or "").strip()
+    address  = (request.form.get("address") or "").strip()
+    fname    = (request.form.get("full_name") or "").strip()
+
+    if not username or len(username) > 50:
+        flash("Invalid username.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if not fname or len(fname) > 100:
+        flash("Invalid name.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
     users.document(user_id).update({
-        "username": request.form.get("username"),
-        "number":   request.form.get("contact"),
-        "address":  request.form.get("address"),
-        "fname":    request.form.get("full_name")
+        "username": username,
+        "number":   number,
+        "address":  address,
+        "fname":    fname
     })
+
+    flash("Profile updated successfully!", "success")
     return redirect(url_for("customer_dashboard"))
 
 # ---------------- CUSTOMIZE CAKE PAGE ----------------
@@ -2141,6 +2034,7 @@ def payment_failed():
 # ---------------- SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
 @login_required
+@limiter.limit("20 per minute")
 def send_message():
     try:
         data = request.get_json()
