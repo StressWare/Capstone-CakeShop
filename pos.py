@@ -4,6 +4,8 @@ import json
 from db import walkin_orders, cakes
 from extensions import limiter
 from decorators import admin_required
+from helpers import log_admin_action
+
 
 pos_bp = Blueprint('pos', __name__)
 PH_TZ = timezone(timedelta(hours=8))
@@ -59,7 +61,11 @@ def pos_order():
 
     doc_ref  = walkin_orders.add(order_data)
     order_id = doc_ref[1].id
-
+    log_admin_action(
+        action="Created POS order",
+        target=f"Walk-in order {order_id} — {item_names}",
+        category="pos"
+    )
     for i in items:
         cake_ref = cakes.document(i["cake_id"])
         cake_doc = cake_ref.get()
