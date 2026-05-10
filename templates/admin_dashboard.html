@@ -3,7 +3,7 @@
 
 {% block extra_css %}
 <style>
- /* ===== GENERAL RESPONSIVENESS ===== */
+/* ===== GENERAL RESPONSIVENESS ===== */
 body { overflow-x: hidden; }
 .container-fluid { max-width: 1400px; margin: auto; }
 
@@ -62,6 +62,140 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
 /* ===== TODAY ORDERS SCROLL FIX ===== */
 .card-body[style*="overflow-y"] { scrollbar-width: thin; }
 
+/* ===== VIEW TABS ===== */
+.view-tabs {
+  display: flex; gap: 6px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 4px;
+}
+.view-tab-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  border: none; cursor: pointer;
+  background: transparent; color: #6b7280;
+  transition: all 0.18s;
+}
+.view-tab-btn:hover { color: #6B1A3A; }
+.view-tab-btn.active {
+  background: #ffffff;
+  color: #6B1A3A;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+.view-tab-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+/* ===== VIEWS ===== */
+#view-dashboard { display: block; }
+#view-calendar  { display: none; }
+
+/* ===== CALENDAR STYLES ===== */
+.cal-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 16px;
+}
+@media (max-width: 768px) {
+  .cal-wrapper { grid-template-columns: 1fr; }
+}
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.cal-nav-btn {
+  background: #fff; border: 1px solid #d1d5db;
+  border-radius: 8px; padding: 5px 12px;
+  cursor: pointer; font-size: 14px; color: #374151;
+  transition: all 0.15s;
+}
+.cal-nav-btn:hover { border-color: #6B1A3A; color: #6B1A3A; }
+.cal-month-label { font-size: 16px; font-weight: 700; color: #fff; }
+.cal-grid-header {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  gap: 4px; margin-bottom: 4px;
+}
+.cal-grid-header span {
+  font-size: 11px; font-weight: 600; text-align: center;
+  color: #9ca3af; padding: 4px 0;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+}
+.cal-cell {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 68px;
+  padding: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.cal-cell:hover { border-color: #6B1A3A; }
+.cal-cell.today { border: 2px solid #6B1A3A; }
+.cal-cell.selected { background: #fdf2f6; border-color: #6B1A3A; box-shadow: 0 0 0 2px rgba(107,26,58,0.12); }
+.cal-cell.empty { background: #f9fafb; cursor: default; border-color: #f3f4f6; }
+.cal-cell.empty:hover { border-color: #f3f4f6; }
+.cal-day-num { font-size: 12px; font-weight: 600; color: #6b7280; }
+.cal-cell.today .cal-day-num { color: #6B1A3A; }
+.cal-badge {
+  display: inline-block;
+  background: #6B1A3A; color: #fff;
+  border-radius: 10px; font-size: 10px;
+  padding: 1px 7px; margin-top: 5px;
+  font-weight: 600;
+}
+
+/* Detail panel */
+.cal-detail-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  max-height: 520px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.cal-detail-title {
+  font-size: 14px; font-weight: 700; color: #111;
+  margin-bottom: 12px; padding-bottom: 10px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.cal-order-card {
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+.cal-order-card:hover { border-color: #d1d5db; }
+.cal-order-card.rush { border-left: 3px solid #dc2626; }
+.cal-order-top {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 6px;
+  margin-bottom: 4px;
+}
+.cal-order-name { font-size: 13px; font-weight: 600; color: #111; }
+.cal-order-item { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
+.cal-order-time { font-size: 11px; color: #9ca3af; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.rush-label {
+  font-size: 10px; font-weight: 700;
+  background: #fef2f2; color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px; padding: 1px 6px;
+}
+.cal-loading { text-align: center; color: #9ca3af; font-size: 13px; padding: 24px 0; }
+
+/* Status badge colors */
+.status-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
+.status-New       { background: #f3f4f6; color: #374151; }
+.status-Accepted  { background: #cffafe; color: #0e7490; }
+.status-Pending   { background: #fef9c3; color: #854d0e; }
+.status-Ready     { background: #dbeafe; color: #1d4ed8; }
+.status-Out       { background: #1f2937; color: #f9fafb; }
+.status-Completed { background: #dcfce7; color: #166534; }
+.status-Cancelled { background: #fee2e2; color: #991b1b; }
+
 /* ===== TABLET (≤ 992px) ===== */
 @media (max-width: 992px) {
   #status-overview .col-md-7, #status-overview .col-md-5 { width: 100%; }
@@ -114,203 +248,428 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
         </svg>
         Refresh
       </button>
+
+      <!-- ===== VIEW TABS ===== -->
+      <div class="view-tabs">
+        <button class="view-tab-btn active" id="tab-dashboard" onclick="switchView('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          </svg>
+          Dashboard
+        </button>
+        <button class="view-tab-btn" id="tab-calendar" onclick="switchView('calendar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Calendar
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- STATUS OVERVIEW -->
-  <section id="status-overview" class="mb-5">
-    <h3 class="mb-3">Status Overview</h3>
-    <div class="row g-3">
-      <div class="col-md-7">
-        <div class="row g-2">
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">NEW</h6><h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">ACCEPTED</h6><h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">PENDING</h6><h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">READY</h6><h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">OUT</h6><h2 class="mb-0 fw-bold">{{ total_out }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">COMPLETED</h6><h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">CANCEL</h6><h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2></div></div>
-          <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">RUSH</h6><h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2></div></div>
+  <!-- ===================================================== -->
+  <!-- DASHBOARD VIEW                                        -->
+  <!-- ===================================================== -->
+  <div id="view-dashboard">
 
-          <div class="col-12 mt-3">
-            <div class="card">
-              <div class="card-body py-2">
-                <div class="d-flex align-items-center">
-                  <h5 class="mb-0 me-3"><strong>LOW STOCK:</strong></h5>
-                  {% if low_stock %}
-                    <div class="d-flex flex-wrap gap-2">
-                      {% for i in low_stock %}
-                        <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">{{ i.item }}: {{ i.quantity }} left</span>
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <span class="text-muted">All items stocked</span>
-                  {% endif %}
+    <!-- STATUS OVERVIEW -->
+    <section id="status-overview" class="mb-5">
+      <h3 class="mb-3">Status Overview</h3>
+      <div class="row g-3">
+        <div class="col-md-7">
+          <div class="row g-2">
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">NEW</h6><h2 class="mb-0 fw-bold text-secondary">{{ total_new }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">ACCEPTED</h6><h2 class="mb-0 fw-bold text-info">{{ total_accepted }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">PENDING</h6><h2 class="mb-0 fw-bold text-warning">{{ total_pending }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">READY</h6><h2 class="mb-0 fw-bold text-primary">{{ total_ready }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">OUT</h6><h2 class="mb-0 fw-bold">{{ total_out }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">COMPLETED</h6><h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">CANCEL</h6><h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2></div></div>
+            <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">RUSH</h6><h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2></div></div>
+
+            <div class="col-12 mt-3">
+              <div class="card">
+                <div class="card-body py-2">
+                  <div class="d-flex align-items-center">
+                    <h5 class="mb-0 me-3"><strong>LOW STOCK:</strong></h5>
+                    {% if low_stock %}
+                      <div class="d-flex flex-wrap gap-2">
+                        {% for i in low_stock %}
+                          <span class="badge {% if i.quantity < 5 %}bg-danger{% else %}bg-warning text-dark{% endif %} p-2">{{ i.item }}: {{ i.quantity }} left</span>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <span class="text-muted">All items stocked</span>
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-md-5">
-        <div class="card h-100">
-          <div class="card-header bg-white"><h5 class="mb-0">Today's Orders ({{ today_count }})</h5></div>
-          <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
-            {% if today_deliveries %}
-              {% for delivery in today_deliveries %}
-              <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                <div>
-                  <span class="badge bg-light text-dark me-2">{{ delivery.time }}</span>
-                  {% if delivery.rush %}<span class="badge bg-danger">RUSH</span>{% endif %}
-                  <strong class="d-block">{{ delivery.customer }}</strong>
-                  <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
+        <div class="col-md-5">
+          <div class="card h-100">
+            <div class="card-header bg-white"><h5 class="mb-0">Today's Orders ({{ today_count }})</h5></div>
+            <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
+              {% if today_deliveries %}
+                {% for delivery in today_deliveries %}
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                  <div>
+                    <span class="badge bg-light text-dark me-2">{{ delivery.time }}</span>
+                    {% if delivery.rush %}<span class="badge bg-danger">RUSH</span>{% endif %}
+                    <strong class="d-block">{{ delivery.customer }}</strong>
+                    <small class="text-muted">{{ delivery.cake[:30] }}{% if delivery.cake|length > 30 %}...{% endif %}</small>
+                  </div>
+                  <span class="badge {% if delivery.status == 'New' %}bg-secondary{% elif delivery.status == 'Accepted' %}bg-info{% elif delivery.status == 'Pending' %}bg-warning text-dark{% elif delivery.status == 'Ready' %}bg-primary{% elif delivery.status == 'Out for Delivery' %}bg-dark{% endif %}">{{ delivery.status }}</span>
                 </div>
-                <span class="badge {% if delivery.status == 'New' %}bg-secondary{% elif delivery.status == 'Accepted' %}bg-info{% elif delivery.status == 'Pending' %}bg-warning text-dark{% elif delivery.status == 'Ready' %}bg-primary{% elif delivery.status == 'Out for Delivery' %}bg-dark{% endif %}">{{ delivery.status }}</span>
-              </div>
-              {% endfor %}
-            {% else %}
-              <div class="text-center py-3 text-muted">No deliveries today</div>
-            {% endif %}
+                {% endfor %}
+              {% else %}
+                <div class="text-center py-3 text-muted">No deliveries today</div>
+              {% endif %}
+            </div>
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- DAILY REPORT -->
+    <section id="daily-report" class="mb-5">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="mb-0">Daily Sale Report</h3>
+        <div class="d-flex gap-2">
+          <button class="btn btn-danger btn-sm" onclick="downloadPDF()">Download PDF</button>
+          <button class="btn btn-success btn-sm" onclick="downloadCSV()">Download CSV</button>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <!-- Walk-in -->
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#c084fc;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Walk-in</h6>
+            </div>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales) }}</h2>
+              <p class="text-muted small mb-3">Sales today</p>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pos_txn }}</strong></div>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pos_top }}</span></div>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash</span><strong>₱{{ "{:,.0f}".format(pos_cash) }}</strong></div>
+              <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pos_ewallet) }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Online Premade -->
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Premade Cake</h6>
+            </div>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pre_sales) }}</h2>
+              <p class="text-muted small mb-3">Sales today</p>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pre_txn }}</strong></div>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pre_top }}</span></div>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>{{ "{:,.0f}".format(pre_cash) }}</strong></div>
+              <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pre_ewallet) }}</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Online Custom -->
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Customize Cake</h6>
+            </div>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_sales) }}</h2>
+              <p class="text-muted small mb-3">Sales today</p>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ cus_txn }}</strong></div>
+              <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>₱{{ "{:,.0f}".format(cus_cash) }}</strong></div>
+              <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(cus_ewallet) }}</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOTAL BAR -->
+      <div class="card mt-3">
+        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div>
+            <h6 class="text-muted mb-1">Total Sales Today</h6>
+            <div class="d-flex gap-3 small text-muted">
+              <span>Walk-in: <strong class="text-dark">₱{{ "{:,.0f}".format(pos_sales) }}</strong></span>
+              <span>Premade: <strong class="text-dark">₱{{ "{:,.0f}".format(pre_sales) }}</strong></span>
+              <span>Custom: <strong class="text-dark">₱{{ "{:,.0f}".format(cus_sales) }}</strong></span>
+            </div>
+          </div>
+          <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales + pre_sales + cus_sales) }}</h2>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /view-dashboard -->
+
+  <!-- ===================================================== -->
+  <!-- CALENDAR VIEW                                         -->
+  <!-- ===================================================== -->
+  <div id="view-calendar">
+    <div class="cal-wrapper">
+
+      <!-- LEFT: Calendar grid -->
+      <div>
+        <div class="cal-nav">
+          <button class="cal-nav-btn" onclick="calPrevMonth()">&#8592;</button>
+          <span class="cal-month-label" id="cal-month-label"></span>
+          <button class="cal-nav-btn" onclick="calNextMonth()">&#8594;</button>
+        </div>
+        <div class="cal-grid-header">
+          <span>Sun</span><span>Mon</span><span>Tue</span>
+          <span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <!-- RIGHT: Order detail panel -->
+      <div class="cal-detail-panel">
+        <div class="cal-detail-title" id="cal-detail-title">Select a day to view orders</div>
+        <div id="cal-detail-body">
+          <p class="cal-loading">Click any day on the calendar.</p>
+        </div>
+      </div>
+
     </div>
-  </section>
+  </div><!-- /view-calendar -->
 
-  <!-- Daily Report -->
-  <section id="daily-report" class="mb-5">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <h3 class="mb-0">Daily Sale Report</h3>
-      <div class="d-flex gap-2">
-        <button class="btn btn-danger btn-sm" onclick="downloadPDF()"> Download PDF</button>
-        <button class="btn btn-success btn-sm" onclick="downloadCSV()"> Download CSV</button>
-      </div>
-    </div>
-
-    <div class="row g-3">
-      <!-- Walk-in -->
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;background:#c084fc;display:inline-block;"></span>
-            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Walk-in</h6>
-          </div>
-          <div class="card-body">
-            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales) }}</h2>
-            <p class="text-muted small mb-3">Sales today</p>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pos_txn }}</strong></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pos_top }}</span></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash</span><strong>₱{{ "{:,.0f}".format(pos_cash) }}</strong></div>
-            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pos_ewallet) }}</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Online Premade -->
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;background:#60a5fa;display:inline-block;"></span>
-            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Premade Cake</h6>
-          </div>
-          <div class="card-body">
-            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pre_sales) }}</h2>
-            <p class="text-muted small mb-3">Sales today</p>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ pre_txn }}</strong></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Top item</span><span class="badge bg-light text-dark">{{ pre_top }}</span></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>{{ "{:,.0f}".format(pre_cash) }}</strong></div>
-            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(pre_ewallet) }}</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Online Custom -->
-      <div class="col-md-4">
-        <div class="card h-100">
-          <div class="card-header bg-white d-flex align-items-center gap-2">
-            <span style="width:10px;height:10px;border-radius:50%;background:#34d399;display:inline-block;"></span>
-            <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Online Customize Cake</h6>
-          </div>
-          <div class="card-body">
-            <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_sales) }}</h2>
-            <p class="text-muted small mb-3">Sales today</p>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Transactions</span><strong>{{ cus_txn }}</strong></div>
-            <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted small">Cash on delivery</span><strong>₱{{ "{:,.0f}".format(cus_cash) }}</strong></div>
-            <div class="d-flex justify-content-between py-2"><span class="text-muted small">Bank / e-wallet</span><strong>₱{{ "{:,.0f}".format(cus_ewallet) }}</strong></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TOTAL BAR -->
-    <div class="card mt-3">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-          <h6 class="text-muted mb-1">Total Sales Today</h6>
-          <div class="d-flex gap-3 small text-muted">
-            <span>Walk-in: <strong class="text-dark">₱{{ "{:,.0f}".format(pos_sales) }}</strong></span>
-            <span>Premade: <strong class="text-dark">₱{{ "{:,.0f}".format(pre_sales) }}</strong></span>
-            <span>Custom: <strong class="text-dark">₱{{ "{:,.0f}".format(cus_sales) }}</strong></span>
-          </div>
-        </div>
-        <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales + pre_sales + cus_sales) }}</h2>
-      </div>
-    </div>
-  </section>
-
-</div>
+</div><!-- /container-fluid -->
 
 <!-- html2pdf.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
-  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-});
+  // ── Date display ───────────────────────────────────────────────────────
+  document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }); 
 
-function downloadPDF() {
-  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-  const content = document.createElement('div');
-  content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
-  content.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
-      <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
-      <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})}</p></div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead><tr style="background:#6B1A3A;color:#fff;">
-        <th style="padding:10px 12px;text-align:left;border-radius:4px 0 0 4px;">Channel</th>
-        <th style="padding:10px 12px;text-align:right;">Total Sales</th>
-        <th style="padding:10px 12px;text-align:right;">Transactions</th>
-        <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
-        <th style="padding:10px 12px;text-align:right;border-radius:0 4px 4px 0;">Bank / E-wallet</th>
-      </tr></thead>
-      <tbody>
-        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
-        <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
-        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
-        <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;border-radius:0 0 0 4px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">${pos_sales + pre_sales + cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn + pre_txn + cus_txn}</td><td style="padding:10px 12px;text-align:right;">${pos_cash + pre_cash + cus_cash}</td><td style="padding:10px 12px;text-align:right;border-radius:0 0 4px 0;">₱${pos_ewallet + pre_ewallet + cus_ewallet}</td></tr>
-      </tbody>
-    </table>
-    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
-  const opt = { margin: 12, filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
-  html2pdf().set(opt).from(content).save();
-}
+  // ── Tab switching ──────────────────────────────────────────────────────
+  async function switchView(view) {
+    document.getElementById('view-dashboard').style.display = view === 'dashboard' ? 'block' : 'none';
+    document.getElementById('view-calendar').style.display  = view === 'calendar'  ? 'block' : 'none';
+    document.getElementById('tab-dashboard').classList.toggle('active', view === 'dashboard');
+    document.getElementById('tab-calendar').classList.toggle('active', view === 'calendar');
+    if (view === 'calendar') await renderCalendar();
+  }
 
-function downloadCSV() {
-  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-  const rows = [
-    ['Ms. Brave Cake Shop - Daily Sale Report'], [`Date: ${today}`], [],
-    ['Channel', 'Total Sales (PHP)', 'Transactions', 'Top Item', 'Cash / COD (PHP)', 'Bank / E-wallet (PHP)'],
-    ['Walk-in', '${pos_sales}', '${pos_txn}', '${pos_top}', '${pos_cash}', '${pos_ewallet}'],
-    ['Online Premade Cake', '${pre_sales}', '${pre_txn}', '${pre_top}', '${pre_cash}', '${pre_ewallet}'],
-    ['Online Customize Cake', '${cus_sales}', '${cus_txn}', '', '${cus_cash}', '${cus_ewallet}'],
-    [], ['TOTAL', '${pos_sales + pre_sales + cus_sales}', '${pos_txn + pre_txn + cus_txn}', '', '${pos_cash + pre_cash + cus_cash}', '${pos_ewallet + pre_ewallet + cus_ewallet}'],
-  ];
-  const csvContent = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob); const a = document.createElement('a');
-  a.href = url; a.download = `daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click(); URL.revokeObjectURL(url);
-}
+  // ── Calendar state ─────────────────────────────────────────────────────
+  const now = new Date();
+  let calYear    = now.getFullYear();
+  let calMonth   = now.getMonth();   // 0-based
+  let selectedDate = null;
+
+  // ── JS Cache (survives for the lifetime of the page session) ───────────
+  // monthCache: { "YYYY-MM": { "YYYY-MM-DD": count, ... } }
+  // dayCache:   { "YYYY-MM-DD": [ ...orders ] }
+  const monthCache = {};
+  const dayCache   = {};
+
+  const MONTHS = ['January','February','March','April','May','June',
+                  'July','August','September','October','November','December'];
+
+  const STATUS_CLASS = {
+    'New': 'status-New', 'Accepted': 'status-Accepted',
+    'Pending': 'status-Pending', 'Ready': 'status-Ready',
+    'Out for Delivery': 'status-Out', 'Completed': 'status-Completed',
+    'Cancelled': 'status-Cancelled'
+  };
+
+  // ── Fetch month badge counts (with cache) ──────────────────────────────
+  async function fetchMonthCounts(year, month) {
+    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+    if (monthCache[key]) return monthCache[key];   // cache hit — zero Firestore reads
+
+    const resp = await fetch(`/admin/calendar-orders?month=${key}`);
+    const data = await resp.json();
+    monthCache[key] = data.counts || {};           // store in cache
+    return monthCache[key];
+  }
+
+  // ── Fetch day orders (with cache) ──────────────────────────────────────
+  async function fetchDayOrders(dateStr) {
+    if (dayCache[dateStr]) return dayCache[dateStr];  // cache hit — zero Firestore reads
+
+    const resp = await fetch(`/admin/calendar-orders?date=${dateStr}`);
+    const data = await resp.json();
+    dayCache[dateStr] = data.orders || [];            // store in cache
+    return dayCache[dateStr];
+  }
+
+  // ── Render calendar grid ───────────────────────────────────────────────
+  async function renderCalendar() {
+    document.getElementById('cal-month-label').textContent = MONTHS[calMonth] + ' ' + calYear;
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:16px;font-size:13px;">Loading…</div>';
+
+    const counts  = await fetchMonthCounts(calYear, calMonth);
+    const todayStr = now.toISOString().slice(0, 10);
+
+    grid.innerHTML = '';
+
+    const firstDay    = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+    // Empty leading cells
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement('div');
+      empty.className = 'cal-cell empty';
+      grid.appendChild(empty);
+    }
+
+    // Day cells
+    for (let d = 1; d <= daysInMonth; d++) {
+      const mm      = String(calMonth + 1).padStart(2, '0');
+      const dd      = String(d).padStart(2, '0');
+      const dateStr = `${calYear}-${mm}-${dd}`;
+      const count   = counts[dateStr] || 0;
+
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      if (dateStr === todayStr)     cell.classList.add('today');
+      if (dateStr === selectedDate) cell.classList.add('selected');
+
+      cell.innerHTML =
+        `<div class="cal-day-num">${d}</div>` +
+        (count ? `<span class="cal-badge">${count} order${count > 1 ? 's' : ''}</span>` : '');
+
+      cell.addEventListener('click', () => selectDay(dateStr, d, cell));
+      grid.appendChild(cell);
+    }
+  }
+
+  // ── Select a day and load its orders ──────────────────────────────────
+  async function selectDay(dateStr, d, clickedCell) {
+    selectedDate = dateStr;
+
+    // Highlight selected cell
+    document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+    clickedCell.classList.add('selected');
+
+    document.getElementById('cal-detail-title').textContent = `${MONTHS[calMonth]} ${d}, ${calYear}`;
+    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Loading orders…</p>';
+
+    const orders = await fetchDayOrders(dateStr);
+
+    if (!orders.length) {
+      document.getElementById('cal-detail-body').innerHTML =
+        '<p class="cal-loading">No orders for this day.</p>';
+      return;
+    }
+
+    document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
+      <div class="cal-order-card ${o.rush ? 'rush' : ''}">
+        <div class="cal-order-top">
+          <span class="cal-order-name">${o.customer}</span>
+          <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
+        </div>
+        <div class="cal-order-item">${o.item}</div>
+        <div class="cal-order-time">
+          🕐 ${o.time}
+          ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ── Month navigation ───────────────────────────────────────────────────
+  function calResetDetail() {
+    selectedDate = null;
+    document.getElementById('cal-detail-title').textContent = 'Select a day to view orders';
+    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Click any day on the calendar.</p>';
+  }
+
+  async function calPrevMonth() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    calResetDetail();
+    await renderCalendar();
+  }
+
+  async function calNextMonth() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    calResetDetail();
+    await renderCalendar();
+  }
+
+  // ── PDF / CSV (unchanged from your original) ──────────────────────────
+  const pos_sales   = {{ pos_sales }};
+  const pre_sales   = {{ pre_sales }};
+  const cus_sales   = {{ cus_sales }};
+  const pos_txn     = {{ pos_txn }};
+  const pre_txn     = {{ pre_txn }};
+  const cus_txn     = {{ cus_txn }};
+  const pos_cash    = {{ pos_cash }};
+  const pre_cash    = {{ pre_cash }};
+  const cus_cash    = {{ cus_cash }};
+  const pos_ewallet = {{ pos_ewallet }};
+  const pre_ewallet = {{ pre_ewallet }};
+  const cus_ewallet = {{ cus_ewallet }};
+  const pos_top     = "{{ pos_top }}";
+  const pre_top     = "{{ pre_top }}";
+
+  function downloadPDF() {
+    const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+    const content = document.createElement('div');
+    content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
+    content.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
+        <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
+        <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})}</p></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#6B1A3A;color:#fff;">
+          <th style="padding:10px 12px;text-align:left;">Channel</th>
+          <th style="padding:10px 12px;text-align:right;">Total Sales</th>
+          <th style="padding:10px 12px;text-align:right;">Transactions</th>
+          <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
+          <th style="padding:10px 12px;text-align:right;">Bank / E-wallet</th>
+        </tr></thead>
+        <tbody>
+          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
+          <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">₱${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
+          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
+          <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales+pre_sales+cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn+pre_txn+cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash+pre_cash+cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet+pre_ewallet+cus_ewallet}</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
+    const opt = { margin: 12, filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
+    html2pdf().set(opt).from(content).save();
+  }
+
+  function downloadCSV() {
+    const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+    const rows = [
+      ['Ms. Brave Cake Shop - Daily Sale Report'], [`Date: ${today}`], [],
+      ['Channel','Total Sales (PHP)','Transactions','Top Item','Cash / COD (PHP)','Bank / E-wallet (PHP)'],
+      ['Walk-in', pos_sales, pos_txn, pos_top, pos_cash, pos_ewallet],
+      ['Online Premade Cake', pre_sales, pre_txn, pre_top, pre_cash, pre_ewallet],
+      ['Online Customize Cake', cus_sales, cus_txn, '', cus_cash, cus_ewallet],
+      [], ['TOTAL', pos_sales+pre_sales+cus_sales, pos_txn+pre_txn+cus_txn, '', pos_cash+pre_cash+cus_cash, pos_ewallet+pre_ewallet+cus_ewallet],
+    ];
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
 </script>
 {% endblock %}

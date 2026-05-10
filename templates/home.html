@@ -223,59 +223,101 @@
 {% endif %}
 
     <h2 class="text-center mb-3" style="font-weight:700;">Most Ordered</h2>
-<div class="container">
-        <!-- First Row - 2 columns -->
-        <div class="grid">
-            <div class="card card-large">
-                <img src="../static/img/ubedeleche.jpg" alt="ubedeleche">
-                <div class="card-content">
-                    <h2 class="card-title">Ube de Leche...</h2>
-                    <button class="book-btn" onclick="bookNow('ubedeleche')">
-                        ORDER NOW <span class="arrow">→</span>
-                    </button>
-                </div>
-            </div>
-            <div class="card card-large">
-                <img src="../static/img/mini.jpg" alt="Valentine’s Cupcakes">
-                <div class="card-content">
-                    <h2 class="card-title">Valentine’s<br>Cupcakes</h2>
-                    <button class="book-btn" onclick="bookNow('valentinescupcake')">
-                        ORDER NOW <span class="arrow">→</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- Second Row - 3 columns -->
-        <div class="grid-row-2">
-            <div class="card card-small">
-                <img src="../static/img/biscoff.jpg" alt="biscoffcheesecake">
-                <div class="card-content">
-                    <h2 class="card-title">Biscoff<br>Cheesescake</h2>
-                    <button class="book-btn" onclick="bookNow('biscoffcheesecake')">
-                        ORDER NOW <span class="arrow">→</span>
-                    </button>
-                </div>
-            </div>
-            <div class="card card-small">
-                <img src="../static/img/purplecupcake.jpg" alt="purplecupcake">
-                <div class="card-content">
-                    <h2 class="card-title">Cupcakes<br></h2>
-                    <button class="book-btn" onclick="bookNow('purplecupcake')">
-                        ORDER NOW <span class="arrow">→</span>
-                    </button>
-                </div>
-            </div>
-            <div class="card card-small">
-                <img src="../static/img/plantcake.jpg" alt="Customized Plant Cake">
-                <div class="card-content">
-                    <h2 class="card-title">Customized Plant Cake</h2>
-                    <button class="book-btn" onclick="bookNow('Customized Plant Cake')">
-                        ORDER NOW <span class="arrow">→</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+  <div class="container">
+      <!-- First Row - 2 large cards -->
+      <div class="grid">
+          {% for cake in most_ordered[:2] %}
+          <div class="card card-large">
+              {% if cake %}
+                  {% if cake.image %}
+                      <img src="{{ cake.image }}" alt="{{ cake.name }}">
+                  {% else %}
+                      <div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:4rem; background:#fce8f3;">🎂</div>
+                  {% endif %}
+                  <div class="card-content">
+                      <h2 class="card-title">{{ cake.name[:20] }}{% if cake.name|length > 20 %}...{% endif %}</h2>
+                      {% if not cake.status or cake.quantity == 0 %}
+                          <button class="book-btn" disabled
+                                  style="background:#555; cursor:not-allowed; opacity:0.7;">
+                              SOLD OUT
+                          </button>
+                      {% elif customer %}
+                          <form method="POST" action="/order/cake" style="margin:0;">
+                              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                              <input type="hidden" name="price"     value="{{ cake.price }}">
+                              <input type="hidden" name="quantity"  value="1">
+                              <button type="submit" class="book-btn">
+                                  ORDER NOW <span class="arrow">→</span>
+                              </button>
+                          </form>
+                      {% else %}
+                          <a href="/authentication" class="book-btn" style="display:inline-block; text-decoration:none;">
+                              LOGIN TO ORDER <span class="arrow">→</span>
+                          </a>
+                      {% endif %}
+                  </div>
+              {% else %}
+                  <div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:4rem; background:#f5f5f5;">🎂</div>
+                  <div class="card-content">
+                      <h2 class="card-title" style="color:#aaa;">Coming Soon</h2>
+                      <button class="book-btn" disabled
+                              style="background:#aaa; cursor:not-allowed;">
+                          COMING SOON
+                      </button>
+                  </div>
+              {% endif %}
+          </div>
+          {% endfor %}
+      </div>
+
+      <!-- Second Row - 3 small cards -->
+      <div class="grid-row-2">
+          {% for cake in most_ordered[2:] %}
+          <div class="card card-small">
+              {% if cake %}
+                  {% if cake.image %}
+                      <img src="{{ cake.image }}" alt="{{ cake.name }}">
+                  {% else %}
+                      <div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:3rem; background:#fce8f3;">🎂</div>
+                  {% endif %}
+                  <div class="card-content">
+                      <h2 class="card-title">{{ cake.name[:20] }}{% if cake.name|length > 20 %}...{% endif %}</h2>
+                      {% if not cake.status or cake.quantity == 0 %}
+                          <button class="book-btn" disabled
+                                  style="background:#555; cursor:not-allowed; opacity:0.7;">
+                              SOLD OUT
+                          </button>
+                      {% elif customer %}
+                          <form method="POST" action="/order/cake" style="margin:0;">
+                              <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+                              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+                              <input type="hidden" name="price"     value="{{ cake.price }}">
+                              <input type="hidden" name="quantity"  value="1">
+                              <button type="submit" class="book-btn">
+                                  ORDER NOW <span class="arrow">→</span>
+                              </button>
+                          </form>
+                      {% else %}
+                          <a href="/authentication" class="book-btn" style="display:inline-block; text-decoration:none;">
+                              LOGIN TO ORDER <span class="arrow">→</span>
+                          </a>
+                      {% endif %}
+                  </div>
+              {% else %}
+                  <div style="height:100%; display:flex; align-items:center; justify-content:center; font-size:3rem; background:#f5f5f5;">🎂</div>
+                  <div class="card-content">
+                      <h2 class="card-title" style="color:#aaa;">Coming Soon</h2>
+                      <button class="book-btn" disabled
+                              style="background:#aaa; cursor:not-allowed;">
+                          COMING SOON
+                      </button>
+                  </div>
+              {% endif %}
+          </div>
+          {% endfor %}
+      </div>
+  </div>
 
 <!-- Services -->
 <section id="services" class="services-section">
@@ -305,246 +347,243 @@
 
 {% block extra_js %}
 <script>
-// Carousel
-const carousel = document.getElementById("cakeCarousel");
-const items = carousel.querySelectorAll(".custom-carousel-item");
-const dots = document.querySelectorAll(".dot");
+  // Carousel
+  const carousel = document.getElementById("cakeCarousel");
+  const items = carousel.querySelectorAll(".custom-carousel-item");
+  const dots = document.querySelectorAll(".dot");
 
-let currentIndex = 0;
+  let currentIndex = 0;
 
-function showSlide(index) {
-  items[currentIndex].classList.remove("active");
-  dots[currentIndex].classList.remove("active");
+  function showSlide(index) {
+    items[currentIndex].classList.remove("active");
+    dots[currentIndex].classList.remove("active");
 
-  currentIndex = index;
+    currentIndex = index;
 
-  items[currentIndex].classList.add("active");
-  dots[currentIndex].classList.add("active");
-}
+    items[currentIndex].classList.add("active");
+    dots[currentIndex].classList.add("active");
+  }
 
-// Dot click
-dots.forEach(dot => {
-  dot.addEventListener("click", () => {
-    const index = parseInt(dot.getAttribute("data-index"));
-    showSlide(index);
+  // Dot click
+  dots.forEach(dot => {
+    dot.addEventListener("click", () => {
+      const index = parseInt(dot.getAttribute("data-index"));
+      showSlide(index);
+    });
   });
-});
 
-// Auto slide
-setInterval(() => {
-  let nextIndex = (currentIndex + 1) % items.length;
-  showSlide(nextIndex);
-}, 5000);
+  // Auto slide
+  setInterval(() => {
+    let nextIndex = (currentIndex + 1) % items.length;
+    showSlide(nextIndex);
+  }, 5000);
 
 
-// Categories
-const categories = {
-  Girl: [
-  { name: 'Jungle Safari Cake',        img: '../static/categories/girls/girl2-removebg-preview.png' },
-  { name: 'Elegant Floral Chocolate',  img: '../static/categories/girls/girl3-removebg-preview.png' },
-  { name: 'Sunset Rose Designer Cake', img: '../static/categories/girls/girl4-removebg-preview.png' },
-  { name: 'Butterfly Princess Cake',   img: '../static/categories/girls/girl5-removebg-preview.png' },
-  { name: 'Cartoon Fun Celebration',   img: '../static/categories/girls/girl6-removebg-preview.png' },
-  { name: 'Rainbow Dream Cake',        img: '../static/categories/girls/girl7-removebg-preview.png' },
-  { name: 'Unicorn Fantasy Cake',      img: '../static/categories/girls/girl8-removebg-preview.png' },
-{ name: 'Golden Safari Rainbow Cake',     img: '../static/categories/girls/girl9-removebg-preview.png' },
-{ name: 'Pastel Drip Floral Elegance',    img: '../static/categories/girls/girl10-removebg-preview.png' },
-{ name: 'Butterfly Garden Tier Cake',     img: '../static/categories/girls/girl11.png' },
-{ name: 'Enchanted Butterfly Princess',   img: '../static/categories/girls/girl12.png' },
-{ name: 'Whimsical Cartoon Party Cake',   img: '../static/categories/girls/girl13.png' },
-{ name: 'Dreamy Rainbow Celebration',     img: '../static/categories/girls/girl14.png' },
-{ name: 'Magical Unicorn Blossom Cake',   img: '../static/categories/girls/girl15.png' },
-  ],
+  // Categories
+  const categories = {
+    Girl: [
+    { name: 'Jungle Safari Cake',        img: '../static/categories/girls/girl2-removebg-preview.png' },
+    { name: 'Elegant Floral Chocolate',  img: '../static/categories/girls/girl3-removebg-preview.png' },
+    { name: 'Sunset Rose Designer Cake', img: '../static/categories/girls/girl4-removebg-preview.png' },
+    { name: 'Butterfly Princess Cake',   img: '../static/categories/girls/girl5-removebg-preview.png' },
+    { name: 'Cartoon Fun Celebration',   img: '../static/categories/girls/girl6-removebg-preview.png' },
+    { name: 'Rainbow Dream Cake',        img: '../static/categories/girls/girl7-removebg-preview.png' },
+    { name: 'Unicorn Fantasy Cake',      img: '../static/categories/girls/girl8-removebg-preview.png' },
+  { name: 'Golden Safari Rainbow Cake',     img: '../static/categories/girls/girl9-removebg-preview.png' },
+  { name: 'Pastel Drip Floral Elegance',    img: '../static/categories/girls/girl10-removebg-preview.png' },
+  { name: 'Butterfly Garden Tier Cake',     img: '../static/categories/girls/girl11.png' },
+  { name: 'Enchanted Butterfly Princess',   img: '../static/categories/girls/girl12.png' },
+  { name: 'Whimsical Cartoon Party Cake',   img: '../static/categories/girls/girl13.png' },
+  { name: 'Dreamy Rainbow Celebration',     img: '../static/categories/girls/girl14.png' },
+  { name: 'Magical Unicorn Blossom Cake',   img: '../static/categories/girls/girl15.png' },
+    ],
 
-  Boy: [
-    { name: 'Jungle Adventure Cake',     img: '../static/categories/boys/boy2-removebg-preview.png' },
-    { name: 'Safari Theme Cake',         img: '../static/categories/boys/boy3-removebg-preview.png' },
-    { name: 'Minecraft Block Cake',      img: '../static/categories/boys/boy4-removebg-preview.png' },
-    { name: 'Baby Boss Cake',            img: '../static/categories/boys/boy5-removebg-preview.png' },
-    { name: 'Ocean Whale Cake',          img: '../static/categories/boys/boy6-removebg-preview.png' },
-    { name: 'Travel Explorer Cake',      img: '../static/categories/boys/boy7-removebg-preview.png' },
-    { name: 'Baby Elephant Cake',        img: '../static/categories/boys/boy8-removebg-preview.png' },
-    { name: 'Racing Car Cake',           img: '../static/categories/boys/boy9-removebg-preview.png' },
-    { name: 'Minecraft Block Cake',      img: '../static/categories/boys/boy10-removebg-preview.png' },
-    { name: 'Baby Boss Cake',            img: '../static/categories/boys/boy11.png' },
-    { name: 'Ocean Whale Cake',          img: '../static/categories/boys/boy12.png' },
-    { name: 'Travel Explorer Cake',      img: '../static/categories/boys/boy13.png' },
-    { name: 'Baby Elephant Cake',        img: '../static/categories/boys/boy14.png' },
-    { name: 'Racing Car Cake',           img: '../static/categories/boys/boy15.png' }
-  ],
+    Boy: [
+      { name: 'Jungle Adventure Cake',     img: '../static/categories/boys/boy2-removebg-preview.png' },
+      { name: 'Safari Theme Cake',         img: '../static/categories/boys/boy3-removebg-preview.png' },
+      { name: 'Minecraft Block Cake',      img: '../static/categories/boys/boy4-removebg-preview.png' },
+      { name: 'Baby Boss Cake',            img: '../static/categories/boys/boy5-removebg-preview.png' },
+      { name: 'Ocean Whale Cake',          img: '../static/categories/boys/boy6-removebg-preview.png' },
+      { name: 'Travel Explorer Cake',      img: '../static/categories/boys/boy7-removebg-preview.png' },
+      { name: 'Baby Elephant Cake',        img: '../static/categories/boys/boy8-removebg-preview.png' },
+      { name: 'Racing Car Cake',           img: '../static/categories/boys/boy9-removebg-preview.png' },
+      { name: 'Minecraft Block Cake',      img: '../static/categories/boys/boy10-removebg-preview.png' },
+      { name: 'Baby Boss Cake',            img: '../static/categories/boys/boy11.png' },
+      { name: 'Ocean Whale Cake',          img: '../static/categories/boys/boy12.png' },
+      { name: 'Travel Explorer Cake',      img: '../static/categories/boys/boy13.png' },
+      { name: 'Baby Elephant Cake',        img: '../static/categories/boys/boy14.png' },
+      { name: 'Racing Car Cake',           img: '../static/categories/boys/boy15.png' }
+    ],
 
-  Birthdays: [
-    { name: 'Golden Jubilee Cake',       img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
-    { name: 'Mermaid Theme Cake',        img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
-    { name: 'Racing Track Cake',         img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
-    { name: 'Royal Golden Wings Cake',   img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
-    { name: 'Pink Floral Drip Cake',     img: '../static/categories/bdaycakes/b6-removebg-preview.png' },
-    { name: 'Cartoon Fun Cake',          img: '../static/categories/bdaycakes/b7-removebg-preview.png' },
-    { name: 'Balloon Party Cake',        img: '../static/categories/bdaycakes/b8-removebg-preview.png' },
-    { name: 'Chocolate Celebration Cake',img: '../static/categories/bdaycakes/b9-removebg-preview.png' },
-    { name: 'Midnight Gold Elegance',       img: '../static/categories/bdaycakes/b10-removebg-preview.png' },
-    { name: 'Oceanic Fantasy',              img: '../static/categories/bdaycakes/b11-removebg-preview.png' },
-    { name: 'Speedway Adventure',           img: '../static/categories/bdaycakes/b12-removebg-preview.png' },
-    { name: 'Regal Feathered Delight',      img: '../static/categories/bdaycakes/b13-removebg-preview.png' },
-    { name: 'Blossom Drizzle',              img: '../static/categories/bdaycakes/b14.png' },
-    { name: 'Cartoon Carnival',             img: '../static/categories/bdaycakes/b15.png' },
-    { name: 'Sunny Balloon Fiesta',         img: '../static/categories/bdaycakes/b16.png' },
-    { name: 'Confetti Burst',               img: '../static/categories/bdaycakes/b17.png' },
-    { name: 'Twilight Chocolate Cascade',   img: '../static/categories/bdaycakes/b18.png' }
-  ],
-  Christening: [
-    { name: 'Snowy Celebration Bliss',    img: '../static/categories/christening/ch1-removebg-preview.png' },
-    { name: 'Golden Pearl Elegance', img: '../static/categories/christening/ch3-removebg-preview.png' },
-    { name: 'Little Prince Sky Cake', img: '../static/categories/christening/ch4-removebg-preview.png' },
-    { name: 'Heavenly Grace Baptism Cake', img: '../static/categories/christening/ch10-removebg-preview.png' },
-    { name: 'Celestial Bloom Cross Cake', img: '../static/categories/christening/ch6-removebg-preview.png' },
-    { name: 'Angel Wings Dream Cake', img: '../static/categories/christening/ch7-removebg-preview.png' },
-    { name: 'Blessed Blue Communion Cake', img: '../static/categories/christening/ch8-removebg-preview.png' },
-    { name: 'Rosé Sacred Charm Cake', img: '../static/categories/christening/ch9-removebg-preview.png' }
-  ],
-  Ordinary: [
-      { name: 'Green Velvet Dream',    img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
-      { name: 'Golden Delight Dark Chocolate', img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
-      { name: 'Cherry Blossom Choco Truffle', img: '../static/categories/ordinarycakes/c4-removebg-preview.png' },
-      { name: 'Purple Passion Choco Truffle', img: '../static/categories/ordinarycakes/c5-removebg-preview.png' },
-      { name: 'Chocolate Fudge Bliss', img: '../static/categories/ordinarycakes/c6-removebg-preview.png' },
-      { name: 'Rose Fantasy Choco Truffle', img: '../static/categories/ordinarycakes/c7-removebg-preview.png' },
-      { name: 'Funfair Choco Truffle', img: '../static/categories/ordinarycakes/c8-removebg-preview.png' },
-      { name: 'Whimsical Wonder Choco Truffle', img: '../static/categories/ordinarycakes/c9-removebg-preview.png'},
-      { name: 'Chocolate Cherry Drip Truffle',     img: '../static/categories/ordinarycakes/c10-removebg-preview.png' },
-      { name: 'Golden Caramel Spiral Delight',     img: '../static/categories/ordinarycakes/c11.png' },
-      { name: 'Pastel Bloom Butterfly Cake',       img: '../static/categories/ordinarycakes/c12.png' },
-      { name: 'Confetti Sprinkle Celebration',     img: '../static/categories/ordinarycakes/c13.png' },
-      { name: 'Classic Cream Swirl Elegance',      img: '../static/categories/ordinarycakes/c14.png' },
-      { name: 'Chocolate Festive Crunch Cake',     img: '../static/categories/ordinarycakes/c15.png' }
-  ],
-  Holiday: [
-      { name: 'Valentine’s Choco Lava',            img: '../static/categories/holiday/H1.png' },
-      { name: 'Festive Holiday Dark Chocolate',        img: '../static/categories/holiday/H2.png' },
-      { name: 'Snowfall Choco Truffle',           img: '../static/categories/holiday/H3.png' },
-      { name: 'Red Velvet Celebration Cake',        img: '../static/categories/holiday/H4.png' },
-      { name: 'Winter Wonderland Delight',           img: '../static/categories/holiday/H5.png' },
-      { name: 'Sprinkle Party Cake',         img: '../static/categories/holiday/H6.png' },
-      { name: 'Golden Moments Chocolate Celebration', img: '../static/categories/holiday/H7.png' },
-      { name: 'Shiny Golden Glow Cake',              img: '../static/categories/holiday/h8.png' }
-  ],
-  Cartoons: [
-    { name: 'Mickey Celebration Blast',   img: '../static/categories/Cartoons/1.png' },
-    { name: 'Minion Rainbow Party Cake',  img: '../static/categories/Cartoons/2.png' },
-    { name: 'SpongeBob Ocean Adventure',  img: '../static/categories/Cartoons/3.png' },
-    { name: 'Peppa Pig Birthday Fun',     img: '../static/categories/Cartoons/4.png' },
-    { name: 'Tom & Jerry Splash Delight', img: '../static/categories/Cartoons/5.png' },
-    { name: 'Frozen Elsa Snow Magic',     img: '../static/categories/Cartoons/6.png' },
-    { name: 'Pikachu Candy Dream Cake',   img: '../static/categories/Cartoons/7.png' },
-    { name: 'Looney Tunes Rainbow Party', img: '../static/categories/Cartoons/8.png' },
-    { name: 'Looney Tunes Pastel Fiesta', img: '../static/categories/Cartoons/9.png' },
-{ name: 'Kuromi Kawaii Party Cake',       img: '../static/categories/Cartoons/10.png' },
-{ name: 'Mickey & Friends Party Blast',   img: '../static/categories/Cartoons/11.png' },
-{ name: 'Minion Fun Rainbow Cake',        img: '../static/categories/Cartoons/12.png' },
-{ name: 'SpongeBob Undersea Adventure',   img: '../static/categories/Cartoons/13.png' },
+    Birthdays: [
+      { name: 'Golden Jubilee Cake',       img: '../static/categories/bdaycakes/b1-removebg-preview.png' },
+      { name: 'Mermaid Theme Cake',        img: '../static/categories/bdaycakes/b3-removebg-preview.png' },
+      { name: 'Racing Track Cake',         img: '../static/categories/bdaycakes/b4-removebg-preview.png' },
+      { name: 'Royal Golden Wings Cake',   img: '../static/categories/bdaycakes/b5-removebg-preview.png' },
+      { name: 'Pink Floral Drip Cake',     img: '../static/categories/bdaycakes/b6-removebg-preview.png' },
+      { name: 'Cartoon Fun Cake',          img: '../static/categories/bdaycakes/b7-removebg-preview.png' },
+      { name: 'Balloon Party Cake',        img: '../static/categories/bdaycakes/b8-removebg-preview.png' },
+      { name: 'Chocolate Celebration Cake',img: '../static/categories/bdaycakes/b9-removebg-preview.png' },
+      { name: 'Midnight Gold Elegance',       img: '../static/categories/bdaycakes/b10-removebg-preview.png' },
+      { name: 'Oceanic Fantasy',              img: '../static/categories/bdaycakes/b11-removebg-preview.png' },
+      { name: 'Speedway Adventure',           img: '../static/categories/bdaycakes/b12-removebg-preview.png' },
+      { name: 'Regal Feathered Delight',      img: '../static/categories/bdaycakes/b13-removebg-preview.png' },
+      { name: 'Blossom Drizzle',              img: '../static/categories/bdaycakes/b14.png' },
+      { name: 'Cartoon Carnival',             img: '../static/categories/bdaycakes/b15.png' },
+      { name: 'Sunny Balloon Fiesta',         img: '../static/categories/bdaycakes/b16.png' },
+      { name: 'Confetti Burst',               img: '../static/categories/bdaycakes/b17.png' },
+      { name: 'Twilight Chocolate Cascade',   img: '../static/categories/bdaycakes/b18.png' }
+    ],
+    Christening: [
+      { name: 'Snowy Celebration Bliss',    img: '../static/categories/christening/ch1-removebg-preview.png' },
+      { name: 'Golden Pearl Elegance', img: '../static/categories/christening/ch3-removebg-preview.png' },
+      { name: 'Little Prince Sky Cake', img: '../static/categories/christening/ch4-removebg-preview.png' },
+      { name: 'Heavenly Grace Baptism Cake', img: '../static/categories/christening/ch10-removebg-preview.png' },
+      { name: 'Celestial Bloom Cross Cake', img: '../static/categories/christening/ch6-removebg-preview.png' },
+      { name: 'Angel Wings Dream Cake', img: '../static/categories/christening/ch7-removebg-preview.png' },
+      { name: 'Blessed Blue Communion Cake', img: '../static/categories/christening/ch8-removebg-preview.png' },
+      { name: 'Rosé Sacred Charm Cake', img: '../static/categories/christening/ch9-removebg-preview.png' }
+    ],
+    Ordinary: [
+        { name: 'Green Velvet Dream',    img: '../static/categories/ordinarycakes/c2-removebg-preview.png' },
+        { name: 'Golden Delight Dark Chocolate', img: '../static/categories/ordinarycakes/c3-removebg-preview.png' },
+        { name: 'Cherry Blossom Choco Truffle', img: '../static/categories/ordinarycakes/c4-removebg-preview.png' },
+        { name: 'Purple Passion Choco Truffle', img: '../static/categories/ordinarycakes/c5-removebg-preview.png' },
+        { name: 'Chocolate Fudge Bliss', img: '../static/categories/ordinarycakes/c6-removebg-preview.png' },
+        { name: 'Rose Fantasy Choco Truffle', img: '../static/categories/ordinarycakes/c7-removebg-preview.png' },
+        { name: 'Funfair Choco Truffle', img: '../static/categories/ordinarycakes/c8-removebg-preview.png' },
+        { name: 'Whimsical Wonder Choco Truffle', img: '../static/categories/ordinarycakes/c9-removebg-preview.png'},
+        { name: 'Chocolate Cherry Drip Truffle',     img: '../static/categories/ordinarycakes/c10-removebg-preview.png' },
+        { name: 'Golden Caramel Spiral Delight',     img: '../static/categories/ordinarycakes/c11.png' },
+        { name: 'Pastel Bloom Butterfly Cake',       img: '../static/categories/ordinarycakes/c12.png' },
+        { name: 'Confetti Sprinkle Celebration',     img: '../static/categories/ordinarycakes/c13.png' },
+        { name: 'Classic Cream Swirl Elegance',      img: '../static/categories/ordinarycakes/c14.png' },
+        { name: 'Chocolate Festive Crunch Cake',     img: '../static/categories/ordinarycakes/c15.png' }
+    ],
+    Holiday: [
+        { name: 'Valentine’s Choco Lava',            img: '../static/categories/holiday/H1.png' },
+        { name: 'Festive Holiday Dark Chocolate',        img: '../static/categories/holiday/H2.png' },
+        { name: 'Snowfall Choco Truffle',           img: '../static/categories/holiday/H3.png' },
+        { name: 'Red Velvet Celebration Cake',        img: '../static/categories/holiday/H4.png' },
+        { name: 'Winter Wonderland Delight',           img: '../static/categories/holiday/H5.png' },
+        { name: 'Sprinkle Party Cake',         img: '../static/categories/holiday/H6.png' },
+        { name: 'Golden Moments Chocolate Celebration', img: '../static/categories/holiday/H7.png' },
+        { name: 'Shiny Golden Glow Cake',              img: '../static/categories/holiday/h8.png' }
+    ],
+    Cartoons: [
+      { name: 'Mickey Celebration Blast',   img: '../static/categories/Cartoons/1.png' },
+      { name: 'Minion Rainbow Party Cake',  img: '../static/categories/Cartoons/2.png' },
+      { name: 'SpongeBob Ocean Adventure',  img: '../static/categories/Cartoons/3.png' },
+      { name: 'Peppa Pig Birthday Fun',     img: '../static/categories/Cartoons/4.png' },
+      { name: 'Tom & Jerry Splash Delight', img: '../static/categories/Cartoons/5.png' },
+      { name: 'Frozen Elsa Snow Magic',     img: '../static/categories/Cartoons/6.png' },
+      { name: 'Pikachu Candy Dream Cake',   img: '../static/categories/Cartoons/7.png' },
+      { name: 'Looney Tunes Rainbow Party', img: '../static/categories/Cartoons/8.png' },
+      { name: 'Looney Tunes Pastel Fiesta', img: '../static/categories/Cartoons/9.png' },
+  { name: 'Kuromi Kawaii Party Cake',       img: '../static/categories/Cartoons/10.png' },
+  { name: 'Mickey & Friends Party Blast',   img: '../static/categories/Cartoons/11.png' },
+  { name: 'Minion Fun Rainbow Cake',        img: '../static/categories/Cartoons/12.png' },
+  { name: 'SpongeBob Undersea Adventure',   img: '../static/categories/Cartoons/13.png' },
 
-{ name: 'Tom & Jerry Fun Splash Cake',    img: '../static/categories/Cartoons/15.png' },
-{ name: 'Elsa Frozen Fantasy Cake',       img: '../static/categories/Cartoons/16.png' },
-{ name: 'Pikachu Candy Tower Cake',       img: '../static/categories/Cartoons/17.png' }
-  ],
+  { name: 'Tom & Jerry Fun Splash Cake',    img: '../static/categories/Cartoons/15.png' },
+  { name: 'Elsa Frozen Fantasy Cake',       img: '../static/categories/Cartoons/16.png' },
+  { name: 'Pikachu Candy Tower Cake',       img: '../static/categories/Cartoons/17.png' }
+    ],
 
-  Others: [
-    { name: 'Elegant Gentleman Theme Cake', img: '../static/categories/others/ot1.png' },
-    { name: 'Floral Garden Delight Cake',   img: '../static/categories/others/ot2.png' },
-    { name: 'Fairytale Kids Play Cake',     img: '../static/categories/others/ot3.png' },
-    { name: 'Boss Lady Celebration Cake',   img: '../static/categories/others/ot4.png' },
-    { name: 'Music Lover Piano Cake',       img: '../static/categories/others/ot5.png' },
-    { name: 'Festive Poinsettia Cake',      img: '../static/categories/others/ot6.png' },
-    { name: 'Classic Mickey Cream Cake',    img: '../static/categories/others/ot7.png' },
-    { name: 'Royal Navy Anchor Cake',       img: '../static/categories/others/ot8.png' },
-    { name: 'King’s Throne Celebration',    img: '../static/categories/others/ot9.png' },
-    { name: 'Princess Doll Dream Cake',     img: '../static/categories/others/ot10.png' },
-    { name: 'Underwater Adventure Cake',    img: '../static/categories/others/ot11.png' }
-  ]
-};
+    Others: [
+      { name: 'Elegant Gentleman Theme Cake', img: '../static/categories/others/ot1.png' },
+      { name: 'Floral Garden Delight Cake',   img: '../static/categories/others/ot2.png' },
+      { name: 'Fairytale Kids Play Cake',     img: '../static/categories/others/ot3.png' },
+      { name: 'Boss Lady Celebration Cake',   img: '../static/categories/others/ot4.png' },
+      { name: 'Music Lover Piano Cake',       img: '../static/categories/others/ot5.png' },
+      { name: 'Festive Poinsettia Cake',      img: '../static/categories/others/ot6.png' },
+      { name: 'Classic Mickey Cream Cake',    img: '../static/categories/others/ot7.png' },
+      { name: 'Royal Navy Anchor Cake',       img: '../static/categories/others/ot8.png' },
+      { name: 'King’s Throne Celebration',    img: '../static/categories/others/ot9.png' },
+      { name: 'Princess Doll Dream Cake',     img: '../static/categories/others/ot10.png' },
+      { name: 'Underwater Adventure Cake',    img: '../static/categories/others/ot11.png' }
+    ]
+  };
 
-function openCategory(category) {
-  const modal = document.getElementById('categoryModal');
-  const cardsContainer = document.getElementById('categoryCards');
-  cardsContainer.innerHTML = '';
+  function openCategory(category) {
+    const modal = document.getElementById('categoryModal');
+    const cardsContainer = document.getElementById('categoryCards');
+    cardsContainer.innerHTML = '';
 
-  categories[category].forEach(item => {
-    const card = document.createElement('div');
-    card.classList.add('category-card');
+    categories[category].forEach(item => {
+      const card = document.createElement('div');
+      card.classList.add('category-card');
 
-    // INNER WRAPPER (IMPORTANT FOR FLIP)
-    const inner = document.createElement('div');
-    inner.classList.add('card-inner');
+      // INNER WRAPPER (IMPORTANT FOR FLIP)
+      const inner = document.createElement('div');
+      inner.classList.add('card-inner');
 
-    // FRONT SIDE
-    const front = document.createElement('div');
-    front.classList.add('card-front');
+      // FRONT SIDE
+      const front = document.createElement('div');
+      front.classList.add('card-front');
 
-    const img = document.createElement('img');
-    img.src = item.img;
-    img.alt = item.name;
-    img.classList.add('category-card-img');
+      const img = document.createElement('img');
+      img.src = item.img;
+      img.alt = item.name;
+      img.classList.add('category-card-img');
 
-    // ADD NAME BACK (FIX)
-    const nameFront = document.createElement('p');
-    nameFront.textContent = item.name;
-    nameFront.classList.add('card-front-name');
+      // ADD NAME BACK (FIX)
+      const nameFront = document.createElement('p');
+      nameFront.textContent = item.name;
+      nameFront.classList.add('card-front-name');
 
-    front.appendChild(img);
-    front.appendChild(nameFront);
+      front.appendChild(img);
+      front.appendChild(nameFront);
 
-    // BACK SIDE
-    const back = document.createElement('div');
-    back.classList.add('card-back');
+      // BACK SIDE
+      const back = document.createElement('div');
+      back.classList.add('card-back');
 
-    const title = document.createElement('h5');
-    title.textContent = item.name;
+      const title = document.createElement('h5');
+      title.textContent = item.name;
 
-    const desc = document.createElement('p');
-    desc.textContent = "Premium handcrafted cake made with love and finest ingredients.";
+      const desc = document.createElement('p');
+      desc.textContent = "Premium handcrafted cake made with love and finest ingredients.";
 
-    back.appendChild(title);
-    back.appendChild(desc);
+      back.appendChild(title);
+      back.appendChild(desc);
 
-    // assemble
-    inner.appendChild(front);
-    inner.appendChild(back);
-    card.appendChild(inner);
+      // assemble
+      inner.appendChild(front);
+      inner.appendChild(back);
+      card.appendChild(inner);
 
-    // CLICK FLIP LOGIC (ONLY ONE ACTIVE)
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.category-card.flipped')
-        .forEach(el => el.classList.remove('flipped'));
+      // CLICK FLIP LOGIC (ONLY ONE ACTIVE)
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.category-card.flipped')
+          .forEach(el => el.classList.remove('flipped'));
 
-      card.classList.add('flipped');
+        card.classList.add('flipped');
+      });
+
+      cardsContainer.appendChild(card);
     });
 
-    cardsContainer.appendChild(card);
-  });
+    modal.style.display = 'flex';
+  }
 
-  modal.style.display = 'flex';
-}
+  function closeModal() {
+    document.getElementById('categoryModal').style.display = 'none';
+  }
 
-function closeModal() {
-  document.getElementById('categoryModal').style.display = 'none';
-}
-
-window.onclick = function(event) {
-  const modal = document.getElementById('categoryModal');
-  if (event.target == modal) modal.style.display = 'none';
-}
-        function bookNow(teaType) {
-            alert(`Booking: ${teaType}\n\nThis would redirect to the booking page.`);
-        }
-        // Add hover effects
-        document.querySelectorAll('.card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.boxShadow = 'none';
-            });
-        });
-</script>
+  window.onclick = function(event) {
+    const modal = document.getElementById('categoryModal');
+    if (event.target == modal) modal.style.display = 'none';
+  }
+          // Add hover effects
+          document.querySelectorAll('.card').forEach(card => {
+              card.addEventListener('mouseenter', function() {
+                  this.style.boxShadow = '0 10px 30px rgba(0,0,0,0.2)';
+              });
+              
+              card.addEventListener('mouseleave', function() {
+                  this.style.boxShadow = 'none';
+              });
+          });
+  </script>
 {% endblock %}

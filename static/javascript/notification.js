@@ -84,11 +84,18 @@ function renderNotifications(notifications) {
         const unreadStyle = !notif.is_read ? 'background: #fff0f5; border-left: 3px solid #d63384;' : '';
         
         html += `
-            <div style="padding: 10px 14px; border-bottom: 1px solid #f5f5f5; cursor: pointer; ${unreadStyle}" 
-                 onclick="handleNotificationClick('${notif.id}', '${notif.order_id || ''}')">
-                <div style="font-weight: 600; font-size: 0.85rem; color: #333; margin-bottom: 3px;">${escapeHtml(notif.title)}</div>
-                <div style="color: #666; font-size: 0.75rem; margin-bottom: 3px;">${escapeHtml(notif.message)}</div>
-                <div style="font-size: 0.7rem; color: #999;">${timeAgo}</div>
+            <div style="padding: 10px 14px; border-bottom: 1px solid #f5f5f5; position: relative; ${unreadStyle}">
+                <div style="cursor: pointer; padding-right: 24px;"
+                    onclick="handleNotificationClick('${notif.id}', '${notif.order_id || ''}')">
+                    <div style="font-weight: 600; font-size: 0.85rem; color: #333; margin-bottom: 3px;">${escapeHtml(notif.title)}</div>
+                    <div style="color: #666; font-size: 0.75rem; margin-bottom: 3px;">${escapeHtml(notif.message)}</div>
+                    <div style="font-size: 0.7rem; color: #999;">${timeAgo}</div>
+                </div>
+                <button onclick="event.stopPropagation(); deleteNotification('${notif.id}')"
+                        style="position: absolute; top: 8px; right: 10px; background: none; border: none; color: #ccc; font-size: 0.85rem; cursor: pointer; line-height: 1; padding: 2px 4px; border-radius: 4px;"
+                        onmouseover="this.style.color='#d63384'; this.style.background='#fff0f5';"
+                        onmouseout="this.style.color='#ccc'; this.style.background='none';"
+                        title="Delete notification">✕</button>
             </div>
         `;
     });
@@ -155,6 +162,39 @@ async function markAllNotificationsAsRead() {
         await batch.commit();
     } catch (error) {
         console.error('Error marking all as read:', error);
+    }
+}
+
+async function deleteNotification(notifId) {
+    try {
+        const db = firebase.firestore();
+        await db.collection("notifications").doc(notifId).delete();
+    } catch (error) {
+        console.error('Error deleting notification:', error);
+    }
+}
+
+async function clearReadNotifications() {
+    const userIdElement = document.querySelector('[data-user-id]');
+    if (!userIdElement) return;
+
+    const userId = userIdElement.dataset.userId;
+    if (!userId) return;
+
+    try {
+        const db = firebase.firestore();
+        const snapshot = await db.collection("notifications")
+            .where("user_id", "==", userId)
+            .where("is_read", "==", true)
+            .get();
+
+        const batch = db.batch();
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        await batch.commit();
+    } catch (error) {
+        console.error('Error clearing read notifications:', error);
     }
 }
 
@@ -232,8 +272,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Close dropdown when clicking outside
-    document.addEventListener('click', function() {
-        if (dropdown) {
+    document.addEventListener('click', function(e) {
+        if (dropdown && !dropdown.contains(e.target) && !bellWrapper.contains(e.target)) {
             dropdown.style.display = 'none';
         }
     });
@@ -244,6 +284,14 @@ document.addEventListener('DOMContentLoaded', function() {
         markAllBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             markAllNotificationsAsRead();
+        });
+    }
+
+    const clearReadBtn = document.getElementById('clearReadBtn');
+    if (clearReadBtn) {
+        clearReadBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            clearReadNotifications();
         });
     }
 });

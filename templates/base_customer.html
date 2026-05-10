@@ -60,8 +60,11 @@
         <div class="notification-dropdown" id="notificationDropdown" style="position: absolute; top: 40px; right: 0; width: 320px; max-height: 400px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; z-index: 1000; overflow: hidden; border: 1px solid #f0f0f0;">
           <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #d63384; color: white; font-weight: 600; font-size: 0.85rem;">
             <span> Notifications</span>
-            <button id="markAllReadBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 15px;">Mark all read</button>
-          </div>
+            <div style="display: flex; gap: 6px;">
+    <button id="markAllReadBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 15px;">Mark all read</button>
+    <button id="clearReadBtn" style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 0.7rem; cursor: pointer; padding: 3px 8px; border-radius: 15px;">Clear read</button>
+</div>
+           </div>
           <div class="dropdown-list" id="notificationList" style="max-height: 350px; overflow-y: auto;">
             <div style="text-align: center; padding: 25px 16px; color: #aaa;">Loading...</div>
           </div>

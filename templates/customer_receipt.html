@@ -18,7 +18,7 @@
     max-width: 680px;
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    overflow: hidden;
+    overflow: visible;
   }
 
   /* ── HEADER ── */
@@ -39,9 +39,7 @@
     font-size: 0.78rem;
     opacity: 0.85;
   }
-  .receipt-title {
-    text-align: right;
-  }
+  .receipt-title { text-align: right; }
   .receipt-title h2 {
     font-size: 1.5rem;
     font-weight: 700;
@@ -56,7 +54,6 @@
   /* ── BODY ── */
   .receipt-body { padding: 28px 32px; }
 
-  /* Status banner */
   .receipt-status-banner {
     display: flex;
     align-items: center;
@@ -71,7 +68,6 @@
     font-weight: 600;
   }
 
-  /* Info grid */
   .receipt-info-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -91,7 +87,6 @@
     font-weight: 500;
   }
 
-  /* Items table */
   .receipt-items-title {
     font-size: 0.72rem;
     text-transform: uppercase;
@@ -113,7 +108,6 @@
   .receipt-item-name { color: #333; font-weight: 500; }
   .receipt-item-price { color: #d63384; font-weight: 600; }
 
-  /* Total */
   .receipt-total-row {
     display: flex;
     justify-content: space-between;
@@ -126,7 +120,6 @@
   }
   .receipt-total-amount { color: #d63384; font-size: 1.3rem; }
 
-  /* Payment section */
   .receipt-payment {
     background: #f9f9f9;
     border-radius: 8px;
@@ -156,7 +149,6 @@
     font-weight: 600;
   }
 
-  /* Notes */
   .receipt-notes {
     background: #fff8f0;
     border: 1px solid #fde8cc;
@@ -167,7 +159,6 @@
     color: #664d03;
   }
 
-  /* Footer */
   .receipt-footer {
     background: #f9f9f9;
     padding: 20px 32px;
@@ -177,7 +168,6 @@
     color: #888;
   }
 
-  /* Action buttons */
   .receipt-actions {
     display: flex;
     gap: 12px;
@@ -203,7 +193,6 @@
   }
   .btn-back:hover { border-color: #d63384; color: #d63384; }
 
-  /* ── PRINT STYLES ── */
   @media print {
     body { background: #fff !important; }
     .receipt-wrapper { background: #fff !important; padding: 0 !important; }
@@ -216,12 +205,12 @@
 
 {% block content %}
 <div class="receipt-wrapper">
-  <div class="receipt-doc">
+  <div class="receipt-doc" id="receiptDoc">
 
     <!-- ── HEADER ── -->
     <div class="receipt-header">
       <div>
-        <div class="receipt-shop-name">🎂 Ms. Brave Cake Shop</div>
+        <div class="receipt-shop-name">Ms. Brave Cake Shop</div>
         <div class="receipt-shop-info">R Mapa Street, Mandurriao, Iloilo City</div>
         <div class="receipt-shop-info">0956 350 4486</div>
       </div>
@@ -234,13 +223,11 @@
     <!-- ── BODY ── -->
     <div class="receipt-body">
 
-      <!-- Status Banner -->
       <div class="receipt-status-banner">
         <i class="fas fa-check-circle fa-lg"></i>
-        Order Completed ✅
+        Order Completed – Thank you for your purchase!
       </div>
 
-      <!-- Order Info Grid -->
       <div class="receipt-info-grid">
         <div class="receipt-info-item">
           <div class="info-label">Order ID</div>
@@ -265,11 +252,7 @@
         <div class="receipt-info-item">
           <div class="info-label">Delivery Type</div>
           <div class="info-value">
-            {% if order.delivery_type == 'Pickup' %}
-              🏪 Pick Up
-            {% else %}
-              🚚 Delivery
-            {% endif %}
+            {% if order.delivery_type == 'Pickup' %}Pick Up{% else %}Delivery{% endif %}
           </div>
         </div>
         <div class="receipt-info-item">
@@ -300,11 +283,9 @@
         {% endif %}
       </div>
 
-      <!-- ========== ITEMS SECTION - FIXED ========== -->
       <div class="receipt-items-title">Items Ordered</div>
 
       {% if order.order_type == 'premade' and order.selected_items %}
-        <!-- PREMADE ORDERS - Vertical list -->
         {% for item in order.selected_items %}
         <div class="receipt-item-row">
           <span class="receipt-item-name">
@@ -318,59 +299,47 @@
           </span>
         </div>
         {% endfor %}
-        
+
       {% elif order.order_type == 'custom' and order.custom_components %}
-        <!-- CUSTOM ORDERS WITH COMPONENTS - Vertical list -->
         {% for component in order.custom_components %}
         <div class="receipt-item-row">
-          <span class="receipt-item-name">
-            {{ component.name }}
-          </span>
-          <span class="receipt-item-price">
-            ₱{{ "%.2f"|format(component.price|float) }}
-          </span>
+          <span class="receipt-item-name">{{ component.name }}</span>
+          <span class="receipt-item-price">₱{{ "%.2f"|format(component.price|float) }}</span>
         </div>
         {% endfor %}
-        
+
       {% else %}
-        <!-- FALLBACK for old orders without components -->
         <div class="receipt-item-row">
           <span class="receipt-item-name">
-            🎂 Custom Cake
+            Custom Cake
             {% if order.rush %}
-              <span class="badge bg-danger ms-1" style="font-size:0.7rem;">⚡ Rush</span>
+              <span class="badge bg-danger ms-1" style="font-size:0.7rem;">Rush</span>
             {% endif %}
           </span>
           <span class="receipt-item-price">₱{{ "%.2f"|format(order.amount) }}</span>
         </div>
         {% if order.item %}
-        <div style="font-size:0.78rem; color:#aaa; padding: 4px 0 8px;">
-          {{ order.item }}
-        </div>
+        <div style="font-size:0.78rem; color:#aaa; padding: 4px 0 8px;">{{ order.item }}</div>
         {% endif %}
       {% endif %}
-      <!-- ========== END ITEMS SECTION ========== -->
 
-      <!-- Total -->
       <div class="receipt-total-row">
         <span>Total</span>
         <span class="receipt-total-amount">₱{{ "%.2f"|format(order.amount) }}</span>
       </div>
 
-      <!-- Payment -->
       <div class="receipt-payment">
         <div>
           <div class="payment-method-label">Payment Method</div>
           <div class="payment-method-value">{{ order.payment_method or 'N/A' }}</div>
         </div>
         {% if order.payment_status == 'Paid' %}
-          <span class="payment-paid-badge">✅ Paid</span>
+          <span >Paid</span>
         {% else %}
-          <span class="payment-pending-badge">⏳ Cash on Delivery</span>
+          <span >Cash on Delivery</span>
         {% endif %}
       </div>
 
-      <!-- Notes -->
       {% if order.notes %}
       <div class="receipt-notes">
         <strong><i class="fas fa-sticky-note me-2"></i>Special Instructions:</strong><br>
@@ -382,16 +351,16 @@
 
     <!-- ── FOOTER ── -->
     <div class="receipt-footer">
-      Thank you for ordering from Ms. Brave Cake Shop! 🎂<br>
+      Thank you for ordering from Ms. Brave Cake Shop! <br>
       <small>This is an official e-receipt. Please keep for your records.</small>
     </div>
 
   </div>
 
-  <!-- ── ACTION BUTTONS ── -->
+  <!-- ── ACTION BUTTONS (outside receipt-doc so not captured in PDF) ── -->
   <div class="receipt-actions">
-    <button onclick="window.print()" class="btn-print">
-      <i class="fas fa-print me-2"></i>Print Receipt
+    <button onclick="downloadReceipt()" class="btn-print">
+      <i class="fas fa-download me-2"></i>Download Receipt
     </button>
     <a href="{{ url_for('customer_dashboard') }}" class="btn-back">
       <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
@@ -399,4 +368,40 @@
   </div>
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+function downloadReceipt() {
+    const element = document.getElementById('receiptDoc');
+    const btn     = document.querySelector('.btn-print');
+
+    btn.textContent = 'Generating...';
+    btn.disabled    = true;
+
+    window.scrollTo(0, 0);
+
+    const options = {
+        margin:      10,
+        filename:    'receipt-{{ order.id[:8] }}.pdf',
+        image:       { type: 'jpeg', quality: 1.0 },
+        html2canvas: {
+            scale:           2,
+            useCORS:         true,
+            allowTaint:      true,
+            logging:         false,
+            backgroundColor: '#ffffff',
+            scrollX:         0,
+            scrollY:         0
+        },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(options).from(element).save().then(() => {
+        btn.innerHTML = '<i class="fas fa-download me-2"></i>Download Receipt';
+        btn.disabled  = false;
+    });
+}
+</script>
 {% endblock %}

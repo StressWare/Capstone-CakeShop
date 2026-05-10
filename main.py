@@ -6,6 +6,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image)
 from decorators import login_required, admin_required
+from firebase_admin import messaging
 import re
 import os
 import json
@@ -58,8 +59,8 @@ def home_page():
         doc = users.document(user_id).get()
         if doc.exists:
             customer = doc.to_dict()
- 
-    # Fetch top 5 rated cakes
+
+    # ── Existing: Top rated cakes (untouched) ──
     available_cakes = []
     for cake_doc in cakes.where("status", "==", True).stream():
         cake_data = cake_doc.to_dict()
@@ -67,8 +68,7 @@ def home_page():
         cake_data['avg_rating']   = 0
         cake_data['review_count'] = 0
         available_cakes.append(cake_data)
- 
-    # Calculate ratings
+
     cake_ratings = {}
     for r_doc in reviews.where("is_visible", "==", True).stream():
         r   = r_doc.to_dict()
@@ -77,23 +77,49 @@ def home_page():
             cake_ratings[cid] = {"total": 0, "count": 0}
         cake_ratings[cid]["total"] += r.get("rating", 0)
         cake_ratings[cid]["count"] += 1
- 
+
     for cake in available_cakes:
         if cake["id"] in cake_ratings:
             data = cake_ratings[cake["id"]]
             cake["avg_rating"]   = round(data["total"] / data["count"], 1)
             cake["review_count"] = data["count"]
- 
-    # Sort by rating descending → top 5
+
     top_cakes = sorted(
         [c for c in available_cakes if c["review_count"] > 0],
         key=lambda x: x["avg_rating"],
         reverse=True
     )[:5]
- 
+
+    # ── New: Most ordered cakes ──
+    order_counts = {}
+    for order_doc in orders.stream():
+        order_data = order_doc.to_dict()
+        for item in order_data.get("selected_items", []):
+            cake_id  = item.get("cake_id")
+            quantity = int(item.get("quantity", 1))
+            if cake_id:
+                order_counts[cake_id] = order_counts.get(cake_id, 0) + quantity
+
+    # Sort by most ordered, take top 5 IDs
+    top_ids = sorted(order_counts, key=order_counts.get, reverse=True)[:5]
+
+    # Fetch each cake document
+    most_ordered = []
+    for cake_id in top_ids:
+        cake_doc = cakes.document(cake_id).get()
+        if cake_doc.exists:
+            cake_data       = cake_doc.to_dict()
+            cake_data['id'] = cake_doc.id
+            most_ordered.append(cake_data)
+
+    # Pad with None if less than 5
+    while len(most_ordered) < 5:
+        most_ordered.append(None)
+
     return render_template("home.html",
-        customer=customer,
-        top_cakes=top_cakes
+        customer     = customer,
+        top_cakes    = top_cakes,
+        most_ordered = most_ordered
     )
 @app.route("/privacy-policy")
 def privacy_policy():
@@ -461,7 +487,7 @@ def add_review():
     
     flash("Review submitted! Thank you 🎂", "success")
     return redirect(url_for("customer_dashboard"))
-#RECEIPT
+# ---------------- RECIEPT PAGE ----------------
 @app.route("/order/receipt/<order_id>")
 @login_required
 def order_receipt(order_id):
@@ -853,6 +879,7 @@ def cancel_order(order_id):
 # ================================================================
 # DELIVERY ROUTES
 # ================================================================
+# ---------------- RIDER DELIVERY PAGE ----------------
 @app.route("/delivery/<token>")
 @limiter.limit("30 per minute")
 def delivery_page(token):
@@ -874,12 +901,11 @@ def delivery_page(token):
         return render_template("delivery.html", expired=True)
  
     return render_template("delivery.html", order=order, expired=False)
-
+# ---------------- NOTIFY DELIVERY TO ADMIN ----------------
 @app.route("/delivery/<token>/notify", methods=["POST"])
-@limiter.limit("5 per minute")  # tight limit — rider should only tap once
+@limiter.limit("5 per minute")
 def notify_delivery(token):
     try:
-        # 1. Look up order by delivery_token (same as your existing route)
         results = orders.where("delivery_token", "==", token).limit(1).stream()
         order_doc = next(results, None)
 
@@ -888,74 +914,64 @@ def notify_delivery(token):
 
         order = order_doc.to_dict()
 
-        # 2. Guard: don't notify if already completed
         if order.get("status") == "Completed":
             return {"error": "Order already completed"}, 400
 
-        # 3. Get all admin FCM tokens from Firestore
         admin_tokens_doc = fcm_tokens.document("admins").get()
 
         if not admin_tokens_doc.exists:
+            app.logger.warning("[FCM] No admin tokens doc found")
             return {"error": "No admin tokens found"}, 500
 
-        tokens = list(admin_tokens_doc.to_dict().values())
+        token_map = admin_tokens_doc.to_dict()  # {uid: token}
+        tokens = list(token_map.values())
 
         if not tokens:
             return {"error": "No admin tokens registered"}, 500
 
-        # 4. Build FCM message
         order_id = order_doc.id
         customer_name = order.get("customer", {}).get("name", "Customer")
 
-        notification = messaging.Notification(
-            title="🛵 Order Delivered!",
-            body=f"{customer_name}'s order has been delivered. Tap to mark as completed."
-        )
+        # 5. Send one message per token
+        success_count = 0
+        failed_uids = []
 
-        # 5. Send to all admin tokens via MulticastMessage
-        fcm_message = messaging.MulticastMessage(
-            tokens=tokens,
-            notification=notification,
-            data={
-                "order_id": order_id,
-                "type": "delivery_complete"
-            },
-            webpush=messaging.WebpushConfig(
-                notification=messaging.WebpushNotification(
-                    icon="/static/img/logo.png",
-                    badge="/static/img/logo.png",
+        for uid, tok in token_map.items():
+            try:
+                msg = messaging.Message(
+                    token=tok,
+                    notification=messaging.Notification(
+                        title="🛵 Order Delivered!",
+                        body=f"{customer_name}'s order has been delivered. Tap to mark as completed."
+                    ),
+                    data={"order_id": order_id, "type": "delivery_complete"},
+                    webpush=messaging.WebpushConfig(
+                        notification=messaging.WebpushNotification(
+                            icon="/static/img/logo.png",
+                            badge="/static/img/logo.png",
+                        )
+                    )
                 )
-            )
-        )
+                messaging.send(msg)
+                success_count += 1
+                app.logger.info(f"[FCM] Sent to uid: {uid}")
+            except Exception as send_err:
+                app.logger.warning(f"[FCM] Failed for uid {uid}: {send_err}")
+                failed_uids.append(uid)
 
-        response = messaging.send_multicast(fcm_message)
-        print(f"[FCM] Sent to {response.success_count}/{len(tokens)} admins")
+        if failed_uids:
+            admin_ref = fcm_tokens.document("admins")
+            updates = {uid: firestore.DELETE_FIELD for uid in failed_uids}
+            admin_ref.update(updates)
+            app.logger.info(f"[FCM] Removed {len(failed_uids)} invalid token(s)")
 
-        # 6. Clean up invalid tokens (FCM tells us which ones failed)
-        if response.failure_count > 0:
-            failed_tokens = set()
-            for idx, result in enumerate(response.responses):
-                if not result.success:
-                    failed_tokens.add(tokens[idx])
-
-            if failed_tokens:
-                # Remove invalid tokens from Firestore
-                admin_ref = fcm_tokens.document("admins")
-                admin_data = admin_tokens_doc.to_dict()
-                updates = {
-                    uid: firestore.DELETE_FIELD
-                    for uid, tok in admin_data.items()
-                    if tok in failed_tokens
-                }
-                if updates:
-                    admin_ref.update(updates)
-                    print(f"[FCM] Removed {len(updates)} invalid token(s)")
-
-        return {"success": True, "notified": response.success_count}, 200
+        app.logger.info(f"[FCM] Done: {success_count}/{len(tokens)} succeeded")
+        return {"success": True, "notified": success_count}, 200
 
     except Exception as e:
-        print(f"[FCM] Notify error: {e}")
+        app.logger.exception(f"[FCM] Notify error: {e}")
         return {"error": str(e)}, 500
+
 # ================================================================
 # CAKES ROUTES
 # ================================================================
@@ -1253,8 +1269,102 @@ def admin_page():
         cus_cash=cus_cash,
         cus_ewallet=cus_ewallet,
     )
-    
-    
+@app.route("/admin/calendar-orders")
+@admin_required
+def calendar_orders():
+    date_str  = request.args.get("date")
+    month_str = request.args.get("month")
+ 
+    # ── Per-day detail ──────────────────────────────────────────────
+    if date_str:
+        try:
+            target = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+ 
+        day_start = datetime.combine(target, datetime.min.time()).replace(tzinfo=PH_TZ)
+        day_end   = datetime.combine(target, datetime.max.time()).replace(tzinfo=PH_TZ)
+ 
+        # Firestore range query — only fetches orders for this specific day
+        try:
+            day_docs = (
+                orders
+                .where("delivery_date", ">=", day_start)
+                .where("delivery_date", "<=", day_end)
+                .where("status", "not-in", ["Cancelled", "Completed"])
+                .stream()
+            )
+        except Exception as e:
+            return jsonify({"error": f"Firestore query failed: {str(e)}"}), 500
+ 
+        result = []
+        for order_doc in day_docs:
+            order = order_doc.to_dict()
+            order = convert_timestamps(order)
+            delivery_date = order.get("delivery_date")
+ 
+            if not isinstance(delivery_date, datetime):
+                continue
+ 
+            status  = order.get("status", "")
+            is_rush = order.get("rush", False)
+ 
+            result.append({
+                "id":       order_doc.id,
+                "customer": order.get("customer", {}).get("name", "N/A"),
+                "item":     order.get("item", "N/A"),
+                "status":   status,
+                "rush":     is_rush,
+                "time":     delivery_date.strftime("%I:%M %p"),
+            })
+ 
+        # Sort by delivery time
+        result.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
+        return jsonify({"orders": result})
+ 
+    # ── Month overview (badge counts per day) ───────────────────────
+    elif month_str:
+        try:
+            month_start = datetime.strptime(month_str + "-01", "%Y-%m-%d").date()
+        except ValueError:
+            return jsonify({"error": "Invalid month format. Use YYYY-MM"}), 400
+ 
+        # Last day of the month
+        if month_start.month == 12:
+            month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(days=1)
+        else:
+            month_end = month_start.replace(month=month_start.month + 1, day=1) - timedelta(days=1)
+ 
+        range_start = datetime.combine(month_start, datetime.min.time()).replace(tzinfo=PH_TZ)
+        range_end   = datetime.combine(month_end,   datetime.max.time()).replace(tzinfo=PH_TZ)
+ 
+        # Firestore range query — only fetches orders within this month
+        try:
+            month_docs = (
+                orders
+                .where("delivery_date", ">=", range_start)
+                .where("delivery_date", "<=", range_end)
+                .where("status", "not-in", ["Cancelled", "Completed"])
+                .stream()
+            )
+        except Exception as e:
+            return jsonify({"error": f"Firestore query failed: {str(e)}"}), 500
+ 
+        counts = {}  # { "YYYY-MM-DD": count }
+        for order_doc in month_docs:
+            order = order_doc.to_dict()
+            order = convert_timestamps(order)
+            delivery_date = order.get("delivery_date")
+ 
+            if not isinstance(delivery_date, datetime):
+                continue
+ 
+            key = delivery_date.strftime("%Y-%m-%d")
+            counts[key] = counts.get(key, 0) + 1
+ 
+        return jsonify({"counts": counts})
+ 
+    return jsonify({"error": "Provide ?date=YYYY-MM-DD or ?month=YYYY-MM"}), 400
 # ---------------- ADMIN ORDERS ----------------
 @app.route("/admin/orders")
 @admin_required
@@ -2394,9 +2504,7 @@ def manifest_pos():
 def service_worker_pos():
     return app.send_static_file('javascript/service-worker-pos.js')
 
-@app.route('/service-worker-firebase-messaging.js')
-def service_worker_firebase_messaging():
-    return app.send_static_file('javascript/service-worker-firebase-messaging.js')
+
 # ================================================================
 # RUN SERVER
 # ================================================================

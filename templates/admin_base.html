@@ -291,52 +291,69 @@
     </script>
 
     <script>
-    (async function registerAdminFCMToken() {
-        try {
-            // 1. Wait for auth state
-            firebase.auth().onAuthStateChanged(async (user) => {
-                if (!user) return;
+(async function registerAdminFCMToken() {
+    try {
+        // 1. Register SW first — outside auth state
+        
+        const swReg = await navigator.serviceWorker.ready;
 
-                // 2. Check admin custom claim
-                const idTokenResult = await user.getIdTokenResult();
-                if (!idTokenResult.claims.admin) return;
+        // 2. Wait for auth state
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (!user) {
+                console.warn('[FCM] No user logged in');
+                return;
+            }
 
-                // 3. Register FCM messaging service worker
-                const swReg = await navigator.serviceWorker.register('/service-worker-firebase-messaging.js');
+            // 3. Check admin custom claim
+            const idTokenResult = await user.getIdTokenResult();
+            if (!idTokenResult.claims.admin) {
+                console.warn('[FCM] User is not admin');
+                return;
+            }
 
-                // 4. Get messaging instance
-                const messaging = firebase.messaging();
+            // 4. Get messaging instance
+            const messaging = firebase.messaging();
 
-                // 5. Request permission + get token
-                const permission = await Notification.requestPermission();
-                if (permission !== 'granted') {
-                    console.warn('[FCM] Notification permission denied');
-                    return;
-                }
-
-                const token = await messaging.getToken({
-                    vapidKey: 'BIlhY4rDBY7ZcedYvAqLYStQOC-_ySz1Daq3Dd4ZVgO4HJynJMCByWy0vsfDcebJKbxOxta9irjDD53jcc-ddg',
-                    serviceWorkerRegistration: swReg
+            // 5. Handle FOREGROUND messages (when tab is open)
+            messaging.onMessage((payload) => {
+                console.log('[FCM] Foreground message received:', payload);
+                const title = payload.notification?.title || '🛵 Delivery Update';
+                const body = payload.notification?.body || '';
+                new Notification(title, {
+                    body: body,
+                    icon: '/static/img/logo.png'
                 });
-
-                if (!token) {
-                    console.warn('[FCM] No token received');
-                    return;
-                }
-
-                // 6. Save token to Firestore under fcm_tokens/admins/{uid}
-                const db = firebase.firestore();
-                await db.collection('fcm_tokens').doc('admins').set({
-                    [user.uid]: token
-                }, { merge: true });  // merge so other admins' tokens are not overwritten
-
-                console.log('[FCM] Admin token saved:', token);
             });
-        } catch (err) {
-            console.error('[FCM] Token registration failed:', err);
-        }
-    })();
-    </script>
+
+            // 6. Request permission + get token
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                console.warn('[FCM] Notification permission denied');
+                return;
+            }
+
+            const token = await messaging.getToken({
+                vapidKey: 'BIlhY4rDBY7ZcedYvAqLYStQQOC-_ySz1Daq3Dd4ZVgO4HJynJMCByWy0vsfDcebJKbxOxta9irjDD53jcc-ddg',
+                serviceWorkerRegistration: swReg
+            });
+
+            if (!token) {
+                console.warn('[FCM] No token received');
+                return;
+            }
+
+            // 7. Save token to Firestore
+            const db = firebase.firestore();
+            await db.collection('fcm_tokens').doc('admins').set({
+                [user.uid]: token
+            }, { merge: true });
+            
+        });
+    } catch (err) {
+        console.error('[FCM] Token registration failed:', err);
+    }
+})();
+</script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
