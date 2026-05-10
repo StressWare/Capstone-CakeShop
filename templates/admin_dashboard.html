@@ -92,15 +92,14 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
 /* ===== CALENDAR STYLES ===== */
 .cal-wrapper {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 300px;
   gap: 16px;
 }
-@media (max-width: 768px) {
-  .cal-wrapper { grid-template-columns: 1fr; }
-}
+@media (max-width: 768px) { .cal-wrapper { grid-template-columns: 1fr; } }
+
 .cal-nav {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 12px; gap: 8px;
 }
 .cal-nav-btn {
   background: #fff; border: 1px solid #d1d5db;
@@ -109,7 +108,16 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   transition: all 0.15s;
 }
 .cal-nav-btn:hover { border-color: #6B1A3A; color: #6B1A3A; }
-.cal-month-label { font-size: 16px; font-weight: 700; color: #fff; }
+.cal-today-btn {
+  background: #6B1A3A; color: #fff;
+  border: none; border-radius: 8px;
+  padding: 5px 14px; font-size: 12px;
+  font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.cal-today-btn:hover { background: #8b2250; }
+.cal-month-label { font-size: 16px; font-weight: 700; color: #fff; flex: 1; text-align: center; }
+
 .cal-grid-header {
   display: grid; grid-template-columns: repeat(7, 1fr);
   gap: 4px; margin-bottom: 4px;
@@ -119,14 +127,13 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   color: #9ca3af; padding: 4px 0;
   text-transform: uppercase; letter-spacing: 0.04em;
 }
-.cal-grid {
-  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
-}
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+
 .cal-cell {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  min-height: 68px;
+  min-height: 72px;
   padding: 6px;
   cursor: pointer;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -134,17 +141,20 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
 .cal-cell:hover { border-color: #6B1A3A; }
 .cal-cell.today { border: 2px solid #6B1A3A; }
 .cal-cell.selected { background: #fdf2f6; border-color: #6B1A3A; box-shadow: 0 0 0 2px rgba(107,26,58,0.12); }
-.cal-cell.empty { background: #f9fafb; cursor: default; border-color: #f3f4f6; }
-.cal-cell.empty:hover { border-color: #f3f4f6; }
-.cal-day-num { font-size: 12px; font-weight: 600; color: #6b7280; }
+.cal-cell.empty { background: #f9fafb; cursor: default; border-color: #f3f4f6; pointer-events: none; }
+.cal-day-num { font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
 .cal-cell.today .cal-day-num { color: #6B1A3A; }
-.cal-badge {
-  display: inline-block;
-  background: #6B1A3A; color: #fff;
-  border-radius: 10px; font-size: 10px;
-  padding: 1px 7px; margin-top: 5px;
-  font-weight: 600;
+
+/* Dot row */
+.cal-dots { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 2px; }
+.cal-dot-group { display: inline-flex; align-items: center; gap: 2px; }
+.cal-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
 }
+.cal-dot.premade { background: #3b82f6; }
+.cal-dot.custom  { background: #22c55e; }
+.cal-dot.rush    { background: #dc2626; }
+.cal-dot-count { font-size: 10px; font-weight: 600; color: #6b7280; }
 
 /* Detail panel */
 .cal-detail-panel {
@@ -152,7 +162,7 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
-  max-height: 520px;
+  max-height: 560px;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -161,32 +171,49 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   margin-bottom: 12px; padding-bottom: 10px;
   border-bottom: 1px solid #f3f4f6;
 }
+
+/* Legend */
+.cal-legend {
+  display: flex; gap: 12px; margin-bottom: 14px;
+  padding-bottom: 12px; border-bottom: 1px solid #f3f4f6;
+  flex-wrap: wrap;
+}
+.cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b7280; }
+
+/* Order cards in detail panel */
 .cal-order-card {
   border: 1px solid #f3f4f6;
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 8px;
-  transition: border-color 0.15s;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
-.cal-order-card:hover { border-color: #d1d5db; }
+.cal-order-card:hover { border-color: #6B1A3A; box-shadow: 0 1px 4px rgba(107,26,58,0.10); }
 .cal-order-card.rush { border-left: 3px solid #dc2626; }
 .cal-order-top {
   display: flex; align-items: center;
-  justify-content: space-between; gap: 6px;
-  margin-bottom: 4px;
+  justify-content: space-between; gap: 6px; margin-bottom: 4px;
 }
 .cal-order-name { font-size: 13px; font-weight: 600; color: #111; }
-.cal-order-item { font-size: 12px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-.cal-order-time { font-size: 11px; color: #9ca3af; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.cal-order-item { font-size: 12px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 180px; }
+.cal-order-meta { font-size: 11px; color: #9ca3af; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .rush-label {
   font-size: 10px; font-weight: 700;
   background: #fef2f2; color: #dc2626;
   border: 1px solid #fecaca;
   border-radius: 4px; padding: 1px 6px;
 }
+.type-label {
+  font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 4px;
+}
+.type-premade { background: #eff6ff; color: #1d4ed8; }
+.type-custom  { background: #f0fdf4; color: #166534; }
+
 .cal-loading { text-align: center; color: #9ca3af; font-size: 13px; padding: 24px 0; }
 
-/* Status badge colors */
+/* Status badges */
 .status-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 6px; white-space: nowrap; }
 .status-New       { background: #f3f4f6; color: #374151; }
 .status-Accepted  { background: #cffafe; color: #0e7490; }
@@ -196,13 +223,65 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
 .status-Completed { background: #dcfce7; color: #166534; }
 .status-Cancelled { background: #fee2e2; color: #991b1b; }
 
-/* ===== TABLET (≤ 992px) ===== */
+/* ===== ORDER MODAL ===== */
+.cal-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.cal-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%; max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  position: relative;
+}
+.cal-modal-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none;
+  font-size: 20px; cursor: pointer; color: #9ca3af;
+  line-height: 1;
+}
+.cal-modal-close:hover { color: #374151; }
+.cal-modal-name {
+  font-size: 18px; font-weight: 700; color: #111;
+  margin-bottom: 4px; padding-right: 24px;
+}
+.cal-modal-item {
+  font-size: 13px; color: #6b7280; margin-bottom: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid #f3f4f6;
+}
+.cal-modal-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 7px 0;
+  border-bottom: 1px solid #f9fafb;
+  font-size: 13px;
+}
+.cal-modal-row:last-of-type { border-bottom: none; }
+.cal-modal-label { color: #9ca3af; }
+.cal-modal-val { font-weight: 600; color: #111; }
+.cal-modal-actions {
+  margin-top: 16px; padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+  display: flex; justify-content: flex-end;
+}
+.cal-modal-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #6B1A3A; color: #fff;
+  padding: 8px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 600;
+  text-decoration: none; transition: background 0.15s;
+}
+.cal-modal-link:hover { background: #8b2250; color: #fff; }
+
+/* ===== TABLET / MOBILE ===== */
 @media (max-width: 992px) {
   #status-overview .col-md-7, #status-overview .col-md-5 { width: 100%; }
   .stat-card { min-height: 20px; max-width: 100px; }
 }
-
-/* ===== MOBILE (≤ 768px) ===== */
 @media (max-width: 768px) {
   .container-fluid { padding-left: 12px; padding-right: 12px; }
   #status-overview .col-6 { width: 50%; }
@@ -210,8 +289,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   .d-flex.justify-content-between { flex-direction: column; align-items: flex-start !important; gap: 5px; }
   .section-header { flex-direction: column; align-items: flex-start; }
 }
-
-/* ===== SMALL MOBILE (≤ 480px) ===== */
 @media (max-width: 480px) {
   #status-overview .col-6 { width: 30%; }
   h1 { font-size: 20px; }
@@ -248,8 +325,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
         </svg>
         Refresh
       </button>
-
-      <!-- ===== VIEW TABS ===== -->
       <div class="view-tabs">
         <button class="view-tab-btn active" id="tab-dashboard" onclick="switchView('dashboard')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -274,8 +349,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   <!-- DASHBOARD VIEW                                        -->
   <!-- ===================================================== -->
   <div id="view-dashboard">
-
-    <!-- STATUS OVERVIEW -->
     <section id="status-overview" class="mb-5">
       <h3 class="mb-3">Status Overview</h3>
       <div class="row g-3">
@@ -289,7 +362,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
             <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">COMPLETED</h6><h2 class="mb-0 fw-bold text-success">{{ total_completed }}</h2></div></div>
             <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">CANCEL</h6><h2 class="mb-0 fw-bold text-danger">{{ total_cancelled }}</h2></div></div>
             <div class="col-6 col-md-3"><div class="card stat-card text-center p-2"><h6 class="mb-0 small">RUSH</h6><h2 class="mb-0 fw-bold text-danger">{{ total_rush }}</h2></div></div>
-
             <div class="col-12 mt-3">
               <div class="card">
                 <div class="card-body py-2">
@@ -310,7 +382,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
             </div>
           </div>
         </div>
-
         <div class="col-md-5">
           <div class="card h-100">
             <div class="card-header bg-white"><h5 class="mb-0">Today's Orders ({{ today_count }})</h5></div>
@@ -336,7 +407,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
       </div>
     </section>
 
-    <!-- DAILY REPORT -->
     <section id="daily-report" class="mb-5">
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h3 class="mb-0">Daily Sale Report</h3>
@@ -345,9 +415,7 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
           <button class="btn btn-success btn-sm" onclick="downloadCSV()">Download CSV</button>
         </div>
       </div>
-
       <div class="row g-3">
-        <!-- Walk-in -->
         <div class="col-md-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex align-items-center gap-2">
@@ -364,8 +432,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
             </div>
           </div>
         </div>
-
-        <!-- Online Premade -->
         <div class="col-md-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex align-items-center gap-2">
@@ -382,8 +448,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
             </div>
           </div>
         </div>
-
-        <!-- Online Custom -->
         <div class="col-md-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex align-items-center gap-2">
@@ -400,8 +464,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
           </div>
         </div>
       </div>
-
-      <!-- TOTAL BAR -->
       <div class="card mt-3">
         <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
@@ -416,7 +478,6 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
         </div>
       </div>
     </section>
-
   </div><!-- /view-dashboard -->
 
   <!-- ===================================================== -->
@@ -424,12 +485,11 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   <!-- ===================================================== -->
   <div id="view-calendar">
     <div class="cal-wrapper">
-
-      <!-- LEFT: Calendar grid -->
       <div>
         <div class="cal-nav">
           <button class="cal-nav-btn" onclick="calPrevMonth()">&#8592;</button>
           <span class="cal-month-label" id="cal-month-label"></span>
+          <button class="cal-today-btn" onclick="calGoToday()">Today</button>
           <button class="cal-nav-btn" onclick="calNextMonth()">&#8594;</button>
         </div>
         <div class="cal-grid-header">
@@ -439,237 +499,286 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
         <div class="cal-grid" id="cal-grid"></div>
       </div>
 
-      <!-- RIGHT: Order detail panel -->
       <div class="cal-detail-panel">
+        <!-- Legend -->
+        <div class="cal-legend">
+          <div class="cal-legend-item"><span class="cal-dot premade"></span> Premade</div>
+          <div class="cal-legend-item"><span class="cal-dot custom"></span> Custom</div>
+          <div class="cal-legend-item"><span class="cal-dot rush"></span> Rush</div>
+        </div>
         <div class="cal-detail-title" id="cal-detail-title">Select a day to view orders</div>
         <div id="cal-detail-body">
           <p class="cal-loading">Click any day on the calendar.</p>
         </div>
       </div>
-
     </div>
   </div><!-- /view-calendar -->
 
 </div><!-- /container-fluid -->
 
-<!-- html2pdf.js -->
+<!-- ORDER QUICK-VIEW MODAL -->
+<div class="cal-modal-overlay" id="cal-modal-overlay" style="display:none;" onclick="closeOrderModal(event)">
+  <div class="cal-modal" id="cal-modal">
+    <button class="cal-modal-close" onclick="closeModal()">&times;</button>
+    <div class="cal-modal-name"  id="modal-name"></div>
+    <div class="cal-modal-item"  id="modal-item"></div>
+    <div class="cal-modal-row"><span class="cal-modal-label">Status</span>     <span class="cal-modal-val" id="modal-status"></span></div>
+    <div class="cal-modal-row"><span class="cal-modal-label">Time</span>       <span class="cal-modal-val" id="modal-time"></span></div>
+    <div class="cal-modal-row"><span class="cal-modal-label">Order type</span> <span class="cal-modal-val" id="modal-type"></span></div>
+    <div class="cal-modal-row"><span class="cal-modal-label">Payment</span>    <span class="cal-modal-val" id="modal-payment"></span></div>
+    <div class="cal-modal-row" id="modal-rush-row" style="display:none;">
+      <span class="cal-modal-label">Rush</span>
+      <span class="rush-label">⚡ RUSH ORDER</span>
+    </div>
+    <div class="cal-modal-actions">
+      <a href="/admin/orders" class="cal-modal-link">View Full Order →</a>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-  // ── Date display ───────────────────────────────────────────────────────
-  document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
-    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-  }); 
+document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
+  weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+});
 
-  // ── Tab switching ──────────────────────────────────────────────────────
-  async function switchView(view) {
-    document.getElementById('view-dashboard').style.display = view === 'dashboard' ? 'block' : 'none';
-    document.getElementById('view-calendar').style.display  = view === 'calendar'  ? 'block' : 'none';
-    document.getElementById('tab-dashboard').classList.toggle('active', view === 'dashboard');
-    document.getElementById('tab-calendar').classList.toggle('active', view === 'calendar');
-    if (view === 'calendar') await renderCalendar();
+// ── Tab switching ──────────────────────────────────────────────────────
+async function switchView(view) {
+  document.getElementById('view-dashboard').style.display = view === 'dashboard' ? 'block' : 'none';
+  document.getElementById('view-calendar').style.display  = view === 'calendar'  ? 'block' : 'none';
+  document.getElementById('tab-dashboard').classList.toggle('active', view === 'dashboard');
+  document.getElementById('tab-calendar').classList.toggle('active', view === 'calendar');
+  if (view === 'calendar') await renderCalendar();
+}
+
+// ── Calendar state ─────────────────────────────────────────────────────
+const now = new Date();
+let calYear    = now.getFullYear();
+let calMonth   = now.getMonth();
+let selectedDate = null;
+
+const monthCache = {};
+const dayCache   = {};
+
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+const STATUS_CLASS = {
+  'New': 'status-New', 'Accepted': 'status-Accepted',
+  'Pending': 'status-Pending', 'Ready': 'status-Ready',
+  'Out for Delivery': 'status-Out', 'Completed': 'status-Completed',
+  'Cancelled': 'status-Cancelled'
+};
+
+// ── Fetch month data (with cache) ──────────────────────────────────────
+async function fetchMonthData(year, month) {
+  const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+  if (monthCache[key]) return monthCache[key];
+  const resp = await fetch(`/admin/calendar-orders?month=${key}`);
+  const data = await resp.json();
+  monthCache[key] = data.days || {};
+  return monthCache[key];
+}
+
+// ── Fetch day orders (with cache) ──────────────────────────────────────
+async function fetchDayOrders(dateStr) {
+  if (dayCache[dateStr]) return dayCache[dateStr];
+  const resp = await fetch(`/admin/calendar-orders?date=${dateStr}`);
+  const data = await resp.json();
+  dayCache[dateStr] = data.orders || [];
+  return dayCache[dateStr];
+}
+
+// ── Render calendar ────────────────────────────────────────────────────
+async function renderCalendar() {
+  document.getElementById('cal-month-label').textContent = MONTHS[calMonth] + ' ' + calYear;
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:16px;font-size:13px;">Loading…</div>';
+
+  const days     = await fetchMonthData(calYear, calMonth);
+  const todayStr = now.toISOString().slice(0, 10);
+
+  grid.innerHTML = '';
+  const firstDay    = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    const e = document.createElement('div');
+    e.className = 'cal-cell empty';
+    grid.appendChild(e);
   }
 
-  // ── Calendar state ─────────────────────────────────────────────────────
-  const now = new Date();
-  let calYear    = now.getFullYear();
-  let calMonth   = now.getMonth();   // 0-based
-  let selectedDate = null;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm      = String(calMonth + 1).padStart(2, '0');
+    const dd      = String(d).padStart(2, '0');
+    const dateStr = `${calYear}-${mm}-${dd}`;
+    const info    = days[dateStr] || null;
 
-  // ── JS Cache (survives for the lifetime of the page session) ───────────
-  // monthCache: { "YYYY-MM": { "YYYY-MM-DD": count, ... } }
-  // dayCache:   { "YYYY-MM-DD": [ ...orders ] }
-  const monthCache = {};
-  const dayCache   = {};
+    const cell = document.createElement('div');
+    cell.className = 'cal-cell';
+    if (dateStr === todayStr)     cell.classList.add('today');
+    if (dateStr === selectedDate) cell.classList.add('selected');
 
-  const MONTHS = ['January','February','March','April','May','June',
-                  'July','August','September','October','November','December'];
-
-  const STATUS_CLASS = {
-    'New': 'status-New', 'Accepted': 'status-Accepted',
-    'Pending': 'status-Pending', 'Ready': 'status-Ready',
-    'Out for Delivery': 'status-Out', 'Completed': 'status-Completed',
-    'Cancelled': 'status-Cancelled'
-  };
-
-  // ── Fetch month badge counts (with cache) ──────────────────────────────
-  async function fetchMonthCounts(year, month) {
-    const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-    if (monthCache[key]) return monthCache[key];   // cache hit — zero Firestore reads
-
-    const resp = await fetch(`/admin/calendar-orders?month=${key}`);
-    const data = await resp.json();
-    monthCache[key] = data.counts || {};           // store in cache
-    return monthCache[key];
-  }
-
-  // ── Fetch day orders (with cache) ──────────────────────────────────────
-  async function fetchDayOrders(dateStr) {
-    if (dayCache[dateStr]) return dayCache[dateStr];  // cache hit — zero Firestore reads
-
-    const resp = await fetch(`/admin/calendar-orders?date=${dateStr}`);
-    const data = await resp.json();
-    dayCache[dateStr] = data.orders || [];            // store in cache
-    return dayCache[dateStr];
-  }
-
-  // ── Render calendar grid ───────────────────────────────────────────────
-  async function renderCalendar() {
-    document.getElementById('cal-month-label').textContent = MONTHS[calMonth] + ' ' + calYear;
-    const grid = document.getElementById('cal-grid');
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#9ca3af;padding:16px;font-size:13px;">Loading…</div>';
-
-    const counts  = await fetchMonthCounts(calYear, calMonth);
-    const todayStr = now.toISOString().slice(0, 10);
-
-    grid.innerHTML = '';
-
-    const firstDay    = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-    // Empty leading cells
-    for (let i = 0; i < firstDay; i++) {
-      const empty = document.createElement('div');
-      empty.className = 'cal-cell empty';
-      grid.appendChild(empty);
+    let dotsHTML = '';
+    if (info) {
+      dotsHTML = '<div class="cal-dots">';
+      if (info.premade > 0) dotsHTML += `<div class="cal-dot-group"><span class="cal-dot premade"></span><span class="cal-dot-count">${info.premade}</span></div>`;
+      if (info.custom  > 0) dotsHTML += `<div class="cal-dot-group"><span class="cal-dot custom"></span><span class="cal-dot-count">${info.custom}</span></div>`;
+      if (info.rush)        dotsHTML += `<div class="cal-dot-group"><span class="cal-dot rush"></span></div>`;
+      dotsHTML += '</div>';
     }
 
-    // Day cells
-    for (let d = 1; d <= daysInMonth; d++) {
-      const mm      = String(calMonth + 1).padStart(2, '0');
-      const dd      = String(d).padStart(2, '0');
-      const dateStr = `${calYear}-${mm}-${dd}`;
-      const count   = counts[dateStr] || 0;
+    cell.innerHTML = `<div class="cal-day-num">${d}</div>${dotsHTML}`;
+    cell.addEventListener('click', () => selectDay(dateStr, d, cell));
+    grid.appendChild(cell);
+  }
+}
 
-      const cell = document.createElement('div');
-      cell.className = 'cal-cell';
-      if (dateStr === todayStr)     cell.classList.add('today');
-      if (dateStr === selectedDate) cell.classList.add('selected');
+// ── Select day ─────────────────────────────────────────────────────────
+async function selectDay(dateStr, d, clickedCell) {
+  selectedDate = dateStr;
+  document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+  clickedCell.classList.add('selected');
 
-      cell.innerHTML =
-        `<div class="cal-day-num">${d}</div>` +
-        (count ? `<span class="cal-badge">${count} order${count > 1 ? 's' : ''}</span>` : '');
+  document.getElementById('cal-detail-title').textContent = `${MONTHS[calMonth]} ${d}, ${calYear}`;
+  document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Loading orders…</p>';
 
-      cell.addEventListener('click', () => selectDay(dateStr, d, cell));
-      grid.appendChild(cell);
-    }
+  const orders = await fetchDayOrders(dateStr);
+
+  if (!orders.length) {
+    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">No active orders for this day.</p>';
+    return;
   }
 
-  // ── Select a day and load its orders ──────────────────────────────────
-  async function selectDay(dateStr, d, clickedCell) {
-    selectedDate = dateStr;
-
-    // Highlight selected cell
-    document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
-    clickedCell.classList.add('selected');
-
-    document.getElementById('cal-detail-title').textContent = `${MONTHS[calMonth]} ${d}, ${calYear}`;
-    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Loading orders…</p>';
-
-    const orders = await fetchDayOrders(dateStr);
-
-    if (!orders.length) {
-      document.getElementById('cal-detail-body').innerHTML =
-        '<p class="cal-loading">No orders for this day.</p>';
-      return;
-    }
-
-    document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
-      <div class="cal-order-card ${o.rush ? 'rush' : ''}">
-        <div class="cal-order-top">
-          <span class="cal-order-name">${o.customer}</span>
-          <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
-        </div>
-        <div class="cal-order-item">${o.item}</div>
-        <div class="cal-order-time">
-          🕐 ${o.time}
-          ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
-        </div>
+  document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
+    <div class="cal-order-card ${o.rush ? 'rush' : ''}" onclick='openOrderModal(${JSON.stringify(o)})'>
+      <div class="cal-order-top">
+        <span class="cal-order-name">${o.customer}</span>
+        <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
       </div>
-    `).join('');
-  }
-
-  // ── Month navigation ───────────────────────────────────────────────────
-  function calResetDetail() {
-    selectedDate = null;
-    document.getElementById('cal-detail-title').textContent = 'Select a day to view orders';
-    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Click any day on the calendar.</p>';
-  }
-
-  async function calPrevMonth() {
-    calMonth--;
-    if (calMonth < 0) { calMonth = 11; calYear--; }
-    calResetDetail();
-    await renderCalendar();
-  }
-
-  async function calNextMonth() {
-    calMonth++;
-    if (calMonth > 11) { calMonth = 0; calYear++; }
-    calResetDetail();
-    await renderCalendar();
-  }
-
-  // ── PDF / CSV (unchanged from your original) ──────────────────────────
-  const pos_sales   = {{ pos_sales }};
-  const pre_sales   = {{ pre_sales }};
-  const cus_sales   = {{ cus_sales }};
-  const pos_txn     = {{ pos_txn }};
-  const pre_txn     = {{ pre_txn }};
-  const cus_txn     = {{ cus_txn }};
-  const pos_cash    = {{ pos_cash }};
-  const pre_cash    = {{ pre_cash }};
-  const cus_cash    = {{ cus_cash }};
-  const pos_ewallet = {{ pos_ewallet }};
-  const pre_ewallet = {{ pre_ewallet }};
-  const cus_ewallet = {{ cus_ewallet }};
-  const pos_top     = "{{ pos_top }}";
-  const pre_top     = "{{ pre_top }}";
-
-  function downloadPDF() {
-    const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-    const content = document.createElement('div');
-    content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
-    content.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
-        <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
-        <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH', {hour:'2-digit',minute:'2-digit'})}</p></div>
+      <div class="cal-order-item">${o.item}</div>
+      <div class="cal-order-meta">
+        <span>🕐 ${o.time}</span>
+        <span class="type-label ${o.order_type === 'premade' ? 'type-premade' : 'type-custom'}">${o.order_type === 'premade' ? 'Premade' : 'Custom'}</span>
+        ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
-        <thead><tr style="background:#6B1A3A;color:#fff;">
-          <th style="padding:10px 12px;text-align:left;">Channel</th>
-          <th style="padding:10px 12px;text-align:right;">Total Sales</th>
-          <th style="padding:10px 12px;text-align:right;">Transactions</th>
-          <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
-          <th style="padding:10px 12px;text-align:right;">Bank / E-wallet</th>
-        </tr></thead>
-        <tbody>
-          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
-          <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">₱${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
-          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
-          <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales+pre_sales+cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn+pre_txn+cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash+pre_cash+cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet+pre_ewallet+cus_ewallet}</td></tr>
-        </tbody>
-      </table>
-      <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
-    const opt = { margin: 12, filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } };
-    html2pdf().set(opt).from(content).save();
-  }
+    </div>
+  `).join('');
+}
 
-  function downloadCSV() {
-    const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-    const rows = [
-      ['Ms. Brave Cake Shop - Daily Sale Report'], [`Date: ${today}`], [],
-      ['Channel','Total Sales (PHP)','Transactions','Top Item','Cash / COD (PHP)','Bank / E-wallet (PHP)'],
-      ['Walk-in', pos_sales, pos_txn, pos_top, pos_cash, pos_ewallet],
-      ['Online Premade Cake', pre_sales, pre_txn, pre_top, pre_cash, pre_ewallet],
-      ['Online Customize Cake', cus_sales, cus_txn, '', cus_cash, cus_ewallet],
-      [], ['TOTAL', pos_sales+pre_sales+cus_sales, pos_txn+pre_txn+cus_txn, '', pos_cash+pre_cash+cus_cash, pos_ewallet+pre_ewallet+cus_ewallet],
-    ];
-    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  }
+// ── Order modal ────────────────────────────────────────────────────────
+function openOrderModal(o) {
+  document.getElementById('modal-name').textContent    = o.customer;
+  document.getElementById('modal-item').textContent    = o.item;
+  document.getElementById('modal-time').textContent    = o.time;
+  document.getElementById('modal-payment').textContent = o.payment_method;
+  document.getElementById('modal-type').innerHTML =
+    `<span class="type-label ${o.order_type === 'premade' ? 'type-premade' : 'type-custom'}">${o.order_type === 'premade' ? 'Premade' : 'Custom'}</span>`;
+
+  const statusEl = document.getElementById('modal-status');
+  statusEl.innerHTML = `<span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>`;
+
+  document.getElementById('modal-rush-row').style.display = o.rush ? 'flex' : 'none';
+  document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('cal-modal-overlay').style.display = 'none';
+}
+
+function closeOrderModal(e) {
+  if (e.target === document.getElementById('cal-modal-overlay')) closeModal();
+}
+
+// ── Month navigation ───────────────────────────────────────────────────
+function calResetDetail() {
+  selectedDate = null;
+  document.getElementById('cal-detail-title').textContent = 'Select a day to view orders';
+  document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Click any day on the calendar.</p>';
+}
+
+async function calPrevMonth() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  calResetDetail();
+  await renderCalendar();
+}
+
+async function calNextMonth() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  calResetDetail();
+  await renderCalendar();
+}
+
+async function calGoToday() {
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  calResetDetail();
+  await renderCalendar();
+}
+
+// ── PDF / CSV ──────────────────────────────────────────────────────────
+const pos_sales   = {{ pos_sales }};
+const pre_sales   = {{ pre_sales }};
+const cus_sales   = {{ cus_sales }};
+const pos_txn     = {{ pos_txn }};
+const pre_txn     = {{ pre_txn }};
+const cus_txn     = {{ cus_txn }};
+const pos_cash    = {{ pos_cash }};
+const pre_cash    = {{ pre_cash }};
+const cus_cash    = {{ cus_cash }};
+const pos_ewallet = {{ pos_ewallet }};
+const pre_ewallet = {{ pre_ewallet }};
+const cus_ewallet = {{ cus_ewallet }};
+const pos_top     = "{{ pos_top }}";
+const pre_top     = "{{ pre_top }}";
+
+function downloadPDF() {
+  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const content = document.createElement('div');
+  content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
+  content.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
+      <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
+      <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p></div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#6B1A3A;color:#fff;">
+        <th style="padding:10px 12px;text-align:left;">Channel</th>
+        <th style="padding:10px 12px;text-align:right;">Total Sales</th>
+        <th style="padding:10px 12px;text-align:right;">Transactions</th>
+        <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
+        <th style="padding:10px 12px;text-align:right;">Bank / E-wallet</th>
+      </tr></thead>
+      <tbody>
+        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
+        <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">₱${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
+        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
+        <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales+pre_sales+cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn+pre_txn+cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash+pre_cash+cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet+pre_ewallet+cus_ewallet}</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
+  const opt = { margin:12, filename:`daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'landscape'} };
+  html2pdf().set(opt).from(content).save();
+}
+
+function downloadCSV() {
+  const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+  const rows = [
+    ['Ms. Brave Cake Shop - Daily Sale Report'],[`Date: ${today}`],[],
+    ['Channel','Total Sales (PHP)','Transactions','Top Item','Cash / COD (PHP)','Bank / E-wallet (PHP)'],
+    ['Walk-in',pos_sales,pos_txn,pos_top,pos_cash,pos_ewallet],
+    ['Online Premade Cake',pre_sales,pre_txn,pre_top,pre_cash,pre_ewallet],
+    ['Online Customize Cake',cus_sales,cus_txn,'',cus_cash,cus_ewallet],
+    [],[`TOTAL`,pos_sales+pre_sales+cus_sales,pos_txn+pre_txn+cus_txn,'',pos_cash+pre_cash+cus_cash,pos_ewallet+pre_ewallet+cus_ewallet],
+  ];
+  const csv = rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
 </script>
 {% endblock %}

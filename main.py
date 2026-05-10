@@ -1272,6 +1272,12 @@ def admin_page():
 @app.route("/admin/calendar-orders")
 @admin_required
 def calendar_orders():
+    """
+    Returns orders whose delivery_date matches the requested date or month.
+    Excludes Cancelled and Completed orders.
+    Query param: ?date=YYYY-MM-DD  → returns order list for that day
+    Query param: ?month=YYYY-MM    → returns badge counts + dot info per day
+    """
     date_str  = request.args.get("date")
     month_str = request.args.get("month")
  
@@ -1285,7 +1291,6 @@ def calendar_orders():
         day_start = datetime.combine(target, datetime.min.time()).replace(tzinfo=PH_TZ)
         day_end   = datetime.combine(target, datetime.max.time()).replace(tzinfo=PH_TZ)
  
-        # Firestore range query — only fetches orders for this specific day
         try:
             day_docs = (
                 orders
@@ -1306,30 +1311,27 @@ def calendar_orders():
             if not isinstance(delivery_date, datetime):
                 continue
  
-            status  = order.get("status", "")
-            is_rush = order.get("rush", False)
- 
             result.append({
-                "id":       order_doc.id,
-                "customer": order.get("customer", {}).get("name", "N/A"),
-                "item":     order.get("item", "N/A"),
-                "status":   status,
-                "rush":     is_rush,
-                "time":     delivery_date.strftime("%I:%M %p"),
+                "id":             order_doc.id,
+                "customer":       order.get("customer", {}).get("name", "N/A"),
+                "item":           order.get("item", "N/A"),
+                "status":         order.get("status", ""),
+                "rush":           order.get("rush", False),
+                "order_type":     order.get("order_type", ""),
+                "payment_method": order.get("payment_method", "—"),
+                "time":           delivery_date.strftime("%I:%M %p"),
             })
  
-        # Sort by delivery time
         result.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
         return jsonify({"orders": result})
  
-    # ── Month overview (badge counts per day) ───────────────────────
+    # ── Month overview ───────────────────────────────────────────────
     elif month_str:
         try:
             month_start = datetime.strptime(month_str + "-01", "%Y-%m-%d").date()
         except ValueError:
             return jsonify({"error": "Invalid month format. Use YYYY-MM"}), 400
  
-        # Last day of the month
         if month_start.month == 12:
             month_end = month_start.replace(year=month_start.year + 1, month=1, day=1) - timedelta(days=1)
         else:
@@ -1338,7 +1340,6 @@ def calendar_orders():
         range_start = datetime.combine(month_start, datetime.min.time()).replace(tzinfo=PH_TZ)
         range_end   = datetime.combine(month_end,   datetime.max.time()).replace(tzinfo=PH_TZ)
  
-        # Firestore range query — only fetches orders within this month
         try:
             month_docs = (
                 orders
@@ -1350,7 +1351,8 @@ def calendar_orders():
         except Exception as e:
             return jsonify({"error": f"Firestore query failed: {str(e)}"}), 500
  
-        counts = {}  # { "YYYY-MM-DD": count }
+        # Per day: { "YYYY-MM-DD": { premade: n, custom: n, rush: bool } }
+        days = {}
         for order_doc in month_docs:
             order = order_doc.to_dict()
             order = convert_timestamps(order)
@@ -1359,10 +1361,22 @@ def calendar_orders():
             if not isinstance(delivery_date, datetime):
                 continue
  
-            key = delivery_date.strftime("%Y-%m-%d")
-            counts[key] = counts.get(key, 0) + 1
+            key        = delivery_date.strftime("%Y-%m-%d")
+            order_type = order.get("order_type", "")
+            is_rush    = order.get("rush", False)
  
-        return jsonify({"counts": counts})
+            if key not in days:
+                days[key] = {"premade": 0, "custom": 0, "rush": False}
+ 
+            if order_type == "premade":
+                days[key]["premade"] += 1
+            elif order_type == "custom":
+                days[key]["custom"] += 1
+ 
+            if is_rush:
+                days[key]["rush"] = True
+ 
+        return jsonify({"days": days})
  
     return jsonify({"error": "Provide ?date=YYYY-MM-DD or ?month=YYYY-MM"}), 400
 # ---------------- ADMIN ORDERS ----------------
