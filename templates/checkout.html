@@ -20,15 +20,17 @@
     <!-- Hidden fields -->
     <input type="hidden" name="order_type"     value="{{ order_type }}">
     <input type="hidden" name="order_item"     value="{{ order_item }}">
-    <input type="hidden" name="amount"         value="{{ amount }}">
+    <input type="hidden" name="amount"         id="totalAmountInput" value="{{ amount }}">
     <input type="hidden" name="price"          value="{{ price }}">
     <input type="hidden" name="rush"           value="{{ rush }}">
     <input type="hidden" name="inspo_image"    value="{{ inspo_image or '' }}">
-    <input type="hidden" name="selected_items" value='{{ selected_items | tojson }}'>
+    <input type="hidden" name="selected_items" id="selectedItemsInput" value='{{ selected_items | tojson }}'>
     <input type="hidden" name="delivery_type"  id="deliveryTypeInput" value="Delivery">
     <input type="hidden" name="payment_method" id="paymentInput"      value="Cash on Delivery">
     <input type="hidden" name="lat"            id="latInput"          value="">
     <input type="hidden" name="lng"            id="lngInput"          value="">
+    <input type="hidden" name="voucher_id" id="voucherIdInput" value="">
+    <input type="hidden" name="discount_amount" id="discountAmountInput" value="0">
 
     <div class="checkout-main">
 
@@ -153,9 +155,50 @@
             You'll be redirected to PayMongo's secure checkout page.
           </div>
         </div>
+        <!-- Voucher selector -->
+        <div class="checkout-form-section" style="margin-top:12px;">
+          <div class="section-title">Your Vouchers</div>
 
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            
+            <div class="voucher-option" id="voucher-none"
+                style="padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
+                        cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+                onclick="selectVoucher(null, 0)">
+              <span style="font-size:13px;color:rgba(255,255,255,0.7);">No voucher</span>
+            </div>
+
+            {% if active_vouchers %}
+              {% for v in active_vouchers %}
+              <div class="voucher-option" id="voucher-{{ v.id }}"
+                  style="padding:10px 14px;border-radius:8px;border:1px solid rgba(214,51,132,0.4);
+                          cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+                  onclick="selectVoucher('{{ v.id }}', {{ v.discount }})">
+                <div>
+                  <div style="font-size:14px;font-weight:600;color:#fff;">{{ v.discount }}% OFF</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.5);">Expires {{ v.expires_at_fmt }}</div>
+                </div>
+                <div style="font-size:12px;color:#d63384;font-weight:600;">Apply</div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <div style="font-size:12px;color:rgba(255,255,255,0.5);padding-left:4px;">
+                No vouchers available
+              </div>
+            {% endif %}
+
+          </div>
+
+          <!-- Stamp info note -->
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.05);
+                      border-radius:8px;border-left:3px solid #d63384;font-size:11px;
+                      color:rgba(255,255,255,0.55);">
+            <i class="fas fa-info-circle me-1" style="color:#d63384;"></i>
+            Stamps are earned on <strong style="color:rgba(255,255,255,0.8);">Cake</strong> category
+            and <strong style="color:rgba(255,255,255,0.8);">Custom Cake</strong> orders only.
+          </div>
+        </div>
       </div>
-
       <!-- RIGHT COLUMN -->
       <div>
         <div class="order-summary">
@@ -176,9 +219,15 @@
                   <div class="order-item-name">{{ item.cake_name }}</div>
                   <div class="order-item-spec">
                     ₱{{ "%.2f"|format(item.price|float) }}
-                    {% if item.quantity > 1 %} × {{ item.quantity }} {% endif %}
                   </div>
-                  <div class="order-item-price">
+                  <div class="qty-controls" style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                    <button type="button" class="qty-btn" onclick="changeQty({{ loop.index0 }}, -1)"
+                            style="width:28px;height:28px;border-radius:50%;border:1px solid #d63384;background:none;color:#d63384;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+                    <span id="qty-{{ loop.index0 }}" style="font-weight:600; min-width:20px; text-align:center;">{{ item.quantity }}</span>
+                    <button type="button" class="qty-btn" onclick="changeQty({{ loop.index0 }}, 1)"
+                            style="width:28px;height:28px;border-radius:50%;border:1px solid #d63384;background:none;color:#d63384;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                  </div>
+                  <div class="order-item-price" id="subtotal-{{ loop.index0 }}">
                     Subtotal: ₱{{ "%.2f"|format(item.subtotal|float) }}
                   </div>
                 </div>
@@ -199,24 +248,27 @@
             {% endif %}
 
           </div>
-
+          <div class="order-summary-price" style="font-size:0.9rem; opacity:0.8;">
+              <span>Subtotal</span>
+              <span id="displaySubtotal">₱{{ "%.2f"|format(amount|float) }}</span>
+          </div>
+          <div class="order-summary-price" style="font-size:0.9rem; opacity:0.8;">
+              <span>Delivery Fee</span>
+              <span id="displayDeliveryFee">₱50.00</span>
+          </div>
           <div class="order-summary-price total">
-            <span>Total</span>
-            <span>₱{{ "%.2f"|format(amount|float) }}</span>
+              <span>Total</span>
+              <span id="displayTotal">₱{{ "%.2f"|format((amount|float) + 50) }}</span>
+          </div>
+          <div style="margin-top: 20px;">
+            <button type="submit" class="btn w-100" id="submitBtn"
+                    style="background:#d63384; color:white; padding:14px; border-radius:10px;
+                          font-size:1rem; font-weight:600; border:none; margin-top:20px;">
+              <i class="fas fa-check me-2"></i>Place Order
+            </button>
           </div>
         </div>
-
-        <!-- ✅ FIXED: BUTTON MOVED HERE (RIGHT COLUMN UNDER SUMMARY) -->
-        <div style="margin-top: 20px;">
-          <button type="submit" class="btn w-100" id="submitBtn"
-                  style="background:#d63384; color:white; padding:14px; border-radius:10px;
-                         font-size:1rem; font-weight:600; border:none;">
-            <i class="fas fa-check me-2"></i>Place Order
-          </button>
-        </div>
-
       </div>
-
     </div>
   </form>
 </div>
@@ -299,6 +351,12 @@
   });
 
   function selectDelivery(type) {
+     currentDeliveryType = type;  // ← ADD THIS LINE
+      var deliveryFee = type === 'Delivery' ? 50 : 0;
+    var subtotal = orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0);
+    document.getElementById('displayDeliveryFee').textContent = type === 'Delivery' ? '₱50.00' : 'Free';
+        recalcTotal();
+
     document.getElementById('deliveryTypeInput').value = type;
     var isPickup = type === 'Pickup';
     document.getElementById('addressSection').style.display     = isPickup ? 'none'  : 'block';
@@ -369,5 +427,90 @@
     }
   });
   window.addEventListener('load', function() { initDeliveryMap(); });
+</script>
+<script>
+  // ── Quantity controls for premade orders ──
+  var currentDeliveryType = 'Delivery';
+  var orderItems = {{ selected_items | tojson }};
+  function changeQty(index, delta) {
+      var item = orderItems[index];
+      var newQty = Math.max(1, item.quantity + delta);
+      item.quantity = newQty;
+      item.subtotal = item.price * newQty;
+
+      document.getElementById('qty-' + index).textContent = newQty;
+      document.getElementById('subtotal-' + index).textContent =
+          'Subtotal: ₱' + item.subtotal.toFixed(2);
+
+      var subtotal = orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0);
+      var deliveryFee = currentDeliveryType === 'Delivery' ? 50 : 0;
+      var total = subtotal + deliveryFee;
+
+    document.getElementById('selectedItemsInput').value = JSON.stringify(orderItems);
+          recalcTotal();
+  }
+
+  // ── Voucher selection ──
+  var baseAmount = {{ amount }};
+  var activeDiscount = 0;
+
+  function selectVoucher(voucherId, discountPct) {
+    document.querySelectorAll('.voucher-option').forEach(function(el) {
+      el.style.borderColor = 'rgba(255,255,255,0.15)';
+      el.style.background  = 'transparent';
+    });
+
+    activeDiscount = 0;
+
+    if (voucherId) {
+      var el = document.getElementById('voucher-' + voucherId);
+      if (el) {
+        el.style.borderColor = '#d63384';
+        el.style.background  = 'rgba(214,51,132,0.1)';
+      }
+      activeDiscount = discountPct;
+    } else {
+      var el = document.getElementById('voucher-none');
+      if (el) {
+        el.style.borderColor = '#d63384';
+        el.style.background  = 'rgba(214,51,132,0.1)';
+      }
+    }
+
+    document.getElementById('voucherIdInput').value      = voucherId || '';
+    document.getElementById('discountAmountInput').value = activeDiscount;
+
+    recalcTotal();
+  }
+
+  function recalcTotal() {
+    var subtotal = orderItems.length > 0
+      ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
+      : baseAmount;
+    var deliveryFee  = currentDeliveryType === 'Delivery' ? 50 : 0;
+    var discountAmt  = subtotal * activeDiscount / 100;
+    var total        = subtotal + deliveryFee - discountAmt;
+
+    document.getElementById('displaySubtotal').textContent = '₱' + subtotal.toFixed(2);
+    document.getElementById('totalAmountInput').value      = total.toFixed(2);
+    document.getElementById('displayTotal').textContent    = '₱' + total.toFixed(2);
+
+    // Show/hide discount row
+    var discountRow = document.getElementById('displayDiscountRow');
+    if (discountAmt > 0) {
+      if (!discountRow) {
+        var totalRow = document.querySelector('.order-summary-price.total');
+        var row = document.createElement('div');
+        row.id        = 'displayDiscountRow';
+        row.className = 'order-summary-price';
+        row.style.cssText = 'font-size:0.9rem;color:#d63384;';
+        totalRow.parentNode.insertBefore(row, totalRow);
+      }
+      document.getElementById('displayDiscountRow').innerHTML =
+        '<span>Discount (' + activeDiscount + '%)</span><span>-₱' + discountAmt.toFixed(2) + '</span>';
+    } else if (discountRow) {
+      discountRow.remove();
+    }
+  }
 </script>
 {% endblock %}

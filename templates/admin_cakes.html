@@ -215,10 +215,10 @@
         <div class="col-md-3 mb-2">
           <select class="form-select" id="categoryFilter">
             <option value="">All Categories</option>
-            <option value="Birthday">Birthday</option>
-            <option value="Wedding">Wedding</option>
-            <option value="Anniversary">Anniversary</option>
-            <option value="Custom">Custom</option>
+            <option value="Cake">Cake</option>
+            <option value="Drinks">Drinks</option>
+            <option value="Dessert">Dessert</option>
+            <option value="Pastry">Pastry</option>
           </select>
         </div>
         <div class="col-md-3 mb-2">
@@ -277,24 +277,25 @@
                     {% else %}<p class="text-muted">No image uploaded</p>{% endif %}
                   </div>
                   <div class="row">
-                    <div class="col-md-6 mb-3"><label class="form-label">Cake Name *</label><input type="text" class="form-control" name="name" value="{{ cake.name }}" required></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Product Name *</label><input type="text" class="form-control" name="name" value="{{ cake.name }}" required></div>
                     <div class="col-md-6 mb-3">
-                      <label class="form-label">Category *</label>
+                      <label class="form-label">Product Category *</label>
                       <select class="form-select" name="category" required>
-                        <option value="Birthday" {{ 'selected' if cake.category == 'Birthday' }}>Birthday</option>
-                        <option value="Wedding" {{ 'selected' if cake.category == 'Wedding' }}>Wedding</option>
-                        <option value="Anniversary" {{ 'selected' if cake.category == 'Anniversary' }}>Anniversary</option>
-                        <option value="Custom" {{ 'selected' if cake.category == 'Custom' }}>Custom</option>
+                        <option value="Cake" {{ 'selected' if cake.category == 'Cake' }}>Cake</option>
+                        <option value="Drinks" {{ 'selected' if cake.category == 'Drinks' }}>Drinks</option>
+                        <option value="Dessert" {{ 'selected' if cake.category == 'Dessert' }}>Dessert</option>
+                        <option value="Pastry" {{ 'selected' if cake.category == 'Pastry' }}>Pastry</option>
+
                       </select>
                     </div>
                   </div>
-                  <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" rows="3" required>{{ cake.description }}</textarea></div>
+                  <div class="mb-3"><label class="form-label">Product Description *</label><textarea class="form-control" name="description" rows="3" required>{{ cake.description }}</textarea></div>
                   <div class="row">
-                    <div class="col-md-6 mb-3"><label class="form-label">Price (₱) *</label><input type="number" class="form-control" name="price" value="{{ cake.price }}" step="0.01" min="0" required></div>
-                    <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" name="quantity" value="{{ cake.quantity }}" min="0" required></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Product Price (₱) *</label><input type="number" class="form-control" name="price" value="{{ cake.price }}" step="0.01" min="0" required></div>
+                    <div class="col-md-6 mb-3"><label class="form-label">Product Quantity *</label><input type="number" class="form-control" name="quantity" value="{{ cake.quantity }}" min="0" required></div>
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Status</label>
+                    <label class="form-label">Product Status</label>
                     <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="status" {{ 'checked' if cake.status }}><label class="form-check-label">Available</label></div>
                   </div>
                 </div>
@@ -321,34 +322,34 @@
     <div class="modal-content">
       <form method="POST" action="{{ url_for('add_cake') }}" enctype="multipart/form-data">
         <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title"><i class="fas fa-cake-candles me-2"></i>Add Cake</h5>
+          <h5 class="modal-title"><i class="fas fa-cake-candles me-2"></i>Add Product</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3"><label class="form-label">Cake Image</label><input type="file" class="form-control" name="image" accept="image/*" onchange="checkFileSize(this)"><small class="text-muted">Max 2MB</small></div>
+          <div class="mb-3"><label class="form-label">Product Image</label><input type="file" class="form-control" name="image" accept="image/*" onchange="checkFileSize(this)"><small class="text-muted">Max 2MB</small></div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Cake Name *</label><input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream"></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Product Name *</label><input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream"></div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Category *</label>
+              <label class="form-label">Product Category *</label>
               <select class="form-select" name="category" required>
                 <option value="">Select category</option>
-                <option value="Birthday">Birthday</option>
-                <option value="Wedding">Wedding</option>
-                <option value="Anniversary">Anniversary</option>
-                <option value="Custom">Custom</option>
+                <option value="Cake">Cake</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Dessert">Dessert</option>
+                <option value="Pastry">Pastry</option>
               </select>
             </div>
           </div>
-          <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
+          <div class="mb-3"><label class="form-label">Product Description *</label><textarea class="form-control" name="description" rows="3" required></textarea></div>
           <div class="row">
-            <div class="col-md-6 mb-3"><label class="form-label">Price (₱) *</label><input type="number" class="form-control" name="price" step="0.01" min="0" required></div>
-            <div class="col-md-6 mb-3"><label class="form-label">Quantity *</label><input type="number" class="form-control" name="quantity" min="0" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label"> Product Price (₱) *</label><input type="number" class="form-control" name="price" step="0.01" min="0" required></div>
+            <div class="col-md-6 mb-3"><label class="form-label">Product Quantity *</label><input type="number" class="form-control" name="quantity" min="0" required></div>
           </div>
-          <div class="mb-3"><label class="form-label">Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="status" checked><label class="form-check-label">Available</label></div></div>
+          <div class="mb-3"><label class="form-label">Product Status</label><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="status" checked><label class="form-check-label">Available</label></div></div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning text-dark"><i class="fas fa-save me-2"></i>Save Cake</button>
+          <button type="submit" class="btn btn-warning text-dark"><i class="fas fa-save me-2"></i>Save Product</button>
         </div>
       </form>
     </div>

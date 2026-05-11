@@ -4,7 +4,7 @@ from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
-                     get_faq_response, save_uploaded_image, delete_uploaded_image)
+                     get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp)
 from decorators import login_required, admin_required
 from firebase_admin import messaging
 import re
@@ -325,14 +325,33 @@ def customer_dashboard():
                 cake["review_count"] = data["count"]
  
     cart_count = len(list(users.document(user_id).collection("cart").stream()))
- 
+
+    # ── Loyalty data ──
+    loyalty_stamps    = int(customer.get('loyalty_stamps', 0))
+    loyalty_unclaimed = customer.get('loyalty_unclaimed', None)
+
+    active_vouchers = []
+    now_dt = datetime.now(PH_TZ)
+    for v_doc in users.document(user_id).collection("vouchers").stream():
+        v = v_doc.to_dict()
+        v['id'] = v_doc.id
+        expires = v.get('expires_at')
+        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+            expires = expires.replace(tzinfo=PH_TZ)
+        if not v.get('used', False) and expires and expires > now_dt:
+            v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
+            active_vouchers.append(v)
+
     return render_template("customer_dashboard.html",
-        customer=customer,
-        orders=orders_list,
-        user_id=user_id,
-        cart_count=cart_count,
-        favorite_ids=favorite_ids,
-        favorites_list=favorites_list,
+        customer        = customer,
+        orders          = orders_list,
+        user_id         = user_id,
+        cart_count      = cart_count,
+        favorite_ids    = favorite_ids,
+        favorites_list  = favorites_list,
+        loyalty_stamps    = loyalty_stamps,
+        loyalty_unclaimed = loyalty_unclaimed,
+        active_vouchers   = active_vouchers,
     )
 
 # ---------------- FAVORITES TOGGLE ----------------
@@ -394,6 +413,42 @@ def edit_customer_profile():
 
     flash("Profile updated successfully!", "success")
     return redirect(url_for("customer_dashboard"))
+
+# ---------------- LOYALTY CLAIM ----------------
+@app.route("/loyalty/claim", methods=["POST"])
+@login_required
+def loyalty_claim():
+    user_id = session.get("user_id")
+    now     = datetime.now(PH_TZ)
+
+    try:
+        user_ref  = users.document(user_id)
+        user_data = user_ref.get().to_dict() or {}
+
+        unclaimed = user_data.get('loyalty_unclaimed', None)
+        if not unclaimed:
+            flash("No reward available to claim.", "warning")
+            return redirect(url_for("customer_dashboard") + "#loyalty")
+
+        expires_at = now + timedelta(days=180)  # 6 months
+
+        user_ref.collection("vouchers").add({
+            "discount":   unclaimed,
+            "claimed_at": now,
+            "expires_at": expires_at,
+            "used":       False,
+            "used_at":    None,
+        })
+
+        user_ref.update({"loyalty_unclaimed": None})
+
+        flash(f"🎉 Your {unclaimed}% discount voucher has been claimed! Valid for 6 months.", "success")
+
+    except Exception:
+        app.logger.exception("[LOYALTY CLAIM] Failed")
+        flash("Something went wrong. Please try again.", "danger")
+
+    return redirect(url_for("customer_dashboard") + "#loyalty")
 
 # ---------------- CUSTOMIZE CAKE PAGE ----------------
 @app.route('/customize_cake')
@@ -570,7 +625,18 @@ def place_order():
         app.logger.exception("Error computing custom cake price")
         flash("Unable to compute order price. Please try again.", "danger")
         return redirect(url_for('customize'))
-
+    active_vouchers = []
+    now_dt = datetime.now(PH_TZ)
+    for v_doc in users.document(user_id).collection("vouchers").stream():
+        v = v_doc.to_dict()
+        v['id'] = v_doc.id
+        expires = v.get('expires_at')
+        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+            expires = expires.replace(tzinfo=PH_TZ)
+        if not v.get('used', False) and expires and expires > now_dt:
+            v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
+            active_vouchers.append(v)
+            
     return render_template('checkout.html',
         order_type     = 'custom',
         order_item     = request.form.get('order_item'),
@@ -581,6 +647,7 @@ def place_order():
         selected_items = [],
         customer       = customer,
         min_date       = min_date,
+        active_vouchers = active_vouchers,
     )
 
 # ---------------- PREMADE ORDER ----------------
@@ -641,13 +708,24 @@ def order_cake():
             'image_url': cake_data.get('image', None)
         }]
         amount = real_price * quantity
-
+    active_vouchers = []
+    now_dt = datetime.now(PH_TZ)
+    for v_doc in users.document(user_id).collection("vouchers").stream():
+        v = v_doc.to_dict()
+        v['id'] = v_doc.id
+        expires = v.get('expires_at')
+        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+            expires = expires.replace(tzinfo=PH_TZ)
+        if not v.get('used', False) and expires and expires > now_dt:
+            v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
+            active_vouchers.append(v)
     return render_template('checkout.html',
         order_type     = 'premade',
         selected_items = selected_items,
         amount         = amount,
         customer       = customer,
         min_date       = min_date,
+        active_vouchers = active_vouchers, 
     )
  
 # ---------------- PLACE ORDER (FINALIZE OF BOTH PREMADE  OR  CUSTOM) ----------------
@@ -677,7 +755,20 @@ def finalize_order():
     order_type     = request.form.get("order_type")
     selected_json  = request.form.get("selected_items", "[]")
     payment_method = request.form.get("payment_method", "Cash on Delivery")
-
+        # ── Voucher validation ── ← ADD HERE
+    voucher_id = request.form.get('voucher_id', '').strip()
+    voucher_discount_pct = 0
+    if voucher_id:
+        now_dt = datetime.now(PH_TZ)
+        v_ref  = users.document(user_id).collection("vouchers").document(voucher_id)
+        v_doc  = v_ref.get()
+        if v_doc.exists:
+            v_data  = v_doc.to_dict()
+            expires = v_data.get('expires_at')
+            if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+                expires = expires.replace(tzinfo=PH_TZ)
+            if not v_data.get('used', False) and expires and expires > now_dt:
+                voucher_discount_pct = int(v_data.get('discount', 0))
     custom_components = []
     if order_type == "premade":
         selected_items = json.loads(selected_json)
@@ -766,7 +857,12 @@ def finalize_order():
                     "name": component_name,
                     "price": component_price
                 })
-
+     # ── Apply voucher discount ── 
+    if voucher_discount_pct > 0:
+        discount_amount = round(amount * voucher_discount_pct / 100, 2)
+        amount          = round(amount - discount_amount, 2)
+    else:
+        discount_amount = 0
     # ── Base order data with user_id ──
     order_data = {
         "user_id":        user_id,
@@ -784,7 +880,10 @@ def finalize_order():
         "inspo_image":    inspo_image,
         "order_type":     order_type,
         "custom_components": custom_components,
-        "delivery_token": secrets.token_urlsafe(16),  
+        "delivery_token": secrets.token_urlsafe(16),
+        "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,    
+        "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,  
+        "discount_amount":  discount_amount if voucher_discount_pct > 0 else None, 
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),
@@ -813,6 +912,13 @@ def finalize_order():
     # ── COD or Bank Transfer → save immediately to top-level orders ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
         orders.add(order_data)
+        handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
+          # ── Mark voucher as used ── ← ADD
+        if voucher_id and voucher_discount_pct > 0:
+            users.document(user_id).collection("vouchers").document(voucher_id).update({
+                "used":    True,
+                "used_at": datetime.now(PH_TZ)
+            })
         flash("Order placed successfully! 🎂", "success")
         return redirect(url_for("customer_dashboard"))
 
@@ -2204,6 +2310,21 @@ def payment_success():
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
 
+    handle_loyalty_stamp(
+        users,
+        order_data.get('user_id'),
+        order_data.get('order_type'),
+        order_data.get('selected_items', []),
+        cakes
+    )
+        # ── Mark voucher as used ── ← ADD
+    v_id = order_data.get('voucher_id', '')
+    if v_id:
+        users.document(order_data['user_id']).collection("vouchers").document(v_id).update({
+            "used":    True,
+            "used_at": datetime.now(PH_TZ)
+        })
+        
     # Delete pending order
     pending_ref.delete()
 

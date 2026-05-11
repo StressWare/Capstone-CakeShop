@@ -6,672 +6,1131 @@
 <link href="../static/css/customer_dashboard_responsive.css" rel="stylesheet">
 <link href="../static/css/chatbot.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<style>
+/* ===== CSS VARIABLES ===== */
+:root {
+  --pink:        #d63384;
+  --pink-dark:   #b02070;
+  --pink-light:  rgba(214,51,132,0.12);
+  --pink-glow:   rgba(214,51,132,0.25);
+  --bg-card:     #161616;
+  --bg-raised:   #1e1e1e;
+  --border:      rgba(255,255,255,0.07);
+  --border-pink: rgba(214,51,132,0.35);
+  --text:        #f0f0f0;
+  --text-muted:  #888;
+  --text-dim:    #555;
+  --radius:      12px;
+  --radius-sm:   8px;
+}
+
+/* ===== CONTAINER ===== */
+.dash-container { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+
+/* ===== PROFILE CARD ===== */
+.profile-card-enhanced {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.profile-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: var(--pink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 700; color: #fff;
+  flex-shrink: 0;
+}
+.profile-info-block { flex: 1; min-width: 200px; }
+.profile-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.profile-username { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; }
+.profile-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.profile-field { background: #111; border-radius: var(--radius-sm); padding: 8px 12px; }
+.profile-field-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.profile-field-val { font-size: 12px; color: #ccc; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profile-action { display: flex; align-items: flex-start; }
+.btn-edit-profile {
+  background: transparent;
+  border: 1px solid var(--pink);
+  color: var(--pink);
+  border-radius: var(--radius-sm);
+  padding: 7px 16px; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn-edit-profile:hover { background: var(--pink-light); }
+
+/* ===== STATS ROW ===== */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 10px; margin-bottom: 14px;
+}
+.stat-box {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px; text-align: center;
+}
+.stat-num { font-size: 24px; font-weight: 700; color: var(--pink); line-height: 1; }
+.stat-lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+/* ===== LOYALTY BAR ===== */
+.loyalty-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 20px;
+}
+.loyalty-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.loyalty-title { font-size: 13px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 6px; }
+.loyalty-title i { color: var(--pink); }
+.loyalty-badge {
+  background: var(--pink-light); color: var(--pink);
+  border: 1px solid var(--border-pink);
+  border-radius: 20px; font-size: 11px; font-weight: 600; padding: 2px 10px;
+}
+.loyalty-track { background: #222; border-radius: 20px; height: 8px; margin-bottom: 6px; overflow: hidden; }
+.loyalty-fill { background: var(--pink); height: 8px; border-radius: 20px; transition: width 0.6s ease; }
+.loyalty-sub { font-size: 11px; color: var(--text-muted); }
+.loyalty-sub span { color: var(--pink); font-weight: 600; }
+
+/* ===== TAB NAV ===== */
+.dashboard-nav-icons {
+  display: flex; gap: 8px;
+  background: #111; border-radius: var(--radius);
+  padding: 4px; margin-bottom: 20px;
+}
+.nav-icon {
+  flex: 1; display: flex; align-items: center;
+  justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: var(--radius-sm);
+  border: none; background: transparent;
+  color: var(--text-muted); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.18s;
+}
+.nav-icon i { font-size: 16px; }
+.nav-icon:hover { color: var(--pink); }
+.nav-icon.active {
+  background: var(--bg-raised); color: var(--pink);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* ===== SECTION HEADER ===== */
+.section-header-row {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 12px;
+}
+.section-title { font-size: 15px; font-weight: 700; color: var(--text); }
+
+/* ===== ACTIVE ORDERS ===== */
+.active-order-card {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 10px;
+  transition: border-color 0.15s;
+}
+.active-order-card:hover { border-color: var(--border-pink); }
+.active-order-card.rush { border-left: 3px solid #dc2626; }
+.aoc-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 10px; margin-bottom: 10px;
+}
+.aoc-item { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.aoc-meta { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.aoc-badges { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+/* Status pills */
+.status-pill {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  white-space: nowrap; display: inline-block;
+}
+.pill-new       { background: #222;    color: #aaa; }
+.pill-accepted  { background: #0e3a4a; color: #22d3ee; }
+.pill-pending   { background: #3a2e00; color: #fbbf24; }
+.pill-ready     { background: #1e3a5f; color: #60a5fa; }
+.pill-out       { background: #1f2937; color: #d1d5db; }
+.pill-completed { background: #14301a; color: #4ade80; }
+.pill-cancelled { background: #3a1010; color: #f87171; }
+.pill-rush      { background: #3a1010; color: #f87171; }
+
+/* Timeline */
+.order-timeline { display: flex; align-items: center; margin-bottom: 10px; }
+.tl-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.tl-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #2a2a2a; border: 2px solid #333; z-index: 1;
+}
+.tl-dot.done   { background: var(--pink); border-color: var(--pink); }
+.tl-dot.active { background: var(--pink); border-color: var(--pink); box-shadow: 0 0 0 3px var(--pink-glow); }
+.tl-lbl { font-size: 9px; color: var(--text-dim); margin-top: 4px; text-align: center; line-height: 1.2; }
+.tl-lbl.done   { color: var(--pink); }
+.tl-lbl.active { color: var(--pink); }
+.tl-line { flex: 1; height: 2px; background: #2a2a2a; margin-top: -19px; }
+.tl-line.done  { background: var(--pink); }
+
+/* Active orders pagination */
+.active-orders-pagination {
+  display: flex; justify-content: flex-end;
+  align-items: center; gap: 6px; margin-top: 4px; margin-bottom: 16px;
+}
+.aop-btn {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  color: var(--text-muted); border-radius: 6px;
+  padding: 4px 12px; font-size: 12px; cursor: pointer;
+  transition: all 0.15s;
+}
+.aop-btn:hover:not(:disabled) { border-color: var(--border-pink); color: var(--pink); }
+.aop-btn:disabled { opacity: 0.35; cursor: default; }
+.aop-info { font-size: 12px; color: var(--text-muted); }
+
+/* ===== ORDER HISTORY TABLE ===== */
+.filters-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.filters-row .input-group { flex: 2; min-width: 160px; }
+.filters-row .input-group-text {
+  background: var(--bg-card); border: 0.5px solid var(--border);
+  border-right: none; color: var(--text-muted);
+}
+.filters-row .form-control,
+.filters-row .form-select {
+  background: var(--bg-card); border: 0.5px solid var(--border);
+  color: var(--text); font-size: 13px;
+}
+.filters-row .form-control:focus,
+.filters-row .form-select:focus {
+  background: var(--bg-card); border-color: var(--pink);
+  color: var(--text); box-shadow: 0 0 0 2px var(--pink-glow);
+}
+.filters-row .form-select option { background: #1a1a1a; }
+.filters-row .form-control::placeholder { color: var(--text-dim); }
+
+.table-wrapper {
+  background: var(--bg-card);
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.custom-table { margin: 0; color: var(--text); }
+.custom-table thead th {
+  background: #111; color: var(--text-muted);
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  border-bottom: 0.5px solid var(--border);
+  padding: 10px 14px; white-space: nowrap;
+}
+.custom-table tbody tr {
+  border-bottom: 0.5px solid var(--border);
+  transition: background 0.12s;
+}
+.custom-table tbody tr:last-child { border-bottom: none; }
+.custom-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.custom-table td {
+  padding: 10px 14px; font-size: 13px;
+  color: var(--text); vertical-align: middle;
+}
+/* FIX: status column — prevent overflow */
+.custom-table td.status-col {
+  white-space: nowrap;
+  min-width: 130px;
+}
+.custom-table .text-muted { color: var(--text-muted) !important; }
+
+/* Status badge overrides */
+.badge-new       { background: #222;    color: #aaa;    padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-accepted  { background: #0e3a4a; color: #22d3ee; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-pending   { background: #3a2e00; color: #fbbf24; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-ready     { background: #1e3a5f; color: #60a5fa; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-out       { background: #1f2937; color: #d1d5db; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-completed { background: #14301a; color: #4ade80; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+.badge-cancelled { background: #3a1010; color: #f87171; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; display: inline-block; }
+
+.btn-view-order {
+  background: transparent; border: 0.5px solid #3a3a3a;
+  color: #aaa; border-radius: 6px; padding: 4px 12px;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.btn-view-order:hover { border-color: var(--pink); color: var(--pink); }
+.btn-reorder {
+  background: transparent; border: 0.5px solid var(--border-pink);
+  color: var(--pink); border-radius: 6px; padding: 4px 12px;
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s; margin-left: 4px;
+}
+.btn-reorder:hover { background: var(--pink-light); }
+
+/* Pagination */
+.pagination .page-link {
+  background: var(--bg-card); border: 0.5px solid var(--border);
+  color: var(--text-muted); font-size: 12px;
+}
+.pagination .page-item.active .page-link { background: var(--pink); border-color: var(--pink); color: #fff; }
+.pagination .page-link:hover { background: var(--bg-raised); color: var(--pink); }
+.pagination .page-item.disabled .page-link { opacity: 0.4; }
+
+/* ===== FAVORITES ===== */
+.favorites-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.fav-card {
+  background: var(--bg-card); border: 0.5px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.fav-card:hover { border-color: var(--border-pink); transform: translateY(-2px); }
+.fav-card-img { width: 100%; height: 160px; object-fit: cover; display: block; }
+.fav-card-no-img {
+  width: 100%; height: 160px; background: #1a1a1a;
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+}
+.fav-card-body { padding: 12px; }
+.fav-card-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.fav-card-price { font-size: 15px; font-weight: 700; color: var(--pink); margin-bottom: 6px; }
+.fav-card-rating { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.fav-card-stock { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+.fav-btn-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.fav-btn-group .btn { font-size: 12px; font-weight: 600; border-radius: var(--radius-sm); padding: 7px; }
+.btn-unfav {
+  width: 100%; background: transparent; border: 0.5px solid #3a3a3a;
+  color: var(--text-dim); border-radius: var(--radius-sm);
+  padding: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.btn-unfav:hover { border-color: #dc2626; color: #f87171; }
+.fav-empty { text-align: center; padding: 48px 0; color: var(--text-muted); }
+.fav-empty i { font-size: 48px; display: block; margin-bottom: 12px; color: var(--text-dim); }
+.fav-empty p { font-size: 14px; margin-bottom: 14px; }
+
+/* ===== MODALS ===== */
+.modal-content {
+  background: #161616; border: 0.5px solid var(--border);
+  border-radius: 16px; color: var(--text);
+}
+.modal-header { border-bottom: 0.5px solid var(--border); padding: 16px 20px; }
+.modal-footer { border-top: 0.5px solid var(--border); padding: 12px 20px; }
+.modal-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.modal-body { padding: 20px; }
+.modal-body p, .modal-body strong { color: var(--text); }
+.modal-body small { color: var(--text-muted); }
+.modal-body hr { border-color: var(--border); }
+.modal-body .text-muted { color: var(--text-muted) !important; }
+.modal-body .alert-info {
+  background: rgba(59,130,246,0.1); border: 0.5px solid rgba(59,130,246,0.2); color: #93c5fd;
+}
+.btn-close { filter: invert(0.7); }
+.btn-close-white { filter: invert(1); }
+.form-control, .form-select {
+  background: #111; border: 0.5px solid var(--border);
+  color: var(--text); border-radius: var(--radius-sm);
+}
+.form-control:focus, .form-select:focus {
+  background: #111; border-color: var(--pink);
+  color: var(--text); box-shadow: 0 0 0 2px var(--pink-glow);
+}
+.form-control::placeholder { color: var(--text-dim); }
+.form-select option { background: #1a1a1a; }
+.form-label { color: var(--text-muted); font-size: 13px; }
+.order-item-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 8px 0; border-bottom: 0.5px solid var(--border);
+}
+.order-item-row:last-child { border-bottom: none; }
+.order-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.order-item-qty  { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.order-item-sub  { font-size: 13px; font-weight: 700; color: var(--pink); }
+.star-rating { display: flex; gap: 4px; margin-bottom: 6px; }
+.star-btn { font-size: 24px; cursor: pointer; transition: transform 0.1s; }
+.star-btn:hover { transform: scale(1.15); }
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .profile-fields { grid-template-columns: 1fr; }
+  .stats-row { grid-template-columns: repeat(3,1fr); }
+  .stat-num { font-size: 18px; }
+  .favorites-grid { grid-template-columns: repeat(2, 1fr); }
+  .filters-row { flex-direction: column; }
+  .filters-row .input-group { min-width: 100%; }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5 pt-5" data-user-id="{{ user_id }}">
 
-    <!-- PROFILE SECTION -->
-    <section id="profile" class="mb-5">
-        <h2 class="mb-3">Profile</h2>
-        <div class="profile-card-enhanced">
-            <div class="profile-avatar">
-                <i class="bi bi-person-circle" style="color: white; font-size: 4rem;"></i>
-            </div>
-            <div class="profile-info">
-                <p><strong>Full Name:</strong> {{ customer.fname }}</p>
-                <p><strong>Username:</strong> {{ customer.username }}</p>
-                <p><strong>Contact:</strong> {{ customer.number }}</p>
-                <p><strong>Email:</strong> {{ customer.email }}</p>
-                <p><strong>Address:</strong> {{ customer.address }}</p>
-            </div>
-            <div class="profile-action">
-                <button class="btn btn-primary btn-sm"
-                        data-bs-toggle="modal"
-                        data-bs-target="#editProfileModal">
-                    Edit Profile
-                </button>
-            </div>
+{# ── Jinja calculations ── #}
+{% set completed_orders = orders | selectattr('status', 'equalto', 'Completed') | list %}
+{% set total_spent = completed_orders | sum(attribute='amount') %}
+{% set completed_count = completed_orders | length %}
+{% set active_orders = orders | rejectattr('status', 'in', ['Completed', 'Cancelled']) | list %}
+
+<div class="dash-container">
+
+  <!-- ===== PROFILE SECTION ===== -->
+  <section id="profile" class="mb-4">
+    <h2 class="mb-3" style="font-size:22px; font-weight:700; color:#f0f0f0;">Profile</h2>
+
+    <div class="profile-card-enhanced">
+      <div class="profile-avatar">
+        {{ customer.fname[0] | upper if customer.fname else '?' }}
+      </div>
+      <div class="profile-info-block">
+        <div class="profile-name">{{ customer.fname }}</div>
+        <div class="profile-username">@{{ customer.username }}</div>
+        <div class="profile-fields">
+          <div class="profile-field">
+            <div class="profile-field-label">Contact</div>
+            <div class="profile-field-val">{{ customer.number or '—' }}</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">Email</div>
+            <div class="profile-field-val">{{ customer.email or '—' }}</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">Address</div>
+            <div class="profile-field-val">{{ customer.address or '—' }}</div>
+          </div>
+          <div class="profile-field">
+            <div class="profile-field-label">Username</div>
+            <div class="profile-field-val">{{ customer.username or '—' }}</div>
+          </div>
         </div>
-
-        <!-- ICON NAV -->
-        <div class="dashboard-nav-icons">
-            <button class="nav-icon active" onclick="showTab('orders')">
-                <i class="bi bi-box-seam"></i>
-                <span>Orders</span>
-            </button>
-            <button class="nav-icon" onclick="showTab('favorites')">
-                <i class="bi bi-heart"></i>
-                <span>Favorites</span>
-                {% if favorites_list %}
-                <span class="badge bg-danger ms-1" style="font-size:0.65rem;"></span>
-                {% endif %}
-            </button>
-        </div>
-    </section>
-
-    <!-- ================= ORDERS TAB ================= -->
-    <div id="ordersTab">
-        <section id="orders">
-            <h2 class="mb-3">Order History</h2>
-            <div class="row mb-4 g-2">
-                <div class="col-12 col-md-6">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                        <input type="text" id="searchOrders" class="form-control" placeholder="Search by item, order ID...">
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <select id="statusFilter" class="form-select">
-                        <option value="">All Status</option>
-                        <option value="New">New</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Pending">Pending</option>
-                        <option value="Ready">Ready</option>
-                        <option value="Out for Delivery">Out for Delivery</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Cancelled">Cancelled</option>
-                    </select>
-                </div>
-                <div class="col-6 col-md-3">
-                    <select id="typeFilter" class="form-select">
-                        <option value="">All Types</option>
-                        <option value="premade">Premade</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="table-responsive table-wrapper">
-                <table class="table table-hover align-middle custom-table">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Items</th>
-                            <th>Total (₱)</th>
-                            <th>Delivery Date</th>
-                            <th>Ordered On</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for order in orders %}
-                        <tr data-type="{{ order.order_type }}">
-                            <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
-                            <td>{{ "%.2f"|format(order.amount) }}</td>
-                            <td>{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
-                            <td>
-                                {% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y') }}
-                                {% else %}N/A{% endif %}
-                            </td>
-                            <td>
-                                {% set s = order.status %}
-                                {% if s == 'New' %}<span class="badge badge-new">New</span>
-                                {% elif s == 'Accepted' %}<span class="badge badge-accepted">Accepted</span>
-                                {% elif s == 'Pending' %}<span class="badge badge-pending">Pending</span>
-                                {% elif s == 'Ready' %}<span class="badge badge-ready">Ready</span>
-                                {% elif s == 'Out for Delivery' %}<span class="badge badge-out">Out for Delivery</span>
-                                {% elif s == 'Completed' %}<span class="badge badge-completed">Completed</span>
-                                {% elif s == 'Cancelled' %}<span class="badge badge-cancelled">Cancelled</span>
-                                {% else %}<span class="badge bg-secondary">{{ s }}</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <button class="btn btn-info btn-sm" data-bs-toggle="modal"
-                                        data-bs-target="#orderModal{{ order.id }}">
-                                    View
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- ORDER DETAILS MODAL -->
-                        <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Order Details</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Order Info</h6>
-                                        <div class="row g-2 mb-4">
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Order ID:</strong></p>
-                                                <small class="text-muted">{{ order.id }}</small>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Ordered On:</strong></p>
-                                                <p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Delivery Date:</strong></p>
-                                                <p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Delivery Type:</strong></p>
-                                                <p>
-                                                    {% if order.delivery_type == 'Pickup' %}
-                                                        <span class="badge bg-warning text-dark">🏪 Pick Up</span>
-                                                    {% else %}
-                                                        <span class="badge bg-info text-dark">🚚 Delivery</span>
-                                                    {% endif %}
-                                                </p>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Payment Method:</strong></p>
-                                                <p>{{ order.payment_method or 'N/A' }}</p>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Rush Order:</strong></p>
-                                                <p>
-                                                    {% if order.rush %}<span class="badge bg-danger">⚡ Yes</span>
-                                                    {% else %}<span class="badge bg-secondary">No</span>{% endif %}
-                                                </p>
-                                            </div>
-                                            <div class="col-6 col-sm-6">
-                                                <p class="mb-1"><strong>Status:</strong></p>
-                                                <p>{{ order.status }}</p>
-                                            </div>
-                                        </div>
-
-                                        <hr>
-                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Items</h6>
-                                        {% if order.order_type == 'premade' and order.selected_items %}
-                                            {% for item in order.selected_items %}
-                                            <div class="order-item-row">
-                                                <div>
-                                                    <div class="order-item-name">{{ item.cake_name }}</div>
-                                                    <div class="order-item-qty">
-                                                        ₱{{ "%.2f"|format(item.price|float) }}
-                                                        {% if item.get('quantity', 1) > 1 %} × {{ item.get('quantity', 1) }}{% endif %}
-                                                    </div>
-                                                </div>
-                                                <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
-                                            </div>
-                                            {% endfor %}
-
-                                        {% elif order.order_type == 'custom' and order.custom_components %}
-                                            {% for component in order.custom_components %}
-                                            <div class="order-item-row">
-                                                <div>
-                                                    <div class="order-item-name">{{ component.name }}</div>
-                                                    <div class="order-item-qty">₱{{ "%.2f"|format(component.price|float) }}</div>
-                                                </div>
-                                                <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
-                                            </div>
-                                            {% endfor %}
-
-                                        {% else %}
-                                            <p>{{ order.item }}</p>
-                                        {% endif %}
-                                        <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
-
-                                        <hr>
-                                        <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem; letter-spacing:0.08em;">Delivery Info</h6>
-                                        <div class="row g-2">
-                                            <div class="col-12 col-sm-6">
-                                                <p class="mb-1"><strong>Address:</strong></p>
-                                                <p>{{ order.customer.address or 'N/A' }}</p>
-                                            </div>
-                                            {% if order.customer.occasion %}
-                                            <div class="col-12 col-sm-6">
-                                                <p class="mb-1"><strong>Occasion:</strong></p>
-                                                <p>{{ order.customer.occasion }}</p>
-                                            </div>
-                                            {% endif %}
-                                            {% if order.customer.celebrant %}
-                                            <div class="col-12 col-sm-6">
-                                                <p class="mb-1"><strong>Celebrant:</strong></p>
-                                                <p>{{ order.customer.celebrant }}</p>
-                                            </div>
-                                            {% endif %}
-                                            {% if order.customer.age %}
-                                            <div class="col-12 col-sm-6">
-                                                <p class="mb-1"><strong>Age:</strong></p>
-                                                <p>{{ order.customer.age }}</p>
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                        {% if order.notes %}
-                                        <hr>
-                                        <div class="alert alert-info mt-2">
-                                            <strong>Special Instructions:</strong>
-                                            <p class="mb-0">{{ order.notes }}</p>
-                                        </div>
-                                        {% endif %}
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
-                                        <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm">
-                                            <i class="fas fa-receipt me-1"></i>View Receipt
-                                        </a>
-                                        {% endif %}
-
-                                        {% if order.status == 'Completed' and not order.reviewed %}
-                                            {% if order.order_type == 'premade' %}
-                                                {% for item in order.selected_items %}
-                                                <button type="button" class="btn btn-warning btn-sm"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}">
-                                                    <i class="fas fa-star me-1"></i>Review {{ item.cake_name }}
-                                                </button>
-                                                {% endfor %}
-                                            {% elif order.order_type == 'custom' %}
-                                            <button type="button" class="btn btn-warning btn-sm"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#reviewModal{{ order.id }}">
-                                                <i class="fas fa-star me-1"></i>Review Order
-                                            </button>
-                                            {% endif %}
-                                        {% endif %}
-
-                                        {% if order.status == 'New' %}
-                                        <form method="POST" action="/order/cancel/{{ order.id }}"
-                                              onsubmit="return confirm('Are you sure you want to cancel this order?')">
-                                            <button type="submit" class="btn btn-danger">
-                                                <i class="fas fa-times me-2"></i>Cancel Order
-                                            </button>
-                                        </form>
-                                        {% endif %}
-
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- REVIEW MODALS -->
-                        {% if order.status == 'Completed' and not order.reviewed %}
-                            {% if order.order_type == 'premade' and order.selected_items %}
-                                {% for item in order.selected_items %}
-                                <div class="modal fade" id="reviewModal{{ order.id }}_{{ item.cake_id }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <form method="POST" action="/review/add">
-                                                <input type="hidden" name="cake_id"   value="{{ item.cake_id }}">
-                                                <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
-                                                <input type="hidden" name="order_id"  value="{{ order.id }}">
-                                                <div class="modal-header" style="background:#d63384; color:#fff;">
-                                                    <h5 class="modal-title"><i class="fas fa-star me-2"></i>Review {{ item.cake_name }}</h5>
-                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold">Rating *</label>
-                                                        <div class="star-rating" id="stars_{{ order.id }}_{{ item.cake_id }}">
-                                                            {% for i in range(1, 6) %}
-                                                            <i class="fas fa-star star-btn"
-                                                               data-value="{{ i }}"
-                                                               data-target="rating_{{ order.id }}_{{ item.cake_id }}"
-                                                               onmouseover="hoverStars(this)"
-                                                               onmouseout="resetStars(this)"
-                                                               onclick="selectStar(this)"></i>
-                                                            {% endfor %}
-                                                        </div>
-                                                        <input type="hidden" name="rating" id="rating_{{ order.id }}_{{ item.cake_id }}" value="5">
-                                                        <small class="text-muted" id="ratingLabel_{{ order.id }}_{{ item.cake_id }}">⭐⭐⭐⭐⭐ Excellent!</small>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
-                                                        <textarea name="comment" class="form-control" rows="3" placeholder="How was the cake? Share your experience..."></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn" style="background:#d63384; color:#fff;">
-                                                        <i class="fas fa-paper-plane me-2"></i>Submit Review
-                                                    </button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            {% elif order.order_type == 'custom' %}
-                            <div class="modal fade" id="reviewModal{{ order.id }}" tabindex="-1">
-                                <div class="modal-dialog">
-                                    <div class="modal-content">
-                                        <form method="POST" action="/review/add">
-                                            <input type="hidden" name="cake_id"   value="custom">
-                                            <input type="hidden" name="cake_name" value="Custom Cake">
-                                            <input type="hidden" name="order_id"  value="{{ order.id }}">
-                                            <div class="modal-header" style="background:#d63384; color:#fff;">
-                                                <h5 class="modal-title"><i class="fas fa-star me-2"></i>Review Your Custom Cake Order</h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">Rating *</label>
-                                                    <div class="star-rating">
-                                                        {% for i in range(1, 6) %}
-                                                        <i class="fas fa-star star-btn"
-                                                           data-value="{{ i }}"
-                                                           data-target="rating_{{ order.id }}"
-                                                           onmouseover="hoverStars(this)"
-                                                           onmouseout="resetStars(this)"
-                                                           onclick="selectStar(this)"></i>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <input type="hidden" name="rating" id="rating_{{ order.id }}" value="5">
-                                                    <small class="text-muted" id="ratingLabel_{{ order.id }}">⭐⭐⭐⭐⭐ Excellent!</small>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
-                                                    <textarea name="comment" class="form-control" rows="3" placeholder="Share your experience..."></textarea>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn" style="background:#d63384; color:#fff;">
-                                                    <i class="fas fa-paper-plane me-2"></i>Submit Review
-                                                </button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endif %}
-                        {% endif %}
-
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                No orders yet! <a href="/cakes">Browse our cakes 🎂</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <nav class="mt-4">
-                <ul class="pagination justify-content-end" id="ordersPagination"></ul>
-            </nav>
-        </section>
+      </div>
+      <div class="profile-action">
+        <button class="btn-edit-profile"
+                data-bs-toggle="modal"
+                data-bs-target="#editProfileModal">
+          <i class="bi bi-pencil me-1"></i> Edit Profile
+        </button>
+      </div>
     </div>
 
-    <!-- ================= FAVORITES TAB ================= -->
-    <div id="favoritesTab" style="display:none;">
-        <h2 class="mb-3">My Favorites</h2>
+    <!-- Stats row -->
+    <div class="stats-row mb-3">
+      <div class="stat-box">
+        <div class="stat-num">{{ orders | length }}</div>
+        <div class="stat-lbl">Total orders</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">₱{{ "{:,.0f}".format(total_spent) }}</div>
+        <div class="stat-lbl">Total spent</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num">{{ favorites_list | length }}</div>
+        <div class="stat-lbl">Favourites</div>
+      </div>
+    </div>
 
-        {% if favorites_list %}
-        <div class="favorites-grid">
-            {% for cake in favorites_list %}
-            <div class="fav-card" id="fav-card-{{ cake.id }}">
+    <!-- Loyalty bar -->
+    <div class="loyalty-card mb-4">
+    <div class="loyalty-top">
+        <div class="loyalty-title">
+        <i class="bi bi-star-fill"></i> Loyalty rewards
+        </div>
+        <div class="loyalty-badge">{{ loyalty_stamps }} / 10 stamps</div>
+    </div>
+    <div class="loyalty-track">
+        <div class="loyalty-fill" style="width: {{ (loyalty_stamps / 10 * 100)|int }}%;"></div>
+    </div>
+    {% if loyalty_unclaimed %}
+        <div class="loyalty-sub">🎉 You have an unclaimed <span>{{ loyalty_unclaimed }}% reward</span>!</div>
+        <div style="margin-top:8px;">
+        <button onclick="showTab('loyalty')"
+                style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
+                        padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;">
+            <i class="bi bi-gift me-1"></i>Claim your reward →
+        </button>
+        </div>
+    {% elif loyalty_stamps >= 5 %}
+        <div class="loyalty-sub"><span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock 15% off!</div>
+    {% else %}
+        <div class="loyalty-sub"><span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock 10% off!</div>
+    {% endif %}
+    </div>
 
-                {% if cake.image %}
-                    <img src="{{ cake.image }}" alt="{{ cake.name }}" class="fav-card-img">
-                {% else %}
-                    <div class="fav-card-no-img">🎂</div>
-                {% endif %}
+    <!-- Tab nav -->
+    <div class="dashboard-nav-icons">
+      <button class="nav-icon active" onclick="showTab('orders')">
+        <i class="bi bi-box-seam"></i>
+        <span>Orders</span>
+      </button>
+      <button class="nav-icon" onclick="showTab('favorites')">
+            <i class="bi bi-heart"></i>
+            <span>Favorites</span>
+            {% if favorites_list %}
+            <span class="badge rounded-pill ms-1"
+                    style="background:var(--pink);color:#fff;font-size:10px;padding:2px 7px;">
+                {{ favorites_list | length }}
+            </span>
+            {% endif %}
+        </button>
+        <button class="nav-icon" onclick="showTab('loyalty')">
+            <i class="bi bi-star"></i>
+            <span>Loyalty</span>
+            {% if loyalty_unclaimed %}
+            <span class="badge rounded-pill ms-1"
+                    style="background:var(--pink);color:#fff;font-size:10px;padding:2px 7px;">1</span>
+            {% endif %}
+        </button>
+    </div>
+  </section>
 
-                <div class="fav-card-body">
-                    <div class="fav-card-name">{{ cake.name }}</div>
-                    <div class="fav-card-price">₱{{ "%.2f"|format(cake.price) }}</div>
+  <!-- ===== ORDERS TAB ===== -->
+  <div id="ordersTab">
 
-                    <div class="fav-card-rating">
-                        {% if cake.review_count > 0 %}
-                            {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
-                            {{ cake.avg_rating }} ({{ cake.review_count }})
-                        {% else %}
-                            No reviews yet
-                        {% endif %}
-                    </div>
+    <!-- Active orders -->
+    {% if active_orders %}
+    <div class="mb-2">
+      <div class="section-header-row">
+        <div class="section-title">
+          Active orders
+          <span style="font-size:12px;color:var(--pink);font-weight:600;margin-left:6px;">{{ active_orders | length }}</span>
+        </div>
+      </div>
 
-                    <div class="fav-card-stock">
-                        {% if cake.quantity > 0 %}
-                            {{ cake.quantity }} left
-                        {% else %}
-                            😔 Sold Out
-                        {% endif %}
-                    </div>
-
-                    {% if cake.quantity > 0 %}
-                    <div class="fav-btn-group">
-                        <form method="POST" action="/order/cake">
-                            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-                            <input type="hidden" name="cake_name" value="{{ cake.name }}">
-                            <input type="hidden" name="price"     value="{{ cake.price }}">
-                            <input type="hidden" name="quantity"  value="1">
-                            <button type="submit" class="btn btn-sm w-100"
-                                    style="background:#d63384; color:white; border:none;">
-                                <i class="fas fa-bolt me-1"></i> Order Now
-                            </button>
-                        </form>
-                        <form method="POST" action="/cart/add">
-                            <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-                            <input type="hidden" name="cake_name" value="{{ cake.name }}">
-                            <input type="hidden" name="price"     value="{{ cake.price }}">
-                            <input type="hidden" name="quantity"  value="1">
-                            <button type="submit" class="btn btn-sm w-100"
-                                    style="background:white; color:#d63384; border:2px solid #d63384;">
-                                <i class="fas fa-cart-plus me-1"></i> Add to Cart
-                            </button>
-                        </form>
-                    </div>
-                    {% endif %}
-
-                    <button class="btn-unfav mt-2"
-                            onclick="removeFavorite('{{ cake.id }}', '{{ cake.name }}')">
-                        Remove from Favorites
-                    </button>
-                </div>
+      <!-- Active order cards rendered as data, shown/hidden by JS -->
+      <div id="activeOrdersList">
+        {% for order in active_orders %}
+        {% set s = order.status %}
+        <div class="active-order-card {% if order.rush %}rush{% endif %}" data-active-idx="{{ loop.index0 }}">
+          <div class="aoc-top">
+            <div>
+              <div class="aoc-item">{{ order.item[:45] }}{% if order.item|length > 45 %}...{% endif %}</div>
+              <div class="aoc-meta">
+                <i class="bi bi-calendar3" style="font-size:11px;"></i>
+                {{ order.delivery_date.strftime('%b %d, %Y · %I:%M %p') }}
+              </div>
             </div>
+            <div class="aoc-badges">
+              {% if s == 'New' %}<span class="status-pill pill-new">New</span>
+              {% elif s == 'Accepted' %}<span class="status-pill pill-accepted">Accepted</span>
+              {% elif s == 'Pending' %}<span class="status-pill pill-pending">Pending</span>
+              {% elif s == 'Ready' %}<span class="status-pill pill-ready">Ready</span>
+              {% elif s == 'Out for Delivery' %}<span class="status-pill pill-out">Out for delivery</span>
+              {% endif %}
+              {% if order.rush %}<span class="status-pill pill-rush">⚡ Rush</span>{% endif %}
+            </div>
+          </div>
+
+          <!-- Status timeline -->
+          <div class="order-timeline">
+            {% set step_labels = ['New', 'Accepted', 'Ready', 'On the way', 'Delivered'] %}
+            {% set current_idx = 0 %}
+            {% if s == 'Accepted' or s == 'Pending' %}{% set current_idx = 1 %}
+            {% elif s == 'Ready' %}{% set current_idx = 2 %}
+            {% elif s == 'Out for Delivery' %}{% set current_idx = 3 %}
+            {% endif %}
+            {% for i in range(5) %}
+              <div class="tl-step">
+                <div class="tl-dot {% if i < current_idx %}done{% elif i == current_idx %}active{% endif %}"></div>
+                <div class="tl-lbl {% if i < current_idx %}done{% elif i == current_idx %}active{% endif %}">{{ step_labels[i] }}</div>
+              </div>
+              {% if i < 4 %}<div class="tl-line {% if i < current_idx %}done{% endif %}"></div>{% endif %}
             {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Active orders pagination -->
+      <div class="active-orders-pagination" id="activeOrdersPagination" style="display:none;">
+        <button class="aop-btn" id="aopPrev" onclick="activeOrdersPage(-1)" disabled>← Prev</button>
+        <span class="aop-info" id="aopInfo"></span>
+        <button class="aop-btn" id="aopNext" onclick="activeOrdersPage(1)">Next →</button>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Order History -->
+    <section id="orders">
+      <h2 class="mb-3" style="font-size:18px;font-weight:700;color:#f0f0f0;">Order History</h2>
+      <div class="filters-row row g-2 mb-3">
+        <div class="col-12 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="searchOrders" class="form-control" placeholder="Search by item, order ID...">
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="statusFilter" class="form-select">
+            <option value="">All Status</option>
+            <option value="New">New</option>
+            <option value="Accepted">Accepted</option>
+            <option value="Pending">Pending</option>
+            <option value="Ready">Ready</option>
+            <option value="Out for Delivery">Out for Delivery</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          
+        </div>
+        <div class="col-6 col-md-3">
+          <select id="typeFilter" class="form-select">
+            <option value="">All Types</option>
+            <option value="premade">Premade</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-responsive table-wrapper">
+        <table class="table table-hover align-middle custom-table">
+          <thead>
+            <tr>
+              <th>Items</th>
+              <th>Total (₱)</th>
+              <th>Delivery Date</th>
+              <th>Ordered On</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+            <tr data-type="{{ order.order_type }}">
+              <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
+              <td>{{ "%.2f"|format(order.amount) }}</td>
+              <td style="white-space:nowrap;">{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
+              <td style="white-space:nowrap;">{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</td>
+              <td class="status-col">
+                {% set s = order.status %}
+                {% if s == 'New' %}<span class="badge-new">New</span>
+                {% elif s == 'Accepted' %}<span class="badge-accepted">Accepted</span>
+                {% elif s == 'Pending' %}<span class="badge-pending">Pending</span>
+                {% elif s == 'Ready' %}<span class="badge-ready">Ready</span>
+                {% elif s == 'Out for Delivery' %}<span class="badge-out">Out for Delivery</span>
+                {% elif s == 'Completed' %}<span class="badge-completed">Completed</span>
+                {% elif s == 'Cancelled' %}<span class="badge-cancelled">Cancelled</span>
+                {% else %}<span class="badge bg-secondary">{{ s }}</span>
+                {% endif %}
+              </td>
+              <td style="white-space:nowrap;">
+                <button class="btn-view-order"
+                        data-bs-toggle="modal"
+                        data-bs-target="#orderModal{{ order.id }}">View</button>
+                {% if order.status == 'Completed' %}
+                <a href="/cakes" class="btn-reorder">Reorder</a>
+                {% endif %}
+              </td>
+            </tr>
+
+            <!-- ORDER DETAILS MODAL — untouched -->
+            <div class="modal fade" id="orderModal{{ order.id }}" tabindex="-1">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Order Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Order Info</h6>
+                    <div class="row g-2 mb-4">
+                      <div class="col-6"><p class="mb-1"><strong>Order ID:</strong></p><small class="text-muted">{{ order.id }}</small></div>
+                      <div class="col-6"><p class="mb-1"><strong>Ordered On:</strong></p><p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p></div>
+                      <div class="col-6"><p class="mb-1"><strong>Delivery Date:</strong></p><p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p></div>
+                      <div class="col-6"><p class="mb-1"><strong>Delivery Type:</strong></p><p>{% if order.delivery_type == 'Pickup' %}<span class="badge bg-warning text-dark">🏪 Pick Up</span>{% else %}<span class="badge bg-info text-dark">🚚 Delivery</span>{% endif %}</p></div>
+                      <div class="col-6"><p class="mb-1"><strong>Payment Method:</strong></p><p>{{ order.payment_method or 'N/A' }}</p></div>
+                      <div class="col-6"><p class="mb-1"><strong>Rush Order:</strong></p><p>{% if order.rush %}<span class="badge bg-danger">⚡ Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</p></div>
+                      <div class="col-6"><p class="mb-1"><strong>Status:</strong></p><p>{{ order.status }}</p></div>
+                    </div>
+                    <hr>
+                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Items</h6>
+                    {% if order.order_type == 'premade' and order.selected_items %}
+                      {% for item in order.selected_items %}
+                      <div class="order-item-row">
+                        <div><div class="order-item-name">{{ item.cake_name }}</div><div class="order-item-qty">₱{{ "%.2f"|format(item.price|float) }}{% if item.get('quantity',1) > 1 %} × {{ item.get('quantity',1) }}{% endif %}</div></div>
+                        <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal',item.price)|float) }}</div>
+                      </div>
+                      {% endfor %}
+                    {% elif order.order_type == 'custom' and order.custom_components %}
+                      {% for component in order.custom_components %}
+                      <div class="order-item-row">
+                        <div><div class="order-item-name">{{ component.name }}</div><div class="order-item-qty">₱{{ "%.2f"|format(component.price|float) }}</div></div>
+                        <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
+                      </div>
+                      {% endfor %}
+                    {% else %}<p>{{ order.item }}</p>{% endif %}
+                    <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
+                    <hr>
+                    <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Delivery Info</h6>
+                    <div class="row g-2">
+                      <div class="col-12 col-sm-6"><p class="mb-1"><strong>Address:</strong></p><p>{{ order.customer.address or 'N/A' }}</p></div>
+                      {% if order.customer.occasion %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Occasion:</strong></p><p>{{ order.customer.occasion }}</p></div>{% endif %}
+                      {% if order.customer.celebrant %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Celebrant:</strong></p><p>{{ order.customer.celebrant }}</p></div>{% endif %}
+                      {% if order.customer.age %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Age:</strong></p><p>{{ order.customer.age }}</p></div>{% endif %}
+                    </div>
+                    {% if order.notes %}
+                    <hr>
+                    <div class="alert alert-info mt-2"><strong>Special Instructions:</strong><p class="mb-0">{{ order.notes }}</p></div>
+                    {% endif %}
+                  </div>
+                  <div class="modal-footer">
+                    {% if order.status == 'Completed' or order.payment_status == 'Paid' %}
+                    <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm"><i class="fas fa-receipt me-1"></i>View Receipt</a>
+                    {% endif %}
+                    {% if order.status == 'Completed' and not order.reviewed %}
+                      {% if order.order_type == 'premade' %}
+                        {% for item in order.selected_items %}
+                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}"><i class="fas fa-star me-1"></i>Review {{ item.cake_name }}</button>
+                        {% endfor %}
+                      {% elif order.order_type == 'custom' %}
+                      <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}"><i class="fas fa-star me-1"></i>Review Order</button>
+                      {% endif %}
+                    {% endif %}
+                    {% if order.status == 'New' %}
+                    <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                      <button type="submit" class="btn btn-danger"><i class="fas fa-times me-2"></i>Cancel Order</button>
+                    </form>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- REVIEW MODALS — untouched -->
+            {% if order.status == 'Completed' and not order.reviewed %}
+              {% if order.order_type == 'premade' and order.selected_items %}
+                {% for item in order.selected_items %}
+                <div class="modal fade" id="reviewModal{{ order.id }}_{{ item.cake_id }}" tabindex="-1">
+                  <div class="modal-dialog"><div class="modal-content">
+                    <form method="POST" action="/review/add">
+                      <input type="hidden" name="cake_id" value="{{ item.cake_id }}">
+                      <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
+                      <input type="hidden" name="order_id" value="{{ order.id }}">
+                      <div class="modal-header" style="background:var(--pink);">
+                        <h5 class="modal-title" style="color:#fff;"><i class="fas fa-star me-2"></i>Review {{ item.cake_name }}</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                      </div>
+                      <div class="modal-body">
+                        <div class="mb-3">
+                          <label class="form-label fw-bold">Rating *</label>
+                          <div class="star-rating" id="stars_{{ order.id }}_{{ item.cake_id }}">
+                            {% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}_{{ item.cake_id }}" onmouseover="hoverStars(this)" onmouseout="resetStars(this)" onclick="selectStar(this)"></i>{% endfor %}
+                          </div>
+                          <input type="hidden" name="rating" id="rating_{{ order.id }}_{{ item.cake_id }}" value="5">
+                          <small class="text-muted" id="ratingLabel_{{ order.id }}_{{ item.cake_id }}">⭐⭐⭐⭐⭐ Excellent!</small>
+                        </div>
+                        <div class="mb-3">
+                          <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                          <textarea name="comment" class="form-control" rows="3" placeholder="How was the cake? Share your experience..."></textarea>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn" style="background:var(--pink);color:#fff;"><i class="fas fa-paper-plane me-2"></i>Submit Review</button>
+                      </div>
+                    </form>
+                  </div></div>
+                </div>
+                {% endfor %}
+              {% elif order.order_type == 'custom' %}
+              <div class="modal fade" id="reviewModal{{ order.id }}" tabindex="-1">
+                <div class="modal-dialog"><div class="modal-content">
+                  <form method="POST" action="/review/add">
+                    <input type="hidden" name="cake_id" value="custom">
+                    <input type="hidden" name="cake_name" value="Custom Cake">
+                    <input type="hidden" name="order_id" value="{{ order.id }}">
+                    <div class="modal-header" style="background:var(--pink);">
+                      <h5 class="modal-title" style="color:#fff;"><i class="fas fa-star me-2"></i>Review Your Custom Cake Order</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Rating *</label>
+                        <div class="star-rating">{% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}" onmouseover="hoverStars(this)" onmouseout="resetStars(this)" onclick="selectStar(this)"></i>{% endfor %}</div>
+                        <input type="hidden" name="rating" id="rating_{{ order.id }}" value="5">
+                        <small class="text-muted" id="ratingLabel_{{ order.id }}">⭐⭐⭐⭐⭐ Excellent!</small>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Comment <span class="text-muted fw-normal">(optional)</span></label>
+                        <textarea name="comment" class="form-control" rows="3" placeholder="Share your experience..."></textarea>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn" style="background:var(--pink);color:#fff;"><i class="fas fa-paper-plane me-2"></i>Submit Review</button>
+                    </div>
+                  </form>
+                </div></div>
+              </div>
+              {% endif %}
+            {% endif %}
+
+            {% else %}
+            <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">No orders yet! <a href="/cakes" style="color:var(--pink);">Browse our cakes 🎂</a></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <nav class="mt-3"><ul class="pagination justify-content-end" id="ordersPagination"></ul></nav>
+    </section>
+  </div><!-- /ordersTab -->
+
+  <!-- ===== FAVORITES TAB ===== -->
+  <div id="favoritesTab" style="display:none;">
+    <h2 class="mb-3" style="font-size:18px;font-weight:700;color:#f0f0f0;">My Favorites</h2>
+    {% if favorites_list %}
+    <div class="favorites-grid">
+      {% for cake in favorites_list %}
+      <div class="fav-card" id="fav-card-{{ cake.id }}">
+        {% if cake.image %}<img src="{{ cake.image }}" alt="{{ cake.name }}" class="fav-card-img">
+        {% else %}<div class="fav-card-no-img">🎂</div>{% endif %}
+        <div class="fav-card-body">
+          <div class="fav-card-name">{{ cake.name }}</div>
+          <div class="fav-card-price">₱{{ "%.2f"|format(cake.price) }}</div>
+          <div class="fav-card-rating">
+            {% if cake.review_count > 0 %}{% for i in range(cake.avg_rating|int) %}⭐{% endfor %} {{ cake.avg_rating }} ({{ cake.review_count }})
+            {% else %}No reviews yet{% endif %}
+          </div>
+          <div class="fav-card-stock">{% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %}😔 Sold Out{% endif %}</div>
+          {% if cake.quantity > 0 %}
+          <div class="fav-btn-group">
+            <form method="POST" action="/order/cake">
+              <input type="hidden" name="cake_id" value="{{ cake.id }}">
+              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+              <input type="hidden" name="price" value="{{ cake.price }}">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn btn-sm w-100" style="background:var(--pink);color:white;border:none;"><i class="fas fa-bolt me-1"></i> Order Now</button>
+            </form>
+            <form method="POST" action="/cart/add">
+              <input type="hidden" name="cake_id" value="{{ cake.id }}">
+              <input type="hidden" name="cake_name" value="{{ cake.name }}">
+              <input type="hidden" name="price" value="{{ cake.price }}">
+              <input type="hidden" name="quantity" value="1">
+              <button type="submit" class="btn btn-sm w-100" style="background:white;color:var(--pink);border:2px solid var(--pink);"><i class="fas fa-cart-plus me-1"></i> Add to Cart</button>
+            </form>
+          </div>
+          {% endif %}
+          <button class="btn-unfav mt-2" onclick="removeFavorite('{{ cake.id }}', '{{ cake.name }}')">Remove from Favorites</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="fav-empty">
+      <i class="bi bi-heart"></i>
+      <p>No favorites yet!</p>
+      <a href="/cakes" class="btn btn-sm" style="background:var(--pink);color:white;border:none;padding:8px 20px;border-radius:8px;">Browse Cakes</a>
+    </div>
+    {% endif %}
+  </div><!-- /favoritesTab -->
+  <!-- ===== LOYALTY TAB ===== -->
+    <div id="loyaltyTab" style="display:none;">
+    <h2 class="mb-3" style="font-size:18px;font-weight:700;color:#f0f0f0;">Loyalty Card</h2>
+
+    <!-- Stamp card -->
+    <div class="loyalty-card mb-3" style="border-radius:var(--radius);">
+        <div class="loyalty-top mb-3">
+        <div class="loyalty-title">
+            <i class="bi bi-star-fill"></i> Your Stamps
+        </div>
+        <div class="loyalty-badge">{{ loyalty_stamps }} / 10</div>
         </div>
 
+        <!-- Stamp grid -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1rem;">
+        {% for i in range(1, 11) %}
+        <div style="aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;
+                    {% if i <= loyalty_stamps %}
+                        background:rgba(214,51,132,0.15);border:2px solid var(--pink);
+                    {% elif i == 5 or i == 10 %}
+                        background:rgba(255,215,0,0.08);border:2px dashed rgba(255,215,0,0.4);
+                    {% else %}
+                        background:#1a1a1a;border:2px dashed #333;
+                    {% endif %}">
+            {% if i <= loyalty_stamps %}
+            <i class="bi bi-star-fill" style="color:var(--pink);font-size:16px;"></i>
+            {% elif i == 5 %}
+            <span style="font-size:10px;color:rgba(255,215,0,0.5);font-weight:600;">10%</span>
+            {% elif i == 10 %}
+            <span style="font-size:10px;color:rgba(255,215,0,0.5);font-weight:600;">15%</span>
+            {% else %}
+            <i class="bi bi-circle" style="color:#333;font-size:14px;"></i>
+            {% endif %}
+        </div>
+        {% endfor %}
+        </div>
+
+        <!-- Progress bar -->
+        <div class="loyalty-track mb-2">
+        <div class="loyalty-fill" style="width:{{ (loyalty_stamps / 10 * 100)|int }}%;"></div>
+        </div>
+        <div class="loyalty-sub mb-3">
+        {% if loyalty_unclaimed %}
+            <span style="color:var(--pink);">🎉 You have an unclaimed reward!</span>
+        {% elif loyalty_stamps >= 5 %}
+            <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock 15% off!
         {% else %}
-        <div class="fav-empty">
-            <i class="bi bi-heart"></i>
-            <p>No favorites yet!</p>
-            <a href="/cakes" class="btn btn-sm" style="background:#d63384; color:white; border:none;">
-                Browse Cakes
-            </a>
+            <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock 10% off!
+        {% endif %}
+        </div>
+
+        <!-- Claim button -->
+        {% if loyalty_unclaimed %}
+        <form method="POST" action="/loyalty/claim">
+        <button type="submit" style="width:100%;background:var(--pink);color:#fff;border:none;
+                border-radius:var(--radius-sm);padding:12px;font-size:14px;font-weight:600;cursor:pointer;">
+            <i class="bi bi-gift me-2"></i>Claim {{ loyalty_unclaimed }}% Discount Voucher
+        </button>
+        </form>
+        {% endif %}
+
+        <!-- Earn info note -->
+        <div style="margin-top:12px;padding:10px 14px;background:#111;border-radius:var(--radius-sm);
+                    border-left:3px solid var(--pink);font-size:12px;color:var(--text-muted);">
+        <i class="bi bi-info-circle me-1" style="color:var(--pink);"></i>
+        Stamps are earned on <strong style="color:var(--text);">Cake category</strong> orders (+1 stamp)
+        and <strong style="color:var(--text);">Custom Cake</strong> orders (+2 stamps).
+        Drinks, Desserts, and Pastries do not earn stamps.
+        </div>
+    </div>
+
+    <!-- Active vouchers -->
+    <div class="loyalty-card" style="border-radius:var(--radius);">
+        <div class="loyalty-title mb-3">
+        <i class="bi bi-ticket-perforated-fill" style="color:var(--pink);"></i> Your Vouchers
+        </div>
+        {% if active_vouchers %}
+        {% for v in active_vouchers %}
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:12px;background:#111;border-radius:var(--radius-sm);
+                    border:0.5px solid var(--border-pink);margin-bottom:8px;">
+            <div>
+            <div style="font-size:20px;font-weight:700;color:var(--pink);">{{ v.discount }}% OFF</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+                Expires: {{ v.expires_at_fmt }}
+            </div>
+            </div>
+            <div style="background:rgba(214,51,132,0.1);border:1px solid var(--border-pink);
+                        color:var(--pink);font-size:11px;font-weight:600;padding:4px 12px;
+                        border-radius:20px;">
+            Ready to use
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:13px;">
+            <i class="bi bi-ticket-perforated" style="font-size:2rem;display:block;margin-bottom:8px;"></i>
+            No active vouchers yet. Collect stamps to earn rewards!
         </div>
         {% endif %}
     </div>
-
-    <!-- EDIT PROFILE MODAL -->
-    <div class="modal fade" id="editProfileModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="{{ url_for('edit_customer_profile') }}">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Edit Profile</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label>Full Name</label>
-                            <input type="text" name="full_name" class="form-control" value="{{ customer.fname }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Username</label>
-                            <input type="text" name="username" class="form-control" value="{{ customer.username }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Contact</label>
-                            <input type="text" name="contact" class="form-control" value="{{ customer.number }}" required>
-                        </div>
-                        <div class="mb-3">
-                            <label>Email</label>
-                            <input type="email" name="email" class="form-control" value="{{ customer.email }}" readonly disabled>
-                        </div>
-                        <div class="mb-3">
-                            <label>Address</label>
-                            <input type="text" name="address" class="form-control" value="{{ customer.address }}" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
+  <!-- ===== EDIT PROFILE MODAL — untouched ===== -->
+  <div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+      <form method="POST" action="{{ url_for('edit_customer_profile') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Profile</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Full Name</label><input type="text" name="full_name" class="form-control" value="{{ customer.fname }}" required></div>
+          <div class="mb-3"><label class="form-label">Username</label><input type="text" name="username" class="form-control" value="{{ customer.username }}" required></div>
+          <div class="mb-3"><label class="form-label">Contact</label><input type="text" name="contact" class="form-control" value="{{ customer.number }}" required></div>
+          <div class="mb-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" value="{{ customer.email }}" readonly disabled></div>
+          <div class="mb-3"><label class="form-label">Address</label><input type="text" name="address" class="form-control" value="{{ customer.address }}" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn" style="background:var(--pink);color:#fff;">Save Changes</button>
+        </div>
+      </form>
+    </div></div>
+  </div>
 
-</div>
+</div><!-- /dash-container -->
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// ── Tab switcher ──
+/* ── Tab switcher ── */
 function showTab(tab) {
-    document.getElementById("ordersTab").style.display    = tab === 'orders'    ? 'block' : 'none';
-    document.getElementById("favoritesTab").style.display = tab === 'favorites' ? 'block' : 'none';
-    document.querySelectorAll(".nav-icon").forEach((btn, i) => {
-        btn.classList.toggle("active", (tab === 'orders' && i === 0) || (tab === 'favorites' && i === 1));
-    });
+  document.getElementById("ordersTab").style.display    = tab === 'orders'    ? 'block' : 'none';
+  document.getElementById("favoritesTab").style.display = tab === 'favorites' ? 'block' : 'none';
+  document.getElementById("loyaltyTab").style.display   = tab === 'loyalty'   ? 'block' : 'none';
+  document.querySelectorAll(".nav-icon").forEach((btn, i) => {
+    btn.classList.toggle("active",
+      (tab === 'orders'    && i === 0) ||
+      (tab === 'favorites' && i === 1) ||
+      (tab === 'loyalty'   && i === 2)
+    );
+  });
 }
 
-// ── Remove favorite from dashboard ──
+/* ── Active orders pagination (3 per page) ── */
+const ACTIVE_PER_PAGE = 3;
+let activeCurrentPage = 0;
+
+function initActiveOrdersPagination() {
+  const cards = document.querySelectorAll('[data-active-idx]');
+  if (!cards.length) return;
+  if (cards.length <= ACTIVE_PER_PAGE) return; // no pagination needed
+  document.getElementById('activeOrdersPagination').style.display = 'flex';
+  renderActiveOrders();
+}
+
+function renderActiveOrders() {
+  const cards = document.querySelectorAll('[data-active-idx]');
+  const total = cards.length;
+  const totalPages = Math.ceil(total / ACTIVE_PER_PAGE);
+  const start = activeCurrentPage * ACTIVE_PER_PAGE;
+  const end   = start + ACTIVE_PER_PAGE;
+
+  cards.forEach((card, i) => {
+    card.style.display = (i >= start && i < end) ? 'block' : 'none';
+  });
+
+  document.getElementById('aopInfo').textContent =
+    `${activeCurrentPage + 1} / ${totalPages}`;
+  document.getElementById('aopPrev').disabled = activeCurrentPage === 0;
+  document.getElementById('aopNext').disabled = activeCurrentPage >= totalPages - 1;
+}
+
+function activeOrdersPage(dir) {
+  const cards = document.querySelectorAll('[data-active-idx]');
+  const totalPages = Math.ceil(cards.length / ACTIVE_PER_PAGE);
+  activeCurrentPage = Math.max(0, Math.min(totalPages - 1, activeCurrentPage + dir));
+  renderActiveOrders();
+}
+
+/* ── Remove favorite ── */
 async function removeFavorite(cakeId, cakeName) {
-    try {
-        const res  = await fetch('/favorites/toggle', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ cake_id: cakeId, cake_name: cakeName })
-        });
-        const data = await res.json();
-        if (data.success && data.action === 'removed') {
-            const card = document.getElementById('fav-card-' + cakeId);
-            if (card) card.remove();
-
-            const grid = document.querySelector('.favorites-grid');
-            if (grid && grid.children.length === 0) {
-                grid.outerHTML = `<div class="fav-empty">
-                    <i class="bi bi-heart" style="font-size:3rem; display:block; margin-bottom:12px;"></i>
-                    <p>No favorites yet!</p>
-                    <a href="/cakes" class="btn btn-sm" style="background:#d63384; color:white; border:none;">Browse Cakes</a>
-                </div>`;
-            }
-        }
-    } catch (e) {
-        console.error('Remove favorite error:', e);
+  try {
+    const res  = await fetch('/favorites/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cake_id: cakeId, cake_name: cakeName })
+    });
+    const data = await res.json();
+    if (data.success && data.action === 'removed') {
+      const card = document.getElementById('fav-card-' + cakeId);
+      if (card) card.remove();
+      const grid = document.querySelector('.favorites-grid');
+      if (grid && grid.children.length === 0) {
+        grid.outerHTML = `<div class="fav-empty">
+          <i class="bi bi-heart" style="font-size:3rem;display:block;margin-bottom:12px;"></i>
+          <p>No favorites yet!</p>
+          <a href="/cakes" class="btn btn-sm" style="background:#d63384;color:white;border:none;">Browse Cakes</a>
+        </div>`;
+      }
     }
+  } catch(e) { console.error('Remove favorite error:', e); }
 }
 
-// ── Star rating ──
+/* ── Star rating ── */
 var ratingLabels = { 1:'⭐ Poor', 2:'⭐⭐ Fair', 3:'⭐⭐⭐ Good', 4:'⭐⭐⭐⭐ Great', 5:'⭐⭐⭐⭐⭐ Excellent!' };
-
 function hoverStars(star) {
-    var container = star.closest('.star-rating');
-    var value = parseInt(star.getAttribute('data-value'));
-    container.querySelectorAll('.star-btn').forEach(function(s, i) {
-        s.style.color = i < value ? '#ffc107' : '#ddd';
-    });
+  var container = star.closest('.star-rating');
+  var value = parseInt(star.getAttribute('data-value'));
+  container.querySelectorAll('.star-btn').forEach(function(s,i) { s.style.color = i < value ? '#ffc107' : '#555'; });
 }
-
 function resetStars(star) {
-    var container = star.closest('.star-rating');
-    var targetId  = container.querySelector('.star-btn').getAttribute('data-target');
-    var selected  = parseInt(document.getElementById(targetId).value);
-    container.querySelectorAll('.star-btn').forEach(function(s, i) {
-        s.style.color = i < selected ? '#ffc107' : '#ddd';
-    });
+  var container = star.closest('.star-rating');
+  var targetId  = container.querySelector('.star-btn').getAttribute('data-target');
+  var selected  = parseInt(document.getElementById(targetId).value);
+  container.querySelectorAll('.star-btn').forEach(function(s,i) { s.style.color = i < selected ? '#ffc107' : '#555'; });
 }
-
 function selectStar(star) {
-    var container = star.closest('.star-rating');
-    var value     = parseInt(star.getAttribute('data-value'));
-    var targetId  = star.getAttribute('data-target');
-    document.getElementById(targetId).value = value;
-    container.querySelectorAll('.star-btn').forEach(function(s, i) {
-        s.style.color = i < value ? '#ffc107' : '#ddd';
-    });
-    var label = document.getElementById('ratingLabel_' + targetId.replace('rating_', ''));
-    if (label) label.textContent = ratingLabels[value];
+  var container = star.closest('.star-rating');
+  var value     = parseInt(star.getAttribute('data-value'));
+  var targetId  = star.getAttribute('data-target');
+  document.getElementById(targetId).value = value;
+  container.querySelectorAll('.star-btn').forEach(function(s,i) { s.style.color = i < value ? '#ffc107' : '#555'; });
+  var label = document.getElementById('ratingLabel_' + targetId.replace('rating_',''));
+  if (label) label.textContent = ratingLabels[value];
 }
-
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.star-rating').forEach(function(container) {
-        var stars    = container.querySelectorAll('.star-btn');
-        var targetId = stars[0] ? stars[0].getAttribute('data-target') : null;
-        var selected = targetId ? parseInt(document.getElementById(targetId).value) : 5;
-        stars.forEach(function(s, i) { s.style.color = i < selected ? '#ffc107' : '#ddd'; });
-    });
+  document.querySelectorAll('.star-rating').forEach(function(container) {
+    var stars    = container.querySelectorAll('.star-btn');
+    var targetId = stars[0] ? stars[0].getAttribute('data-target') : null;
+    var selected = targetId ? parseInt(document.getElementById(targetId).value) : 5;
+    stars.forEach(function(s,i) { s.style.color = i < selected ? '#ffc107' : '#555'; });
+  });
+  initActiveOrdersPagination();
 });
 
-// ── Orders search/filter/pagination ──
+/* ── Orders search / filter / pagination ── */
 let currentPage = 1;
 const rowsPerPage = 5;
 let allRows = [];
 
 function updatePaginationDisplay() {
-    const tbody = document.querySelector('#orders tbody');
-    const rows  = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
-    const searchValue = document.getElementById('searchOrders')?.value.toLowerCase() || '';
-    const statusValue = document.getElementById('statusFilter')?.value || '';
-    const typeValue   = document.getElementById('typeFilter')?.value || '';
+  const tbody = document.querySelector('#orders tbody');
+  const rows  = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
+  const searchValue = document.getElementById('searchOrders')?.value.toLowerCase() || '';
+  const statusValue = document.getElementById('statusFilter')?.value || '';
+  const typeValue   = document.getElementById('typeFilter')?.value || '';
 
-    allRows = rows.filter(row => {
-        const itemText   = row.cells[0]?.textContent.toLowerCase() || '';
-        const statusText = row.cells[4]?.textContent.trim() || '';
-        const orderType  = row.getAttribute('data-type') || '';
-        let show = true;
-        if (searchValue && !itemText.includes(searchValue)) show = false;
-        if (statusValue && statusValue !== statusText) show = false;
-        if (typeValue   && typeValue   !== orderType)   show = false;
-        return show;
-    });
+  allRows = rows.filter(row => {
+    const itemText   = row.cells[0]?.textContent.toLowerCase() || '';
+    const statusText = row.cells[4]?.textContent.trim() || '';
+    const orderType  = row.getAttribute('data-type') || '';
+    let show = true;
+    if (searchValue && !itemText.includes(searchValue)) show = false;
+    if (statusValue && statusValue !== statusText) show = false;
+    if (typeValue   && typeValue   !== orderType)   show = false;
+    return show;
+  });
 
-    const totalPages = Math.ceil(allRows.length / rowsPerPage);
-    if (currentPage > totalPages) currentPage = totalPages || 1;
+  const totalPages = Math.ceil(allRows.length / rowsPerPage);
+  if (currentPage > totalPages) currentPage = totalPages || 1;
+  rows.forEach(r => r.style.display = 'none');
+  const start = (currentPage - 1) * rowsPerPage;
+  allRows.slice(start, start + rowsPerPage).forEach(r => r.style.display = '');
 
-    rows.forEach(r => r.style.display = 'none');
-    const start = (currentPage - 1) * rowsPerPage;
-    allRows.slice(start, start + rowsPerPage).forEach(r => r.style.display = '');
-
-    let noResultsRow = document.getElementById('noResultsRow');
-    if (allRows.length === 0) {
-        if (!noResultsRow) {
-            noResultsRow = document.createElement('tr');
-            noResultsRow.id = 'noResultsRow';
-            noResultsRow.innerHTML = '<td colspan="6" class="text-center text-muted py-4">No orders match your search</td>';
-            tbody.appendChild(noResultsRow);
-        }
-        noResultsRow.style.display = '';
-    } else if (noResultsRow) {
-        noResultsRow.style.display = 'none';
+  let noResultsRow = document.getElementById('noResultsRow');
+  if (allRows.length === 0) {
+    if (!noResultsRow) {
+      noResultsRow = document.createElement('tr');
+      noResultsRow.id = 'noResultsRow';
+      noResultsRow.innerHTML = '<td colspan="6" class="text-center py-4" style="color:#888;">No orders match your search</td>';
+      tbody.appendChild(noResultsRow);
     }
+    noResultsRow.style.display = '';
+  } else if (noResultsRow) { noResultsRow.style.display = 'none'; }
 
-    updatePaginationButtons(totalPages);
+  updatePaginationButtons(totalPages);
 }
 
 function updatePaginationButtons(totalPages) {
-    const el = document.getElementById('ordersPagination');
-    if (!el || totalPages <= 1) { if (el) el.innerHTML = ''; return; }
-    let html = '';
-    html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage-1});return false;">Previous</a></li>`;
-    for (let i = 1; i <= totalPages; i++) {
-        if (totalPages <= 5 || i===1 || i===totalPages || (i>=currentPage-1 && i<=currentPage+1)) {
-            html += `<li class="page-item ${currentPage===i?'active':''}"><a class="page-link" href="#" onclick="goToPage(${i});return false;">${i}</a></li>`;
-        } else if (i===currentPage-2 || i===currentPage+2) {
-            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-        }
+  const el = document.getElementById('ordersPagination');
+  if (!el || totalPages <= 1) { if (el) el.innerHTML = ''; return; }
+  let html = '';
+  html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage-1});return false;">Previous</a></li>`;
+  for (let i = 1; i <= totalPages; i++) {
+    if (totalPages <= 5 || i===1 || i===totalPages || (i>=currentPage-1 && i<=currentPage+1)) {
+      html += `<li class="page-item ${currentPage===i?'active':''}"><a class="page-link" href="#" onclick="goToPage(${i});return false;">${i}</a></li>`;
+    } else if (i===currentPage-2 || i===currentPage+2) {
+      html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
     }
-    html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage+1});return false;">Next</a></li>`;
-    el.innerHTML = html;
+  }
+  html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage+1});return false;">Next</a></li>`;
+  el.innerHTML = html;
 }
 
 function goToPage(page) {
-    const totalPages = Math.ceil(allRows.length / rowsPerPage);
-    if (page < 1 || page > totalPages) return;
-    currentPage = page;
-    updatePaginationDisplay();
+  const totalPages = Math.ceil(allRows.length / rowsPerPage);
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  updatePaginationDisplay();
 }
 
 function filterOrders() { currentPage = 1; updatePaginationDisplay(); }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const s = document.getElementById('searchOrders');
-    const f = document.getElementById('statusFilter');
-    const t = document.getElementById('typeFilter');
-    if (s) s.addEventListener('keyup',  filterOrders);
-    if (f) f.addEventListener('change', filterOrders);
-    if (t) t.addEventListener('change', filterOrders);
-    updatePaginationDisplay();
+  const s = document.getElementById('searchOrders');
+  const f = document.getElementById('statusFilter');
+  const t = document.getElementById('typeFilter');
+  if (s) s.addEventListener('keyup',  filterOrders);
+  if (f) f.addEventListener('change', filterOrders);
+  if (t) t.addEventListener('change', filterOrders);
+  updatePaginationDisplay();
 });
 </script>
 {% endblock %}

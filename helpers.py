@@ -112,3 +112,41 @@ def _today_range():
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     end = start + timedelta(days=1)
     return start, end
+
+def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_ref):
+    try:
+        earns_stamps = 0
+
+        if order_type == 'custom':
+            earns_stamps = 2
+        elif order_type == 'premade' and selected_items:
+            for item in selected_items:
+                cake_doc = cakes_ref.document(item.get('cake_id', '')).get()
+                if cake_doc.exists:
+                    category = cake_doc.to_dict().get('category', '')
+                    if category == 'Cake':
+                        earns_stamps = 1
+                        break
+
+        if earns_stamps == 0:
+            return
+
+        user_ref  = users_ref.document(user_id)
+        user_data = user_ref.get().to_dict() or {}
+
+        stamps           = int(user_data.get('loyalty_stamps', 0)) + earns_stamps
+        loyalty_unclaimed = user_data.get('loyalty_unclaimed', None)
+
+        update = {'loyalty_stamps': stamps}
+
+        if stamps >= 10:
+            update['loyalty_unclaimed'] = '15'
+            update['loyalty_stamps']    = 0
+        elif stamps >= 5 and not loyalty_unclaimed:
+            update['loyalty_unclaimed'] = '10'
+
+        user_ref.update(update)
+
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("[LOYALTY] Failed to handle loyalty stamp")
