@@ -151,7 +151,7 @@
             console.error('Firebase initialization error:', error);
         }
     </script>
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="../static/css/admin_dashboard.css" rel="stylesheet">
@@ -184,13 +184,13 @@
             <li><a href="/admin/sales" class="{{ 'active' if request.path == '/admin/sales' }}">Sales</a></li>
             <li><a href="/admin/expenses" class="{{ 'active' if request.path == '/admin/expenses' }}">Expenses</a></li>
             <li><a href="/admin/inventory" class="{{ 'active' if request.path == '/admin/inventory' }}">Inventory</a></li>
-            <li><a href="/admin/orders" class="{{ 'active' if request.path == '/admin/orders' }}">Order List</a></li>
-            <li><a href="/admin/delivery" class="{{ 'active' if request.path == '/admin/delivery' }}">Delivery Management</a></li>
-            <li><a href="/admin/cakes" class="{{ 'active' if request.path == '/admin/cakes' }}">Cake Availability</a></li>
-            <li><a href="/admin/users" class="{{ 'active' if request.path == '/admin/users' }}">User Management</a></li>
+            <li><a href="/admin/orders" class="{{ 'active' if request.path == '/admin/orders' }}">Orders</a></li>
+            <li><a href="/admin/delivery" class="{{ 'active' if request.path == '/admin/delivery' }}">Deliveries</a></li>
+            <li><a href="/admin/cakes" class="{{ 'active' if request.path == '/admin/cakes' }}">Cake Stock</a></li>
+            <li><a href="/admin/users" class="{{ 'active' if request.path == '/admin/users' }}">Users</a></li>
             <li><a href="/admin/reviews" class="{{ 'active' if request.path == '/admin/reviews' }}">Reviews</a></li>
             <li><a href="/admin/logs" class="{{ 'active' if request.path == '/admin/logs' }}">Activity Logs</a></li>
-            <li><a href="/admin/conversations" class="{{ 'active' if request.path == '/admin/conversations' }}">Conversations</a></li>
+            <li><a href="/admin/conversations" class="{{ 'active' if request.path == '/admin/conversations' }}">Messages</a></li>
             <li><a href="/pos">POS</a></li>
         </ul>
 
@@ -215,14 +215,40 @@
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div style="position:fixed; top:16px; left:50%; transform:translateX(-50%); z-index:9999; min-width:350px;">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show text-center shadow">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const flashes = {{ messages | tojson }};
+                        
+                        // SweetAlert2 Toast Instance
+                        const Toast = Swal.mixin({
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3500,
+                            timerProgressBar: true,
+                            didOpen: (toast) => {
+                                toast.addEventListener('mouseenter', Swal.stopTimer);
+                                toast.addEventListener('mouseleave', Swal.resumeTimer);
+                            }
+                        });
+
+                        // Map Flask categories → SweetAlert2 icons
+                        const iconMap = {
+                            'success': 'success',
+                            'danger':  'error',
+                            'warning': 'warning',
+                            'info':    'info'
+                        };
+
+                        // Fire each toast
+                        flashes.forEach(([category, message]) => {
+                            Toast.fire({
+                                icon: iconMap[category] || 'info',
+                                title: message
+                            });
+                        });
+                    });
+                </script>
             {% endif %}
         {% endwith %}
 

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp)
-from decorators import login_required, admin_required
+from decorators import login_required, admin_required, profile_required
 from firebase_admin import messaging
 import re
 import os
@@ -270,6 +270,7 @@ def complete_profile():
 
 # ---------------- CUSTOMER DASHBOARD ----------------
 @app.route("/customer_dashboard")
+@profile_required
 @login_required
 def customer_dashboard():
     user_id = session.get("user_id")
@@ -356,6 +357,7 @@ def customer_dashboard():
 
 # ---------------- FAVORITES TOGGLE ----------------
 @app.route("/favorites/toggle", methods=["POST"])
+@profile_required
 @login_required
 def favorites_toggle():
     try:
@@ -387,6 +389,7 @@ def favorites_toggle():
 
 # ---------------- CUSTOMER PROFILE EDIT ----------------
 @app.route("/customer/edit", methods=["POST"])
+@profile_required
 @login_required
 def edit_customer_profile():
     user_id  = session.get("user_id")
@@ -416,6 +419,7 @@ def edit_customer_profile():
 
 # ---------------- LOYALTY CLAIM ----------------
 @app.route("/loyalty/claim", methods=["POST"])
+@profile_required
 @login_required
 def loyalty_claim():
     user_id = session.get("user_id")
@@ -463,6 +467,7 @@ def customize():
 
 # ---------------- ADD REVIEW PAGE ----------------
 @app.route("/review/add", methods=["POST"])
+@profile_required
 @login_required
 def add_review():
     user_id  = session.get("user_id")
@@ -544,6 +549,7 @@ def add_review():
     return redirect(url_for("customer_dashboard"))
 # ---------------- RECIEPT PAGE ----------------
 @app.route("/order/receipt/<order_id>")
+@profile_required
 @login_required
 def order_receipt(order_id):
     user_id = session.get("user_id")
@@ -652,6 +658,7 @@ def place_order():
 
 # ---------------- PREMADE ORDER ----------------
 @app.route("/order/cake", methods=["POST"])
+@profile_required
 @login_required
 @limiter.limit("5 per minute")
 def order_cake():
@@ -665,7 +672,6 @@ def order_cake():
     selected_items = json.loads(selected_json)
 
     if selected_items:
-        # coming from cart — recompute price from Firestore, ignore client price
         for i in selected_items:
             cake_id  = i.get('cake_id')
             quantity = int(i.get('quantity', 1))
@@ -675,19 +681,26 @@ def order_cake():
                 flash("Cake not found.", "danger")
                 return redirect(url_for("customer_dashboard"))
 
-            cake_data         = cake_doc.to_dict()
-            real_price        = float(cake_data.get('price', 0))  # ← server price
+            cake_data  = cake_doc.to_dict()
+            real_price = float(cake_data.get('price', 0))
+            max_qty    = int(cake_data.get('quantity', 0))  # ← stock
+            quantity   = min(quantity, max_qty)             # ← cap
+
+            if quantity < 1:
+                flash(f"{cake_data.get('name', 'A cake')} is out of stock.", "danger")
+                return redirect(url_for("customer_dashboard"))
 
             i['quantity']  = quantity
-            i['price']     = real_price                           # ← overwrite client price
-            i['subtotal']  = real_price * quantity                # ← recomputed
+            i['price']     = real_price
+            i['subtotal']  = real_price * quantity
             i['cake_name'] = cake_data.get('name', i.get('cake_name', ''))
             i['image_url'] = cake_data.get('image', i.get('image_url', None))
+            i['category']  = cake_data.get('category', '')
+            i['max_qty']   = max_qty                        # ← for frontend cap
 
         amount = sum(i['subtotal'] for i in selected_items)
 
     else:
-        # coming from Order Now — recompute price from Firestore
         cake_id  = request.form.get('cake_id')
         quantity = int(request.form.get('quantity', 1))
 
@@ -697,17 +710,26 @@ def order_cake():
             return redirect(url_for("customer_dashboard"))
 
         cake_data  = cake_doc.to_dict()
-        real_price = float(cake_data.get('price', 0))  # ← server price, ignore client
+        real_price = float(cake_data.get('price', 0))
+        max_qty    = int(cake_data.get('quantity', 0))      # stock
+        quantity   = min(quantity, max_qty)                 # cap
+
+        if quantity < 1:
+            flash(f"{cake_data.get('name', 'A cake')} is out of stock.", "danger")
+            return redirect(url_for("customer_dashboard"))
 
         selected_items = [{
             'cake_id':   cake_id,
-            'cake_name': cake_data.get('name', ''),    # ← from server too
+            'cake_name': cake_data.get('name', ''),
             'price':     real_price,
             'quantity':  quantity,
             'subtotal':  real_price * quantity,
-            'image_url': cake_data.get('image', None)
+            'image_url': cake_data.get('image', None),
+            'category':  cake_data.get('category', ''),
+            'max_qty':   max_qty                            
         }]
         amount = real_price * quantity
+
     active_vouchers = []
     now_dt = datetime.now(PH_TZ)
     for v_doc in users.document(user_id).collection("vouchers").stream():
@@ -719,17 +741,19 @@ def order_cake():
         if not v.get('used', False) and expires and expires > now_dt:
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
+
     return render_template('checkout.html',
-        order_type     = 'premade',
-        selected_items = selected_items,
-        amount         = amount,
-        customer       = customer,
-        min_date       = min_date,
-        active_vouchers = active_vouchers, 
+        order_type      = 'premade',
+        selected_items  = selected_items,
+        amount          = amount,
+        customer        = customer,
+        min_date        = min_date,
+        active_vouchers = active_vouchers,
     )
  
 # ---------------- PLACE ORDER (FINALIZE OF BOTH PREMADE  OR  CUSTOM) ----------------
 @app.route("/place-order", methods=["POST"])
+@profile_required
 @login_required
 @limiter.limit("5 per minute")
 def finalize_order():
@@ -755,8 +779,9 @@ def finalize_order():
     order_type     = request.form.get("order_type")
     selected_json  = request.form.get("selected_items", "[]")
     payment_method = request.form.get("payment_method", "Cash on Delivery")
-        # ── Voucher validation ── ← ADD HERE
-    voucher_id = request.form.get('voucher_id', '').strip()
+
+    # ── Voucher validation ──
+    voucher_id           = request.form.get('voucher_id', '').strip()
     voucher_discount_pct = 0
     if voucher_id:
         now_dt = datetime.now(PH_TZ)
@@ -769,7 +794,9 @@ def finalize_order():
                 expires = expires.replace(tzinfo=PH_TZ)
             if not v_data.get('used', False) and expires and expires > now_dt:
                 voucher_discount_pct = int(v_data.get('discount', 0))
+
     custom_components = []
+
     if order_type == "premade":
         selected_items = json.loads(selected_json)
         amount         = 0.0
@@ -785,14 +812,20 @@ def finalize_order():
                 return redirect(url_for("customer_dashboard"))
 
             cake_data  = cake_doc.to_dict()
-            real_price = float(cake_data.get("price", 0))  # ← server price
+            real_price = float(cake_data.get("price", 0))
+            stock      = int(cake_data.get("quantity", 0))  # ← check stock
+
+            if quantity < 1 or quantity > stock:            # ← reject bad qty
+                flash(f"{cake_data.get('name', 'A cake')} only has {stock} available.", "danger")
+                return redirect(url_for("customer_dashboard"))
+
             subtotal   = real_price * quantity
             amount    += subtotal
 
             normalized.append({
                 **i,
-                "price":     real_price,   # ← overwrite client price
-                "subtotal":  subtotal,     # ← recomputed
+                "price":     real_price,
+                "subtotal":  subtotal,
                 "cake_name": cake_data.get("name", i.get("cake_name", "")),
             })
 
@@ -803,7 +836,7 @@ def finalize_order():
 
         for i in selected_items:
             users.document(user_id).collection("cart").document(i["cake_id"]).delete()
-    # NEW — recomputes from Firestore
+
     else:
         selected_items = []
         item_names     = request.form.get("order_item", "")
@@ -842,28 +875,33 @@ def finalize_order():
             part = part.strip()
             if not part:
                 continue
-
             if match := re.search(r'^(.+?) \(₱([\d,]+)\)$', part):
-                component_name = match[1].strip()
+                component_name  = match[1].strip()
                 component_price = float(match[2].replace(',', ''))
-                custom_components.append({
-                    "name": component_name,
-                    "price": component_price
-                })
+                custom_components.append({"name": component_name, "price": component_price})
             elif match2 := re.search(r'^(.+?) \(([\d,]+)\)$', part):
-                component_name = match2[1].strip()
+                component_name  = match2[1].strip()
                 component_price = float(match2[2].replace(',', ''))
-                custom_components.append({
-                    "name": component_name,
-                    "price": component_price
-                })
-     # ── Apply voucher discount ── 
+                custom_components.append({"name": component_name, "price": component_price})
+
+    # ── Apply voucher discount ──
     if voucher_discount_pct > 0:
-        discount_amount = round(amount * voucher_discount_pct / 100, 2)
-        amount          = round(amount - discount_amount, 2)
+        if order_type == 'premade':
+            cake_subtotal = 0.0
+            for item in selected_items:
+                cake_doc = cakes.document(item.get('cake_id', '')).get()
+                if cake_doc.exists:
+                    category = cake_doc.to_dict().get('category', '')
+                    if category == 'Cake':
+                        cake_subtotal += item.get('subtotal', 0.0)
+            discount_amount = round(cake_subtotal * voucher_discount_pct / 100, 2)
+        else:
+            discount_amount = round(amount * voucher_discount_pct / 100, 2)
+        amount = round(amount - discount_amount, 2)
     else:
         discount_amount = 0
-    # ── Base order data with user_id ──
+
+    # ── Base order data ──
     order_data = {
         "user_id":        user_id,
         "delivery_date":  delivery_datetime,
@@ -881,9 +919,9 @@ def finalize_order():
         "order_type":     order_type,
         "custom_components": custom_components,
         "delivery_token": secrets.token_urlsafe(16),
-        "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,    
-        "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,  
-        "discount_amount":  discount_amount if voucher_discount_pct > 0 else None, 
+        "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,
+        "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,
+        "discount_amount":  discount_amount if voucher_discount_pct > 0 else None,
         "customer": {
             "name":      request.form.get("customer_name", ""),
             "contact":   request.form.get("contact", ""),
@@ -897,23 +935,32 @@ def finalize_order():
         "created_at": now
     }
 
-    # Deduct cake quantity for premade orders
+    # ── Deduct stock for premade orders ──
     if order_type == "premade":
         for item in selected_items:
-            cake_id = item.get("cake_id")
-            quantity_ordered = item.get("quantity", 1)
-            cake_ref = cakes.document(cake_id)
-            cake_doc = cake_ref.get()
-            if cake_doc.exists:
-                current_qty = cake_doc.to_dict().get("quantity", 0)
-                new_qty = max(0, current_qty - quantity_ordered)
-                cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
+            cake_id          = item.get("cake_id")
+            quantity_ordered = int(item.get("quantity", 1))
+            cake_ref         = cakes.document(cake_id)
+            cake_doc         = cake_ref.get()
 
-    # ── COD or Bank Transfer → save immediately to top-level orders ──
+            if not cake_doc.exists:
+                flash("One or more cakes no longer exist.", "danger")
+                return redirect(url_for("customer_dashboard"))
+
+            current_qty = cake_doc.to_dict().get("quantity", 0)
+
+            if quantity_ordered > current_qty:          # ← last line of defense
+                name = cake_doc.to_dict().get("name", "A cake")
+                flash(f"{name} only has {current_qty} available.", "danger")
+                return redirect(url_for("customer_dashboard"))
+
+            new_qty = current_qty - quantity_ordered
+            cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
+
+    # ── COD or Bank Transfer → save immediately ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
         orders.add(order_data)
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
-          # ── Mark voucher as used ── ← ADD
         if voucher_id and voucher_discount_pct > 0:
             users.document(user_id).collection("vouchers").document(voucher_id).update({
                 "used":    True,
@@ -922,10 +969,8 @@ def finalize_order():
         flash("Order placed successfully! 🎂", "success")
         return redirect(url_for("customer_dashboard"))
 
-    # ── GCash / Maya / Card → PayMongo checkout ──
+    # ── Online Payment → PayMongo ──
     line_items = build_line_items(order_type, selected_items, amount)
-
-    # ↓↓↓ REMOVED session['pending_order'] ↓↓↓
 
     base_url    = request.host_url.rstrip('/')
     success_url = f"{base_url}/payment/success"
@@ -943,7 +988,6 @@ def finalize_order():
         flash("Payment service unavailable. Please try Cash on Delivery.", "danger")
         return redirect(url_for("customer_dashboard"))
 
-    # ↓↓↓ CHANGED: save to Firestore instead of session ↓↓↓
     pending_orders.document(checkout["session_id"]).set({
         "user_id": user_id,
         "order_data": {
@@ -956,6 +1000,7 @@ def finalize_order():
     return redirect(checkout["checkout_url"])
 # ---------------- CUSTOMER CANCEL ORDER ----------------
 @app.route("/order/cancel/<order_id>", methods=["POST"])
+@profile_required
 @login_required
 @limiter.limit("10 per minute")
 def cancel_order(order_id):
@@ -1155,6 +1200,7 @@ def cakes_page():
 
 # ---------------- CART PAGE ----------------
 @app.route("/cart")
+@profile_required
 @login_required
 def cart_page():
     user_id = session.get("user_id")
@@ -1167,6 +1213,7 @@ def cart_page():
 
 # ---------------- ADD TO CART ----------------
 @app.route("/cart/add", methods=["POST"])
+@profile_required
 @login_required
 def add_to_cart():
     user_id   = session.get("user_id")
@@ -1207,6 +1254,7 @@ def add_to_cart():
     return redirect(url_for("cakes_page"))
 # ---------------- REMOVE FROM CART ----------------
 @app.route("/cart/remove/<cake_id>", methods=["POST"])
+@profile_required
 @login_required
 def remove_from_cart(cake_id):
     user_id = session.get("user_id")
@@ -1928,8 +1976,7 @@ def update_order_status(order_id):
             target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
             category="order"
         )
-    
-    return redirect(url_for("admin_orders"))
+    return jsonify({"success": True, "message": f"Order status updated to {new_status}"})
 
 # ---------------- EDIT ORDER ----------------
 @app.route("/order/edit/<order_id>", methods=["POST"])
@@ -1956,12 +2003,11 @@ def edit_order( order_id):
             target=f"Order #{order_id} — {item}",
             category="order"
         )
-        flash('Order updated successfully!', 'success')
+        return jsonify({"success": True, "message": "Order updated successfully!"})
     except Exception:
         app.logger.exception("Error updating order")
-        flash('An error occurred while updating the order. Please try again.', 'danger')
+        return jsonify({"success": False, "message": "Failed to update order. Please try again."}), 500
 
-    return redirect(url_for("admin_orders"))
 
 # ---------------- ADD INVENTORY ----------------
 @app.route("/inventory/add", methods=["POST"])
@@ -2066,13 +2112,10 @@ def add_cake():
             target=request.form.get('name'),
             category="cake"
         )
-        flash('Cake added!', 'success')
+        return jsonify({"success": True, "message": "Cake added successfully!"})
     except Exception:
         app.logger.exception("Error adding cake")
-        flash('An error occurred while adding the cake. Please try again.', 'danger')
-
-
-    return redirect(url_for('admin_cakes'))
+        return jsonify({"success": False, "message": "Failed to add cake."}), 500
 
 # ---------------- EDIT CAKE ----------------
 @app.route('/cake/edit/<cake_id>', methods=['POST'])
@@ -2100,11 +2143,10 @@ def edit_cake(cake_id):
             target=f"{request.form.get('name')} (ID: {cake_id})",
             category="cake"
         )
-        flash('Cake updated!', 'success')
+        return jsonify({"success": True, "message": "Cake updated successfully!"})
     except Exception:
         app.logger.exception(f"Error editing cake {cake_id}")
-        flash('An error occurred while editing the cake. Please try again.', 'danger')
-    return redirect(url_for('admin_cakes'))
+        return jsonify({"success": False, "message": "Failed to update cake."}), 500
 
 # ---------------- DELETE CAKE ----------------
 @app.route('/cake/delete/<cake_id>', methods=['POST'])
@@ -2128,12 +2170,10 @@ def delete_cake(cake_id):
             target=f"{cake_name} (ID: {cake_id})",
             category="cake"
         )
-        flash('Cake deleted!', 'success')
+        return jsonify({"success": True, "message": "Cake deleted successfully!"})
     except Exception:
         app.logger.exception(f"Error deleting cake {cake_id}")
-        flash('An error occurred while deleting the cake. Please try again.', 'danger')
-
-    return redirect(url_for('admin_cakes'))
+        return jsonify({"success": False, "message": "Failed to delete cake."}), 500
 
 # ---------------- DISABLE USER ----------------
 @app.route('/admin/user/disable/<uid>', methods=['POST'])

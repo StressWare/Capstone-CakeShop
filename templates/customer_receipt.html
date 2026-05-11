@@ -323,6 +323,14 @@
         {% endif %}
       {% endif %}
 
+      {% if order.discount_amount %}
+      <div style="display:flex;justify-content:space-between;align-items:center;
+                  padding:8px 0;font-size:0.88rem;color:#d63384;">
+        <span>Discount ({{ order.voucher_discount }}% on Cakes)</span>
+        <span>-₱{{ "%.2f"|format(order.discount_amount|float) }}</span>
+      </div>
+      {% endif %}
+
       <div class="receipt-total-row">
         <span>Total</span>
         <span class="receipt-total-amount">₱{{ "%.2f"|format(order.amount) }}</span>

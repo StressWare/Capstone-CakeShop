@@ -844,12 +844,10 @@ document.addEventListener('hidden.bs.modal', function() {
 
   // ── Update Status Cell ──
   function getUpdateCell(o) {
-    if (o.status === 'Completed') {
-      return `<span class="badge bg-success p-2">✅ Completed</span>
-              ${o.payment_method === 'Cash on Delivery' ? '<br><span class="badge bg-success mt-1">💰 COD Paid</span>' : ''}`;
-    }
-    if (o.status === 'Cancelled') {
-      return `<span class="badge bg-danger p-2">❌ Cancelled</span>`;
+    if (o.status === 'Completed' || o.status === 'Cancelled') {
+      const badgeClass = o.status === 'Completed' ? 'bg-success' : 'bg-danger';
+      const icon = o.status === 'Completed' ? '✅' : '❌';
+      return `<span class="badge ${badgeClass} p-2">${icon} ${o.status}</span>`;
     }
 
     const options = {
@@ -866,13 +864,66 @@ document.addEventListener('hidden.bs.modal', function() {
     ).join('');
 
     return `
-      <form method="POST" action="/order/status/${o.id}" onsubmit="return confirmStatus('${o.status}')">
-        <select name="status" class="form-select form-select-sm mb-1">${selectOptions}</select>
-        <button class="btn btn-primary btn-sm w-100">
+      <div class="status-update-wrapper" data-order-id="${o.id}" data-current-status="${o.status}">
+        <select class="form-select form-select-sm mb-1 status-select">${selectOptions}</select>
+        <button type="button" class="btn btn-primary btn-sm w-100" onclick="updateOrderStatus('${o.id}')">
           <i class="fas fa-sync-alt"></i> Update
         </button>
-      </form>`;
+      </div>`;
   }
+  window.updateOrderStatus = async function(orderId) {
+    const wrapper = document.querySelector(`.status-update-wrapper[data-order-id="${orderId}"]`);
+    if (!wrapper) return;
+
+    const currentStatus = wrapper.dataset.currentStatus;
+    const newStatus = wrapper.querySelector('.status-select').value;
+    const btn = wrapper.querySelector('button');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+
+    const confirm = await Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'warning',
+      title: 'Confirm Status Change?',
+      html: `<div style="text-align:left; font-size:0.85rem;">
+              <div style="margin-bottom:6px;"><span style="color:#6c757d;">Current:</span> <strong>${currentStatus}</strong></div>
+              <div><span style="color:#6c757d;">Change to:</span> <strong style="color:#d63384;">${newStatus}</strong></div>
+            </div>`,
+      showConfirmButton: true,
+      showCancelButton: true,
+      confirmButtonText: '✓ Confirm',
+      cancelButtonText: '✕ Cancel',
+      confirmButtonColor: '#d63384',
+      cancelButtonColor: '#6c757d',
+      timer: 0
+    });
+
+    if (!confirm.isConfirmed) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('status', newStatus);
+      const response = await fetch(`/order/status/${orderId}`, { method: 'POST', body: formData });
+      const result = await response.json();
+
+      Swal.fire({
+        toast: true, position: 'top-end', icon: result.success ? 'success' : 'error',
+        title: result.message || (result.success ? 'Updated!' : 'Failed'),
+        showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
+      });
+    } catch (err) {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+    }
+  };
 
   // ── Show Details Modal ──
   window.showDetails = function(orderId) {
@@ -988,6 +1039,59 @@ document.addEventListener('hidden.bs.modal', function() {
     calculateEditTotal();
     new bootstrap.Modal(document.getElementById('editOrderModal')).show();
   };
+  document.addEventListener('DOMContentLoaded', function() {
+    const editForm = document.getElementById('editOrderForm');
+    if (!editForm) return;
+
+    editForm.addEventListener('submit', async function(e) {
+      e.preventDefault(); // Stop traditional form submit
+
+      const btn = editForm.querySelector('button[type="submit"]');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      try {
+        // 1. Calculate totals (runs your existing onclick logic)
+        updateEditOrderData();
+
+        // 2. Send via fetch
+        const formData = new FormData(editForm);
+        const response = await fetch(editForm.action, {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        // 3. Show toast
+        Swal.fire({
+          toast: true, position: 'top-end',
+          icon: result.success ? 'success' : 'error',
+          title: result.message,
+          showConfirmButton: false,
+          timer: result.success ? 2500 : 4000,
+          timerProgressBar: true
+        });
+
+        // 4. Close modal on success
+        if (result.success) {
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editOrderModal'));
+          if (modal) modal.hide();
+        }
+
+      } catch (err) {
+        Swal.fire({
+          toast: true, position: 'top-end', icon: 'error',
+          title: 'Network error. Please try again.',
+          showConfirmButton: false, timer: 3000
+        });
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+  });
 
   // ── Calculate Edit Total ──
   window.calculateEditTotal = function() {
@@ -1092,5 +1196,54 @@ document.addEventListener('hidden.bs.modal', function() {
 
   document.addEventListener('DOMContentLoaded', init);
 })();
+
+  // ── SweetAlert2 Toast Confirmation ──
+  window.confirmStatus = function(currentStatus) {
+      return new Promise((resolve) => {
+          Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'warning',
+              title: 'Update Order Status?',
+              html: `
+                  <div style="text-align:left; font-size:0.85rem;">
+                      <div style="margin-bottom:8px;">
+                          <span style="color:#6c757d;">Current:</span> 
+                          <strong>${currentStatus}</strong>
+                      </div>
+                      <div>
+                          <span style="color:#6c757d;">Change to:</span> 
+                          <strong style="color:#d63384;">${document.querySelector('select[name="status"]').value}</strong>
+                      </div>
+                  </div>
+              `,
+              showConfirmButton: true,
+              showCancelButton: true,
+              confirmButtonText: '✓ Confirm',
+              cancelButtonText: '✕ Cancel',
+              confirmButtonColor: '#d63384',
+              cancelButtonColor: '#6c757d',
+              timer: 0,  // ← NO auto-dismiss!
+              timerProgressBar: false,
+              didOpen: (toast) => {
+                  toast.addEventListener('mouseenter', Swal.stopTimer);
+                  toast.addEventListener('mouseleave', Swal.resumeTimer);
+              }
+          }).then((result) => {
+              resolve(result.isConfirmed);  // Returns true if confirmed
+          });
+      });
+  };
+  // ── Handle Status Update with Toast Confirm ──
+  window.handleStatusUpdate = async function(event, currentStatus) {
+      event.preventDefault();  // Stop normal submit
+      
+      const confirmed = await confirmStatus(currentStatus);
+      
+      if (confirmed) {
+          event.target.submit();  // Submit the form
+      }
+      return false;
+  };
 </script>
 {% endblock %}

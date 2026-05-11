@@ -434,7 +434,7 @@
   var orderItems = {{ selected_items | tojson }};
   function changeQty(index, delta) {
       var item = orderItems[index];
-      var newQty = Math.max(1, item.quantity + delta);
+      var newQty = Math.max(1, Math.min(item.max_qty || 99, item.quantity + delta));
       item.quantity = newQty;
       item.subtotal = item.price * newQty;
 
@@ -484,12 +484,23 @@
   }
 
   function recalcTotal() {
-    var subtotal = orderItems.length > 0
-      ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
-      : baseAmount;
-    var deliveryFee  = currentDeliveryType === 'Delivery' ? 50 : 0;
-    var discountAmt  = subtotal * activeDiscount / 100;
-    var total        = subtotal + deliveryFee - discountAmt;
+      var subtotal = orderItems.length > 0
+        ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
+        : baseAmount;
+      var deliveryFee  = currentDeliveryType === 'Delivery' ? 50 : 0;
+
+      // Only apply discount to Cake category items (or full amount for custom)
+      var discountBase = 0;
+      if (orderItems.length > 0) {
+        orderItems.forEach(function(i) {
+          if (i.category === 'Cake') discountBase += i.subtotal;
+        });
+      } else {
+        // Custom cake — full amount is cake
+        discountBase = baseAmount;
+      }
+      var discountAmt = discountBase * activeDiscount / 100;
+      var total       = subtotal + deliveryFee - discountAmt;
 
     document.getElementById('displaySubtotal').textContent = '₱' + subtotal.toFixed(2);
     document.getElementById('totalAmountInput').value      = total.toFixed(2);
@@ -507,7 +518,7 @@
         totalRow.parentNode.insertBefore(row, totalRow);
       }
       document.getElementById('displayDiscountRow').innerHTML =
-        '<span>Discount (' + activeDiscount + '%)</span><span>-₱' + discountAmt.toFixed(2) + '</span>';
+        '<span>Discount (' + activeDiscount + '% on Cakes)</span><span>-₱' + discountAmt.toFixed(2) + '</span>';
     } else if (discountRow) {
       discountRow.remove();
     }

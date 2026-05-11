@@ -2,112 +2,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login / Sign Up</title>
-  <link href="../static/css/authentication.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <!-- Firebase SDK (v9 compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Sign Up</title>
+    <link href="../static/css/authentication.css" rel="stylesheet">
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Firebase SDK (v9 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-light bg-light fixed-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">
-      <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
-    </a>
-  </div>
-</nav>
-
-<!-- Spacer for navbar -->
-<div style="height: 70px;"></div>
-
-<!-- FORM CONTAINER -->
-<div class="container">
-    <div style="height: 70px;"></div>
-    
-    <div class="container auth-layout">
-        <!-- LEFT SIDE: LOGO -->
-        <div class="auth-left">
-            <img src="../static/img/logo.png" alt="Mrs. Brave's Logo" class="auth-logo">
-        </div>
-        <!-- RIGHT SIDE: FORMS -->
-        <div class="form-container">
-            <!-- Login Form -->
-            <form id="loginForm" class="form active">
-                <h2>Login</h2>
-                <input type="email" id="loginEmail" placeholder="Email" required>
-                <div class="password-wrapper">
-                    <input type="password" id="loginPassword" placeholder="Password" required>
-                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
-                </div>
-                <button type="submit">Login</button>
-                <p style="text-align: center; margin-top: 10px;">
-                    <a href="/forgot-password" class="toggle-btn">Forgot Password?</a>
-                </p>
-
-                <p class="toggle-msg">
-                    Don't have an account? 
-                    <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
-                </p>
-                
-                <p class="toggle-msg">
-                Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
-                </p>
-            </form>
-
-            <!-- Sign Up Form (with fname and correct field names) -->
-            <form id="signupForm" class="form">
-                <h2>Sign Up</h2>
-                <input type="email" id="signupEmail" placeholder="Email" required>
-                <input type="text" id="signupFname" placeholder="Full Name" required>   <!-- NEW -->
-                <input type="text" id="signupUsername" placeholder="Username" required>
-                <input type="tel" id="signupNumber" placeholder="Phone Number" required> <!-- ID matches Flask 'number' -->
-                <input type="text" id="signupAddress" placeholder="Address" required>
-                <div class="password-wrapper">
-                    <input type="password" id="signupPassword" placeholder="Password" required>
-                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
-                </div>
-                <div class="password-wrapper">
-                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-                    <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
-                </div>
-                <button type="submit">Sign Up</button>
-                <p class="toggle-msg">
-                    Already have an account? 
-                    <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
-                </p>
-
-                <p class="toggle-msg">
-                Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
-                </p>
-            </form>
-
-
-        </div>
-    </div>
-</div>
-
-<!-- FOOTER -->
-<footer class="custom-footer">
-  <div class="footer-container">
-    <div class="footer-left">
-      <h2>Mrs. Brave's</h2>
-    </div>
-    <div class="footer-right">
-      <p><i class="fas fa-phone"></i> 0956 350 4486</p>
-      <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
-      <p>
-        <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
-          <i class="fab fa-facebook"></i>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-light bg-light fixed-top">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">
+        <img src="../static/img/mrs.brave.jpg" alt="MRS. Brave's" class="navbar-logo">
         </a>
-      </p>
     </div>
-  </div>
-</footer>
+    </nav>
+
+    <!-- Spacer for navbar -->
+    <div style="height: 70px;"></div>
+
+    <!-- FORM CONTAINER -->
+    <div class="container">
+        <div style="height: 70px;"></div>
+        
+        <div class="container auth-layout">
+            <!-- LEFT SIDE: LOGO -->
+            <div class="auth-left">
+                <img src="../static/img/logo.png" alt="Mrs. Brave's Logo" class="auth-logo">
+            </div>
+            <!-- RIGHT SIDE: FORMS -->
+            <div class="form-container">
+                <!-- Login Form -->
+                <form id="loginForm" class="form active">
+                    <h2>Login</h2>
+                    <input type="email" id="loginEmail" placeholder="Email" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" placeholder="Password" required>
+                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
+                    </div>
+                    <button type="submit">Login</button>
+                    <p style="text-align: center; margin-top: 10px;">
+                        <a href="/forgot-password" class="toggle-btn">Forgot Password?</a>
+                    </p>
+
+                    <p class="toggle-msg">
+                        Don't have an account? 
+                        <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
+                    </p>
+                    
+                    <p class="toggle-msg">
+                    Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
+                    </p>
+                </form>
+
+                <!-- Sign Up Form (with fname and correct field names) -->
+                <form id="signupForm" class="form">
+                    <h2>Sign Up</h2>
+                    <input type="email" id="signupEmail" placeholder="Email" required>
+                    <input type="text" id="signupFname" placeholder="Full Name" required>   <!-- NEW -->
+                    <input type="text" id="signupUsername" placeholder="Username" required>
+                    <input type="tel" id="signupNumber" placeholder="Phone Number" required> <!-- ID matches Flask 'number' -->
+                    <input type="text" id="signupAddress" placeholder="Address" required>
+                    <div class="password-wrapper">
+                        <input type="password" id="signupPassword" placeholder="Password" required>
+                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
+                    </div>
+                    <div class="password-wrapper">
+                        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
+                    </div>
+                    <button type="submit">Sign Up</button>
+                    <p class="toggle-msg">
+                        Already have an account? 
+                        <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
+                    </p>
+
+                    <p class="toggle-msg">
+                    Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
+                    </p>
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="custom-footer">
+    <div class="footer-container">
+        <div class="footer-left">
+        <h2>Mrs. Brave's</h2>
+        </div>
+        <div class="footer-right">
+        <p><i class="fas fa-phone"></i> 0956 350 4486</p>
+        <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
+        <p>
+            <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
+            <i class="fab fa-facebook"></i>
+            </a>
+        </p>
+        </div>
+    </div>
+    </footer>
 
 
 <script>
@@ -164,7 +166,21 @@
             const userCredential = await auth.signInWithEmailAndPassword(email, password);
             await sendTokenToBackend(userCredential.user);
         } catch (error) {
-            alert('Login error: ' + error.message);
+            const messages = {
+                'auth/invalid-login-credentials': 'Invalid email or password. Please try again.',
+                'auth/user-not-found': 'No account found with this email.',
+                'auth/wrong-password': 'Incorrect password. Please try again.',
+                'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
+                'auth/invalid-email': 'Please enter a valid email address.',
+                'auth/user-disabled': 'This account has been disabled.'
+            };
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Failed',
+                text: messages[error.code] || 'Login failed. Please try again.',
+                confirmButtonColor: '#C71585',
+                confirmButtonText: 'OK'
+            });
         }
     });
 
@@ -213,7 +229,20 @@
                 alert('Failed to save profile data.');
             }
         } catch (error) {
-            alert('Signup error: ' + error.message);
+            const messages = {
+                'auth/email-already-in-use': 'This email is already registered.',
+                'auth/invalid-email': 'Please enter a valid email address.',
+                'auth/weak-password': 'Password should be at least 6 characters.',
+                'auth/operation-not-allowed': 'Sign-up is currently disabled.'
+            };
+            Swal.fire({
+                icon: 'error',
+                title: 'Signup Failed',
+                text: error.code === 'auth/email-already-in-use' ? 'This email is already registered.' : 
+                    error.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 
+                    'Signup failed. Please try again.',
+                confirmButtonColor: '#C71585'
+            });
         }
     });
 
@@ -240,7 +269,19 @@
             const result = await auth.signInWithPopup(provider);
             await sendTokenToBackend(result.user);
         } catch (error) {
-            alert('Google sign-in error: ' + error.message);
+            const messages = {
+                'auth/popup-closed-by-user': 'Sign-in cancelled.',
+                'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
+                'auth/cancelled-popup-request': 'Sign-in cancelled.',
+                'auth/account-exists-with-different-credential': 'An account already exists with this email.'
+            };
+            Swal.fire({
+                icon: 'error',
+                title: 'Google Sign-In Failed',
+                text: error.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' : 
+                    'Google sign-in failed. Please try again.',
+                confirmButtonColor: '#C71585'
+            });
         }
     });
 
