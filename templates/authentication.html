@@ -139,7 +139,12 @@
     if (response.ok) {
         const data = await response.json();  // ← READ the response
         if (data.needs_verification) {
-            alert('Please verify your email first, check spam folder before logging in')
+            Swal.fire({
+                icon: 'warning',
+                title: 'Email Not Verified',
+                text: 'Please check your email (and spam folder) before logging in.',
+                confirmButtonColor: '#C71585'
+            })
             await auth.signOut()
             return
         }
@@ -152,7 +157,12 @@
         }
     } else {
         const error = await response.json();
-        alert('Authentication failed: ' + (error.error || 'Unknown error'));
+        Swal.fire({
+            icon: 'error',
+            title: 'Authentication Failed',
+            text: error.error || 'Unknown error',
+            confirmButtonColor: '#C71585'
+        })
     }
 }
 
@@ -196,7 +206,12 @@
         const confirm = document.getElementById('signupConfirmPassword').value;
 
         if (password !== confirm) {
-            alert('Passwords do not match!');
+            Swal.fire({
+                icon: 'error',
+                title: 'Passwords Do Not Match',
+                text: 'Please try again.',
+                confirmButtonColor: '#C71585'
+            });
             return;
         }
 
@@ -223,10 +238,20 @@
 
             if (response.ok) {
                 await auth.signOut();            // ← sign out first
-                alert('✅ Account created! Please check your email and click the verification link before logging in.');
+                Swal.fire({
+                    icon: 'success',
+                    title: '✅ Account Created!',
+                    text: 'Please check your email before logging in.',
+                    confirmButtonColor: '#C71585'
+                });
                 toggleForms();                   // ← switch to login form
             } else {
-                alert('Failed to save profile data.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Save Failed',
+                    text: 'Failed to save profile data.',
+                    confirmButtonColor: '#C71585'
+                });
             }
         } catch (error) {
             const messages = {
@@ -250,15 +275,30 @@
     const email = document.getElementById('loginEmail').value;
 
     if (!email) {
-        alert('Please enter your email first!');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Email Required',
+            text: 'Please enter your email first.',
+            confirmButtonColor: '#C71585'
+        });
         return;
     }
 
     try {
         await auth.sendPasswordResetEmail(email);
-        alert('Password reset email sent! Check your Gmail.');
+        Swal.fire({
+            icon: 'success',
+            title: 'Reset Email Sent',
+            text: 'Check your Gmail (and spam folder).',
+            confirmButtonColor: '#C71585'
+        })
     } catch (error) {
-        alert('Error: ' + error.message);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            confirmButtonColor: '#C71585'
+        });
     }
 }
 

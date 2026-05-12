@@ -2039,6 +2039,7 @@ def add_inventory():
         target=f"{item} — qty: {quantity}, cost: ₱{cost}",
         category="inventory"
     )
+    flash('Inventory item added!', 'success')
     return redirect(url_for("admin_inventory"))
 
 # ---------------- EDIT INVENTORY ----------------
@@ -2060,7 +2061,7 @@ def edit_inventory(id):
         target=request.form["item"],
         category="inventory"
     )
-    
+    flash('Inventory item updated!', 'success')
     return redirect(url_for("admin_inventory"))
 
 # ---------------- EDIT EXPENSES COST----------------
