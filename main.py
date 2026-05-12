@@ -62,7 +62,7 @@ def home_page():
 
     # ── Existing: Top rated cakes (untouched) ──
     available_cakes = []
-    for cake_doc in cakes.where("status", "==", True).stream():
+    for cake_doc in cakes.stream():
         cake_data = cake_doc.to_dict()
         cake_data['id']           = cake_doc.id
         cake_data['avg_rating']   = 0

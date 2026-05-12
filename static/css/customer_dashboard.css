@@ -660,6 +660,8 @@ body {
   border-radius: var(--radius);
   overflow: hidden;
   padding: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .custom-table { margin: 0; color: var(--text); }
 .custom-table thead th {

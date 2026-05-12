@@ -480,75 +480,56 @@ background-color: white;
 }
 
 /* ===== MEDIA QUERIES ===== */
-@media (max-width: 768px) {
-  .header h1 {
-    font-size: 1.6rem;
-  }
-  .header p {
-    font-size: 0.9rem;
-  }
-  .cake-image img {
-    height: 180px;
-  }
+/* =========================================
+   CLEAN MOBILE RESPONSIVE (Combined)
+========================================= */
+
+/* Tablet & Small Desktops */
+@media (max-width: 992px) {
+  .header h1 { font-size: 1.6rem; }
+  .header p { font-size: 0.9rem; }
+  .cake-image img, .no-image { height: 180px; }
 }
 
-@media (max-width: 480px) {
-  .cakes-grid {
-    grid-template-columns: 1fr;
-  }
-  .menu {
-    width: 100px;
-  }
-  .menu-btn {
-    font-size: 0.9rem;
-    padding: 4px 8px;
-  }
-}
-
-@media (max-width: 768px) {
-  .cake-image img,
-  .no-image {
-    height: 180px;
-  }
-}
-
-@media (max-width: 480px) {
-  .cakes-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ===== MOBILE: HORIZONTAL CAKE CARDS ===== */
+/* Mobile: Horizontal Scroll Carousel */
 @media (max-width: 768px) {
   .cakes-grid {
-    display: flex;
+    display: flex;        /* Switch from grid to flex */
     flex-wrap: nowrap;
-    overflow-x: auto;
+    overflow-x: auto;     /* Allow horizontal scrolling */
     gap: 14px;
     padding: 10px;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x mandatory; /* Smooth snapping */
   }
 
   .cake-card {
     flex: 0 0 auto;
-    width: 200px;       /* increased width */
-    height: auto;       /* prevents overly tall cards */
+    width: 200px;         /* Fixed width for scroll cards */
+    height: auto;
     scroll-snap-align: start;
   }
 
-  .cake-image img,
-  .no-image {
-    height: 140px;      /* balanced image height */
+  .cake-image img, .no-image {
+    height: 140px;
     width: 100%;
     object-fit: cover;
   }
 }
 
-/* hide scrollbar (optional clean look) */
-.cakes-grid::-webkit-scrollbar {
-  display: none;
+/* Small Phones & Menu Fixes */
+@media (max-width: 480px) {
+  /* Fix menu button sizing */
+  .menu-btn {
+    font-size: 1.2rem;
+    padding: 5px 10px;
+  }
+  
+  /* Ensure menu slide-out is actually readable */
+  .menu {
+    width: 260px !important; /* Changed from 100px to 260px */
+  }
 }
 
-.cakes-grid {
-  scrollbar-width: none;
-}
+/* Hide Scrollbar for Clean Look */
+.cakes-grid::-webkit-scrollbar { display: none; }
+.cakes-grid { scrollbar-width: none; }

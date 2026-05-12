@@ -43,6 +43,8 @@
   <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
   <!-- Chatbot CSS -->
   <link href="{{ url_for('static', filename='css/chatbot.css') }}" rel="stylesheet">
+  <!-- ✅ MOBILE GLOBAL FIXES (load BEFORE page-specific CSS) -->
+  <link href="{{ url_for('static', filename='css/mobileresponsive.css') }}" rel="stylesheet">
   {% block extra_css %}{% endblock %}
 </head>
 <body data-user-id="{{ session.get('user_id') }}">

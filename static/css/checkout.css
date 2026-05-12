@@ -503,9 +503,206 @@
 
 
     
-    @media (max-width: 992px) {
-      .checkout-main {
-        grid-template-columns: 1fr;
-        gap: 30px;
-      }
-    }
+  /* =========================================
+   MOBILE RESPONSIVE - CHECKOUT (CONSOLIDATED)
+   Replaces ALL previous @media blocks
+========================================= */
+
+/* Tablet: Stack columns */
+@media (max-width: 992px) {
+  .checkout-main {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+}
+
+/* Mobile: Full responsive lockdown */
+@media (max-width: 575px) {
+  /* 1. Lock viewport */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  /* 2. Constrain container */
+  .checkout-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 12px !important;
+    margin: 16px auto !important;
+  }
+
+  /* 3. Stack main layout */
+  .checkout-main {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+  .checkout-main > * {
+    min-width: 0 !important; /* ← CRITICAL: prevents flex overflow */
+    width: 100% !important;
+  }
+
+  /* 4. Reduce padding on glass cards */
+  .checkout-form-section,
+  .order-summary {
+    padding: 16px !important; /* Was 40px — huge reduction */
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 5. Stack ALL button groups vertically */
+  .delivery-options,
+  .payment-options,
+  .address-type-buttons {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+  .delivery-option,
+  .payment-options .payment-method,
+  .address-type-btn {
+    width: 100% !important;
+    min-width: 100% !important;
+    flex: none !important;
+  }
+
+  /* 6. Stack form inputs */
+  .form-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+  .form-group {
+    width: 100% !important;
+    min-width: 0 !important; /* ← Prevents input overflow */
+  }
+  .form-control,
+  #mapSearch {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important; /* Prevents iOS zoom */
+  }
+
+  /* 7. Constrain map & search */
+  #mapContainer,
+  #pickupMapContainer,
+  .map-search-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  #map,
+  #pickupMap {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 220px !important; /* Reduced from 280px */
+  }
+  #mapSearch {
+    padding: 10px 32px 10px 12px !important; /* Adjust for icon */
+    box-sizing: border-box !important;
+  }
+  .map-search-icon {
+    right: 14px !important;
+  }
+  #searchSuggestions {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 8. Fix order summary */
+  .order-summary {
+    position: static !important;
+    margin-top: 12px !important;
+  }
+  .order-item {
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+  }
+  .order-item-image {
+    width: 60px !important;
+    height: 60px !important;
+    flex-shrink: 0 !important;
+  }
+  .order-item-details {
+    min-width: 0 !important; /* ← Allows text to wrap */
+    flex: 1 !important;
+  }
+
+  /* 9. Ensure buttons fit */
+  .btn,
+  .btn-save,
+  #submitBtn {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 12px !important;
+    font-size: 1rem !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 10. Fallback: catch any remaining overflow */
+  * {
+    max-width: 100vw !important;
+  }
+}
+
+@media (max-width: 575px) {
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    position: relative !important;
+  }
+
+  /* 2. Fix offcanvas/menu overflow */
+  .offcanvas,
+  .custom-offcanvas,
+  .menu {
+    right: -300px !important; /* Keep hidden off-screen */
+    max-width: 280px !important;
+  }
+  
+  .offcanvas.active,
+  .custom-offcanvas.active,
+  .menu.active {
+    right: 0 !important; /* Slide in when active */
+    left: auto !important;
+    width: 280px !important;
+    max-width: 85vw !important;
+  }
+
+  /* 3. Constrain Leaflet map tiles */
+  #map,
+  #pickupMap,
+  .leaflet-container {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  .leaflet-tile-container {
+    max-width: 100% !important;
+  }
+  
+  .leaflet-container img {
+    max-width: none !important;
+  }
+
+  /* 4. Force all containers to respect viewport */
+  .checkout-container,
+  .checkout-form-section,
+  .order-summary,
+  #mapContainer,
+  #pickupMapContainer {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  /* 5. Catch-all: prevent ANY element from breaking viewport */
+  * {
+    max-width: 100vw !important;
+  }
+}

@@ -278,7 +278,8 @@ footer {
     }
 
     .btn-remove {
-        margin-left: 500px;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
         background: #ffe6f0;
         border: 1px solid #ffcce6;
         color: #9d0000;
@@ -381,3 +382,36 @@ footer {
       padding: 0.7rem 1rem;
       font-size: 0.9rem;
     }
+
+    /* Mobile: Prevent horizontal scroll */
+@media (max-width: 575px) {
+  .cart-wrapper {
+    padding: 0 0.75rem;
+    max-width: 100%;
+  }
+  
+  .cart-card {
+    padding: 0.75rem;
+  }
+  
+  .cart-item-row {
+    flex-wrap: wrap;  /* Allow wrapping on very small screens */
+    gap: 0.6rem;
+  }
+  
+  .cake-img-box {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .item-name {
+    font-size: 0.9rem;
+    flex: 1 1 calc(100% - 80px);  /* Take remaining width */
+  }
+  
+  .btn-remove {
+    margin-top: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+  }
+}
