@@ -78,26 +78,33 @@
   </div>
 </nav>
 <!-- ── OFFCANVAS MENU ── -->
-<div class="custom-offcanvas" id="offcanvasMenu">
-  <div class="offcanvas-header">
-    <h5>Navigate</h5>
-    <button class="close-btn" id="menuClose">&times;</button>
-  </div>
-  <div class="offcanvas-body">
-    <a href="/">Home</a>
-    <a href="/cakes">Available Cakes</a>
-    <a href="/customize_cake">Customize Your Cake</a>
-    {% if session.get('user_id') %}
-      <a href="/customer_dashboard">My Profile</a>
-      <a href="/cart">My Cart</a>
-      <a href="/logout">Logout</a>
-    {% else %}
-      <a href="/authentication">Login</a>
-    {% endif %}
-  </div>
-</div>
+<!-- OVERLAY -->
+<div class="menu-overlay" id="menuOverlay"></div>
 
-<div style="margin-top: 70px;"></div>
+<!-- OFFCANVAS MENU -->
+<!-- OVERLAY -->
+<div class="menu-overlay" id="menuOverlay"></div>
+
+  <!-- OFFCANVAS MENU -->
+  <div class="custom-offcanvas" id="offcanvasMenu">
+    <div class="offcanvas-header">
+      <button class="close-btn" id="menuClose">&#9776;</button>
+  </div>
+    <div class="offcanvas-body">
+      <a href="/">Home</a>
+      <a href="/cakes">Available Cakes</a>
+      <a href="/customize_cake">Customize Your Cake</a>
+      {% if session.get('user_id') %}
+        <a href="/customer_dashboard">My Profile</a>
+        <a href="/cart">My Cart</a>
+        <a href="/logout">Logout</a>
+      {% else %}
+        <a href="/authentication">Login</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="margin-top: 70px;"></div>
 
 <!-- ── FLASH MESSAGES ── -->
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -185,25 +192,36 @@
 {% endif %}
 
 <!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="{{ url_for('static', filename='javascript/notification.js') }}"></script>
-<!-- ── OFFCANVAS JS ── -->
 <script>
-  const menuBtn   = document.getElementById("menuToggle");
-  const offcanvas = document.getElementById("offcanvasMenu");
-  const menuClose = document.getElementById("menuClose");
+  const menuBtn    = document.getElementById("menuToggle");
+  const offcanvas  = document.getElementById("offcanvasMenu");
+  const menuClose  = document.getElementById("menuClose");
+  const overlay    = document.getElementById("menuOverlay");
+
+  function openMenu() {
+    offcanvas.classList.add("active");
+    overlay.classList.add("active");
+  }
+
+  function closeMenu() {
+    offcanvas.classList.remove("active");
+    overlay.classList.remove("active");
+  }
 
   if (menuBtn && offcanvas && menuClose) {
-    menuBtn.addEventListener("click", () => offcanvas.classList.add("active"));
-    menuClose.addEventListener("click", () => offcanvas.classList.remove("active"));
-    document.addEventListener("click", (e) => {
-      if (!offcanvas.contains(e.target) && !menuBtn.contains(e.target)) {
-        offcanvas.classList.remove("active");
-      }
+    // Toggle open/close sa Menu button
+    menuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      offcanvas.classList.contains("active") ? closeMenu() : openMenu();
     });
-  }
-</script>
 
+    // Isara sa X button
+    menuClose.addEventListener("click", closeMenu);
+
+    // Isara kapag na-click ang overlay (labas ng menu)
+    overlay.addEventListener("click", closeMenu);
+  }
+</script> 
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}
 {% if session.get('user_id') %}

@@ -35,32 +35,15 @@
 }
 
 /* ====== MENU (RIGHT-SIDE SLIDE-IN) ====== */
-.menu {
-    position: fixed;
-    top: 0;
-    right: -300px; /* hidden initially */
-    width: 300px;
-    height: 100%;
-    background-color: #f8f8f8;
-    box-shadow: -2px 0 5px rgba(0,0,0,0.2);
-    transition: right 0.5s ease; /* longer & smoother */
-    overflow-y: auto;
-    z-index: 1000;
-}
-
-.menu.active {
-    right: 0; /* slides into view */
-}
-
 .menu-btn {
     font-size: 1.5rem;
     background: none;
-    border: 2px solid #d63384;
-    color: #d63384;
+    border: 2px solid #000000;
+    color: #0c0006;
     border-radius: 8px;
     padding: 5px 15px;
     cursor: pointer;
-    transition: background-color 0.4s ease, color 0.4s ease; /* smooth hover */
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 .menu-btn:hover {
@@ -68,66 +51,155 @@
     color: #fff;
 }
 
-/* ====== OFFCANVAS MENU ====== */
-.offcanvas {
-    position: fixed;
-    top: 0;
-    right: -250px;
-    width: 250px;
-    height: 100%;
-    background-color: #fff0f5;
-    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-    transition: right 0.5s ease; /* smooth slide-in */
-    z-index: 998;
-    padding: 20px;
+/* ====== CUSTOM OFFCANVAS MENU ====== */
+.menu-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: 2px solid #000000;
+    color: #d63384;
+    border-radius: 8px;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-.offcanvas.active {
-    right: 0;
+.menu-btn:hover {
+    background-color: #000000;
+    color: #fff;
+}
+
+/* ====== CUSTOM OFFCANVAS MENU ====== */
+.custom-offcanvas {
+    position: fixed;
+    top: 0;
+    right: -270px;                   /* nakatago sa kanan */
+    width: 270px;
+    height: 100%;
+     background-color: #630031;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    transition: right 0.5s ease;
+    z-index: 1001;
+    padding: 30px 20px;
+    overflow-y: auto;
+}
+
+.custom-offcanvas.active {
+    right: 0;                        /* slide in mula sa kanan */
 }
 
 .offcanvas-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
+}
+
+.offcanvas-header h5 {
+    color: #0b0b0b;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.offcanvas-body {
+    margin-top: 20px;
+    padding-top: 10px;
 }
 
 .offcanvas-body a {
     display: block;
     text-decoration: none;
-    color: #d63384;
-    font-weight: 600;
-    margin-bottom: 15px;
-    transition: color 0.3s ease; /* smoother hover color change */
+    color: #ffffff !important;      /* white text tulad ng admin */
+    font-weight: 400 !important;    /* hindi bold, same sa admin */
+    font-size: 1rem;
+    margin-bottom: 5px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .offcanvas-body a:hover {
-    color: #a71d65;
+    background-color: #d63384 !important;
+    color: #ffffff !important;
 }
 
 .close-btn {
     background: none;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     cursor: pointer;
-}
-/* ====== CUSTOM OFFCANVAS MENU ====== */
-.custom-offcanvas {
-    position: fixed;
-    top: 0;
-    right: -250px;
-    width: 250px;
-    height: 100%;
-    background-color: #fff0f5;
-    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-    transition: right 0.5s ease;
-    z-index: 998;
-    padding: 20px;
+    color: #e1113e;              /* AYOS: black para makita */
+    line-height: 1;
+    font-weight: 700;
 }
 
-.custom-offcanvas.active {
-    right: 0;
+.close-btn:hover {
+    color: #060003;           /* pink on hover */
+}
+
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
 }
 
 /* ===== FOOTER ===== */

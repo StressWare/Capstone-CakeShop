@@ -4,38 +4,42 @@
 {% block extra_css %}
 <link href="../static/css/style.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+<style>
   body { scroll-behavior: smooth; }
   .hero-title { font-weight: 700; }
   .price-box { font-size: 1.5rem; font-weight: bold; color: #d63384; }
-</style>
-<style>
+
   .custom-carousel-container {
     position: relative;
-    width: calc(100% - 100px); /* total space (150 left + 150 right) */
-    margin: 0 auto; /* centers it */
+    width: calc(100% - 120px);       /* 60px espasyo sa bawat gilid */
+    margin: 60px auto 50px auto;
     overflow: hidden;
-    height: 400px;
-    margin-bottom: 50px;
-    margin-top: 60px;
-    border-radius: 15px; /* updated */
+    border-radius: 15px;
+    background: transparent;
   }
 
   .custom-carousel {
-    position: relative !important;
+    position: relative;
     width: 100%;
-    height: 100%;
   }
+
   .custom-carousel-item {
     display: none;
     width: 100%;
+    line-height: 0;
   }
+
   .custom-carousel-item.active {
     display: block;
   }
+
   .custom-carousel-item img {
     width: 100%;
     height: 400px;
     object-fit: cover;
+    object-position: center top;     /* AYOS: hindi maputol ang taas ng image */
+    display: block;
+    border-radius: 15px;
   }
 
   .carousel-indicators {
@@ -45,8 +49,9 @@
     transform: translateX(-50%);
     display: flex;
     justify-content: center;
-    align-items: center !important;
-    width: max-content; 
+    align-items: center;
+    width: max-content;
+    z-index: 10;
   }
 
   .carousel-indicators .dot {
@@ -61,7 +66,7 @@
   }
 
   .carousel-indicators .dot.active {
-    background-color: #d63384; /* pink */
+    background-color: #d63384;
     transform: scale(1.2);
   }
 
@@ -69,15 +74,50 @@
     background-color: #ff8ec7;
   }
 
-  h3{
+  h3 {
     color: white;
-    justify-content: center;
-    align-items: center;
-    margin-left: 600px;
-
+    text-align: center;
+    margin-left: 0;
   }
 
-</style>
+  /* ✅ TABLET */
+  @media (max-width: 992px) {
+    .custom-carousel-container {
+      width: calc(100% - 40px);
+      margin: 40px auto 40px auto;
+    }
+
+    .custom-carousel-item img {
+      height: 320px;
+    }
+  }
+
+  /* ✅ MOBILE — gayahin ang desktop design */
+  @media (max-width: 768px) {
+    .custom-carousel-container {
+      width: calc(100% - 24px);
+      margin: 20px auto 30px auto;
+      border-radius: 12px;
+    }
+
+    .custom-carousel-item img {
+      height: auto;                  /* KEY: auto height para same ratio ng image */
+      aspect-ratio: 16 / 5;          /* same ratio ng desktop na image */
+      object-fit: cover;
+      object-position: center top;
+      border-radius: 12px;
+    }
+
+    .carousel-indicators {
+      bottom: 10px;
+    }
+
+    .carousel-indicators .dot {
+      width: 7px;
+      height: 7px;
+      margin: 0 4px;
+    }
+  }
 </style>
 {% endblock %}
 
