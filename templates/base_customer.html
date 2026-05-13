@@ -41,6 +41,7 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <!-- Base CSS -->
   <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
   <!-- Chatbot CSS -->
   <link href="{{ url_for('static', filename='css/chatbot.css') }}" rel="stylesheet">
   <!-- ✅ MOBILE GLOBAL FIXES (load BEFORE page-specific CSS) -->
@@ -155,7 +156,7 @@
 {% if session.get('user_id') %}
 <div id="chatbot-widget" class="chatbot-container" data-user-id="{{ session.get('user_id') }}">
   <button class="chatbot-toggle-btn" id="chatbotToggle" title="Open Chat">
-    <span class="chat-icon">        <img src="../static/img/chathead.jpg" alt="Chat" style="width: 60px; height: 60px; border-radius: 50%;"></span>
+    <span class="chat-icon"><img src="../static/img/chathead.jpg" alt="Chat" style="width: 60px; height: 60px; border-radius: 50%;"></span>
   </button>
   <div class="chatbot-window" id="chatbotWindow" style="display:none;">
     <div class="chatbot-header">

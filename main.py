@@ -14,7 +14,7 @@ import hmac
 import hashlib
 import secrets
 import firebase
-from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens
+from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations
 from firebase_admin import auth, firestore, messaging
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -2446,7 +2446,17 @@ def send_message():
 
         # Update last_updated
         conv_ref.update({'last_updated': now})
-
+        user_data = users.document(user_id).get().to_dict() or {}
+        conversations.document(conversation_id).set({
+            'user_id': user_id,
+            'conversation_id': conversation_id,
+            'customer_name': user_data.get('fname') or user_data.get('username') or 'Customer',
+            'email': user_data.get('email') or '',
+            'last_message': message[:50],
+            'last_updated': now,
+            'escalated': is_escalated,
+            'unread': True
+        }, merge=True)
         # Only send bot response if conversation is NOT escalated
         if not is_escalated:
             bot_response = (
@@ -2522,6 +2532,17 @@ def admin_reply_message():
         
         # Update last_updated
         conv_ref.update({'last_updated': now})
+        user_data = users.document(user_id).get().to_dict() or {}
+        conversations.document(conversation_id).set({
+            'user_id': user_id,
+            'conversation_id': conversation_id,
+            'customer_name': user_data.get('fname') or user_data.get('username') or 'Customer',
+            'email': user_data.get('email') or '',
+            'last_message': message[:50],
+            'last_updated': now,
+            'escalated': True,
+            'unread': False
+        }, merge=True)
         
         return jsonify({'success': True})  
         
@@ -2568,15 +2589,16 @@ def delete_conversation():
         if not user_id or not conversation_id:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
         
-        # Delete the conversation document
         conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
-        conv_ref.delete()
         
-        # Optional: Delete all messages in subcollection
+        # ✅ Delete messages FIRST before deleting parent
         messages = conv_ref.collection("messages").stream()
         for msg in messages:
             msg.reference.delete()
         
+        # ✅ Then delete the conversation document
+        conv_ref.delete()
+        conversations.document(conversation_id).delete()
         return jsonify({'success': True})
     except Exception as e:
         app.logger.exception("Error deleting conversation")

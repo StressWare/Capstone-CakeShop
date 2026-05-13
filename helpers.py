@@ -31,7 +31,38 @@ FAQ = {
     "return policy": "🔄 Return & Refund Policy:\n\n❌ Non-returnable items: Baked goods due to perishability\n✅ Refund eligibility: Only if cake is damaged or incorrect upon delivery\n🕐 Timeline: Report issues within 24 hours of delivery\n💰 Refund process: Full refund or replacement (customer's choice)\n\nPlease message us immediately with photos if there's an issue!",
     "default": "😊 I'm not sure about that question. Please click one of the FAQ buttons above or contact the owner directly using the 'Chat with Owner' button. Thank you!"
 }
-
+FAQ_KEYWORDS = {
+    "how to order": [
+        "order", "how to", "paano", "mag-order", "purchase", "buy", "step",
+        "pano", "paano mag", "gusto ko", "bibili", "bili", "i-order",
+        "place order", "mag order", "how do i order", "pwede mag order"
+    ],
+    "delivery time": [
+        "delivery", "deliv", "deliver", "shipping", "ship", "days", "araw",
+        "kailan", "when", "rush", "standard", "hatid", "mahatid", "ilang araw",
+        "gaano katagal", "tagal", "dating", "dating ng", "kelan", "free delivery",
+        "libre delivery", "magkano delivery", "delivery fee", "bayad delivery"
+    ],
+    "customization": [
+        "custom", "flavor", "flavour", "design", "frosting", "vegan",
+        "sugar-free", "dairy", "personali", "theme", "lasa", "gusto",
+        "pwede ba", "maaari", "iba", "special", "request", "customize",
+        "ilagay", "sulat", "message sa cake", "anong lasa", "anong flavor",
+        "mayroon ba", "meron ba", "available ba"
+    ],
+    "payment methods": [
+        "payment", "pay", "gcash", "maya", "cod", "cash", "bank", "transfer",
+        "bayad", "magbayad", "paano magbayad", "pwede gcash", "pwede cod",
+        "online payment", "credit card", "debit", "bayaran", "pano magbayad",
+        "payment method", "load", "paymaya", "bdo", "bpi", "metrobank"
+    ],
+    "return policy": [
+        "return", "refund", "damage", "wrong", "incorrect", "issue", "problem",
+        "broken", "sira", "mali", "ibalik", "irefund", "pera", "balik pera",
+        "hindi tama", "nasira", "may problema", "complaint", "reklamo",
+        "di ok", "ayaw", "palitan", "replace", "replacement"
+    ],
+}
 # ================================================================
 # HELPERS
 # ================================================================
@@ -51,11 +82,19 @@ def log_admin_action(action, target, category="general"):
 
 def get_faq_response(user_message):
     user_message_lower = user_message.lower()
-    for faq_key, faq_answer in FAQ.items():
-        if faq_key != "default":
-            keywords = faq_key.split()
-            if any(keyword in user_message_lower for keyword in keywords):
-                return faq_answer
+    
+    best_match = None
+    best_score = 0
+    
+    for faq_key, keywords in FAQ_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw in user_message_lower)
+        if score > best_score:
+            best_score = score
+            best_match = faq_key
+    
+    if best_match and best_score > 0:
+        return FAQ[best_match]
+    
     return FAQ.get("default", "I'm not sure. Please contact us directly!")
 
 def save_uploaded_image(file, upload_type):

@@ -318,7 +318,21 @@
         background: #c1c1c1;
         border-radius: 3px;
     }
-    
+    .unread-dot {
+        width: 8px;
+        height: 8px;
+        background: #e91e8c;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .last-msg {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-top: 2px;
+    }
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
         .conversation-container {
@@ -358,34 +372,11 @@
             <div class="p-3 border-bottom bg-white sticky-top">
                 <input type="text" id="searchCustomer" class="search-input" placeholder="Search name/email..." autocomplete="off">
             </div>
-            
             <div id="customerListContainer" class="flex-grow-1 overflow-auto">
-                {% if conversations %}
-                    {% for convo in conversations %}
-                    <div class="customer-item" 
-                         data-userid="{{ convo.user_id }}"
-                         data-convoid="{{ convo.convo_id }}"
-                         data-customername="{{ convo.customer_name }}"
-                         data-email="{{ convo.email }}">
-                        
-                        <button class="conv-delete-btn" title="Delete this conversation">✕</button>
-                        
-                        <span class="avatar">{{ convo.customer_name[0]|upper if convo.customer_name else '?' }}</span>
-                        <div class="flex-grow-1 min-width-0">
-                            <strong class="text-truncate d-block">{{ convo.customer_name }}</strong>
-                            <small class="text-muted d-block text-truncate">{{ convo.email }}</small>
-                            {% if convo.escalated %}
-                                <span class="escalated-badge mt-1">⚠️ Escalated</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="empty-state visible">
-                        <i class="fas fa-comments"></i>
-                        <p class="mt-2">No conversations yet.</p>
-                    </div>
-                {% endif %}
+                <div class="empty-state visible" id="listEmptyState">
+                    <i class="fas fa-comments"></i>
+                    <p class="mt-2">No conversations yet.</p>
+                </div>
             </div>
         </div>
 
@@ -435,7 +426,6 @@
             chatCustomerName: document.getElementById('chatCustomerName'),
             chatEmail: document.getElementById('chatEmail'),
             chatLastActivity: document.getElementById('chatLastActivity'),
-            customerItems: document.querySelectorAll('.customer-item'),
             searchInput: document.getElementById('searchCustomer'),
             toastContainer: document.getElementById('toastContainer')
         };
@@ -472,40 +462,151 @@
 
             cacheDOM();
             setupEvents();
+            listenConversationList();
             console.log('✅ Admin Chat Initialized');
         } catch (err) {
             console.error('❌ Firebase Init Failed:', err);
         }
     }
+    function listenConversationList() {
+        adminDb.collection('conversations')
+            .orderBy('last_updated', 'desc')
+            .onSnapshot(snapshot => {
+                const container = document.getElementById('customerListContainer');
+                const emptyState = document.getElementById('listEmptyState');
+                
+                if (snapshot.empty) {
+                    container.innerHTML = '';
+                    container.appendChild(emptyState);
+                    emptyState.classList.add('visible');
+                    return;
+                }
 
-    // ===== EVENTS =====
-    function setupEvents() {
-        dom.customerItems.forEach(item => {
-            item.addEventListener('click', () => switchConversation(item));
-            
-            const delBtn = item.querySelector('.conv-delete-btn');
-            if (delBtn) {
-                delBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    if(confirm('🗑️ Delete this entire conversation? This cannot be undone.')) {
-                        deleteConversation(item.dataset.userid, item.dataset.convoid, item);
+                // Remove empty state when conversations exist
+                emptyState.classList.remove('visible');
+                if (container.contains(emptyState)) container.removeChild(emptyState);
+
+                const currentSearch = document.getElementById('searchCustomer').value.toLowerCase();
+
+                snapshot.forEach(doc => {
+                    const convo = doc.data();
+                    const convoId = doc.id;
+                    
+                    let item = document.querySelector(`[data-convoid="${convoId}"]`);
+                    
+                    if (!item) {
+                        item = document.createElement('div');
+                        item.className = 'customer-item';
+                        item.dataset.userid = convo.user_id;
+                        item.dataset.convoid = convoId;
+                        item.dataset.customername = convo.customer_name;
+                        item.dataset.email = convo.email;
+                        container.appendChild(item);
+                    }
+
+                    const initial = convo.customer_name?.[0]?.toUpperCase() || '?';
+                    const unreadDot = convo.unread && activeConvoId !== convoId
+                        ? `<span class="unread-dot"></span>`
+                        : '';
+                    const escalatedBadge = convo.escalated
+                        ? `<span class="escalated-badge mt-1">⚠️ Escalated</span>`
+                        : '';
+                    const lastMsg = convo.last_message || '';
+
+                    item.innerHTML = `
+                        <button class="conv-delete-btn" title="Delete">✕</button>
+                        <span class="avatar">${initial}</span>
+                        <div class="flex-grow-1 min-width-0">
+                            ${unreadDot}
+                            <strong class="text-truncate d-block">${convo.customer_name}</strong>
+                            <small class="text-muted d-block text-truncate">${convo.email}</small>
+                            <small class="text-muted d-block text-truncate last-msg">${lastMsg}</small>
+                            ${escalatedBadge}
+                        </div>
+                    `;
+
+                    // 👇 CHANGE 1: use .onclick instead of addEventListener
+                    item.onclick = () => switchConversation(item);
+
+                    // 👇 CHANGE 2: use .onclick on delete btn
+                    item.querySelector('.conv-delete-btn').onclick = (e) => {
+                        e.stopPropagation();
+                        Swal.fire({
+                            title: 'Delete Conversation?',
+                            text: 'This cannot be undone.', 
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#e91e8c',
+                            cancelButtonColor: '#aaa',
+                            confirmButtonText: 'Yes, delete it!'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                deleteConversation(convo.user_id, convoId, item);
+                            }
+                        });
+                    };
+
+                    if (activeConvoId === convoId) item.classList.add('active');
+
+                    if (currentSearch) {
+                        const match = convo.customer_name.toLowerCase().includes(currentSearch) ||
+                                    convo.email.toLowerCase().includes(currentSearch);
+                        item.style.display = match ? '' : 'none';
                     }
                 });
-            }
-        });
 
+                // Re-sort DOM to match Firestore order
+                const sortedIds = snapshot.docs.map(d => d.id);
+                sortedIds.forEach(id => {
+                    const el = container.querySelector(`[data-convoid="${id}"]`);
+                    if (el) container.appendChild(el);
+                });
+
+                // Remove items that no longer exist
+                document.querySelectorAll('.customer-item').forEach(item => {
+                    const exists = snapshot.docs.find(d => d.id === item.dataset.convoid);
+                    if (!exists) item.remove();
+                });
+
+            }, err => {
+                console.error('Conversation list error:', err);
+            });
+    }
+    // ===== EVENTS =====
+    function setupEvents() {
         dom.sendReplyBtn.addEventListener('click', sendReply);
         dom.replyInput.addEventListener('keypress', e => { if(e.key === 'Enter' && !e.shiftKey) sendReply(); });
+        dom.replyInput.addEventListener('input', () => {
+            if (!activeUserId || !activeConvoId) return;
+            
+            const convRef = adminDb
+                .collection('users').doc(activeUserId)
+                .collection('conversations').doc(activeConvoId);
+            
+            convRef.update({ is_typing: true });
+            
+            if (window.typingTimeout) clearTimeout(window.typingTimeout);
+            
+            window.typingTimeout = setTimeout(() => {
+                convRef.update({ is_typing: false });
+            }, 2000);
+        });
         dom.searchInput.addEventListener('input', handleSearch);
     }
 
     // ===== SWITCH CONVERSATION (Fixed Null Crash) =====
     function switchConversation(item) {
+        adminDb.collection('conversations').doc(item.dataset.convoid)
+            .update({ unread: false }).catch(() => {});
+        if (activeUserId && activeConvoId) {
+            adminDb.collection('users').doc(activeUserId)
+                .collection('conversations').doc(activeConvoId)
+                .update({ is_typing: false }).catch(() => {});
+        }
         if (isSwitching) return; // Prevent rapid double-clicks
         
         isSwitching = true;
-        dom.customerItems.forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.customer-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
         
         activeUserId = item.dataset.userid;
@@ -631,7 +732,7 @@
     // ===== SEARCH =====
     function handleSearch(e) {
         const term = e.target.value.toLowerCase();
-        dom.customerItems.forEach(item => {
+        document.querySelectorAll('.customer-item').forEach(item => {
             const match = item.dataset.customername.toLowerCase().includes(term) || 
                           item.dataset.email.toLowerCase().includes(term);
             item.style.display = match ? '' : 'none';

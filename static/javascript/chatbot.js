@@ -7,7 +7,7 @@ class ChatbotWidget {
         this.isEscalated = false;
         
         this.toggleBtn = document.getElementById('chatbotToggle');
-        this.window = document.getElementById('chatbotWindow');
+        this.chatWindow = document.getElementById('chatbotWindow');
         this.closeBtn = document.getElementById('chatbotClose');
         this.messagesContainer = document.getElementById('chatbotMessages');
         this.input = document.getElementById('chatbotInput');
@@ -17,7 +17,7 @@ class ChatbotWidget {
         this.unsubscribe = null;
         
         if (!this.toggleBtn) console.error('❌ Missing: chatbotToggle');
-        if (!this.window) console.error('❌ Missing: chatbotWindow');
+        if (!this.chatWindow) console.error('❌ Missing: chatbotWindow');
         if (!this.messagesContainer) console.error('❌ Missing: chatbotMessages');
         
         if (this.userId === 'unknown') {
@@ -35,6 +35,7 @@ class ChatbotWidget {
         await this.checkEscalationStatus();
         this.setupEventListeners();
         this.listenMessages();
+        this.listenAdminTyping()
         this.updateUIForEscalation();
         console.log('✅ Chatbot initialized successfully');
     }
@@ -125,20 +126,93 @@ class ChatbotWidget {
         if (this.escalateBtn && !this.isEscalated) {
             this.escalateBtn.addEventListener('click', () => this.escalateToOwner());
         }
+        this.setupDraggable()
+    }
+
+    setupDraggable() {
+        if (window.innerWidth > 768) return;
+
+        interact(this.toggleBtn).draggable({
+            inertia: true,
+            listeners: {
+                move(event) {
+                    const target = event.target;
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    // Get button size
+                    const btnRect = target.getBoundingClientRect();
+                    const btnW = btnRect.width;
+                    const btnH = btnRect.height;
+
+                    // Current position in viewport (before transform)
+                    const currentLeft = btnRect.left - (parseFloat(target.getAttribute('data-x')) || 0);
+                    const currentTop = btnRect.top - (parseFloat(target.getAttribute('data-y')) || 0);
+
+                    // Clamp so it never goes outside viewport
+                    const minX = -currentLeft + 10;
+                    const minY = -currentTop + 10;
+                    const maxX = window.innerWidth - currentLeft - btnW - 10;
+                    const maxY = window.innerHeight - currentTop - btnH - 10;
+
+                    const clampedX = Math.min(Math.max(x, minX), maxX);
+                    const clampedY = Math.min(Math.max(y, minY), maxY);
+
+                    target.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+                    target.setAttribute('data-x', clampedX);
+                    target.setAttribute('data-y', clampedY);
+                },
+
+                end(event) {
+                    const target = event.target;
+                    const btnRect = target.getBoundingClientRect();
+                    const btnW = btnRect.width;
+                    const btnH = btnRect.height;
+
+                    const currentLeft = btnRect.left - (parseFloat(target.getAttribute('data-x')) || 0);
+                    const currentTop  = btnRect.top  - (parseFloat(target.getAttribute('data-y')) || 0);
+
+                    // Current center of button in viewport
+                    const btnCenterX = btnRect.left + btnW / 2;
+
+                    // Snap to left or right edge
+                    const snapToRight = btnCenterX > window.innerWidth / 2;
+
+                    const targetX = snapToRight
+                        ? window.innerWidth - currentLeft - btnW - 10   // right edge
+                        : -currentLeft + 10;                             // left edge
+
+                    const currentY = parseFloat(target.getAttribute('data-y')) || 0;
+
+                    // Clamp Y so it doesn't go off screen
+                    const minY = -currentTop + 10;
+                    const maxY = window.innerHeight - currentTop - btnH - 10;
+                    const clampedY = Math.min(Math.max(currentY, minY), maxY);
+
+                    // Smooth transition to edge
+                    target.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    target.style.transform = `translate(${targetX}px, ${clampedY}px)`;
+                    target.setAttribute('data-x', targetX);
+                    target.setAttribute('data-y', clampedY);
+
+                    // Remove transition after snap so drag feels instant again
+                    setTimeout(() => {
+                        target.style.transition = '';
+                    }, 300);
+                }
+            }
+        });
     }
     
     toggleWindow() {
-        console.log('🪟 Toggle window called, current display:', this.window?.style.display);
+        if (!this.chatWindow) return;
         
-        if (!this.window) return;
-        
-        if (this.window.style.display === 'none' || !this.window.style.display) {
-            this.window.style.display = 'flex';
-            console.log('✅ Window opened');
+        if (this.chatWindow.style.display === 'none' || !this.chatWindow.style.display) {
+            this.chatWindow.style.display = 'flex';
+            this.hideBadge();
             if (this.input) this.input.focus();
         } else {
-            this.window.style.display = 'none';
-            console.log('✅ Window closed');
+            this.chatWindow.style.display = 'none';
         }
     }
     
@@ -259,13 +333,23 @@ class ChatbotWidget {
             if (this.unsubscribe) this.unsubscribe();
             
             this.unsubscribe = messagesRef.onSnapshot((snapshot) => {
+                this.hideTyping();
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const msg = change.doc.data();
+                        const isWindowClosed = this.chatWindow.style.display === 'none';
+                        
+                        if (msg.sender === 'admin' && isWindowClosed) {
+                            this.showBadge();
+                        }
+                    }
+                });
                 // Clear container and reload all messages
                 this.messagesContainer.innerHTML = '';
-                
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     if (msg.text && msg.sender) {
-                        this.addMessage(msg.text, msg.sender);
+                        this.addMessage(msg.text, msg.sender, msg.timestamp);
                     }
                 });
                 
@@ -282,7 +366,7 @@ class ChatbotWidget {
         
         
         if (this.input) this.input.value = '';
-        
+        if (!this.isEscalated) this.showTyping();
         try {
             const response = await fetch('/send-message', {
                 method: 'POST',
@@ -297,29 +381,113 @@ class ChatbotWidget {
             
             const data = await response.json();
             if (!data.success) {
+                this.hideTyping();
                 console.error('Failed to send:', data.error);
                 this.addMessage('Sorry, there was an error. Please try again.', 'bot');
             }
         } catch (error) {
+            this.hideTyping();
             console.error('Error sending message:', error);
             this.addMessage('Connection error. Please check your internet connection.', 'bot');
         }
     }
-    
-    addMessage(text, sender) {
+    showTyping() {
+        const typing = document.createElement('div');
+        typing.id = 'typingIndicator';
+        typing.className = 'message bot-message';
+        typing.innerHTML = `<p class="typing-bubble"><span></span><span></span><span></span></p>`;
+        this.messagesContainer.appendChild(typing);
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    hideTyping() {
+        const typing = document.getElementById('typingIndicator');
+        if (typing) typing.remove();
+    }
+    listenAdminTyping() {
+        if (!this.userId || !this.conversationId) return;
+        
+        const db = firebase.firestore();
+        db.collection('users').doc(this.userId)
+            .collection('conversations').doc(this.conversationId)
+            .onSnapshot((doc) => {
+                if (!doc.exists) return;
+                const data = doc.data();
+                
+                if (data.is_typing && this.isEscalated) {
+                    this.showAdminTyping();
+                } else {
+                    this.hideAdminTyping();
+                }
+            });
+    }
+
+    showAdminTyping() {
+        if (document.getElementById('adminTypingIndicator')) return;
+        const typing = document.createElement('div');
+        typing.id = 'adminTypingIndicator';
+        typing.className = 'message bot-message';
+        typing.innerHTML = `<p class="typing-bubble">👤 <span></span><span></span><span></span></p>`;
+        this.messagesContainer.appendChild(typing);
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    hideAdminTyping() {
+        const typing = document.getElementById('adminTypingIndicator');
+        if (typing) typing.remove();
+    }
+showBadge() {
+    let badge = document.getElementById('chatbotBadge');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'chatbotBadge';
+        badge.style.cssText = `
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: red;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            pointer-events: none;
+        `;
+        this.toggleBtn.style.position = 'relative';
+        this.toggleBtn.appendChild(badge);
+    }
+    badge.style.display = 'block';
+}
+
+    hideBadge() {
+        const badge = document.getElementById('chatbotBadge');
+        if (badge) badge.remove();
+        this.unreadCount = 0;
+    }
+
+
+    addMessage(text, sender, timestamp) {
         if (!this.messagesContainer) return;
         
         const msgDiv = document.createElement('div');
         
+        // Format timestamp
+        let timeStr = '';
+        if (timestamp) {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        const timeHtml = timeStr ? `<span class="msg-timestamp">${timeStr}</span>` : '';
+        
         if (sender === 'customer') {
             msgDiv.className = 'message customer-message';
-            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>`;
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>${timeHtml}`;
         } else if (sender === 'admin') {
             msgDiv.className = 'message bot-message';
-            msgDiv.innerHTML = `<p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)}</p>`;
+            msgDiv.innerHTML = `<p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)}</p>${timeHtml}`;
         } else if (sender === 'bot') {
             msgDiv.className = 'message bot-message';
-            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>`;
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>${timeHtml}`;
         } else {
             return;
         }
@@ -346,8 +514,11 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Chatbot window:', document.getElementById('chatbotWindow'));
     
     if (userContainer) {
-        console.log('🚀 Creating ChatbotWidget instance...');
-        window.chatbot = new ChatbotWidget();
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                window.chatbot = new ChatbotWidget();
+            }
+        });
     } else {
         console.error('❌ No user ID found - chatbot will not work!');
     }
