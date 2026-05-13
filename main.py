@@ -6,6 +6,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp)
 from decorators import login_required, admin_required, profile_required
+from utils import get_all_cakes, get_all_reviews, get_order_counts,invalidate_cache
 from firebase_admin import messaging
 import re
 import os
@@ -53,6 +54,7 @@ app.register_blueprint(pos_bp)
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
+    # ❌ Not cached — user specific
     user_id  = session.get("user_id")
     customer = None
     if user_id:
@@ -60,18 +62,18 @@ def home_page():
         if doc.exists:
             customer = doc.to_dict()
 
-    # ── Existing: Top rated cakes (untouched) ──
-    available_cakes = []
-    for cake_doc in cakes.stream():
-        cake_data = cake_doc.to_dict()
-        cake_data['id']           = cake_doc.id
-        cake_data['avg_rating']   = 0
-        cake_data['review_count'] = 0
-        available_cakes.append(cake_data)
+    # ✅ All heavy reads from cache
+    available_cakes = get_all_cakes()
+    all_reviews     = get_all_reviews()
+    order_counts    = get_order_counts()
+
+    # ── Top rated cakes ──
+    for cake in available_cakes:
+        cake["avg_rating"]   = 0
+        cake["review_count"] = 0
 
     cake_ratings = {}
-    for r_doc in reviews.where("is_visible", "==", True).stream():
-        r   = r_doc.to_dict()
+    for r in all_reviews:
         cid = r.get("cake_id")
         if cid not in cake_ratings:
             cake_ratings[cid] = {"total": 0, "count": 0}
@@ -90,29 +92,11 @@ def home_page():
         reverse=True
     )[:5]
 
-    # ── New: Most ordered cakes ──
-    order_counts = {}
-    for order_doc in orders.stream():
-        order_data = order_doc.to_dict()
-        for item in order_data.get("selected_items", []):
-            cake_id  = item.get("cake_id")
-            quantity = int(item.get("quantity", 1))
-            if cake_id:
-                order_counts[cake_id] = order_counts.get(cake_id, 0) + quantity
+    # ── Most ordered ──
+    top_ids      = sorted(order_counts, key=order_counts.get, reverse=True)[:5]
+    cakes_by_id  = {c["id"]: c for c in available_cakes}
+    most_ordered = [cakes_by_id.get(cid) for cid in top_ids]
 
-    # Sort by most ordered, take top 5 IDs
-    top_ids = sorted(order_counts, key=order_counts.get, reverse=True)[:5]
-
-    # Fetch each cake document
-    most_ordered = []
-    for cake_id in top_ids:
-        cake_doc = cakes.document(cake_id).get()
-        if cake_doc.exists:
-            cake_data       = cake_doc.to_dict()
-            cake_data['id'] = cake_doc.id
-            most_ordered.append(cake_data)
-
-    # Pad with None if less than 5
     while len(most_ordered) < 5:
         most_ordered.append(None)
 
@@ -541,7 +525,7 @@ def add_review():
     
     # Save review
     reviews.add(review_data)
-    
+    invalidate_cache("all_reviews")
     # Mark order as reviewed in top-level orders collection
     order_ref.update({"reviewed": True})  # ← Now updates top-level orders
     
@@ -960,6 +944,7 @@ def finalize_order():
     # ── COD or Bank Transfer → save immediately ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
         orders.add(order_data)
+        invalidate_cache("order_counts", "all_cakes")#cache reset
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
         if voucher_id and voucher_discount_pct > 0:
             users.document(user_id).collection("vouchers").document(voucher_id).update({
@@ -1129,30 +1114,28 @@ def notify_delivery(token):
 # ---------------- AVAILABLE CAKES PAGE ----------------
 @app.route("/cakes")
 def cakes_page():
-    available_cakes = []
-    for cake_doc in cakes.where("status", "==", True).stream():
-        cake_data = cake_doc.to_dict()
-        cake_data['id'] = cake_doc.id
-        cake_data['avg_rating'] = 0
-        cake_data['review_count'] = 0
-        cake_data['reviews'] = []
-        available_cakes.append(cake_data)
+    all_cakes   = get_all_cakes()
+    all_reviews = get_all_reviews()
 
-    # Fetch reviews with Firestore ordering 
+    # Filter active cakes in Python
+    available_cakes = [c for c in all_cakes if c.get("status") == True]
+
+    # Build ratings and reviews from cache
     cake_ratings = {}
     cake_reviews = {}
 
-    for r_doc in reviews.where("is_visible", "==", True).order_by("created_at", direction="DESCENDING").stream():
-        r = r_doc.to_dict()
+    for r in all_reviews:
         cid = r.get("cake_id")
+        if not cid:
+            continue
 
-        # Store ratings
+        # Ratings
         if cid not in cake_ratings:
             cake_ratings[cid] = {"total": 0, "count": 0}
         cake_ratings[cid]["total"] += r.get("rating", 0)
         cake_ratings[cid]["count"] += 1
 
-        # Store full review
+        # Reviews
         if cid not in cake_reviews:
             cake_reviews[cid] = []
 
@@ -1164,23 +1147,31 @@ def cakes_page():
                 created_at = created_at.astimezone(PH_TZ)
 
         cake_reviews[cid].append({
-            "rating": r.get("rating", 5),
-            "comment": r.get("comment", ""),
+            "rating":        r.get("rating", 5),
+            "comment":       r.get("comment", ""),
             "reviewer_name": r.get("reviewer_name", "Customer"),
-            "created_at": created_at
+            "created_at":    created_at
         })
 
-    # Attach to cakes
+    # Sort reviews by created_at descending (was done by Firestore before)
+    for cid in cake_reviews:
+        cake_reviews[cid].sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+
+    # Attach ratings and reviews to cakes
     for cake in available_cakes:
         cid = cake["id"]
+        cake["avg_rating"]   = 0
+        cake["review_count"] = 0
+        cake["reviews"]      = []
+
         if cid in cake_ratings:
             data = cake_ratings[cid]
-            cake["avg_rating"] = round(data["total"] / data["count"], 1)
+            cake["avg_rating"]   = round(data["total"] / data["count"], 1)
             cake["review_count"] = data["count"]
 
-        # Already sorted from Firestore, no lambda needed
         cake["reviews"] = cake_reviews.get(cid, [])
 
+    # Favorites
     user_id = session.get("user_id")
     favorite_ids = []
     if user_id:
@@ -1188,8 +1179,9 @@ def cakes_page():
             doc.id
             for doc in users.document(user_id).collection("favorites").stream()
         )
+
     return render_template("cakes.html",
-        cakes=available_cakes, 
+        cakes=available_cakes,
         user_id=user_id,
         favorite_ids=favorite_ids
     )
@@ -1829,11 +1821,7 @@ def admin_analytics():
 @app.route("/admin/cakes")
 @admin_required
 def admin_cakes():
-    cakes_list = []
-    for cake in cakes.stream():
-        cake_data = cake.to_dict()
-        cake_data['id'] = cake.id
-        cakes_list.append(cake_data)
+    cakes_list = get_all_cakes()
     return render_template("admin_cakes.html", cakes=cakes_list)
 
 # ---------------- ADMIN USERS ----------------
@@ -2107,7 +2095,9 @@ def add_cake():
             'status':      request.form.get('status') == 'on',
             'image':       image_filename,
             'created_at':  datetime.now()
+            
         })
+        invalidate_cache("all_cakes")
         log_admin_action(
             action="Added new cake",
             target=request.form.get('name'),
@@ -2139,6 +2129,7 @@ def edit_cake(cake_id):
             'status':      request.form.get('status') == 'on',
             'image':       cake_doc.to_dict().get('image')
         })
+        invalidate_cache("all_cakes")
         log_admin_action(
             action="Edited cake",
             target=f"{request.form.get('name')} (ID: {cake_id})",
@@ -2166,6 +2157,7 @@ def delete_cake(cake_id):
 
         cake_name = cake_doc.to_dict().get('name', cake_id)
         cake_ref.delete()
+        invalidate_cache("all_cakes")
         log_admin_action(
             action="Deleted cake",
             target=f"{cake_name} (ID: {cake_id})",
@@ -2350,6 +2342,7 @@ def payment_success():
     # Save to orders
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
+    invalidate_cache("order_counts")
 
     handle_loyalty_stamp(
         users,
