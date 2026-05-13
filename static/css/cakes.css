@@ -186,6 +186,7 @@ body {
   margin-bottom: 5px;
 }
 
+
 .badge.category {
   background-color: #ffc107;
   color: #000;
@@ -492,44 +493,144 @@ background-color: white;
 }
 
 /* Mobile: Horizontal Scroll Carousel */
+/* Mobile: 2 Grid Vertical Scroll */
+/* Mobile: 2 Grid Vertical Scroll */
 @media (max-width: 768px) {
   .cakes-grid {
-    display: flex;        /* Switch from grid to flex */
-    flex-wrap: nowrap;
-    overflow-x: auto;     /* Allow horizontal scrolling */
-    gap: 14px;
-    padding: 10px;
-    scroll-snap-type: x mandatory; /* Smooth snapping */
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 8px !important;
+    overflow-x: hidden !important;
+    align-items: stretch !important;
   }
 
   .cake-card {
-    flex: 0 0 auto;
-    width: 200px;         /* Fixed width for scroll cards */
-    height: auto;
-    scroll-snap-align: start;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    padding: 6px !important;
+    box-sizing: border-box !important;
   }
 
   .cake-image img, .no-image {
-    height: 140px;
-    width: 100%;
-    object-fit: cover;
+    height: 110px !important;
+    width: 100% !important;
+    object-fit: cover !important;
+  }
+
+  .cake-info {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+  }
+
+  /* Fixed height title */
+  .cake-title {
+    font-size: 0.75rem !important;
+    min-height: 2.2em !important;
+    max-height: 2.2em !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Fixed height description */
+  .cake-desc {
+    font-size: 0.68rem !important;
+    min-height: 2em !important;
+    max-height: 2em !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Fixed height badge */
+  .badge.category {
+    font-size: 0.65rem !important;
+    padding: 2px 5px !important;
+    display: block !important;
+    width: fit-content !important;
+    min-height: 1.4em !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Fixed height price-stock */
+  .price-stock {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    min-height: 1.8em !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Fixed height reviews */
+  .d-flex.align-items-center.gap-1.mb-2 {
+    min-height: 1.5em !important;
+    margin-bottom: 4px !important;
+  }
+
+  /* Push buttons to bottom always */
+  .qty-label {
+    font-size: 0.65rem !important;
+    margin-top: auto !important;
+  }
+
+  .qty-selector {
+    gap: 4px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .qty-btn {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 0.85rem !important;
+  }
+
+  .qty-display {
+    font-size: 0.8rem !important;
+    min-width: 20px !important;
+  }
+
+  /* Buttons always same size and position */
+  .cake-card form {
+    width: 100% !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+  }
+
+  .cake-card .btn {
+    width: 100% !important;
+    font-size: 0.68rem !important;
+    padding: 5px 4px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .heart-btn {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 0.85rem !important;
+  }
+
+  small, .text-muted {
+    font-size: 0.65rem !important;
+  }
+
+  .price {
+    font-size: 0.8rem !important;
+  }
+
+  .stock {
+    font-size: 0.65rem !important;
   }
 }
-
-/* Small Phones & Menu Fixes */
-@media (max-width: 480px) {
-  /* Fix menu button sizing */
-  .menu-btn {
-    font-size: 1.2rem;
-    padding: 5px 10px;
-  }
-  
-  /* Ensure menu slide-out is actually readable */
-  .menu {
-    width: 260px !important; /* Changed from 100px to 260px */
-  }
-}
-
 /* Hide Scrollbar for Clean Look */
-.cakes-grid::-webkit-scrollbar { display: none; }
-.cakes-grid { scrollbar-width: none; }

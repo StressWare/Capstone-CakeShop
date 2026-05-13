@@ -64,17 +64,17 @@ h2 {
     width: 100%;
 }
 
-.navbar-brand {
-    display: flex;
-    align-items: center;
-}
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+    }
 
-.navbar-logo {
-    margin-top: 15px;
-    height: 180px;
-    width: 230px;
-    object-fit: contain;
-}
+        .navbar-logo {
+            margin-top: 15px;
+            height: 180px;
+            width: 230px;
+            object-fit: contain;
+        }
 
 
 /* =====================================================
