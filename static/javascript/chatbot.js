@@ -126,7 +126,8 @@ class ChatbotWidget {
         if (this.escalateBtn && !this.isEscalated) {
             this.escalateBtn.addEventListener('click', () => this.escalateToOwner());
         }
-        this.setupDraggable()
+        this.setupDraggable();
+        this.setupFaqToggle();
     }
 
     setupDraggable() {
@@ -206,10 +207,12 @@ class ChatbotWidget {
     
     toggleWindow() {
         if (!this.chatWindow) return;
-        
         if (this.chatWindow.style.display === 'none' || !this.chatWindow.style.display) {
             this.chatWindow.style.display = 'flex';
             this.hideBadge();
+            setTimeout(() => {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }, 50)
             if (this.input) this.input.focus();
         } else {
             this.chatWindow.style.display = 'none';
@@ -297,7 +300,40 @@ class ChatbotWidget {
             faqContainer.style.display = '';
         }
     }
+    setupFaqToggle() {
+        const toggleBtn = document.getElementById('faqToggleBtn');
+        const faqContainer = document.getElementById('faqButtons');
+        const icon = document.getElementById('faqToggleIcon');
+
+        if (!toggleBtn || !faqContainer) return;
+
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = faqContainer.style.display === 'grid';
+            faqContainer.style.display = isOpen ? 'none' : 'grid';
+            icon.textContent = isOpen ? '▼' : '▲';
+        });
+    }
     
+    addDateSeparator(date) {
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        let label = '';
+        if (date.toDateString() === today.toDateString()) {
+            label = 'Today';
+        } else if (date.toDateString() === yesterday.toDateString()) {
+            label = 'Yesterday';
+        } else {
+            label = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        const separator = document.createElement('div');
+        separator.className = 'date-separator';
+        separator.innerHTML = `<span>${label}</span>`;
+        this.messagesContainer.appendChild(separator);
+    }
+
     updateUIForEscalation() {
         if (this.isEscalated) {
             if (this.escalateBtn) {
@@ -316,6 +352,61 @@ class ChatbotWidget {
             if (!hasSystemMsg) {
                 this.addMessage('You are now connected with the shop owner. The bot will no longer respond automatically.', 'bot');
             }
+            if (!document.getElementById('resetConversationBtn')) {
+                const resetBtn = document.createElement('button');
+                resetBtn.id = 'resetConversationBtn';
+                resetBtn.className = 'btn-reset-conversation';
+                resetBtn.textContent = '🔄 Start New Chat';
+                resetBtn.addEventListener('click', () => this.resetConversation());
+                this.escalateBtn.parentElement.appendChild(resetBtn);
+            }
+        }
+    }
+    async resetConversation() {
+        try {
+            const response = await fetch('/reset-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    conversation_id: this.conversationId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update state
+                this.conversationId = data.new_conversation_id;
+                this.isEscalated = false;
+
+                // Clear messages
+                this.messagesContainer.innerHTML = '';
+
+                // Restart listeners with new conversation
+                if (this.unsubscribe) this.unsubscribe();
+                this.listenMessages();
+                this.listenAdminTyping();
+
+                // Reset UI
+                this.showFaqButtons();
+                if (this.escalateBtn) {
+                    this.escalateBtn.textContent = '👤 Chat with Owner';
+                    this.escalateBtn.disabled = false;
+                    this.escalateBtn.style.opacity = '1';
+                    this.escalateBtn.style.cursor = 'pointer';
+                    this.escalateBtn.onclick = () => this.escalateToOwner();
+                }
+
+                // Remove reset button
+                const resetBtn = document.getElementById('resetConversationBtn');
+                if (resetBtn) resetBtn.remove();
+
+                // Welcome message
+                this.addMessage('👋 Starting a new conversation! How can we help you?', 'bot');
+            }
+        } catch (error) {
+            console.error('Error resetting conversation:', error);
+            this.addMessage('Sorry, could not reset. Please try again.', 'bot');
         }
     }
     
@@ -346,6 +437,7 @@ class ChatbotWidget {
                 });
                 // Clear container and reload all messages
                 this.messagesContainer.innerHTML = '';
+                this.lastDateLabel = null;
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     if (msg.text && msg.sender) {
@@ -353,7 +445,9 @@ class ChatbotWidget {
                     }
                 });
                 
-                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                setTimeout(() => {
+                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                }, 50);
             });
         } catch (error) {
             console.error('Error setting up listener:', error);
@@ -467,35 +561,41 @@ showBadge() {
 
     addMessage(text, sender, timestamp) {
         if (!this.messagesContainer) return;
-        
+        if (timestamp) {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            const dateStr = date.toDateString();
+            if (dateStr !== this.lastDateLabel) {
+                this.lastDateLabel = dateStr;
+                this.addDateSeparator(date);
+            }
+        }
         const msgDiv = document.createElement('div');
-        
-        // Format timestamp
+
         let timeStr = '';
         if (timestamp) {
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
-        
-        const timeHtml = timeStr ? `<span class="msg-timestamp">${timeStr}</span>` : '';
-        
+
+        const timeHtml = timeStr ? `<span class="msg-timestamp-inline">${timeStr}</span>` : '';
+
         if (sender === 'customer') {
             msgDiv.className = 'message customer-message';
-            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>${timeHtml}`;
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
         } else if (sender === 'admin') {
             msgDiv.className = 'message bot-message';
-            msgDiv.innerHTML = `<p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)}</p>${timeHtml}`;
+            msgDiv.innerHTML = `<p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)} ${timeHtml}</p>`;
         } else if (sender === 'bot') {
             msgDiv.className = 'message bot-message';
-            msgDiv.innerHTML = `<p>${this.escapeHtml(text)}</p>${timeHtml}`;
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
         } else {
             return;
         }
-        
+
         this.messagesContainer.appendChild(msgDiv);
         this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
     }
-    
+
     escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;

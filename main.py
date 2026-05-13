@@ -2411,7 +2411,6 @@ def send_message():
 
         now = datetime.now(PH_TZ)
 
-        # Ensure conversation document exists
         conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
         conv_doc = conv_ref.get()
 
@@ -2419,14 +2418,12 @@ def send_message():
             conv_ref.set({
                 'created_at': now,
                 'last_updated': now,
-                'escalated': False  # New flag
+                'escalated': False
             })
 
-        # Get current conversation data
         conv_data = conv_doc.to_dict() if conv_doc.exists else {'escalated': False}
         is_escalated = conv_data.get('escalated', False)
 
-        # If this is an escalation request, update the flag
         if is_escalation and not is_escalated:
             conv_ref.update({
                 'escalated': True,
@@ -2435,7 +2432,7 @@ def send_message():
             })
             is_escalated = True
 
-        # Save customer message
+        # Save customer message ✅ CORRECT
         messages_ref = conv_ref.collection("messages")
         messages_ref.add({
             "text": message,
@@ -2444,8 +2441,8 @@ def send_message():
             "created_at": now
         })
 
-        # Update last_updated
         conv_ref.update({'last_updated': now})
+
         user_data = users.document(user_id).get().to_dict() or {}
         conversations.document(conversation_id).set({
             'user_id': user_id,
@@ -2457,33 +2454,65 @@ def send_message():
             'escalated': is_escalated,
             'unread': True
         }, merge=True)
-        # Only send bot response if conversation is NOT escalated
+
+        # Only send bot response if NOT escalated
         if not is_escalated:
             bot_response = (
                 "✅ Thank you! The shop owner has been notified and will respond shortly. You're now chatting with the owner."
                 if is_escalation
                 else get_faq_response(message)
             )
-            # Save bot response
             messages_ref.add({
                 "text": bot_response,
                 "sender": "bot",
-                "timestamp": now,
-                "created_at": now
+                "timestamp": now + timedelta(seconds=1),
+                "created_at": now + timedelta(seconds=1)
             })
         elif is_escalation:
-            # Special message for escalation
             messages_ref.add({
                 "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
                 "sender": "bot",
-                "timestamp": now,
-                "created_at": now
+                "timestamp": now + timedelta(seconds=1),
+                "created_at": now + timedelta(seconds=1)
             })
 
         return jsonify({'success': True, 'escalated': is_escalated})
 
     except Exception:
         app.logger.exception("Error in send_message")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
+# ---------------- RESET/START NEW CONVERSATION ----------------
+@app.route('/reset-conversation', methods=['POST'])
+@login_required
+def reset_conversation():
+    try:
+        data = request.get_json()
+        user_id = session['user_id']
+        old_conversation_id = data.get('conversation_id')
+
+        now = datetime.now(PH_TZ)
+
+        # Mark old conversation as closed
+        if old_conversation_id:
+            users.document(user_id).collection('conversations').document(old_conversation_id).update({
+                'closed': True,
+                'closed_at': now
+            })
+
+        # Create new conversation
+        new_conv_id = f'conv_{int(now.timestamp() * 1000)}'
+
+        users.document(user_id).collection('conversations').document(new_conv_id).set({
+            'created_at': now,
+            'last_updated': now,
+            'escalated': False,
+            'closed': False
+        })
+
+        return jsonify({'success': True, 'new_conversation_id': new_conv_id})
+
+    except Exception:
+        app.logger.exception("Error in reset_conversation")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
 # ---------------- ADMIN REPLY ----------------
 @app.route('/admin/reply-message', methods=['POST'])
@@ -2577,7 +2606,7 @@ def get_conversation_status(user_id, conversation_id):
     except Exception:
         app.logger.exception("Error in get_conversation_status")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
-
+# ---------------- DELETE CUSTOMER COVERSATION ----------------
 @app.route('/admin/delete-conversation', methods=['POST'])
 @admin_required
 def delete_conversation():
@@ -2603,6 +2632,7 @@ def delete_conversation():
     except Exception as e:
         app.logger.exception("Error deleting conversation")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 # ---------------- ADMIN GET CONVERSATIONS ----------------
 @app.route('/admin/conversations')
 @admin_required

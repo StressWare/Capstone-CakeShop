@@ -181,7 +181,7 @@
 
 /* FAQ Buttons */
 .faq-buttons {
-  display: grid;
+  display: none;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   padding: 12px;
@@ -191,7 +191,23 @@
   max-height: 140px;
   overflow-y: auto;
 }
+.faq-toggle-btn {
+    width: 100%;
+    padding: 10px 12px;
+    background: white;
+    border: none;
+    border-top: 1px solid #eee;
+    color: #ff6b9d;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s;
+}
 
+.faq-toggle-btn:hover {
+    background: rgba(255, 107, 157, 0.05);
+}
 .faq-btn {
   padding: 10px 12px;
   border: 2px solid #eee;
@@ -235,7 +251,7 @@
 .btn-support {
   width: 100%;
   padding: 10px;
-  background: linear-gradient(135deg, var(--secondary-color), #ffa502);
+  background: linear-gradient(135deg, #ff6b9d, #ff4757);
   border: none;
   border-radius: 8px;
   color: white;
@@ -301,6 +317,47 @@
   transform: scale(0.95);
 }
 
+.btn-reset-conversation {
+    width: 100%;
+    padding: 8px;
+    margin-top: 6px;
+    background: white;
+    border: 2px solid #ff6b9d;
+    border-radius: 8px;
+    color: #ff6b9d;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-reset-conversation:hover {
+    background: #ff6b9d;
+    color: white;
+}
+.date-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 12px 0;
+    gap: 8px;
+}
+
+.date-separator::before,
+.date-separator::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e0e0e0;
+}
+
+.date-separator span {
+    font-size: 11px;
+    color: #aaa;
+    font-weight: 600;
+    white-space: nowrap;
+    padding: 0 8px;
+}
 /* Scrollbar styling */
 .chatbot-messages::-webkit-scrollbar {
   width: 6px;
@@ -324,20 +381,12 @@
 .chatbot-header:active {
     cursor: grabbing;
 }
-.msg-timestamp {
-    display: block;
+.msg-timestamp-inline {
     font-size: 10px;
-    color: #aaa;
-    margin-top: 4px;
-    text-align: right;
-}
-
-.bot-message .msg-timestamp {
-    text-align: left;
-}
-
-.customer-message .msg-timestamp {
-    text-align: right;
+    opacity: 0.6;
+    margin-left: 6px;
+    white-space: nowrap;
+    vertical-align: bottom;
 }
 .typing-bubble {
     display: flex;

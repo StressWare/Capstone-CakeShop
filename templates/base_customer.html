@@ -171,12 +171,15 @@
         <p>👋 Hey there! Welcome to Ms. Brave Cake Shop support. How can we help you today?</p>
       </div>
     </div>
-    <div class="faq-buttons" id="faqButtons">
-      <button class="faq-btn" data-question="how to order">📝 How to Order?</button>
-      <button class="faq-btn" data-question="delivery time">🚚 Delivery Time?</button>
-      <button class="faq-btn" data-question="customization">🎨 Customization?</button>
-      <button class="faq-btn" data-question="payment methods">💳 Payment Methods?</button>
-      <button class="faq-btn" data-question="return policy">🔄 Return Policy?</button>
+    <button class="faq-toggle-btn" id="faqToggleBtn">
+    💬 Quick Questions <span id="faqToggleIcon">▼</span>
+    </button>
+    <div class="faq-buttons" id="faqButtons" style="display:none;">
+        <button class="faq-btn" data-question="how to order">📝 How to Order?</button>
+        <button class="faq-btn" data-question="delivery time">🚚 Delivery Time?</button>
+        <button class="faq-btn" data-question="customization">🎨 Customization?</button>
+        <button class="faq-btn" data-question="payment methods">💳 Payment Methods?</button>
+        <button class="faq-btn" data-question="return policy">🔄 Return Policy?</button>
     </div>
     <div class="support-section" id="supportSection">
       <p class="support-text">Can't find what you need?</p>
@@ -185,7 +188,7 @@
     <div class="chatbot-input-area">
       <input type="text" id="chatbotInput" class="chatbot-input"
              placeholder="Ask a question..." autocomplete="off">
-      <button class="send-btn" id="chatbotSendBtn">➤</button>
+      <button class="send-btn" id="chatbotSendBtn"><i class="fas fa-paper-plane"></i></button>
     </div>
   </div>
 </div>

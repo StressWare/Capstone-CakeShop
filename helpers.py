@@ -24,24 +24,40 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'heic'}
 # FAQ DATA
 # ================================================================
 FAQ = {
-    "how to order": "📝 To place an order with Ms. Brave Cake Shop:\n\n1. Click 'Order Now' on our homepage\n2. Select your cake design and flavor\n3. Choose delivery date and time\n4. Fill in recipient details\n5. Review and confirm your order\n6. Choose payment method\n\nThat's it! We'll confirm your order shortly.",
-    "delivery time": "🚚 Our delivery times:\n\n⏱️ Standard Delivery: 2-3 business days\n⚡ Rush Delivery: 24 hours (available for ₱150 extra)\n\n📍 Delivery areas: Metro and nearby provinces\n🎁 Free delivery for orders ₱2000 and above\n\nDelivery is available 10 AM - 6 PM daily.",
-    "customization": "🎨 Yes! We offer full customization:\n\n🍰 Flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry, and more\n🧁 Frosting: Buttercream, Cream Cheese, Chocolate Ganache\n🎂 Design: Custom designs, personalized messages, themed decorations\n👶 Special requests: Sugar-free, dairy-free, vegan options available\n\nPlease mention your preferences in the order notes!",
-    "payment methods": "💳 We accept multiple payment methods:\n\n💵 Cash on Delivery (COD)\n📱 GCash & PayMaya\n🏦 Bank Transfer (BPI, BDO, Metrobank)\n💰 Online Payment (Debit/Credit Card)\n\nPayment must be settled before delivery. We send a QR code or bank details after confirmation.",
-    "return policy": "🔄 Return & Refund Policy:\n\n❌ Non-returnable items: Baked goods due to perishability\n✅ Refund eligibility: Only if cake is damaged or incorrect upon delivery\n🕐 Timeline: Report issues within 24 hours of delivery\n💰 Refund process: Full refund or replacement (customer's choice)\n\nPlease message us immediately with photos if there's an issue!",
-    "default": "😊 I'm not sure about that question. Please click one of the FAQ buttons above or contact the owner directly using the 'Chat with Owner' button. Thank you!"
+    "how to order": "📝 How to order:\n1. Click 'Order Now'\n2. Pick your cake, flavor & design\n3. Choose delivery date & time\n4. Fill in details & pay\n\nWe'll confirm your order shortly! ✅",
+    "delivery": "🚚 Delivery:\n📍 Metro Iloilo & nearby provinces\n💰 Delivery fee: ₱50\n📅 Pick your delivery date & time at checkout\n\n🎂 Premade — delivered on your chosen date\n🎨 Customized — delivered once production is done",
+    "pickup": "🏪 Pickup at Shop:\n📍 R Mapa Street, Mandurriao, Iloilo City\n✅ Free — no delivery fee!\n📅 Pick your preferred pickup date & time at checkout\n\n🎂 Premade — ready on your chosen date\n🎨 Customized — ready once production is done",
+    "customization": "🎨 We offer full customization!\n\n🍰 Flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry & more\n🧁 Frosting: Buttercream, Cream Cheese, Ganache\n🎂 Custom designs, messages & themes\n👶 Sugar-free, dairy-free, vegan available\n\n💰 50% downpayment required\n❌ No cancellation once confirmed",
+    "payment methods": "💳 We accept:\n💵 Cash on Delivery (COD)\n📱 GCash & PayMaya\n🏦 Bank Transfer (BPI, BDO, Metrobank)\n💳 Debit/Credit Card\n\nWe'll send payment details after confirmation.",
+    "return policy": "🔄 Refund Policy:\n✅ Refund only if cake is damaged or wrong upon delivery\n🕐 Report within 24 hours with photos\n💰 Full refund or replacement — your choice\n\n❌ Baked goods are non-returnable",
+    "pricing": "💰 Prices vary by size, design & flavor.\n\nBrowse our cakes on the website or click 'Chat with Owner' for a custom quote.\n\n🎂 Customized cakes need 50% downpayment to proceed.",
+    "cancellation": "❌ No cancellation once order is accepted or confirmed.\n\n💰 Downpayment is non-refundable.\n\nIssue on our end? Full refund guaranteed.\nFor concerns → 'Chat with Owner'",
+    "minimum order": "🎂 No minimum! You can order just one cake.\n\nFor bulk/events, chat with the owner for special pricing.",
+    "location": "📍 R Mapa Street, Mandurriao, Iloilo City\n📱 0956 350 4486\n💬 Facebook: Mrs. Brave's",
+    "greeting": "👋 Hi! Welcome to Ms. Brave Cake Shop! 🎂\n\nAsk me about ordering, delivery, customization, payment, or anything else!\n\nOr click 'Chat with Owner' for personal help.",
+    "downpayment": "💰 Customized cakes require 50% downpayment before production starts.\n\nAccepted: GCash, PayMaya, Bank Transfer (BPI, BDO, Metrobank)\n\nWe'll send payment details after confirming your order.",
+    "order status": "📦 Check your order:\n1. Go to 'My Profile'\n2. Click 'My Orders'\n\nYou'll also get notifications for updates.\nFor concerns → 'Chat with Owner'",
+    "default": "😊 I'm not sure about that. Try the FAQ buttons above or click 'Chat with Owner' for help!",
+    "kunoli" : "ako to si kunoli tutulungan kita"
 }
+
 FAQ_KEYWORDS = {
+    "kunoli":["princess","frencess", "noli","kunoli"],
     "how to order": [
         "order", "how to", "paano", "mag-order", "purchase", "buy", "step",
         "pano", "paano mag", "gusto ko", "bibili", "bili", "i-order",
         "place order", "mag order", "how do i order", "pwede mag order"
     ],
-    "delivery time": [
-        "delivery", "deliv", "deliver", "shipping", "ship", "days", "araw",
-        "kailan", "when", "rush", "standard", "hatid", "mahatid", "ilang araw",
-        "gaano katagal", "tagal", "dating", "dating ng", "kelan", "free delivery",
-        "libre delivery", "magkano delivery", "delivery fee", "bayad delivery"
+    "delivery": [
+        "delivery", "deliv", "deliver", "shipping", "ship", "hatid", "mahatid",
+        "dating", "kelan", "magkano delivery", "delivery fee", "bayad delivery",
+        "san-o", "kadugay", "dugay", "padala", "send", "courier", "ipadala"
+    ],
+
+    "pickup": [
+        "pickup", "pick up", "kukunin", "kunin", "fetch", "self pickup",
+        "pick up sa shop", "pupunta", "iikot", "collect", "retrieve",
+        "pwede kunin", "pwede mag pickup", "same day pickup"
     ],
     "customization": [
         "custom", "flavor", "flavour", "design", "frosting", "vegan",
@@ -54,13 +70,45 @@ FAQ_KEYWORDS = {
         "payment", "pay", "gcash", "maya", "cod", "cash", "bank", "transfer",
         "bayad", "magbayad", "paano magbayad", "pwede gcash", "pwede cod",
         "online payment", "credit card", "debit", "bayaran", "pano magbayad",
-        "payment method", "load", "paymaya", "bdo", "bpi", "metrobank"
+        "payment method", "load", "paymaya", "bdo", "bpi", "metrobank",
+        "pila", "magkano bayad"
     ],
     "return policy": [
         "return", "refund", "damage", "wrong", "incorrect", "issue", "problem",
         "broken", "sira", "mali", "ibalik", "irefund", "pera", "balik pera",
         "hindi tama", "nasira", "may problema", "complaint", "reklamo",
         "di ok", "ayaw", "palitan", "replace", "replacement"
+    ],
+    "pricing": [
+        "price", "pricing", "magkano", "how much", "presyo", "halaga",
+        "cost", "quote", "rate", "pila", "tag-pila", "mahal", "mura"
+    ],
+    "cancellation": [
+        "cancel", "cancellation", "kanselahin", "bawiin", "hindi na",
+        "ayaw na", "di na tuloy", "withdraw", "back out", "icancel",
+        "cancel order", "cancel my order", "pwede i-cancel", "pwede cancel",
+        "can i cancel", "cancel ba", "icancel order", "bawiin order"
+    ],
+    "order status": [
+        "status", "where is my order", "tracking", "nasaan", "na deliver na ba",
+        "naihatid na", "update", "my order", "order ko", "ano na order ko",
+        "kailan dating", "delivered na ba"
+    ],
+    "minimum order": [
+        "minimum", "minimum order", "smallest", "isang cake", "one cake",
+        "isa lang", "pwede isang", "maliit na order", "small order"
+    ],
+    "location": [
+        "location", "address", "saan", "nasaan kayo", "where are you",
+        "where is", "directions", "how to get", "lugar", "shop"
+    ],
+    "greeting": [
+        "hi", "hello", "hey", "good morning", "good afternoon", "good evening",
+        "kumusta", "musta", "sup", "yo", "helo", "magandang"
+    ],
+    "downpayment": [
+        "downpayment", "down payment", "deposit", "50%", "advance payment",
+        "bayad muna", "partial payment", "half payment", "dp", "paunang bayad"
     ],
 }
 # ================================================================
