@@ -795,8 +795,13 @@ document.addEventListener('hidden.bs.modal', function() {
       ${o.rush ? '<span class="badge bg-danger ms-1">RUSH</span>' : ''}
       <br><small class="text-muted">${esc(o.customer?.contact || '')}</small>`;
 
-    const itemCell = `<span class="text-truncate d-inline-block" style="max-width:200px;" title="${esc(o.item || '')}">${esc(o.item || '')}</span>`;
-
+    const itemCell = `<span class="text-truncate d-inline-block" 
+      style="max-width:200px;" 
+      title="${esc(o.item || '')}"
+      onmouseover="this.style.maxWidth='none'; this.style.whiteSpace='normal';"
+      onmouseout="this.style.maxWidth='200px'; this.style.whiteSpace='nowrap';">
+  ${esc(o.item || '')}
+</span>`;
     const deliveryCell = deliveryDate
       ? `<small>${formatDate(deliveryDate)}</small><br><small class="text-muted">${formatTime(deliveryDate)}</small>`
       : '<small class="text-muted">N/A</small>';
@@ -854,8 +859,11 @@ document.addEventListener('hidden.bs.modal', function() {
       'New':              ['New', 'Accepted', 'Cancelled'],
       'Accepted':         ['Accepted', 'Pending', 'Cancelled'],
       'Pending':          ['Pending', 'Ready', 'Cancelled'],
-      'Ready':            ['Ready', 'Out for Delivery', 'Completed', 'Cancelled'],
+      'Ready': o.delivery_type === 'Pickup' 
+        ? ['Ready', 'Completed', 'Cancelled']        // ✅ If PICKUP
+        : ['Ready', 'Out for Delivery', 'Cancelled'], // ✅ If NOT PICKUP (Delivery)
       'Out for Delivery': ['Out for Delivery', 'Completed', 'Cancelled'],
+      'Delivered':        ['Delivered', 'Completed', 'Cancelled'], 
     };
 
     const opts = options[o.status] || [o.status];

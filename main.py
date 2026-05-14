@@ -1067,6 +1067,10 @@ def notify_delivery(token):
         if order.get("status") == "Completed":
             return {"error": "Order already completed"}, 400
 
+        # ✅ NEW: prevent duplicate notify
+        if order.get("notify_sent"):
+            return {"error": "Already notified"}, 400
+
         admin_tokens_doc = fcm_tokens.document("admins").get()
 
         if not admin_tokens_doc.exists:
@@ -1082,7 +1086,14 @@ def notify_delivery(token):
         order_id = order_doc.id
         customer_name = order.get("customer", {}).get("name", "Customer")
 
-        # 5. Send one message per token
+        #  NEW: update order status + timestamps before sending FCM
+        order_doc.reference.update({
+            "status": "Delivered",
+            "delivered_at": firestore.SERVER_TIMESTAMP,
+            "notify_sent": True
+        })
+
+        # Send one message per token
         success_count = 0
         failed_uids = []
 

@@ -1,4 +1,3 @@
-
 {% extends 'admin_base.html' %}
 {% block title %}Delivery Management – Ms. Brave Cake Shop{% endblock %}
 
@@ -29,10 +28,8 @@
     padding: 16px 24px;
     border-bottom: none;
   }
-
   .card-header-custom h4 { font-weight: 700; font-size: 1.15rem; }
 
-  /* DELIVERY CARDS */
   .delivery-card {
     background: white;
     border-radius: var(--card-radius);
@@ -40,9 +37,15 @@
     border: 1px solid #fce8f3;
     overflow: hidden;
     margin-bottom: 20px;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s, opacity 0.4s;
   }
   .delivery-card:hover { box-shadow: 0 8px 32px rgba(214,51,132,0.18); }
+
+  /* ✅ Delivered card gets a subtle green tint on border */
+  .delivery-card.is-delivered {
+    border-color: #a3d9b1;
+    border-top: 3px solid #198754;
+  }
 
   .delivery-card-header {
     background: var(--pink-gradient);
@@ -57,16 +60,9 @@
 
   .delivery-card-body { padding: 0; }
 
-  /* MAP */
-  .delivery-map {
-    height: 200px;
-    width: 100%;
-  }
+  .delivery-map { height: 200px; width: 100%; }
 
-  /* INFO SECTION */
-  .delivery-info {
-    padding: 14px 18px;
-  }
+  .delivery-info { padding: 14px 18px; }
 
   .info-grid {
     display: grid;
@@ -90,7 +86,6 @@
     margin-bottom: 12px;
   }
 
-  /* ACTIONS */
   .delivery-actions {
     padding: 12px 18px;
     border-top: 1px solid #fce8f3;
@@ -137,17 +132,16 @@
     color: var(--pink-dark);
   }
 
-  /* STATUS BADGE */
   .status-badge {
     padding: 3px 10px;
     border-radius: 20px;
     font-size: 0.72rem;
     font-weight: 700;
+    transition: all 0.3s ease;
   }
   .status-out { background: #fff3cd; color: #856404; }
   .status-delivered { background: #d1e7dd; color: #0f5132; }
 
-  /* RUSH BADGE */
   .rush-badge {
     background: #dc3545;
     color: white;
@@ -157,7 +151,6 @@
     font-weight: 700;
   }
 
-  /* EMPTY STATE */
   .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -165,7 +158,6 @@
   }
   .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; }
 
-  /* STATS BAR */
   .stats-bar {
     display: flex;
     gap: 16px;
@@ -183,6 +175,27 @@
   }
   .stat-card .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--pink-dark); }
   .stat-card .stat-label { font-size: 0.75rem; color: #888; margin-top: 2px; }
+
+  /* ✅ Overdue stat card */
+  .stat-card.overdue { border-left-color: #dc3545; }
+  .stat-card.overdue .stat-number { color: #dc3545; }
+
+  /* ✅ Delivered stat card */
+  .stat-card.delivered-stat { border-left-color: #198754; }
+  .stat-card.delivered-stat .stat-number { color: #198754; }
+
+  /* ✅ Delivered banner inside card */
+  .delivered-banner {
+    background: #d1e7dd;
+    border-top: 1px solid #a3d9b1;
+    padding: 8px 18px;
+    font-size: 0.8rem;
+    color: #0f5132;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 </style>
 {% endblock %}
 
@@ -190,29 +203,37 @@
 <div class="container-fluid my-4 px-4">
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
-      <h4 class="mb-0"> Delivery Management</h4>
+      <h4 class="mb-0">🛵 Delivery Management</h4>
     </div>
     <div class="card-body">
 
       <!-- STATS -->
       <div class="stats-bar">
         <div class="stat-card">
-          <div class="stat-number">{{ orders|length }}</div>
+          <div class="stat-number" id="statActive">{{ orders|length }}</div>
           <div class="stat-label">Active Deliveries</div>
         </div>
         <div class="stat-card">
-          <div class="stat-number">{{ orders|selectattr('rush')|list|length }}</div>
+          <div class="stat-number" id="statRush">{{ orders|selectattr('rush')|list|length }}</div>
           <div class="stat-label">Rush Orders</div>
+        </div>
+        <div class="stat-card delivered-stat">
+          <div class="stat-number" id="statDelivered">{{ orders|selectattr('status', 'equalto', 'Delivered')|list|length }}</div>
+          <div class="stat-label">Delivered (Pending Confirm)</div>
+        </div>
+        <div class="stat-card overdue">
+          <div class="stat-number" id="statOverdue">0</div>
+          <div class="stat-label">Overdue</div>
         </div>
       </div>
 
-      {% if orders %}
-        <div class="row">
+      <!-- DELIVERY CARDS CONTAINER -->
+      <div class="row" id="deliveryCardsContainer">
+        {% if orders %}
           {% for o in orders %}
-          <div class="col-lg-6">
-            <div class="delivery-card">
+          <div class="col-lg-6" id="card-col-{{ o.id }}">
+            <div class="delivery-card {% if o.status == 'Delivered' %}is-delivered{% endif %}" id="delivery-card-{{ o.id }}">
 
-              <!-- CARD HEADER -->
               <div class="delivery-card-header">
                 <div>
                   <div class="customer-name">
@@ -221,12 +242,17 @@
                   </div>
                   <div class="order-id">{{ o.created_at.strftime('%b %d, %Y') }}</div>
                 </div>
-                <span class="status-badge {{ 'status-delivered' if o.status == 'Delivered' else 'status-out' }}">
+                <span class="status-badge {% if o.status == 'Delivered' %}status-delivered{% else %}status-out{% endif %}" id="badge-{{ o.id }}">
                   {{ o.status }}
                 </span>
               </div>
 
-              <!-- MAP -->
+              {% if o.status == 'Delivered' %}
+              <div class="delivered-banner">
+                ✅ Rider confirmed delivery — waiting for your confirmation
+              </div>
+              {% endif %}
+
               {% if o.customer.lat and o.customer.lng %}
               <div id="map-{{ o.id }}" class="delivery-map"></div>
               {% else %}
@@ -235,7 +261,6 @@
               </div>
               {% endif %}
 
-              <!-- INFO -->
               <div class="delivery-info">
                 <div class="info-grid">
                   <div class="info-item">
@@ -260,7 +285,6 @@
                 </div>
               </div>
 
-              <!-- ACTIONS -->
               <div class="delivery-actions">
                 <button class="btn-copy-link" onclick="copyDeliveryLink('{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}', this)">
                   <i class="fas fa-link"></i> Copy Delivery Link
@@ -273,14 +297,15 @@
             </div>
           </div>
           {% endfor %}
-        </div>
-
-      {% else %}
-        <div class="empty-state">
-          <i class="fas fa-truck"></i>
-          No active deliveries right now
-        </div>
-      {% endif %}
+        {% else %}
+          <div class="col-12" id="emptyState">
+            <div class="empty-state">
+              <i class="fas fa-truck"></i>
+              No active deliveries right now
+            </div>
+          </div>
+        {% endif %}
+      </div>
 
     </div>
   </div>
@@ -292,7 +317,6 @@
 <script>
   const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
 
-  // Initialize maps for each delivery card
   {% for o in orders %}
     {% if o.customer.lat and o.customer.lng %}
     (function() {
@@ -321,7 +345,6 @@
     {% endif %}
   {% endfor %}
 
-  // Copy delivery link
   function copyDeliveryLink(url, btn) {
     navigator.clipboard.writeText(url).then(function() {
       btn.classList.add('copied');
@@ -332,5 +355,127 @@
       }, 2000);
     });
   }
+
+  // ✅ onSnapshot — listen to Out for Delivery + Delivered orders in real-time
+  (function() {
+    const db = firebase.firestore();
+
+    db.collection('orders')
+      .where('delivery_type', '==', 'Delivery')
+      .where('status', 'in', ['Out for Delivery', 'Delivered'])
+      .onSnapshot(function(snapshot) {
+
+        snapshot.docChanges().forEach(function(change) {
+          const doc = change.doc;
+          const data = doc.data();
+          const id = doc.id;
+          const status = data.status;
+          const customerName = data.customer?.name || 'A customer';
+
+          if (change.type === 'modified') {
+
+            if (status === 'Delivered') {
+              // Update badge
+              const badge = document.getElementById('badge-' + id);
+              if (badge) {
+                badge.textContent = 'Delivered';
+                badge.classList.remove('status-out');
+                badge.classList.add('status-delivered');
+              }
+
+              // Add green border to card
+              const card = document.getElementById('delivery-card-' + id);
+              if (card) {
+                card.classList.add('is-delivered');
+
+                // Insert delivered banner if not already there
+                const header = card.querySelector('.delivery-card-header');
+                if (header && !card.querySelector('.delivered-banner')) {
+                  const banner = document.createElement('div');
+                  banner.className = 'delivered-banner';
+                  banner.innerHTML = '✅ Rider confirmed delivery — waiting for your confirmation';
+                  header.insertAdjacentElement('afterend', banner);
+                }
+              }
+
+              // Update stats
+              updateStats(snapshot);
+
+              // ✅ Swal toast
+              Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: `🛵 ${customerName}'s order has been delivered!`,
+                text: 'Tap to mark as completed.',
+                showConfirmButton: false,
+                timer: 5000,
+                timerProgressBar: true
+              });
+            }
+
+            // If owner marks Completed — remove card
+            if (status === 'Completed') {
+              const col = document.getElementById('card-col-' + id);
+              if (col) {
+                col.style.opacity = '0';
+                col.style.transition = 'opacity 0.4s';
+                setTimeout(() => col.remove(), 400);
+              }
+              updateStats(snapshot);
+            }
+          }
+
+          if (change.type === 'removed') {
+            const col = document.getElementById('card-col-' + id);
+            if (col) col.remove();
+            updateStats(snapshot);
+          }
+        });
+
+        // Check if no cards left — show empty state
+        checkEmpty();
+      });
+
+    function updateStats(snapshot) {
+      let active = 0, rush = 0, delivered = 0, overdue = 0;
+      const now = new Date();
+
+      snapshot.forEach(function(doc) {
+        const d = doc.data();
+        if (d.status === 'Out for Delivery' || d.status === 'Delivered') {
+          active++;
+          if (d.rush) rush++;
+          if (d.status === 'Delivered') delivered++;
+          if (d.delivery_date && d.delivery_date.toDate && d.delivery_date.toDate() < now && d.status === 'Out for Delivery') {
+            overdue++;
+          }
+        }
+      });
+
+      document.getElementById('statActive').textContent = active;
+      document.getElementById('statRush').textContent = rush;
+      document.getElementById('statDelivered').textContent = delivered;
+      document.getElementById('statOverdue').textContent = overdue;
+    }
+
+    function checkEmpty() {
+      const container = document.getElementById('deliveryCardsContainer');
+      const remaining = container.querySelectorAll('[id^="card-col-"]');
+      const empty = document.getElementById('emptyState');
+      if (remaining.length === 0) {
+        if (!empty) {
+          const div = document.createElement('div');
+          div.id = 'emptyState';
+          div.className = 'col-12';
+          div.innerHTML = '<div class="empty-state"><i class="fas fa-truck"></i>No active deliveries right now</div>';
+          container.appendChild(div);
+        }
+      } else {
+        if (empty) empty.remove();
+      }
+    }
+
+  })();
 </script>
 {% endblock %}

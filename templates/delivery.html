@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +13,7 @@
         .then(() => console.log('Delivery SW registered'))
         .catch(err => console.warn('Delivery SW failed:', err));
     }
-</script>
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -35,7 +34,6 @@
       padding-bottom: 40px;
     }
 
-    /* HEADER */
     .header {
       background: linear-gradient(135deg, #d63384, #a0205e);
       color: white;
@@ -52,7 +50,6 @@
     .header-text h1 { font-size: 1.1rem; font-weight: 700; }
     .header-text p { font-size: 0.78rem; opacity: 0.85; margin-top: 2px; }
 
-    /* STATUS BADGE */
     .status-bar {
       background: white;
       padding: 10px 20px;
@@ -67,11 +64,11 @@
       border-radius: 20px;
       font-weight: 700;
       font-size: 0.78rem;
+      transition: all 0.3s ease;
     }
     .status-out { background: #fff3cd; color: #856404; }
     .status-delivered { background: #d1e7dd; color: #0f5132; }
 
-    /* EXPIRED PAGE */
     .expired-container {
       display: flex;
       flex-direction: column;
@@ -85,13 +82,11 @@
     .expired-container h2 { color: var(--pink-dark); font-size: 1.3rem; margin-bottom: 8px; }
     .expired-container p { color: #888; font-size: 0.9rem; }
 
-    /* MAP */
     #deliveryMap {
       height: 280px;
       width: 100%;
     }
 
-    /* CARDS */
     .card {
       background: white;
       border-radius: var(--card-radius);
@@ -113,7 +108,6 @@
     }
     .card-body { padding: 16px 18px; }
 
-    /* INFO ROWS */
     .info-row {
       display: flex;
       justify-content: space-between;
@@ -126,7 +120,6 @@
     .info-label { color: #888; font-weight: 500; min-width: 110px; }
     .info-value { color: #222; font-weight: 600; text-align: right; flex: 1; }
 
-    /* ORDER ITEMS */
     .order-item {
       display: flex;
       justify-content: space-between;
@@ -138,7 +131,6 @@
     .item-name { font-weight: 600; color: #333; }
     .item-price { color: var(--pink); font-weight: 700; }
 
-    /* TOTAL */
     .total-row {
       background: var(--pink-light);
       border-radius: 10px;
@@ -151,7 +143,6 @@
     }
     .total-row .amount { color: var(--pink-dark); font-size: 1.1rem; }
 
-    /* ADDRESS HIGHLIGHT */
     .address-box {
       background: #fff8e1;
       border: 1.5px solid #ffe082;
@@ -163,7 +154,6 @@
       margin-top: 8px;
     }
 
-    /* DELIVERY TIME HIGHLIGHT */
     .time-box {
       background: var(--pink-light);
       border: 1.5px solid var(--pink-mid);
@@ -175,7 +165,6 @@
     .time-box .time-label { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
     .time-box .time-value { font-size: 1.1rem; font-weight: 700; color: var(--pink-dark); margin-top: 2px; }
 
-    /* PAYMENT BADGE */
     .payment-badge {
       display: inline-block;
       padding: 4px 12px;
@@ -186,7 +175,6 @@
     .payment-cod { background: #fff3cd; color: #856404; }
     .payment-paid { background: #d1e7dd; color: #0f5132; }
 
-    /* MAP LEGEND */
     .map-legend {
       display: flex;
       gap: 16px;
@@ -199,12 +187,32 @@
     .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
     .dot-shop { background: #d63384; }
     .dot-customer { background: #0d6efd; }
+
+    /* ✅ Delivered state for the action card */
+    .delivered-state {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    .delivered-state .check-circle {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #198754, #146c43);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin: 0 auto 12px;
+      box-shadow: 0 4px 16px rgba(25,135,84,0.3);
+    }
+    .delivered-state h3 { color: #198754; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .delivered-state p { color: #888; font-size: 0.82rem; }
   </style>
 </head>
 <body>
 
 {% if expired %}
-  <!-- EXPIRED PAGE -->
   <div class="header">
     <div class="header-icon">🎂</div>
     <div class="header-text">
@@ -219,7 +227,6 @@
   </div>
 
 {% else %}
-  <!-- HEADER -->
   <div class="header">
     <div class="header-icon">🎂</div>
     <div class="header-text">
@@ -228,22 +235,20 @@
     </div>
   </div>
 
-  <!-- STATUS BAR -->
   <div class="status-bar">
     <span style="color:#666;">Order Status</span>
-    <span class="status-badge {{ 'status-delivered' if order.status == 'Delivered' else 'status-out' }}">
+    <!-- ✅ id added for JS update -->
+    <span id="statusBadge" class="status-badge {{ 'status-delivered' if order.status == 'Delivered' else 'status-out' }}">
       {{ order.status }}
     </span>
   </div>
 
-  <!-- MAP -->
   <div id="deliveryMap"></div>
   <div class="map-legend">
     <div class="legend-item"><div class="legend-dot dot-shop"></div> Shop</div>
     <div class="legend-item"><div class="legend-dot dot-customer"></div> Customer</div>
   </div>
 
-  <!-- DELIVERY TIME -->
   <div class="card">
     <div class="card-header">⏰ Delivery Schedule</div>
     <div class="card-body">
@@ -254,7 +259,6 @@
     </div>
   </div>
 
-  <!-- CUSTOMER INFO -->
   <div class="card">
     <div class="card-header">👤 Customer Information</div>
     <div class="card-body">
@@ -274,7 +278,6 @@
     </div>
   </div>
 
-  <!-- ORDER SUMMARY -->
   <div class="card">
     <div class="card-header">🎂 Order Summary</div>
     <div class="card-body">
@@ -326,8 +329,13 @@
       {% endif %}
     </div>
   </div>
+
+  <!-- ✅ Action card with delivered state -->
   <div class="card" style="margin: 16px;">
     <div class="card-body" style="text-align: center; padding: 20px;">
+
+      <!-- Button (hidden if already delivered) -->
+      <div id="btnWrapper" {% if order.status == 'Delivered' %}style="display:none;"{% endif %}>
         <button id="deliveredBtn" onclick="notifyDelivered()" style="
             background: linear-gradient(135deg, #198754, #146c43);
             color: white;
@@ -342,12 +350,18 @@
         ">
             ✅ I've Delivered This Order
         </button>
-        <p id="deliveredMsg" style="display:none; color:#198754; font-weight:600; margin-top:12px;">
-            🎉 Owner has been notified!
-        </p>
         <p id="deliveredErr" style="display:none; color:#dc3545; font-weight:600; margin-top:12px;">
             ⚠️ Failed to notify. Please try again.
         </p>
+      </div>
+
+      <!-- ✅ Delivered confirmation state -->
+      <div id="deliveredState" class="delivered-state" {% if order.status == 'Delivered' %}style="display:block;"{% endif %}>
+        <div class="check-circle">✅</div>
+        <h3>Delivery Confirmed!</h3>
+        <p>Owner has been notified.<br>Waiting for completion.</p>
+      </div>
+
     </div>
   </div>
 {% endif %}
@@ -361,25 +375,18 @@
     lng: {{ order.customer.lng or 122.5621 }}
   };
 
-  var map = L.map('deliveryMap').setView([CUSTOMER.lat, CUSTOMER.lng], 14);
+  var map = L.map('deliveryMap', { maxZoom: 15 }).setView([CUSTOMER.lat, CUSTOMER.lng], 14);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
   }).addTo(map);
 
-  // Shop marker (pink)
   var shopIcon = L.divIcon({
     html: '<div style="background:#d63384; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-    iconSize: [14, 14],
-    iconAnchor: [7, 7],
-    className: ''
+    iconSize: [14, 14], iconAnchor: [7, 7], className: ''
   });
-
-  // Customer marker (blue)
   var customerIcon = L.divIcon({
     html: '<div style="background:#0d6efd; width:18px; height:18px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 9],
-    className: ''
+    iconSize: [18, 18], iconAnchor: [9, 9], className: ''
   });
 
   L.marker([SHOP.lat, SHOP.lng], { icon: shopIcon })
@@ -391,39 +398,57 @@
     .bindPopup('<strong>{{ order.customer.name }}</strong><br>{{ order.customer.address }}')
     .openPopup();
 
-  // Fit map to show both markers
-  var bounds = L.latLngBounds(
+  map.fitBounds([
     [SHOP.lat, SHOP.lng],
     [CUSTOMER.lat, CUSTOMER.lng]
-  );
-  map.fitBounds(bounds, { padding: [40, 40] });
+  ], { padding: [40, 40], maxZoom: 15 });
 </script>
 <script>
   async function notifyDelivered() {
-      const btn = document.getElementById('deliveredBtn');
-      const msg = document.getElementById('deliveredMsg');
-      const err = document.getElementById('deliveredErr');
+    const btn = document.getElementById('deliveredBtn');
+    const err = document.getElementById('deliveredErr');
+    const btnWrapper = document.getElementById('btnWrapper');
+    const deliveredState = document.getElementById('deliveredState');
+    const statusBadge = document.getElementById('statusBadge');
 
-      btn.disabled = true;
-      btn.textContent = 'Notifying...';
+    btn.disabled = true;
+    btn.textContent = 'Notifying...';
+    err.style.display = 'none';
 
-      try {
-          const token = "{{ order.delivery_token }}";
-          const res = await fetch(`/delivery/${token}/notify`, { method: 'POST' });
+    try {
+      const token = "{{ order.delivery_token }}";
+      const res = await fetch(`/delivery/${token}/notify`, { method: 'POST' });
 
-          if (res.ok) {
-              btn.style.display = 'none';
-              msg.style.display = 'block';
-          } else {
-              btn.disabled = false;
-              btn.textContent = "✅ I've Delivered This Order";
-              err.style.display = 'block';
-          }
-      } catch (e) {
+      if (res.ok) {
+        // ✅ Update status badge
+        statusBadge.textContent = 'Delivered';
+        statusBadge.classList.remove('status-out');
+        statusBadge.classList.add('status-delivered');
+
+        // ✅ Swap button for delivered state
+        btnWrapper.style.display = 'none';
+        deliveredState.style.display = 'block';
+
+      } else {
+        const data = await res.json();
+        // ✅ If already notified, just show delivered state silently
+        if (res.status === 400 && data.error === 'Already notified') {
+          btnWrapper.style.display = 'none';
+          deliveredState.style.display = 'block';
+          statusBadge.textContent = 'Delivered';
+          statusBadge.classList.remove('status-out');
+          statusBadge.classList.add('status-delivered');
+        } else {
           btn.disabled = false;
           btn.textContent = "✅ I've Delivered This Order";
           err.style.display = 'block';
+        }
       }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = "✅ I've Delivered This Order";
+      err.style.display = 'block';
+    }
   }
 </script>
 {% endif %}
