@@ -1,24 +1,31 @@
-/* =========================================
-   MOBILE RESPONSIVE GLOBAL FIXES
-   Load BEFORE page-specific CSS
-========================================= */
 @media (max-width: 575px) {
   /* 1. Prevent iOS auto-zoom on input focus */
   input, select, textarea {
     font-size: 16px !important;
   }
 
-  /* 2. Navbar logo: reset hardcoded 180px height */
-  .navbar-logo {
-    height: auto !important;
-    max-height: 48px !important;
-    width: auto !important;
-    position: static !important;
-    transform: none !important;
-    margin-top: 10px !important;
+  /* 2. ✅ FIXED: Navbar brand container */
+  .navbar-brand {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 50px !important;
   }
 
-  /* 3. Chatbot safe width */
+  /* 3. ✅ FIXED: Navbar logo image - INCREASED SIZE */
+  .navbar-logo {
+    height: 130px !important;
+    max-height: 200px !important;
+    width: auto !important;
+    max-width: 200px !important;
+    object-fit: contain !important;
+    margin-top: 30px !important;
+    margin-bottom: 5px !important;
+    margin-left: 16px !important;
+  }
+
+  /* 4. Chatbot safe width */
   .chatbot-window {
     width: 92vw !important;
     max-width: 340px !important;
@@ -26,14 +33,14 @@
     bottom: 2vh !important;
   }
 
-  /* 4. Modal mobile fit */
+  /* 5. Modal mobile fit */
   .modal-dialog {
     width: 94vw !important;
     max-width: 94vw !important;
     margin: 0.5rem auto !important;
   }
 
-  /* 5. Table horizontal scroll */
+  /* 6. Table horizontal scroll */
   .table-wrapper {
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
@@ -41,7 +48,7 @@
     width: 100% !important;
   }
 
-  /* 6. Force wrap for payment/delivery buttons */
+  /* 7. Force wrap for payment/delivery buttons */
   .payment-options, .delivery-options, .address-type-buttons {
     flex-wrap: wrap !important;
     gap: 10px !important;
@@ -52,24 +59,24 @@
     flex: 1 1 calc(50% - 10px) !important;
   }
 
-  /* 7. Profile fields stack vertically */
+  /* 8. Profile fields stack vertically */
   .profile-fields {
     grid-template-columns: 1fr !important;
   }
 
-  /* 8. Checkout summary: un-stick on mobile */
+  /* 9. Checkout summary: un-stick on mobile */
   .order-summary {
     position: static !important;
     margin-top: 20px !important;
   }
 
-  /* 9. Readable min font sizes */
+  /* 10. Readable min font sizes */
   .aoc-meta, .tl-lbl, .profile-field-label, .stat-lbl, .profile-field-val {
     font-size: 0.7rem !important;
     line-height: 1.3 !important;
   }
 
-  /* 10. Clean scrollbar but keep functionality */
+  /* 11. Clean scrollbar but keep functionality */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-thumb { background: rgba(214,51,132,0.3); border-radius: 4px; }
 }

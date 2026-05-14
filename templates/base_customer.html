@@ -195,6 +195,9 @@
 {% endif %}
 {% endif %}
 
+<!-- ── MODALS (rendered outside all containers to avoid stacking context issues) ── -->
+{% block modals %}{% endblock %}
+
 <!-- Bootstrap JS -->
 <script>
   const menuBtn    = document.getElementById("menuToggle");
@@ -213,28 +216,25 @@
   }
 
   if (menuBtn && offcanvas && menuClose) {
-    // Toggle open/close sa Menu button
     menuBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       offcanvas.classList.contains("active") ? closeMenu() : openMenu();
     });
 
-    // Isara sa X button
     menuClose.addEventListener("click", closeMenu);
 
-    // Isara kapag na-click ang overlay (labas ng menu)
     overlay.addEventListener("click", closeMenu);
   }
 </script> 
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}
 {% if session.get('user_id') %}
-
 <script src="{{ url_for('static', filename='javascript/chatbot.js') }}"></script>
+{% endif %}
+{% endif %}
 
-{% endif %}
-{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 {% block extra_js %}{% endblock %}
 
+</body>
 </html>
