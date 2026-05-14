@@ -103,6 +103,72 @@
     z-index: 999;
   }
   [data-tooltip]:hover::after { opacity: 1; }
+
+
+  /* ── Mobile Responsive ── */
+@media (max-width: 576px) {
+  .container-fluid.my-4.px-4 {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* 2-column grid for stat cards on mobile */
+  .row.g-3.mb-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  /* Override Bootstrap col classes inside stat card grid */
+  .row.g-3.mb-4 > [class*="col-"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    padding: 0 !important;
+  }
+
+  .stat-card-analytics {
+    padding: 14px 16px;
+    border-radius: 10px;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .stat-label {
+    font-size: 0.68rem;
+  }
+
+  .stat-sub {
+    font-size: 0.7rem;
+  }
+
+  /* Section header stacks on mobile */
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px;
+  }
+
+  /* Chart card inner padding tighter */
+  .chart-card {
+    padding: 14px 12px;
+  }
+
+  /* Tab switcher smaller text */
+  .tab-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  /* Chart title wraps gracefully */
+  .chart-title {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
 </style>
 {% endblock %}
 
@@ -111,8 +177,8 @@
 
   <div class="section-header d-flex align-items-center justify-content-between mb-2">
     <div>
-      <h1 class="mb-1">Analytics</h1>
-      <p class="mb-0 opacity-75">Business performance overview</p>
+    <h1 class="mb-1" style="font-size: clamp(1.2rem, 5vw, 2rem);">Analytics</h1>      
+    <p class="mb-0 opacity-75">Business performance overview</p>
     </div>
     <button class="btn-export" onclick="exportCSV()">
        Export CSV

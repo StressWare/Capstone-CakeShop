@@ -52,6 +52,75 @@
   .badge-success { background-color: #28a745 !important; }
   .badge-warning { background-color: #ffc107 !important; color: #212529; }
   .badge-danger  { background-color: #dc3545 !important; }
+
+    @media (max-width: 768px) {
+    /* ─ 1. REMOVE VERTICAL GAP ─ */
+    html, body {
+      height: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Main content grows to push footer down */
+    .container-fluid.my-4 {
+      flex: 1 0 auto;
+      margin-top: 0.5rem !important;
+      margin-bottom: 0 !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+      padding-bottom: 0 !important;
+    }
+
+    /* Card stretches to fill space */
+    .card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 0 !important;
+    }
+    .card-body {
+      flex: 1 1 auto;
+      padding: 0.6rem 0.4rem !important;
+      padding-bottom: 0.4rem !important;
+      overflow: visible !important; /* Crucial: keeps horizontal scroll working */
+    }
+
+    /* Pagination sticks to bottom of card */
+    nav.mt-3 {
+      margin-top: auto !important;
+      margin-bottom: 0 !important;
+    }
+
+    /* Footer cleanup */
+    footer, .footer, #footer, .bottom-nav, [class*="footer"] {
+      margin-top: 0 !important;
+      flex-shrink: 0;
+    }
+
+    /* ── 2. HORIZONTAL SCROLL (KEEP WORKING) ─ */
+    .table-responsive {
+      overflow-x: auto !important;
+      -webkit-overflow-scrolling: touch;
+      display: block;
+      width: 100%;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    #usersTable {
+      min-width: 720px !important;
+      width: 100%;
+    }
+    #usersTable th, #usersTable td {
+      white-space: nowrap !important;
+      padding: 0.45rem 0.4rem !important;
+      font-size: 0.8rem;
+    }
+  }
 </style>
 {% endblock %}
 

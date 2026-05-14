@@ -16,12 +16,12 @@
 <body>
 
     <!-- NAVBAR -->
-    <nav class="navbar fixed-top" style="min-height:80px; height:auto; overflow:visible; padding:10px; background-color:#f8f9fa;">
+    <nav class="navbar fixed-top" style="min-height:80px; height:auto; overflow:visible; padding:10px; background-color:#000000;">
   <div class="container-fluid">
     <a href="#">
       <img src="/static/img/mrs.brave.jpg" 
            alt="MRS. Brave's" 
-           style="height:60px; width:auto; object-fit:contain; display:block;">
+           style="height:160px; width:auto; object-fit:contain; display:block; margin-top: 18px;">
     </a>
   </div>
 </nav>
@@ -71,13 +71,14 @@
                     <input type="text" id="signupUsername" placeholder="Username" required>
                     <input type="tel" id="signupNumber" placeholder="Phone Number" required> <!-- ID matches Flask 'number' -->
                     <input type="text" id="signupAddress" placeholder="Address" required>
-                    <div class="password-wrapper">
-                        <input type="password" id="signupPassword" placeholder="Password" required>
-                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
-                    </div>
-                    <div class="password-wrapper">
-                        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
+                <div class="password-wrapper">
+                    <input type="password" id="signupPassword" placeholder="Password" required>
+                    <i class="fa-solid fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
+                </div>
+
+                <div class="password-wrapper">
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+                    <i class="fa-solid fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>                
                     </div>
                     <button type="submit">Sign Up</button>
                     <p class="toggle-msg">

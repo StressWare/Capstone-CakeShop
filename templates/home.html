@@ -229,39 +229,8 @@
   </div>
 </section>
 
-<!-- Top Rated Cakes -->
-{% if top_cakes %}
-<section class="top-cakes-section">
-  <div class="container">
-    <h2 class="text-center mb-3" style="font-weight:700;">Our Best Cakes Rated By Customers</h2>
-    <div class="top-cakes-scroll">
-      {% for cake in top_cakes %}
-      <div class="review-card">
-        {% if cake.image %}
-          <img src="{{ cake.image }}" alt="{{ cake.name }}" class="review-card-img">
-        {% else %}
-          <div class="review-card-img-placeholder">🎂</div>
-        {% endif %}
-        <div class="review-card-body">
-          <div class="review-cake-name">{{ cake.name }}</div>
-          <div class="review-stars" style="color:#ffc107; font-size:0.9rem;">
-            {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
-          </div>
-          <div class="review-rating-text" style="font-size:0.75rem; color:#ffffff;">
-            {{ cake.avg_rating }} / 5 ({{ cake.review_count }} reviews)
-          </div>
-          <div class="price-box" style="margin-top:5px;">
-            ₱{{ "%.2f"|format(cake.price) }}
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-{% endif %}
-
-    <h2 class="text-center mb-3" style="font-weight:700; margin-top: 50px;">Most Ordered</h2>
+<br>
+    <h2 class="text-center mb-3" style="font-weight:700; margin-bottom: 30px;">Most Ordered</h2>
   <div class="container">
       <!-- First Row - 2 large cards -->
       <div class="grid">
@@ -357,6 +326,41 @@
           {% endfor %}
       </div>
   </div>
+
+
+
+  <!-- Top Rated Cakes -->
+{% if top_cakes %}
+<section class="top-cakes-section">
+  <div class="container">
+    <h2 class="text-center mb-3" style="font-weight:700;margin-top:120px;">Our Best Cakes Rated By Customers</h2>
+    <div class="top-cakes-scroll">
+      {% for cake in top_cakes %}
+      <div class="review-card" style="margin-top:20px;">
+        {% if cake.image %}
+          <img src="{{ cake.image }}" alt="{{ cake.name }}" class="review-card-img">
+        {% else %}
+          <div class="review-card-img-placeholder">🎂</div>
+        {% endif %}
+        <div class="review-card-body">
+          <div class="review-cake-name">{{ cake.name }}</div>
+          <div class="review-stars" style="color:#ffc107; font-size:0.9rem;">
+            {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
+          </div>
+          <div class="review-rating-text" style="font-size:0.75rem; color:#ffffff;">
+            {{ cake.avg_rating }} / 5 ({{ cake.review_count }} reviews)
+          </div>
+          <div class="price-box" style="margin-top:5px;">
+            ₱{{ "%.2f"|format(cake.price) }}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
 
 <!-- Services -->
 <section id="services" class="services-section">
@@ -591,12 +595,16 @@
       inner.appendChild(back);
       card.appendChild(inner);
 
-      // CLICK FLIP LOGIC (ONLY ONE ACTIVE)
+      // CLICK FLIP LOGIC (TOGGLE)
       card.addEventListener('click', () => {
-        document.querySelectorAll('.category-card.flipped')
-          .forEach(el => el.classList.remove('flipped'));
+          const isFlipped = card.classList.contains('flipped');
 
-        card.classList.add('flipped');
+          document.querySelectorAll('.category-card.flipped')
+              .forEach(el => el.classList.remove('flipped'));
+
+          if (!isFlipped) {
+              card.classList.add('flipped');
+          }
       });
 
       cardsContainer.appendChild(card);
