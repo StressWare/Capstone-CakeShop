@@ -206,7 +206,7 @@
 .custom-footer {
     background: linear-gradient(135deg, #ffb6c1, #ff69b4);
     color: white;
-    padding: 10px 40px; /* reduced height */
+    padding: 18px 40px;
     margin-top: auto;
 }
 
@@ -221,7 +221,7 @@
 /* title */
 .footer-left h2 {
     color: white;
-    font-size: 11px;
+    font-size: 16px;
     margin: 0;
 }
 
@@ -238,7 +238,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 11px;
+    font-size: 16px;
 }
 
 /* facebook icon */
