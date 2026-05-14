@@ -88,7 +88,10 @@
     </div>
     {% endfor %}
   </div>
-
+<div class="text-center mt-4" id="loadMoreWrapper">
+  <p class="text-white-50 small mb-2" id="logCounter"></p>
+  <button class="btn btn-outline-light btn-sm px-4" id="loadMoreBtn">Load more</button>
+</div>
   <!-- Empty after filter -->
   <div id="noResults" class="text-center text-muted py-5 d-none">
     <i class="bi bi-journal-x fs-1"></i>
@@ -160,31 +163,59 @@
 
 <!-- Filter + Search JS -->
 <script>
-  const filterBtns = document.querySelectorAll("#filterBtns button");
-  const items = document.querySelectorAll(".timeline-item");
-  const noResults = document.getElementById("noResults");
+  const ITEMS_PER_PAGE = 15;
+ 
+  const filterBtns  = document.querySelectorAll("#filterBtns button");
+  const allItems    = document.querySelectorAll(".timeline-item");
+  const noResults   = document.getElementById("noResults");
   const searchInput = document.getElementById("logSearch");
-
-  let activeFilter = "all";
-
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  const logCounter  = document.getElementById("logCounter");
+ 
+  let activeFilter  = "all";
+  let visibleItems  = [];   // items that pass current filter + search
+  let shownCount    = 0;    // how many of visibleItems are currently shown
+ 
   function applyFilters() {
     const searchVal = searchInput.value.toLowerCase();
-    let visible = 0;
-
-    items.forEach(item => {
+ 
+    // rebuild visibleItems based on filter + search
+    visibleItems = [];
+    allItems.forEach(item => {
       const matchFilter = activeFilter === "all" || item.dataset.category === activeFilter;
       const matchSearch = item.dataset.search.includes(searchVal);
-      if (matchFilter && matchSearch) {
-        item.style.display = "";
-        visible++;
-      } else {
-        item.style.display = "none";
-      }
+      // hide everything first
+      item.style.display = "none";
+      if (matchFilter && matchSearch) visibleItems.push(item);
     });
-
-    noResults.classList.toggle("d-none", visible > 0);
+ 
+    // reset to first page
+    shownCount = 0;
+    showNext();
+ 
+    noResults.classList.toggle("d-none", visibleItems.length > 0);
   }
-
+ 
+  function showNext() {
+    const nextBatch = visibleItems.slice(shownCount, shownCount + ITEMS_PER_PAGE);
+    nextBatch.forEach(item => item.style.display = "");
+    shownCount += nextBatch.length;
+    updateUI();
+  }
+ 
+  function updateUI() {
+    const total = visibleItems.length;
+ 
+    // counter text
+    logCounter.textContent = total > 0 ? `Showing ${shownCount} of ${total}` : "";
+ 
+    // hide load more if everything is already shown
+    const exhausted = shownCount >= total;
+    loadMoreBtn.style.display  = exhausted ? "none" : "";
+    logCounter.style.display   = total > 0 ? "" : "none";
+  }
+ 
+  // ── Events ──
   filterBtns.forEach(btn => {
     btn.addEventListener("click", () => {
       filterBtns.forEach(b => b.classList.remove("active"));
@@ -193,7 +224,11 @@
       applyFilters();
     });
   });
-
+ 
   searchInput.addEventListener("input", applyFilters);
+  loadMoreBtn.addEventListener("click", showNext);
+ 
+  // init on page load
+  applyFilters();
 </script>
 {% endblock %}
