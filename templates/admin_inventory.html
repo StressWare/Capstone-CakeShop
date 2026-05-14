@@ -2,10 +2,9 @@
 {% block title %}Inventory – Ms. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
-  <style>
-  /* ── CARD CUSTOMIZATION ── */
+<style>
   .card-header.card-header-custom {
-    border-top: 4px solid #c71585; /* pink top border */
+    border-top: 4px solid #c71585;
     background: #ffffff;
     color: #c71585;
   }
@@ -15,47 +14,40 @@
     background: #ffffff;
   }
 
-  /* ── TABLE STYLING ── */
-  #inventoryTable {
-    border-radius: 8px;
-  }
-  #inventoryTable thead {
-    background-color: #c71585;
-    color: #fff;
-  }
-  #inventoryTable tbody tr:hover {
-    background-color: #ffe6f0;
-  }
-  #inventoryTable td {
-    vertical-align: middle;
-  }
-  .table-danger td, .table-warning td {
-    font-weight: bold;
-  }
+  /* ── TABLE ── */
+  #inventoryTable { border-radius: 8px; }
+  #inventoryTable thead { background-color: #c71585; color: #fff; }
+  #inventoryTable tbody tr:hover { background-color: #ffe6f0; }
+  #inventoryTable td { vertical-align: middle; }
+  .table-danger td, .table-warning td { font-weight: bold; }
 
-/* BADGES FOR STOCK STATUS */
-.badge-status-critical { background-color: #dc3545 !important; color: #fff !important; } /* red */
-.badge-status-low { background-color: #ffc107 !important; color: #000 !important; } /* yellow */
-.badge-status-good { background-color: #28a745 !important; color: #fff !important; } /* green */
+  /* ── STOCK BADGES ── */
+  .badge-status-critical { background-color: #dc3545 !important; color: #fff !important; }
+  .badge-status-low      { background-color: #ffc107 !important; color: #000 !important; }
+  .badge-status-good     { background-color: #28a745 !important; color: #fff !important; }
 
-  /* ── INPUT STYLING ── */
+  /* ── CATEGORY BADGE ── */
+  .badge-ingredients { background: #d4edda; color: #155724; }
+  .badge-equipment   { background: #cce5ff; color: #004085; }
+
+  /* ── INPUT ── */
   .input-group-text {
     background: #ffffff;
     border-right: none;
     color: #c71585;
   }
-  .form-control {
+  .form-control, .form-select {
     border-radius: 0.5rem;
     border: 1px solid #ccc;
   }
-  .form-control:focus {
+  .form-control:focus, .form-select:focus {
     border-color: #c71585;
     box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
   }
 
   /* ── BUTTONS ── */
   .btn-info {
-    background-color: #c71585;  
+    background-color: #c71585;
     border-color: #c71585;
     color: #fff;
   }
@@ -63,134 +55,167 @@
     background-color: #a0106a;
     border-color: #a0106a;
   }
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    border: 1.5px solid #c71585; border-radius: 8px;
+    background: #c71585; color: white;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-export:hover { background: #a01070; border-color: #a01070; }
+  .btn-add-inventory {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 14px;
+    border: 1.5px solid #c71585; border-radius: 8px;
+    background: transparent; color: #c71585;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-add-inventory:hover { background: #fff0f7; }
 
   /* ── PAGINATION ── */
-  .pagination .page-link {
-    color: #c71585;
-  }
-  .pagination .page-link.active {
-    background-color: #c71585;
-    color: #fff;
-  }
+  .pagination .page-link { color: #c71585; }
+  .pagination .page-link.active { background-color: #c71585; color: #fff; }
 
   /* ── MODAL HEADER ── */
-  .modal-header.bg-info {
+  .modal-header.bg-pink {
     background-color: #c71585 !important;
     color: #fff;
   }
-  .btn-close-white {
-    filter: invert(1);
-  }
+  .btn-close-white { filter: invert(1); }
 
-
-
-/* ── RESPONSIVE FIX (TABLET & MOBILE) ── */
-@media (max-width: 992px) {
-  /* prevent horizontal scrolling */
-  body, html {
-    overflow-x: hidden;
-  }
-
-  .container-fluid {
-    padding-left: 12px;
-    padding-right: 12px;
-    margin-left: -5px;
-    margin-right: -8px;
-
-  }
-
-  /* form becomes stacked */
-  form.row {
-    flex-direction: column;
-  }
-
-  form.row .col-md-4,
-  form.row .col-md-3,
-  form.row .col-md-2 {
-    width: 100%;
-    max-width: 100%;
-    margin-left: 5px;
-    margin-right: 5px;
-  }
-
-  form.row .d-flex {
-    width: 100%;
-  }
-
-  /* make button full width and aligned */
-  form button {
-    width: 100%;
-  }
-
-  /* reduce card padding slightly for fit view */
-  .card-body {
-    padding: 1rem;
-  }
-}
-
-@media (max-width: 576px) {
-  /* tighter mobile spacing */
-  .card-header h4 {
-    font-size: 1.1rem;
-  }
-
-  .form-label {
-    font-size: 0.9rem;
-  }
-
-  .table-responsive {
-    font-size: 0.85rem;
-  }
-
-  .input-group {
+  /* ── RADIO BUTTONS ── */
+  .category-radio-group {
+    display: flex;
+    gap: 10px;
     flex-wrap: wrap;
   }
+  .category-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .category-radio-label input[type="radio"] { display: none; }
+  .category-radio-label:has(input:checked) {
+    border-color: #c71585;
+    background: #fff0f7;
+    color: #c71585;
+  }
+  .category-radio-label:hover { border-color: #c71585; color: #c71585; }
 
-  .input-group-text {
-    width: 100%;
+  /* ── EXPORT MODAL ── */
+  .export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1050;
+    align-items: center;
     justify-content: center;
   }
-
-  .form-control, .form-select {
-    font-size: 0.9rem;
+  .export-modal-overlay.open { display: flex; }
+  .export-modal {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(199,21,133,0.18);
+    padding: 32px 28px 24px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    animation: modalIn 0.22s ease;
   }
-}
+  @keyframes modalIn {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+  .export-modal-close {
+    position: absolute; top: 14px; right: 18px;
+    background: none; border: none;
+    font-size: 1.4rem; color: #aaa;
+    cursor: pointer; line-height: 1;
+  }
+  .export-modal-close:hover { color: #c71585; }
+  .export-modal h5 { margin: 0 0 20px; font-size: 1.1rem; font-weight: 700; color: #c71585; }
+  .export-modal label { font-size: 0.82rem; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+  .export-modal input[type="date"] {
+    width: 100%; border: 1.5px solid #ccc; border-radius: 8px;
+    padding: 7px 10px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+  }
+  .export-modal input[type="date"]:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.15rem rgba(199,21,133,0.2);
+  }
+  .date-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .format-toggle { display: flex; gap: 10px; margin-bottom: 18px; }
+  .format-btn {
+    flex: 1; padding: 10px 0;
+    border: 1.5px solid #e0e0e0; border-radius: 10px;
+    background: #f8f8f8; color: #666;
+    font-weight: 700; font-size: 0.92rem;
+    cursor: pointer; transition: all 0.18s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .format-btn.active { border-color: #c71585; background: #fff0f7; color: #c71585; }
+  .format-btn:hover:not(.active) { border-color: #c71585; color: #c71585; }
+  .export-preview {
+    background: #fff8fc; border: 1.5px solid #f0c0da;
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px;
+  }
+  .export-preview-label  { font-size: 0.8rem; color: #999; font-weight: 600; }
+  .export-preview-stat   { font-size: 0.9rem; font-weight: 700; color: #c71585; }
+  .export-preview-orders { font-size: 0.8rem; color: #888; margin-top: 2px; }
+  .btn-download {
+    width: 100%; padding: 11px 0; border: none; border-radius: 10px;
+    background: #c71585; color: white; font-weight: 700; font-size: 0.97rem;
+    cursor: pointer; transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-download:hover { background: #a01070; }
 
-
-
+  /* ── RESPONSIVE ── */
+  @media (max-width: 992px) {
+    body, html { overflow-x: hidden; }
+    .container-fluid { padding-left: 12px; padding-right: 12px; }
+    .card-body { padding: 1rem; }
+  }
+  @media (max-width: 576px) {
+    .card-header h4 { font-size: 1.1rem; }
+    .table-responsive { font-size: 0.85rem; }
+    .form-control, .form-select { font-size: 0.9rem; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
+
+  <!-- PAGE HEADER -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h1 class="mb-0">Inventory Management</h1>
+    <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
+  </div>
+
   <div class="card shadow-sm">
-    <div class="card-header card-header-custom">
-      <h4 class="mb-0">Inventory</h4>
+    <div class="card-header card-header-custom d-flex align-items-center justify-content-between">
+      <h4 class="mb-0">Stock List</h4>
+      <button class="btn-add-inventory" onclick="openAddInventoryModal()">+ Add Inventory</button>
     </div>
     <div class="card-body">
 
-      <!-- ADD ITEM FORM -->
-      <form method="POST" action="/inventory/add" class="row g-3 mb-4">
-        <div class="col-md-4">
-          <label class="form-label">Item Name</label>
-          <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Quantity</label>
-          <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">Cost (₱)</label>
-          <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button type="submit" class="btn btn-info w-100">Add Item</button>
-        </div>
-      </form>
-
       <!-- FILTERS -->
       <div class="row mb-3">
-        <div class="col-md-9 mb-2">
+        <div class="col-md-6 mb-2">
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search by item name..." id="searchInventory">
@@ -199,9 +224,16 @@
         <div class="col-md-3 mb-2">
           <select class="form-select" id="statusFilterInventory">
             <option value="">All Status</option>
-            <option value="critical">Critical (< 5)</option>
-            <option value="low">Low Stock (< 10)</option>
+            <option value="critical">Critical (&lt; 5)</option>
+            <option value="low">Low Stock (&lt; 10)</option>
             <option value="good">Good Stock</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="categoryFilterInventory">
+            <option value="">All Categories</option>
+            <option value="Ingredients">Ingredients</option>
+            <option value="Equipment">Equipment</option>
           </select>
         </div>
       </div>
@@ -212,6 +244,7 @@
           <thead>
             <tr>
               <th>Item</th>
+              <th>Category</th>
               <th>Quantity</th>
               <th>Cost (₱)</th>
               <th>Status</th>
@@ -220,10 +253,18 @@
           </thead>
           <tbody>
             {% for i in inventory %}
-            <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}">
+            <tr class="{% if i.quantity < 5 %}table-danger{% elif i.quantity < 10 %}table-warning{% endif %}"
+                data-category="{{ i.category or 'Ingredients' }}">
               <td><strong>{{ i.item }}</strong></td>
+              <td>
+                {% if (i.category or 'Ingredients') == 'Ingredients' %}
+                  <span class="badge badge-ingredients">🥚 Ingredients</span>
+                {% else %}
+                  <span class="badge badge-equipment">🔧 Equipment</span>
+                {% endif %}
+              </td>
               <td><span class="badge {% if i.quantity < 5 %}bg-danger{% elif i.quantity < 10 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ i.quantity }}</span></td>
-              <td class="fw-bold">₱{{ i.cost }}</td>
+              <td class="fw-bold">₱{{ "%.2f"|format(i.cost) }}</td>
               <td>
                 {% if i.quantity < 5 %}
                   <span class="badge badge-status-critical">Critical</span>
@@ -233,10 +274,21 @@
                   <span class="badge badge-status-good">Good</span>
                 {% endif %}
               </td>
-              <td><button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">View</button></td>
+              <td>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-sm btn-info text-white"
+                    data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">Edit</button>
+                  <button class="btn btn-sm btn-outline-success"
+                    onclick="openRestockModal('{{ i.id }}', '{{ i.item }}')">Restock</button>
+                  <form method="POST" action="/inventory/delete/{{ i.id }}"
+                    onsubmit="return confirm('Delete {{ i.item }}?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                </div>
+              </td>
             </tr>
             {% else %}
-            <tr><td colspan="5" class="text-center text-muted py-5">No inventory items yet</td></tr>
+            <tr><td colspan="6" class="text-center text-muted py-5">No inventory items yet</td></tr>
             {% endfor %}
           </tbody>
         </table>
@@ -249,13 +301,84 @@
   </div>
 </div>
 
-<!-- EDIT MODALS -->
+<!-- ── ADD INVENTORY MODAL ── -->
+<div class="modal fade" id="addInventoryModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/inventory/add">
+        <div class="modal-header bg-pink">
+          <h5 class="modal-title">+ Add Inventory Item</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Item Name</label>
+            <input name="item" class="form-control" placeholder="e.g., Flour, Sugar" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Quantity</label>
+            <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cost per unit (₱)</label>
+            <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category</label>
+            <div class="category-radio-group">
+              <label class="category-radio-label">
+                <input type="radio" name="category" value="Ingredients" required> 🥚 Ingredients
+              </label>
+              <label class="category-radio-label">
+                <input type="radio" name="category" value="Equipment"> 🔧 Equipment
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-info text-white">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESTOCK MODAL (single reusable) ── -->
+<div class="modal fade" id="restockModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form method="POST" id="restockForm">
+        <div class="modal-header bg-pink">
+          <h5 class="modal-title">Restock: <span id="restockItemName"></span></h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Add Quantity</label>
+            <input name="quantity" type="number" class="form-control" placeholder="0" min="1" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cost of Restock (₱)</label>
+            <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-info text-white">Restock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── EDIT MODALS ── -->
 {% for i in inventory %}
 <div class="modal fade" id="editModal{{ i.id }}" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
       <form method="POST" action="/inventory/edit/{{ i.id }}">
-        <div class="modal-header bg-info">
+        <div class="modal-header bg-pink">
           <h5 class="modal-title">Edit Inventory Item</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
@@ -265,9 +388,31 @@
             {% elif i.quantity < 10 %}<span class="badge bg-warning text-dark p-2">Low Stock</span>
             {% else %}<span class="badge bg-success p-2">Good Stock</span>{% endif %}
           </div>
-          <div class="mb-3"><label class="form-label fw-bold">Item Name</label><input type="text" class="form-control" name="item" value="{{ i.item }}" required></div>
-          <div class="mb-3"><label class="form-label fw-bold">Quantity</label><input type="number" class="form-control" name="quantity" value="{{ i.quantity }}" min="0" required></div>
-          <div class="mb-3"><label class="form-label fw-bold">Cost (₱)</label><input type="number" class="form-control" name="cost" value="{{ i.cost }}" step="0.01" min="0" required></div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Item Name</label>
+            <input type="text" class="form-control" name="item" value="{{ i.item }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Quantity</label>
+            <input type="number" class="form-control" name="quantity" value="{{ i.quantity }}" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cost (₱)</label>
+            <input type="number" class="form-control" name="cost" value="{{ i.cost }}" step="0.01" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category</label>
+            <div class="category-radio-group">
+              <label class="category-radio-label">
+                <input type="radio" name="category" value="Ingredients"
+                  {% if (i.category or 'Ingredients') == 'Ingredients' %}checked{% endif %}> 🥚 Ingredients
+              </label>
+              <label class="category-radio-label">
+                <input type="radio" name="category" value="Equipment"
+                  {% if (i.category or 'Ingredients') == 'Equipment' %}checked{% endif %}> 🔧 Equipment
+              </label>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -278,38 +423,240 @@
   </div>
 </div>
 {% endfor %}
+
+<!-- ── EXPORT MODAL ── -->
+<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+  <div class="export-modal">
+    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <h5>⬇ Export Inventory</h5>
+
+    <div class="date-range-row">
+      <div>
+        <label for="exportFrom">From</label>
+        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+      </div>
+      <div>
+        <label for="exportTo">To</label>
+        <input type="date" id="exportTo" onchange="updateExportPreview()">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label style="margin-bottom:8px;">Format</label>
+      <div class="format-toggle">
+        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">📄 PDF</button>
+        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">📊 CSV</button>
+      </div>
+    </div>
+
+    <div class="export-preview">
+      <div>
+        <div class="export-preview-label">Preview</div>
+        <div class="export-preview-orders" id="previewItems">—</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="export-preview-stat" id="previewTotal">—</div>
+        <div class="export-preview-label">Total Items</div>
+      </div>
+    </div>
+
+    <button class="btn-download" onclick="runExport()">
+      <span id="downloadBtnIcon">📄</span>
+      <span id="downloadBtnLabel">Download PDF</span>
+    </button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 let currentInventoryPage = 1;
-const inventoryPerPage = 10;
+const inventoryPerPage   = 10;
+let exportFormat         = 'pdf';
 
+// ── Main display ──
 function updateInventoryDisplay() {
-  const searchValue = document.getElementById('searchInventory').value.toLowerCase();
-  const statusValue = document.getElementById('statusFilterInventory').value;
-  const allRows = document.querySelectorAll('#inventoryTable tbody tr');
+  const searchValue   = document.getElementById('searchInventory').value.toLowerCase();
+  const statusValue   = document.getElementById('statusFilterInventory').value;
+  const categoryValue = document.getElementById('categoryFilterInventory').value;
+  const allRows       = document.querySelectorAll('#inventoryTable tbody tr[data-category]');
+
   let visibleRows = [];
   allRows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    const matchSearch = text.includes(searchValue);
-    let matchStatus = true;
-    if (statusValue === 'critical') matchStatus = row.classList.contains('table-danger');
-    else if (statusValue === 'low') matchStatus = row.classList.contains('table-warning');
-    else if (statusValue === 'good') matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
-    if (matchSearch && matchStatus) visibleRows.push(row);
+    const text          = row.textContent.toLowerCase();
+    const matchSearch   = text.includes(searchValue);
+    const matchCategory = !categoryValue || row.getAttribute('data-category') === categoryValue;
+    let matchStatus     = true;
+    if (statusValue === 'critical')    matchStatus = row.classList.contains('table-danger');
+    else if (statusValue === 'low')    matchStatus = row.classList.contains('table-warning');
+    else if (statusValue === 'good')   matchStatus = !row.classList.contains('table-danger') && !row.classList.contains('table-warning');
+    if (matchSearch && matchCategory && matchStatus) visibleRows.push(row);
   });
+
   const totalPages = Math.ceil(visibleRows.length / inventoryPerPage);
-  const start = (currentInventoryPage - 1) * inventoryPerPage;
-  const end = start + inventoryPerPage;
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, index) => { if (index >= start && index < end) row.style.display = ''; });
-  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => { currentInventoryPage = page; updateInventoryDisplay(); });
+  const start      = (currentInventoryPage - 1) * inventoryPerPage;
+
+  document.querySelectorAll('#inventoryTable tbody tr').forEach(r => r.style.display = 'none');
+  visibleRows.forEach((row, i) => { if (i >= start && i < start + inventoryPerPage) row.style.display = ''; });
+
+  updatePaginationButtons('inventoryPagination', currentInventoryPage, totalPages, (page) => {
+    currentInventoryPage = page;
+    updateInventoryDisplay();
+  });
 }
 
+// ── Restock Modal ──
+function openRestockModal(id, name) {
+  document.getElementById('restockItemName').textContent = name;
+  document.getElementById('restockForm').action = `/inventory/restock/${id}`;
+  const modal = new bootstrap.Modal(document.getElementById('restockModal'));
+  modal.show();
+}
+
+// ── Add Inventory Modal ──
+function openAddInventoryModal() {
+  const modal = new bootstrap.Modal(document.getElementById('addInventoryModal'));
+  modal.show();
+}
+
+// ── Export Modal ──
+function openExportModal() {
+  updateExportPreview();
+  document.getElementById('exportModalOverlay').classList.add('open');
+}
+function closeExportModal() {
+  document.getElementById('exportModalOverlay').classList.remove('open');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('exportModalOverlay')) closeExportModal();
+}
+function selectFormat(fmt) {
+  exportFormat = fmt;
+  document.getElementById('fmtPDF').classList.toggle('active', fmt === 'pdf');
+  document.getElementById('fmtCSV').classList.toggle('active', fmt === 'csv');
+  document.getElementById('downloadBtnIcon').textContent  = fmt === 'pdf' ? '📄' : '📊';
+  document.getElementById('downloadBtnLabel').textContent = fmt === 'pdf' ? 'Download PDF' : 'Download CSV';
+}
+
+function updateExportPreview() {
+  const rows = document.querySelectorAll('#inventoryTable tbody tr[data-category]');
+  const count = rows.length;
+  document.getElementById('previewItems').textContent = `${count} item${count !== 1 ? 's' : ''} in inventory`;
+  document.getElementById('previewTotal').textContent = count;
+}
+
+function runExport() {
+  if (exportFormat === 'pdf') exportPDF();
+  else exportCSV();
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  const rows  = document.querySelectorAll('#inventoryTable tbody tr[data-category]');
+  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+
+  const csvRows = [
+    ['Ms. Brave Cake Shop - Inventory'],
+    [`Date Generated: ${today}`],
+    [],
+    ['Item', 'Category', 'Quantity', 'Cost (₱)', 'Status'],
+  ];
+
+  rows.forEach(row => {
+    const cells    = row.querySelectorAll('td');
+    const item     = cells[0].textContent.trim();
+    const category = row.getAttribute('data-category');
+    const quantity = cells[2].textContent.trim();
+    const cost     = cells[3].textContent.trim();
+    const status   = cells[4].textContent.trim();
+    csvRows.push([item, category, quantity, cost, status]);
+  });
+
+  const csv  = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `inventory-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeExportModal();
+}
+
+// ── Export PDF ──
+function exportPDF() {
+  const rows  = document.querySelectorAll('#inventoryTable tbody tr[data-category]');
+  const today = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+
+  let tableRows = '';
+  rows.forEach((row, i) => {
+    const cells    = row.querySelectorAll('td');
+    const item     = cells[0].textContent.trim();
+    const category = row.getAttribute('data-category');
+    const quantity = cells[2].textContent.trim();
+    const cost     = cells[3].textContent.trim();
+    const status   = cells[4].textContent.trim();
+    tableRows += `
+      <tr style="background:${i % 2 === 0 ? '#faf5f7' : '#fff'};">
+        <td style="padding:8px 12px;font-size:12px;">${item}</td>
+        <td style="padding:8px 12px;font-size:12px;">${category}</td>
+        <td style="padding:8px 12px;font-size:12px;text-align:center;">${quantity}</td>
+        <td style="padding:8px 12px;font-size:12px;">${cost}</td>
+        <td style="padding:8px 12px;font-size:12px;">${status}</td>
+      </tr>`;
+  });
+
+  const content = document.createElement('div');
+  content.style.cssText = 'font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;';
+  content.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #c71585;">
+      <div>
+        <h2 style="margin:0;font-size:20px;color:#c71585;font-weight:700;">Ms. Brave Cake Shop</h2>
+        <p style="margin:4px 0 0;font-size:12px;color:#666;">Inventory Snapshot</p>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin:0;font-size:12px;color:#666;">${today}</p>
+        <p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#c71585;color:#fff;">
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Item</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Category</th>
+          <th style="padding:10px 12px;text-align:center;font-size:12px;">Quantity</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Cost (₱)</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Status</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+      <tfoot>
+        <tr style="background:#c71585;color:#fff;font-weight:700;">
+          <td colspan="5" style="padding:10px 12px;font-size:13px;">TOTAL ITEMS: ${rows.length}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>
+  `;
+
+  html2pdf().set({
+    margin: 12,
+    filename: `inventory-${new Date().toISOString().slice(0,10)}.pdf`,
+    image: {type:'jpeg', quality:0.98},
+    html2canvas: {scale:2, useCORS:true},
+    jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}
+  }).from(content).save();
+
+  closeExportModal();
+}
+
+// ── Init ──
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('searchInventory').addEventListener('keyup', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
   document.getElementById('statusFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
+  document.getElementById('categoryFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
   updateInventoryDisplay();
 });
 </script>

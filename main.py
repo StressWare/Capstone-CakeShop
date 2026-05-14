@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from extensions import limiter
+from extensions import limiter, send_order_confirmation
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
@@ -943,8 +943,22 @@ def finalize_order():
 
     # ── COD or Bank Transfer → save immediately ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
-        orders.add(order_data)
-        invalidate_cache("order_counts", "all_cakes")#cache reset
+        doc_ref  = orders.add(order_data)
+        order_id = doc_ref[1].id
+        invalidate_cache("order_counts", "all_cakes")  # cache reset
+
+        # send confirmation email
+        user_doc = users.document(user_id).get()
+        fname    = user_doc.to_dict().get("fname", "Customer")
+        email    = user_doc.to_dict().get("email", "")
+        send_order_confirmation(
+            fname=fname,
+            email=email,
+            order_id=order_id,
+            amount=order_data.get("amount", 0),
+            payment_method=payment_method
+        )
+
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
         if voucher_id and voucher_discount_pct > 0:
             users.document(user_id).collection("vouchers").document(voucher_id).update({
@@ -1648,7 +1662,8 @@ def admin_sales():
         online_sales=online_sales, 
         walkin_sales=walkin_sales,
         online_count=len(online_sales),
-        walkin_count=len(walkin_sales)
+        walkin_count=len(walkin_sales),
+        today=datetime.now(PH_TZ).strftime("%B %d, %Y")
     )
     
 
@@ -2004,27 +2019,29 @@ def add_inventory():
     item     = request.form["item"]
     quantity = int(request.form["quantity"])
     cost     = float(request.form["cost"])
+    category = request.form["category"]  # Ingredients or Equipment
     now      = datetime.now(PH_TZ)
-
-    # Add to inventory with timestamps
+ 
     inventory.add({
         "item": item,
         "quantity": quantity,
         "cost": cost,
+        "category": category,
         "created_at": now,
         "updated_at": now
     })
-    
-    # Add to expenses
+ 
+    # Auto-log to expenses using form category
     expenses.add({
         "description": f"Purchased {quantity} x {item}",
         "cost": cost * quantity,
-        "date": now
+        "date": now,
+        "category": category
     })
-    
+ 
     log_admin_action(
         action="Added inventory item",
-        target=f"{item} — qty: {quantity}, cost: ₱{cost}",
+        target=f"{item} — qty: {quantity}, cost: ₱{cost}, category: {category}",
         category="inventory"
     )
     flash('Inventory item added!', 'success')
@@ -2035,15 +2052,15 @@ def add_inventory():
 @admin_required
 def edit_inventory(id):
     now = datetime.now(PH_TZ)
-    
-    # Update inventory
+ 
     inventory.document(id).update({
-        "item": request.form["item"],
+        "item":     request.form["item"],
         "quantity": int(request.form["quantity"]),
-        "cost": float(request.form["cost"]),
+        "cost":     float(request.form["cost"]),
+        "category": request.form.get("category", "Ingredients"),
         "updated_at": now
     })
-    
+ 
     log_admin_action(
         action="Edited inventory item",
         target=request.form["item"],
@@ -2052,7 +2069,101 @@ def edit_inventory(id):
     flash('Inventory item updated!', 'success')
     return redirect(url_for("admin_inventory"))
 
-# ---------------- EDIT EXPENSES COST----------------
+# ---------------- DELETE INVENTORY ----------------
+@app.route("/inventory/delete/<id>", methods=["POST"])
+@admin_required
+def delete_inventory(id):
+    doc  = inventory.document(id).get()
+    name = doc.to_dict().get("item", id) if doc.exists else id
+    inventory.document(id).delete()
+    log_admin_action(
+        action="Deleted inventory item",
+        target=name,
+        category="inventory"
+    )
+    flash(f'"{name}" deleted from inventory.', 'success')
+    return redirect(url_for("admin_inventory"))
+ 
+ 
+# ---------------- RESTOCK INVENTORY ----------------
+@app.route("/inventory/restock/<id>", methods=["POST"])
+@admin_required
+def restock_inventory(id):
+    add_qty  = int(request.form["quantity"])
+    cost     = float(request.form["cost"])
+    now      = datetime.now(PH_TZ)
+ 
+    doc      = inventory.document(id).get()
+    data     = doc.to_dict()
+    old_qty  = data.get("quantity", 0)
+    item     = data.get("item", "Unknown")
+    category = data.get("category", "Ingredients")
+ 
+    # Add to existing quantity
+    inventory.document(id).update({
+        "quantity":   old_qty + add_qty,
+        "updated_at": now
+    })
+ 
+    # Auto-log restock to expenses
+    expenses.add({
+        "description": f"Restocked {add_qty} x {item}",
+        "cost": cost,
+        "date": now,
+        "category": category
+    })
+ 
+    log_admin_action(
+        action="Restocked inventory item",
+        target=f"{item} — added qty: {add_qty}, cost: ₱{cost}",
+        category="inventory"
+    )
+    flash(f'"{item}" restocked by {add_qty} units.', 'success')
+    return redirect(url_for("admin_inventory"))
+
+# ---------------- ADD EXPENSE (manual) ----------------
+@app.route("/expenses/add", methods=["POST"])
+@admin_required
+def add_expense():
+    description = request.form["description"]
+    cost        = float(request.form["cost"])
+    category    = request.form["category"]
+    date_str    = request.form["date"]
+    date_val    = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=PH_TZ)
+ 
+    expenses.add({
+        "description": description,
+        "cost": cost,
+        "category": category,
+        "date": date_val
+    })
+ 
+    log_admin_action(
+        action="Added expense",
+        target=f"{description} — ₱{cost} [{category}]",
+        category="expense"
+    )
+    flash("Expense added!", "success")
+    return redirect(url_for("admin_expenses"))
+ 
+ 
+# ---------------- DELETE EXPENSE ----------------
+@app.route("/expenses/delete/<id>", methods=["POST"])
+@admin_required
+def delete_expense(id):
+    doc = expenses.document(id).get()
+    desc = doc.to_dict().get("description", id) if doc.exists else id
+    expenses.document(id).delete()
+    log_admin_action(
+        action="Deleted expense",
+        target=desc,
+        category="expense"
+    )
+    flash("Expense deleted.", "success")
+    return redirect(url_for("admin_expenses"))
+ 
+ 
+# ---------------- EDIT EXPENSE ----------------
 @app.route("/expenses/edit/<id>", methods=["POST"])
 @admin_required
 def edit_expense(id):
@@ -2061,16 +2172,19 @@ def edit_expense(id):
     except ValueError:
         flash("Invalid cost value. Please enter a number.", "danger")
         return redirect(url_for("admin_expenses"))
-    
+ 
+    category = request.form.get("category", "Others")
+ 
     expenses.document(id).update({
-        "cost": new_cost
+        "cost": new_cost,
+        "category": category
     })
     log_admin_action(
-        action="Edited expenses item",
-        target=request.form["cost"],
+        action="Edited expense",
+        target=f"₱{new_cost} [{category}]",
         category="expense"
     )
-    flash("Expense cost updated", "success")
+    flash("Expense updated.", "success")
     return redirect(url_for("admin_expenses"))
 # ---------------- ADD CAKE ----------------
 @app.route('/cake/add', methods=['POST'])
@@ -2343,7 +2457,17 @@ def payment_success():
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
     invalidate_cache("order_counts")
-
+    # send confirmation email
+    user_doc = users.document(order_data.get("user_id")).get()
+    fname    = user_doc.to_dict().get("fname", "Customer")
+    email    = user_doc.to_dict().get("email", "")
+    send_order_confirmation(
+        fname=fname,
+        email=email,
+        order_id=order_id,
+        amount=order_data.get("amount", 0),
+        payment_method=order_data.get("payment_method")
+    )
     handle_loyalty_stamp(
         users,
         order_data.get('user_id'),

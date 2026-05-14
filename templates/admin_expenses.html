@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <style>
-  /* ── CARD CUSTOMIZATION ── */
   .card-header.card-header-custom {
     border-top: 4px solid #c71585;
     background: #ffffff;
@@ -15,238 +14,334 @@
     background: #ffffff;
   }
 
-  /* ── TABLE STYLING ── */
-  #expensesTable {
-    border-radius: 8px;
-  }
+  /* ── TABLE ── */
   #expensesTable thead {
     background-color: #c71585;
     color: #fff;
   }
-  #expensesTable tbody tr:hover {
-    background-color: #ffe6f0;
-  }
-  #expensesTable td {
-    vertical-align: middle;
-  }
-  .text-danger {
-    color: #c71585 !important;
-  }
+  #expensesTable tbody tr:hover { background-color: #ffe6f0; }
+  #expensesTable td { vertical-align: middle; }
+  .text-danger { color: #c71585 !important; }
 
-  /* ── INPUT STYLING ── */
+  /* ── INPUT ── */
   .input-group-text {
     background: #ffffff;
     border-right: none;
     color: #c71585;
   }
-  .form-control {
+  .form-control, .form-select {
     border-radius: 0.5rem;
     border: 1px solid #ccc;
   }
-  .form-control:focus {
+  .form-control:focus, .form-select:focus {
     border-color: #c71585;
     box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
   }
 
   /* ── PAGINATION ── */
-  .pagination .page-link {
+  .pagination .page-link { color: #c71585; }
+  .pagination .page-link.active { background-color: #c71585; color: #fff; }
+
+  /* ── ADD FORM CARD ── */
+  .add-expense-card {
+    background: #fff8fc;
+    border: 1.5px solid #f0c0da;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .add-expense-card h6 {
+    color: #c71585;
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── RADIO BUTTONS ── */
+  .category-radio-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .category-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.18s;
+    user-select: none;
+  }
+  .category-radio-label input[type="radio"] { display: none; }
+  .category-radio-label:has(input:checked) {
+    border-color: #c71585;
+    background: #fff0f7;
     color: #c71585;
   }
-  .pagination .page-link.active {
-    background-color: #c71585;
-    color: #fff;
+  .category-radio-label:hover {
+    border-color: #c71585;
+    color: #c71585;
   }
 
-
-
-
-/* =========================
-   RESPONSIVE DESIGN
-   EXPENSES PAGE
-   ========================= */
-
-/* TABLET */
-@media (max-width: 1024px) {
-
-  .container-fluid {
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-
-  .card {
+  /* ── TOTAL DISPLAY ── */
+  .total-display {
+    background: #fff0f7;
+    border: 1.5px solid #c71585;
     border-radius: 10px;
+    padding: 8px 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
   }
+  .total-label { font-size: 0.82rem; color: #c71585; font-weight: 600; text-transform: uppercase; }
+  .total-value { font-size: 1.3rem; font-weight: 700; color: #c71585; }
 
-  #expensesTable th,
-  #expensesTable td {
-    font-size: 0.9rem;
+  /* ── EXPORT BUTTON ── */
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    border: 1.5px solid #c71585; border-radius: 8px;
+    background: #c71585; color: white;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
   }
-}
+  .btn-export:hover { background: #a01070; border-color: #a01070; }
 
-/* MOBILE */
-@media (max-width: 768px) {
+  /* ── CATEGORY BADGE ── */
+  .badge-ingredients { background: #d4edda; color: #155724; }
+  .badge-equipment   { background: #cce5ff; color: #004085; }
+  .badge-others      { background: #e2e3e5; color: #383d41; }
 
-  .container-fluid {
-    padding-left: 10px;
-    padding-right: 10px;
+  /* ── EXPORT MODAL ── */
+  .export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
   }
-
-  /* Header spacing */
-  .card-header h4 {
-    font-size: 1.1rem;
-    text-align: center;
-  }
-
-  /* Search bar full width feel */
-  .input-group {
-    flex-direction: row;
-  }
-
-  .form-control {
-    font-size: 0.9rem;
-  }
-
-  /* TABLE becomes compact */
-  #expensesTable {
-    font-size: 0.85rem;
-  }
-
-  #expensesTable thead th {
-    font-size: 0.85rem;
-    padding: 10px 6px;
-  }
-
-  #expensesTable td {
-    padding: 10px 6px;
-  }
-
-  /* Description becomes more readable */
-  #expensesTable td strong {
-    font-size: 0.85rem;
-  }
-
-  /* Cost column emphasis */
-  .fw-bold.text-danger {
-    font-size: 0.9rem;
-  }
-
-  /* Edit button becomes easier to tap */
-  .btn-info {
-    font-size: 0.75rem;
-    padding: 6px 10px;
+  .export-modal-overlay.open { display: flex; }
+  .export-modal {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(199,21,133,0.18);
+    padding: 32px 28px 24px;
     width: 100%;
+    max-width: 420px;
+    position: relative;
+    animation: modalIn 0.22s ease;
   }
-
-  /* Pagination fixes */
-  .pagination {
-    flex-wrap: wrap;
-    justify-content: center !important;
-    gap: 4px;
+  @keyframes modalIn {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
   }
-
-  .page-link {
-    padding: 6px 10px;
-    font-size: 0.85rem;
+  .export-modal-close {
+    position: absolute; top: 14px; right: 18px;
+    background: none; border: none;
+    font-size: 1.4rem; color: #aaa;
+    cursor: pointer; line-height: 1;
   }
-}
-
-/* SMALL MOBILE */
-@media (max-width: 480px) {
-
-  #expensesTable {
-    font-size: 0.8rem;
+  .export-modal-close:hover { color: #c71585; }
+  .export-modal h5 { margin: 0 0 20px; font-size: 1.1rem; font-weight: 700; color: #c71585; }
+  .export-modal label { font-size: 0.82rem; font-weight: 600; color: #555; display: block; margin-bottom: 4px; }
+  .export-modal input[type="date"] {
+    width: 100%; border: 1.5px solid #ccc; border-radius: 8px;
+    padding: 7px 10px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
   }
-
-  .input-group-text {
-    padding: 6px 10px;
+  .export-modal input[type="date"]:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.15rem rgba(199,21,133,0.2);
   }
-
-  .form-control {
-    font-size: 0.85rem;
+  .date-range-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+  .format-toggle { display: flex; gap: 10px; margin-bottom: 18px; }
+  .format-btn {
+    flex: 1; padding: 10px 0;
+    border: 1.5px solid #e0e0e0; border-radius: 10px;
+    background: #f8f8f8; color: #666;
+    font-weight: 700; font-size: 0.92rem;
+    cursor: pointer; transition: all 0.18s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
   }
-
-  .btn-info {
-    font-size: 0.7rem;
+  .format-btn.active { border-color: #c71585; background: #fff0f7; color: #c71585; }
+  .format-btn:hover:not(.active) { border-color: #c71585; color: #c71585; }
+  .export-preview {
+    background: #fff8fc; border: 1.5px solid #f0c0da;
+    border-radius: 10px; padding: 10px 16px; margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px;
   }
-}
+  .export-preview-label { font-size: 0.8rem; color: #999; font-weight: 600; }
+  .export-preview-stat  { font-size: 0.9rem; font-weight: 700; color: #c71585; }
+  .export-preview-orders { font-size: 0.8rem; color: #888; margin-top: 2px; }
+  .btn-download {
+    width: 100%; padding: 11px 0; border: none; border-radius: 10px;
+    background: #c71585; color: white; font-weight: 700; font-size: 0.97rem;
+    cursor: pointer; transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-download:hover { background: #a01070; }
 
-
-
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    #expensesTable { font-size: 0.85rem; }
+    .category-radio-group { gap: 6px; }
+    .add-expense-card { padding: 14px 12px; }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
-  <div class="card shadow-sm">
-    <div class="card-header card-header-custom">
-      <h4 class="mb-0">Expenses Records</h4>
+
+  <!-- HEADER -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h1 class="mb-0">Expenses Records</h1>
+    <div class="d-flex gap-2">
+      
+      <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
     </div>
+  </div>
+
+  <div class="card shadow-sm">
     <div class="card-body">
+<!-- TOTAL EXPENSES -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <div class="total-display">
+    <span class="total-label">Total Expenses</span>
+    <span class="total-value">₱<span id="totalExpenses">0.00</span></span>
+    <span class="total-label" id="totalExpensesCount"></span>
+  </div>
+  <button class="btn-export" style="background:transparent;color:#c71585;border-color:#c71585;" onclick="openAddExpenseModal()">+ Add Expense</button>
+</div>
+      <!-- SEARCH + FILTERS -->
       <div class="row mb-3">
-        <div class="col-md-12 mb-2">
+        <div class="col-md-6 mb-2">
           <div class="input-group">
             <span class="input-group-text"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search by description..." id="searchExpenses">
           </div>
         </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="dateFilter" onchange="updateExpensesDisplay()">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="categoryFilter" onchange="updateExpensesDisplay()">
+            <option value="">All Categories</option>
+            <option value="Ingredients">Ingredients</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Others">Others</option>
+          </select>
+        </div>
       </div>
 
+      <!-- TABLE -->
       <div class="table-responsive">
         <table class="table table-hover align-middle" id="expensesTable">
           <thead>
             <tr>
               <th>Date</th>
               <th>Description</th>
+              <th>Category</th>
               <th>Cost (₱)</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {% for e in expenses %}
-            <tr>
+            <tr data-date="{{ e.date.strftime('%Y-%m-%d') }}"
+                data-amount="{{ e.cost }}"
+                data-category="{{ e.category or 'Others' }}">
               <td>
                 <small>{{ e.date.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small>
               </td>
               <td><strong>{{ e.description }}</strong></td>
+              <td>
+                {% set cat = e.category or 'Others' %}
+                {% if cat == 'Ingredients' %}
+                  <span class="badge badge-ingredients">🥚 Ingredients</span>
+                {% elif cat == 'Equipment' %}
+                  <span class="badge badge-equipment">🔧 Equipment</span>
+                {% else %}
+                  <span class="badge badge-others">📦 Others</span>
+                {% endif %}
+              </td>
               <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
               <td>
-                <button class="btn btn-sm btn-info" style="background:#c71585; color:white; border:none;" data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ e.id }}">
-                    Edit Cost
-                </button>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm" style="background:#c71585;color:white;border:none;"
+                    data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ e.id }}">
+                    Edit
+                  </button>
+                  <form method="POST" action="/expenses/delete/{{ e.id }}"
+                    onsubmit="return confirm('Delete this expense?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                  </form>
+                </div>
               </td>
             </tr>
 
-            <!-- Edit Expense Modal - INSIDE the for loop -->
+            <!-- Edit Modal -->
             <div class="modal fade" id="editExpenseModal{{ e.id }}" tabindex="-1">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <form method="POST" action="/expenses/edit/{{ e.id }}">
-                            <div class="modal-header" style="background:#c71585; color:white;">
-                                <h5 class="modal-title">Edit Expense Cost</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label>Description</label>
-                                    <input type="text" class="form-control" value="{{ e.description }}" readonly disabled>
-                                </div>
-                                <div class="mb-3">
-                                    <label>Cost (₱)</label>
-                                    <input type="number" name="cost" class="form-control" value="{{ e.cost }}" step="0.01" required>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" style="background:#c71585; color:white; border:none;">Save Changes</button>
-                            </div>
-                        </form>
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <form method="POST" action="/expenses/edit/{{ e.id }}">
+                    <div class="modal-header" style="background:#c71585;color:white;">
+                      <h5 class="modal-title">Edit Expense</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Description</label>
+                        <input type="text" class="form-control" value="{{ e.description }}" readonly disabled>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Cost (₱)</label>
+                        <input type="number" name="cost" class="form-control" value="{{ e.cost }}" step="0.01" required>
+                      </div>
+                      <div class="mb-3">
+                        <label class="form-label fw-bold">Category</label>
+                        <div class="category-radio-group">
+                          <label class="category-radio-label">
+                            <input type="radio" name="category" value="Ingredients"
+                              {% if (e.category or 'Others') == 'Ingredients' %}checked{% endif %}> 🥚 Ingredients
+                          </label>
+                          <label class="category-radio-label">
+                            <input type="radio" name="category" value="Equipment"
+                              {% if (e.category or 'Others') == 'Equipment' %}checked{% endif %}> 🔧 Equipment
+                          </label>
+                          <label class="category-radio-label">
+                            <input type="radio" name="category" value="Others"
+                              {% if (e.category or 'Others') == 'Others' %}checked{% endif %}> 📦 Others
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                      <button type="submit" class="btn" style="background:#c71585;color:white;border:none;">Save Changes</button>
+                    </div>
+                  </form>
                 </div>
+              </div>
             </div>
             {% else %}
             <tr>
-              <td colspan="4" class="text-center text-muted py-4">No expenses yet</td>
+              <td colspan="5" class="text-center text-muted py-4">No expenses yet</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -256,42 +351,325 @@
       <nav class="mt-3">
         <ul class="pagination justify-content-end mb-0" id="expensesPagination"></ul>
       </nav>
+
     </div>
   </div>
 </div>
+
+<!-- ADD EXPENSE MODAL -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" action="/expenses/add">
+        <div class="modal-header" style="background:#c71585;color:white;">
+          <h5 class="modal-title">+ Add New Expense</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Description</label>
+            <input name="description" class="form-control" placeholder="e.g., Bought flour sack" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Cost (₱)</label>
+            <input name="cost" type="number" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Date</label>
+            <input name="date" type="date" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category</label>
+            <div class="category-radio-group">
+              <label class="category-radio-label">
+                <input type="radio" name="category" value="Others"> 📦 Others
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn" style="background:#c71585;color:white;border:none;">Add Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+  <div class="export-modal">
+    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <h5>⬇ Export Expenses</h5>
+
+    <div class="date-range-row">
+      <div>
+        <label for="exportFrom">From</label>
+        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+      </div>
+      <div>
+        <label for="exportTo">To</label>
+        <input type="date" id="exportTo" onchange="updateExportPreview()">
+      </div>
+    </div>
+
+    <div style="margin-bottom:10px;">
+      <label style="margin-bottom:8px;">Format</label>
+      <div class="format-toggle">
+        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">📄 PDF</button>
+        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">📊 CSV</button>
+      </div>
+    </div>
+
+    <div class="export-preview">
+      <div>
+        <div class="export-preview-label">Preview</div>
+        <div class="export-preview-orders" id="previewOrders">Select a date range to preview</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="export-preview-stat" id="previewTotal">—</div>
+        <div class="export-preview-label">Total Expenses</div>
+      </div>
+    </div>
+
+    <button class="btn-download" onclick="runExport()">
+      <span id="downloadBtnIcon">📄</span>
+      <span id="downloadBtnLabel">Download PDF</span>
+    </button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 let currentExpensesPage = 1;
-const expensesPerPage = 10;
+const expensesPerPage   = 10;
+let exportFormat        = 'pdf';
 
+// ── Date filter helper ──
+function rowPassesDateFilter(row) {
+  const filterVal = document.getElementById('dateFilter').value;
+  if (filterVal === 'all') return true;
+  const rowDate = new Date(row.getAttribute('data-date'));
+  const now     = new Date();
+  if (filterVal === 'today') {
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return rowDate >= today;
+  } else if (filterVal === 'week') {
+    const d = new Date(now); d.setDate(d.getDate() - 7); return rowDate >= d;
+  } else if (filterVal === 'month') {
+    const d = new Date(now); d.setDate(d.getDate() - 30); return rowDate >= d;
+  }
+  return true;
+}
+
+// ── Main display ──
 function updateExpensesDisplay() {
-  const searchValue = document.getElementById('searchExpenses').value.toLowerCase();
-  const allRows = document.querySelectorAll('#expensesTable tbody tr');
+  const searchValue   = document.getElementById('searchExpenses').value.toLowerCase();
+  const categoryValue = document.getElementById('categoryFilter').value;
+  const allRows       = document.querySelectorAll('#expensesTable tbody tr[data-date]');
+
   let visibleRows = [];
-  allRows.forEach(row => { 
-    // Skip rows that are modals or empty
-    if (row.cells.length > 1 && row.textContent.toLowerCase().includes(searchValue)) 
-      visibleRows.push(row); 
+  allRows.forEach(row => {
+    const text          = row.textContent.toLowerCase();
+    const matchSearch   = text.includes(searchValue);
+    const matchCategory = !categoryValue || row.getAttribute('data-category') === categoryValue;
+    const matchDate     = rowPassesDateFilter(row);
+    if (matchSearch && matchCategory && matchDate) visibleRows.push(row);
   });
+
   const totalPages = Math.ceil(visibleRows.length / expensesPerPage);
-  const start = (currentExpensesPage - 1) * expensesPerPage;
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach((row, i) => { 
-    if (i >= start && i < start + expensesPerPage) 
-      row.style.display = ''; 
+  const start      = (currentExpensesPage - 1) * expensesPerPage;
+
+  document.querySelectorAll('#expensesTable tbody tr').forEach(r => r.style.display = 'none');
+  visibleRows.forEach((row, i) => {
+    if (i >= start && i < start + expensesPerPage) row.style.display = '';
   });
-  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => { 
-    currentExpensesPage = page; 
-    updateExpensesDisplay(); 
+
+  // Total
+  let total = 0;
+  visibleRows.forEach(row => { total += parseFloat(row.getAttribute('data-amount')) || 0; });
+  document.getElementById('totalExpenses').textContent      = total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('totalExpensesCount').textContent = `(${visibleRows.length} records)`;
+
+  updatePaginationButtons('expensesPagination', currentExpensesPage, totalPages, (page) => {
+    currentExpensesPage = page;
+    updateExpensesDisplay();
   });
 }
 
+// ── Export Modal ──
+function openExportModal() {
+  const today = new Date();
+  const from  = new Date(); from.setDate(today.getDate() - 30);
+  document.getElementById('exportTo').value   = today.toISOString().slice(0,10);
+  document.getElementById('exportFrom').value = from.toISOString().slice(0,10);
+  updateExportPreview();
+  document.getElementById('exportModalOverlay').classList.add('open');
+}
+function closeExportModal() {
+  document.getElementById('exportModalOverlay').classList.remove('open');
+}
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('exportModalOverlay')) closeExportModal();
+}
+function selectFormat(fmt) {
+  exportFormat = fmt;
+  document.getElementById('fmtPDF').classList.toggle('active', fmt === 'pdf');
+  document.getElementById('fmtCSV').classList.toggle('active', fmt === 'csv');
+  document.getElementById('downloadBtnIcon').textContent  = fmt === 'pdf' ? '📄' : '📊';
+  document.getElementById('downloadBtnLabel').textContent = fmt === 'pdf' ? 'Download PDF' : 'Download CSV';
+}
+
+function getExportRows() {
+  const fromVal = document.getElementById('exportFrom').value;
+  const toVal   = document.getElementById('exportTo').value;
+  const rows    = document.querySelectorAll('#expensesTable tbody tr[data-date]');
+  return Array.from(rows).filter(row => {
+    const d = row.getAttribute('data-date');
+    if (fromVal && d < fromVal) return false;
+    if (toVal   && d > toVal)   return false;
+    return true;
+  });
+}
+
+function updateExportPreview() {
+  const rows = getExportRows();
+  let total  = 0;
+  rows.forEach(r => { total += parseFloat(r.getAttribute('data-amount')) || 0; });
+  document.getElementById('previewOrders').textContent = rows.length === 0
+    ? 'No records in this range'
+    : `${rows.length} record${rows.length !== 1 ? 's' : ''} found`;
+  document.getElementById('previewTotal').textContent = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function runExport() {
+  if (exportFormat === 'pdf') exportPDF();
+  else exportCSV();
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  const rows    = getExportRows();
+  const today   = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const fromVal = document.getElementById('exportFrom').value || 'All';
+  const toVal   = document.getElementById('exportTo').value   || 'All';
+
+  const csvRows = [
+    [`Ms. Brave Cake Shop - Expenses`],
+    [`Date Generated: ${today}`],
+    [`Date Range: ${fromVal} to ${toVal}`],
+    [],
+    ['Date', 'Description', 'Category', 'Cost (PHP)'],
+  ];
+
+  let total = 0;
+  rows.forEach(row => {
+    const cells    = row.querySelectorAll('td');
+    const date     = cells[0].textContent.trim().replace(/\s+/g, ' ');
+    const desc     = cells[1].textContent.trim();
+    const category = row.getAttribute('data-category');
+    const amount   = parseFloat(row.getAttribute('data-amount')) || 0;
+    total += amount;
+    csvRows.push([date, desc, category, amount.toFixed(2)]);
+  });
+
+  csvRows.push([]);
+  csvRows.push(['TOTAL', '', '', total.toFixed(2)]);
+
+  const csv  = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `expenses-${fromVal}-to-${toVal}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeExportModal();
+}
+
+// ── Export PDF ──
+function exportPDF() {
+  const rows    = getExportRows();
+  const today   = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const fromVal = document.getElementById('exportFrom').value || 'All';
+  const toVal   = document.getElementById('exportTo').value   || 'All';
+
+  let total = 0;
+  let tableRows = '';
+  rows.forEach((row, i) => {
+    const cells    = row.querySelectorAll('td');
+    const date     = cells[0].textContent.trim().replace(/\s+/g, ' ');
+    const desc     = cells[1].textContent.trim();
+    const category = row.getAttribute('data-category');
+    const amount   = parseFloat(row.getAttribute('data-amount')) || 0;
+    total += amount;
+    tableRows += `
+      <tr style="background:${i % 2 === 0 ? '#faf5f7' : '#fff'};">
+        <td style="padding:8px 12px;font-size:12px;">${date}</td>
+        <td style="padding:8px 12px;font-size:12px;">${desc}</td>
+        <td style="padding:8px 12px;font-size:12px;">${category}</td>
+        <td style="padding:8px 12px;font-size:12px;text-align:right;">₱${amount.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      </tr>`;
+  });
+
+  const content = document.createElement('div');
+  content.style.cssText = 'font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;';
+  content.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #c71585;">
+      <div>
+        <h2 style="margin:0;font-size:20px;color:#c71585;font-weight:700;">Ms. Brave Cake Shop</h2>
+        <p style="margin:4px 0 0;font-size:12px;color:#666;">Expenses — ${fromVal} to ${toVal}</p>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin:0;font-size:12px;color:#666;">${today}</p>
+        <p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#c71585;color:#fff;">
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Date</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Description</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Category</th>
+          <th style="padding:10px 12px;text-align:right;font-size:12px;">Cost (₱)</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+      <tfoot>
+        <tr style="background:#c71585;color:#fff;font-weight:700;">
+          <td colspan="3" style="padding:10px 12px;font-size:13px;">TOTAL (${rows.length} records)</td>
+          <td style="padding:10px 12px;text-align:right;font-size:13px;">₱${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>
+  `;
+
+  html2pdf().set({
+    margin: 12,
+    filename: `expenses-${fromVal}-to-${toVal}.pdf`,
+    image: {type:'jpeg', quality:0.98},
+    html2canvas: {scale:2, useCORS:true},
+    jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}
+  }).from(content).save();
+
+  closeExportModal();
+}
+
+// ── Add Expense Modal ──
+function openAddExpenseModal() {
+  const modal = new bootstrap.Modal(document.getElementById('addExpenseModal'));
+  modal.show();
+}
+
+// ── Init ──
 document.addEventListener('DOMContentLoaded', function() {
-  document.getElementById('searchExpenses').addEventListener('keyup', () => { 
-    currentExpensesPage = 1; 
-    updateExpensesDisplay(); 
+  document.getElementById('searchExpenses').addEventListener('keyup', () => {
+    currentExpensesPage = 1;
+    updateExpensesDisplay();
   });
   updateExpensesDisplay();
 });

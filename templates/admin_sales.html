@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <style>
-  /* ── CARD CUSTOMIZATION ── */
   .card-header.card-header-custom {
     border-top: 4px solid #c71585;
     background: #ffffff;
@@ -15,11 +14,19 @@
     background: #ffffff;
   }
 
-  /* ── TABS ── */
+  /* ── Tabs + Total row ── */
+  .tabs-revenue-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
   .order-tabs {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    flex-wrap: nowrap;
   }
   .order-tab-btn {
     padding: 8px 20px;
@@ -28,6 +35,7 @@
     background: #f0f0f0;
     font-weight: 600;
     cursor: pointer;
+    white-space: nowrap;
   }
   .order-tab-btn.active {
     background: #c71585;
@@ -43,10 +51,56 @@
     background: rgba(255,255,255,0.2);
   }
 
-  /* ── TABLE STYLING ── */
-  #salesTable {
-    border-radius: 8px;
+  /* ── Total display ── */
+  .total-display {
+    background: #fff0f7;
+    border: 1.5px solid #c71585;
+    border-radius: 10px;
+    padding: 8px 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
   }
+  .total-label { font-size: 0.82rem; color: #c71585; font-weight: 600; text-transform: uppercase; }
+  .total-value { font-size: 1.3rem; font-weight: 700; color: #c71585; }
+
+  /* ── Search + date filter row ── */
+  .search-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .search-filter-row .input-group {
+    flex: 1 1 220px;
+    min-width: 180px;
+  }
+  .date-filter-group {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .date-filter-btn {
+    padding: 6px 14px;
+    border: 1.5px solid #c71585;
+    border-radius: 8px;
+    background: transparent;
+    color: #c71585;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .date-filter-btn.active,
+  .date-filter-btn:hover {
+    background: #c71585;
+    color: white;
+  }
+
+  /* ── Table ── */
   #salesTable thead {
     background-color: #c71585;
     color: #fff;
@@ -54,14 +108,8 @@
   #salesTable tbody tr:hover {
     background-color: #ffe6f0;
   }
-  #salesTable td {
-    vertical-align: middle;
-  }
-  .text-success {
-    color: #c71585 !important;
-  }
-
-  /* ── INPUT & SELECT ── */
+  #salesTable td { vertical-align: middle; }
+  .text-success { color: #c71585 !important; }
   .input-group-text {
     background: #ffffff;
     border-right: none;
@@ -75,174 +123,231 @@
     border-color: #c71585;
     box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
   }
-
-  /* ── PAGINATION ── */
-  .pagination .page-link {
-    color: #c71585;
-  }
+  .pagination .page-link { color: #c71585; }
   .pagination .page-link.active {
     background-color: #c71585;
     color: #fff;
   }
 
+  /* ── Export buttons ── */
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    border: 1.5px solid #c71585; border-radius: 8px;
+    background: #c71585; color: white;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-export:hover { background: #a01070; border-color: #a01070; }
 
-
-/* =========================
-   RESPONSIVE DESIGN
-   SALES PAGE
-   ========================= */
-
-/* TABLET */
-@media (max-width: 1024px) {
-
-  .container-fluid {
-    padding-left: 12px;
-    padding-right: 12px;
+  /* ── Export Modal ── */
+  .export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+  }
+  .export-modal-overlay.open {
+    display: flex;
+  }
+  .export-modal {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(199,21,133,0.18);
+    padding: 32px 28px 24px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    animation: modalIn 0.22s ease;
+  }
+  @keyframes modalIn {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+  .export-modal-close {
+    position: absolute;
+    top: 14px; right: 18px;
+    background: none; border: none;
+    font-size: 1.4rem; color: #aaa;
+    cursor: pointer; line-height: 1;
+  }
+  .export-modal-close:hover { color: #c71585; }
+  .export-modal h5 {
+    margin: 0 0 20px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #c71585;
+  }
+  .export-modal label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #555;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .export-modal input[type="date"] {
+    width: 100%;
+    border: 1.5px solid #ccc;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .export-modal input[type="date"]:focus {
+    border-color: #c71585;
+    box-shadow: 0 0 0 0.15rem rgba(199,21,133,0.2);
+  }
+  .date-range-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 18px;
   }
 
-  .card {
+  /* Format toggle */
+  .format-toggle {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .format-btn {
+    flex: 1;
+    padding: 10px 0;
+    border: 1.5px solid #e0e0e0;
     border-radius: 10px;
+    background: #f8f8f8;
+    color: #666;
+    font-weight: 700;
+    font-size: 0.92rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+  }
+  .format-btn.active {
+    border-color: #c71585;
+    background: #fff0f7;
+    color: #c71585;
+  }
+  .format-btn:hover:not(.active) {
+    border-color: #c71585;
+    color: #c71585;
   }
 
-  .order-tabs {
-    flex-wrap: wrap;
+  /* Preview summary */
+  .export-preview {
+    background: #fff8fc;
+    border: 1.5px solid #f0c0da;
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+  }
+  .export-preview-label {
+    font-size: 0.8rem;
+    color: #999;
+    font-weight: 600;
+  }
+  .export-preview-stat {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #c71585;
+  }
+  .export-preview-orders {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 2px;
+  }
+
+  .btn-download {
+    width: 100%;
+    padding: 11px 0;
+    border: none;
+    border-radius: 10px;
+    background: #c71585;
+    color: white;
+    font-weight: 700;
+    font-size: 0.97rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     gap: 8px;
   }
+  .btn-download:hover { background: #a01070; }
 
-  .order-tab-btn {
-    flex: 1;
-    min-width: 160px;
-    text-align: center;
+  @media (max-width: 768px) {
+    .tabs-revenue-row { flex-direction: column; align-items: flex-start; }
+    .order-tabs { flex-wrap: nowrap; overflow-x: auto; }
+    .order-tab-btn { flex: 0 0 auto; min-width: 140px; }
+    #salesTable { font-size: 0.85rem; }
+    .date-filter-btn { font-size: 0.78rem; padding: 5px 10px; }
+    .search-filter-row { flex-direction: column; align-items: stretch; }
+    .date-filter-group { justify-content: flex-start; }
   }
-
-  #salesTable th,
-  #salesTable td {
-    font-size: 0.9rem;
-  }
-}
-
-/* MOBILE */
-@media (max-width: 768px) {
-
-  .container-fluid {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  /* Header spacing */
-  .section-header h1 {
-    font-size: 1.3rem;
-    text-align: left;
-    margin-left: 2px;
-  }
-
-  /* Tabs become scrollable instead of wrapping messy */
-  .order-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 5px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .order-tab-btn {
-    flex: 0 0 auto;
-    min-width: 140px;
-    font-size: 0.85rem;
-    padding: 8px 12px;
-  }
-
-  /* Search bar stacks nicely */
-  .input-group {
-    flex-direction: row;
-  }
-
-  .form-control {
-    font-size: 0.9rem;
-  }
-
-  /* Table becomes more compact */
-  #salesTable {
-    font-size: 0.85rem;
-  }
-
-  #salesTable thead th {
-    font-size: 0.85rem;
-    padding: 10px 6px;
-  }
-
-  #salesTable td {
-    padding: 10px 6px;
-  }
-
-  /* Amount column emphasis stays readable */
-  .fw-bold.text-success {
-    font-size: 0.9rem;
-  }
-
-  /* Pagination center fix */
-  .pagination {
-    flex-wrap: wrap;
-    justify-content: center !important;
-    gap: 4px;
-  }
-
-  .page-link {
-    padding: 6px 10px;
-    font-size: 0.85rem;
-  }
-}
-
-/* SMALL MOBILE */
-@media (max-width: 480px) {
-
-  .order-tab-btn {
-    min-width: 120px;
-    font-size: 0.8rem;
-  }
-
-  #salesTable {
-    font-size: 0.8rem;
-  }
-
-  .input-group-text {
-    padding: 6px 10px;
-  }
-
-  .form-control {
-    font-size: 0.85rem;
-  }
-}
-
-
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid my-4 px-4">
-  <div class="section-header">
-    <h1 class="mb-2">Sales Records</h1>
+  <div class="section-header d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <h1 class="mb-0">Sales Records</h1>
+    <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
   </div>
 
   <div class="card shadow-sm">
     <div class="card-body">
 
-      <!-- TABS -->
-      <div class="order-tabs">
-        <button class="order-tab-btn active" onclick="switchSalesTab('online', this)">
-          Online Sales <span class="tab-count" id="count-online">{{ online_count }}</span>
-        </button>
-        <button class="order-tab-btn" onclick="switchSalesTab('walkin', this)">
-          Walk-in Sales <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
-        </button>
+      <!-- TABS + TOTAL REVENUE (same row) -->
+      <div class="tabs-revenue-row">
+        <div class="order-tabs">
+          <button class="order-tab-btn active" onclick="switchSalesTab('online', this)">
+            Online Sales <span class="tab-count" id="count-online">{{ online_count }}</span>
+          </button>
+          <button class="order-tab-btn" onclick="switchSalesTab('walkin', this)">
+            Walk-in Sales <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
+          </button>
+        </div>
+        <div class="total-display">
+          <span class="total-label">Total Revenue</span>
+          <span class="total-value">₱<span id="totalRevenue">0.00</span></span>
+          <span class="total-label" id="totalCount"></span>
+        </div>
       </div>
 
-      <!-- SEARCH -->
+      <!-- SEARCH + DATE FILTERS  -->
       <div class="row mb-3">
-        <div class="col-md-12 mb-2">
+        <div class="col-md-6 mb-2">
           <div class="input-group">
-            <span class="input-group-text"><i class="fas fa-search"></i></span>
+            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
             <input type="text" class="form-control" placeholder="Search by order name..." id="searchSales">
           </div>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="dateFilter" onchange="setDateFilterSelect(this.value)">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Last 7 Days</option>
+            <option value="month">Last 30 Days</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <select class="form-select" id="paymentFilter" onchange="setPaymentFilter(this.value)">
+            <option value="">All Methods</option>
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
+          </select>
         </div>
       </div>
 
@@ -253,27 +358,41 @@
             <tr>
               <th>Date</th>
               <th>Order</th>
+              <th>Payment</th>
               <th>Amount (₱)</th>
             </tr>
           </thead>
           <tbody>
             {% for sale in online_sales %}
-            <tr data-source="online" class="online-row">
+            <tr data-source="online"
+                class="online-row"
+                data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
+                data-amount="{{ sale.amount }}"
+                data-payment="{{ sale.payment_method or 'N/A' }}"
+                data-item="{{ sale.item }}">
               <td>
                 <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
               </td>
               <td>{{ sale.item }}</td>
+              <td><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
               <td class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
             </tr>
             {% endfor %}
             {% for sale in walkin_sales %}
-            <tr data-source="walkin" class="walkin-row" style="display:none;">
+            <tr data-source="walkin"
+                class="walkin-row"
+                style="display:none;"
+                data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
+                data-amount="{{ sale.amount }}"
+                data-payment="{{ sale.payment_method or 'N/A' }}"
+                data-item="{{ sale.item }}">
               <td>
                 <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
               </td>
               <td>{{ sale.item }}</td>
+              <td><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
               <td class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
             </tr>
             {% endfor %}
@@ -288,78 +407,326 @@
     </div>
   </div>
 </div>
+
+<!-- ── EXPORT MODAL ── -->
+<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+  <div class="export-modal">
+    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <h5>⬇ Export Sales</h5>
+
+    <!-- Date Range -->
+    <div class="date-range-row">
+      <div>
+        <label for="exportFrom">From</label>
+        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+      </div>
+      <div>
+        <label for="exportTo">To</label>
+        <input type="date" id="exportTo" onchange="updateExportPreview()">
+      </div>
+    </div>
+
+    <!-- Format Toggle -->
+    <div style="margin-bottom:10px;">
+      <label style="margin-bottom:8px;">Format</label>
+      <div class="format-toggle">
+        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">
+          📄 PDF
+        </button>
+        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">
+          📊 CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Preview Summary -->
+    <div class="export-preview" id="exportPreview">
+      <div>
+        <div class="export-preview-label">Preview</div>
+        <div class="export-preview-orders" id="previewOrders">Select a date range to preview</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="export-preview-stat" id="previewTotal">—</div>
+        <div class="export-preview-label" id="previewTabLabel"></div>
+      </div>
+    </div>
+
+    <button class="btn-download" onclick="runExport()">
+      <span id="downloadBtnIcon">📄</span>
+      <span id="downloadBtnLabel">Download PDF</span>
+    </button>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
 let currentSalesPage = 1;
-const salesPerPage = 5;
-let currentTab = 'online';
+const salesPerPage   = 5;
+let currentTab       = 'online';
+let currentFilter    = 'all';
+let exportFormat     = 'pdf';
 
+// ── Date helpers ──
+function getFilterStart() {
+  const now = new Date();
+  if (currentFilter === 'today') {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  } else if (currentFilter === 'week') {
+    const d = new Date(now); d.setDate(d.getDate() - 7); return d;
+  } else if (currentFilter === 'month') {
+    const d = new Date(now); d.setDate(d.getDate() - 30); return d;
+  }
+  return null;
+}
+
+function rowPassesFilter(row) {
+  if (currentFilter === 'all') return true;
+  const rowDate = new Date(row.getAttribute('data-date'));
+  return rowDate >= getFilterStart();
+}
+
+// ── Main display ──
 function updateSalesDisplay() {
-    const searchValue = document.getElementById('searchSales').value.toLowerCase();
-    let rows;
-    
-    if (currentTab === 'online') {
-        rows = document.querySelectorAll('.online-row');
-    } else {
-        rows = document.querySelectorAll('.walkin-row');
+  const searchValue = document.getElementById('searchSales').value.toLowerCase();
+  const rows = document.querySelectorAll(currentTab === 'online' ? '.online-row' : '.walkin-row');
+
+  let visibleRows = [];
+  rows.forEach(row => {
+    const paymentMatch = !currentPayment || row.getAttribute('data-payment') === currentPayment;
+    if (row.textContent.toLowerCase().includes(searchValue) && rowPassesFilter(row) && paymentMatch) {
+      visibleRows.push(row);
     }
-    
-    let visibleRows = [];
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchValue)) {
-            visibleRows.push(row);
-        }
-    });
-    
-    const totalPages = Math.ceil(visibleRows.length / salesPerPage);
-    const start = (currentSalesPage - 1) * salesPerPage;
-    
-    rows.forEach(row => row.style.display = 'none');
-    visibleRows.forEach((row, i) => {
-        if (i >= start && i < start + salesPerPage) {
-            row.style.display = '';
-        }
-    });
-    
-    updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
-        currentSalesPage = page;
-        updateSalesDisplay();
-    });
+  });
+
+  const totalPages = Math.ceil(visibleRows.length / salesPerPage);
+  const start = (currentSalesPage - 1) * salesPerPage;
+
+  document.querySelectorAll('.online-row, .walkin-row').forEach(r => r.style.display = 'none');
+  visibleRows.forEach((row, i) => {
+    if (i >= start && i < start + salesPerPage) row.style.display = '';
+  });
+
+  let total = 0;
+  visibleRows.forEach(row => { total += parseFloat(row.getAttribute('data-amount')) || 0; });
+  document.getElementById('totalRevenue').textContent = total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  document.getElementById('totalCount').textContent   = `(${visibleRows.length} orders)`;
+  document.getElementById(currentTab === 'online' ? 'count-online' : 'count-walkin').textContent = visibleRows.length;
+
+  updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
+    currentSalesPage = page;
+    updateSalesDisplay();
+  });
 }
 
+// ── Tab switch ──
 function switchSalesTab(tab, btn) {
-    currentTab = tab;
-    currentSalesPage = 1;
-    
-    const onlineRows = document.querySelectorAll('.online-row');
-    const walkinRows = document.querySelectorAll('.walkin-row');
-    
-    if (tab === 'online') {
-        onlineRows.forEach(row => row.style.display = '');
-        walkinRows.forEach(row => row.style.display = 'none');
-    } else {
-        onlineRows.forEach(row => row.style.display = 'none');
-        walkinRows.forEach(row => row.style.display = '');
-    }
-    
-    document.querySelectorAll('.order-tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    btn.classList.add('active');
-    
-    document.getElementById('searchSales').value = '';
-    updateSalesDisplay();
+  currentTab = tab;
+  currentSalesPage = 1;
+  document.querySelectorAll('.order-tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('searchSales').value = '';
+  updateSalesDisplay();
 }
 
+// ── Date/payment filter ──
+function setDateFilterSelect(value) {
+  currentFilter = value;
+  currentSalesPage = 1;
+  updateSalesDisplay();
+}
+
+let currentPayment = '';
+function setPaymentFilter(value) {
+  currentPayment = value;
+  currentSalesPage = 1;
+  updateSalesDisplay();
+}
+
+// ── Export Modal ──
+function openExportModal() {
+  // Default: today's date as "to", 30 days ago as "from"
+  const today = new Date();
+  const from  = new Date(); from.setDate(today.getDate() - 30);
+  document.getElementById('exportTo').value   = today.toISOString().slice(0,10);
+  document.getElementById('exportFrom').value = from.toISOString().slice(0,10);
+  document.getElementById('previewTabLabel').textContent = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  updateExportPreview();
+  document.getElementById('exportModalOverlay').classList.add('open');
+}
+
+function closeExportModal() {
+  document.getElementById('exportModalOverlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('exportModalOverlay')) closeExportModal();
+}
+
+function selectFormat(fmt) {
+  exportFormat = fmt;
+  document.getElementById('fmtPDF').classList.toggle('active', fmt === 'pdf');
+  document.getElementById('fmtCSV').classList.toggle('active', fmt === 'csv');
+  document.getElementById('downloadBtnIcon').textContent = fmt === 'pdf' ? '📄' : '📊';
+  document.getElementById('downloadBtnLabel').textContent = fmt === 'pdf' ? 'Download PDF' : 'Download CSV';
+}
+
+function getExportRows() {
+  const fromVal = document.getElementById('exportFrom').value;
+  const toVal   = document.getElementById('exportTo').value;
+  const rows    = document.querySelectorAll(currentTab === 'online' ? '.online-row' : '.walkin-row');
+
+  return Array.from(rows).filter(row => {
+    const d = row.getAttribute('data-date');
+    if (fromVal && d < fromVal) return false;
+    if (toVal   && d > toVal)   return false;
+    return true;
+  });
+}
+
+function updateExportPreview() {
+  const rows  = getExportRows();
+  let total   = 0;
+  rows.forEach(r => { total += parseFloat(r.getAttribute('data-amount')) || 0; });
+
+  const ordersEl = document.getElementById('previewOrders');
+  const totalEl  = document.getElementById('previewTotal');
+
+  if (rows.length === 0) {
+    ordersEl.textContent = 'No orders found in this range';
+    totalEl.textContent  = '₱0.00';
+  } else {
+    ordersEl.textContent = `${rows.length} order${rows.length !== 1 ? 's' : ''} found`;
+    totalEl.textContent  = '₱' + total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+}
+
+function runExport() {
+  if (exportFormat === 'pdf') exportPDF();
+  else exportCSV();
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  const visibleRows = getExportRows();
+  const tabLabel    = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  const today       = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const fromVal     = document.getElementById('exportFrom').value || 'All';
+  const toVal       = document.getElementById('exportTo').value   || 'All';
+
+  const rows = [
+    [`Ms. Brave Cake Shop - ${tabLabel}`],
+    [`Date Generated: ${today}`],
+    [`Date Range: ${fromVal} to ${toVal}`],
+    [],
+    ['Date', 'Order', 'Payment Method', 'Amount (PHP)'],
+  ];
+
+  let total = 0;
+  visibleRows.forEach(row => {
+    const cells   = row.querySelectorAll('td');
+    const date    = cells[0].textContent.trim().replace(/\s+/g, ' ');
+    const item    = row.getAttribute('data-item');
+    const payment = row.getAttribute('data-payment');
+    const amount  = parseFloat(row.getAttribute('data-amount')) || 0;
+    total += amount;
+    rows.push([date, item, payment, amount.toFixed(2)]);
+  });
+
+  rows.push([]);
+  rows.push(['TOTAL', '', '', total.toFixed(2)]);
+
+  const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `sales-${currentTab}-${fromVal}-to-${toVal}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeExportModal();
+}
+
+// ── Export PDF ──
+function exportPDF() {
+  const visibleRows = getExportRows();
+  const tabLabel    = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  const today       = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
+  const fromVal     = document.getElementById('exportFrom').value || 'All';
+  const toVal       = document.getElementById('exportTo').value   || 'All';
+  const rangeLabel  = `${fromVal} to ${toVal}`;
+
+  let total = 0;
+  let tableRows = '';
+  visibleRows.forEach((row, i) => {
+    const cells   = row.querySelectorAll('td');
+    const date    = cells[0].textContent.trim().replace(/\s+/g, ' ');
+    const item    = row.getAttribute('data-item');
+    const payment = row.getAttribute('data-payment');
+    const amount  = parseFloat(row.getAttribute('data-amount')) || 0;
+    total += amount;
+    tableRows += `
+      <tr style="background:${i % 2 === 0 ? '#faf5f7' : '#fff'};">
+        <td style="padding:8px 12px;font-size:12px;">${date}</td>
+        <td style="padding:8px 12px;font-size:12px;">${item}</td>
+        <td style="padding:8px 12px;font-size:12px;">${payment}</td>
+        <td style="padding:8px 12px;font-size:12px;text-align:right;">₱${amount.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      </tr>`;
+  });
+
+  const content = document.createElement('div');
+  content.style.cssText = 'font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;';
+  content.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #c71585;">
+      <div>
+        <h2 style="margin:0;font-size:20px;color:#c71585;font-weight:700;">Ms. Brave Cake Shop</h2>
+        <p style="margin:4px 0 0;font-size:12px;color:#666;">${tabLabel} — ${rangeLabel}</p>
+      </div>
+      <div style="text-align:right;">
+        <p style="margin:0;font-size:12px;color:#666;">${today}</p>
+        <p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p>
+      </div>
+    </div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#c71585;color:#fff;">
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Date</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Order</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Payment</th>
+          <th style="padding:10px 12px;text-align:right;font-size:12px;">Amount (₱)</th>
+        </tr>
+      </thead>
+      <tbody>${tableRows}</tbody>
+      <tfoot>
+        <tr style="background:#c71585;color:#fff;font-weight:700;">
+          <td colspan="3" style="padding:10px 12px;font-size:13px;">TOTAL (${visibleRows.length} orders)</td>
+          <td style="padding:10px 12px;text-align:right;font-size:13px;">₱${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>
+  `;
+
+  html2pdf().set({
+    margin: 12,
+    filename: `sales-${currentTab}-${fromVal}-to-${toVal}.pdf`,
+    image: {type:'jpeg', quality:0.98},
+    html2canvas: {scale:2, useCORS:true},
+    jsPDF: {unit:'mm', format:'a4', orientation:'landscape'}
+  }).from(content).save();
+
+  closeExportModal();
+}
+
+// ── Init ──
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('searchSales').addEventListener('keyup', () => {
-        currentSalesPage = 1;
-        updateSalesDisplay();
-    });
+  document.getElementById('searchSales').addEventListener('keyup', () => {
+    currentSalesPage = 1;
     updateSalesDisplay();
+  });
+  updateSalesDisplay();
 });
 </script>
 {% endblock %}
