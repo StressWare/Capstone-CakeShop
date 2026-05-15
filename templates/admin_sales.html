@@ -478,7 +478,7 @@
             <tr>
               <th>Date</th>
               <th>Order</th>
-              <th>Payment</th>
+              <th>Payment Methods</th>
               <th>Amount (₱)</th>
             </tr>
           </thead>
@@ -496,7 +496,7 @@
             </td>
             <td data-label="Order">{{ sale.item }}</td>
             <td data-label="Payment"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
-            <td data-label="Amount (₱)" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
+            <td data-label="Amount" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
           </tr>
             {% endfor %}
             {% for sale in walkin_sales %}
@@ -507,13 +507,13 @@
                 data-amount="{{ sale.amount }}"
                 data-payment="{{ sale.payment_method or 'N/A' }}"
                 data-item="{{ sale.item }}">
-              <td>
+              <td data-label="DATE">
                 <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
               </td>
-              <td>{{ sale.item }}</td>
-              <td><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
-              <td class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
+              <td data-label="ORDER">{{ sale.item }}</td>
+              <td data-label="PAYMENT"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
+              <td data-label="AMOUNT" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
             </tr>
             {% endfor %}
           </tbody>

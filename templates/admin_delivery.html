@@ -159,10 +159,10 @@
   .empty-state i { font-size: 3rem; margin-bottom: 16px; display: block; }
 
   .stats-bar {
-    display: flex;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
   }
   .stat-card {
     background: white;
@@ -170,10 +170,8 @@
     padding: 14px 20px;
     box-shadow: var(--shadow-soft);
     border-left: 4px solid var(--pink-primary);
-    flex: 1;
-    min-width: 140px;
   }
-  .stat-card .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--pink-dark); }
+    .stat-card .stat-number { font-size: 1.5rem; font-weight: 700; color: var(--pink-dark); }
   .stat-card .stat-label { font-size: 0.75rem; color: #888; margin-top: 2px; }
 
   /* ✅ Overdue stat card */
@@ -203,7 +201,7 @@
 <div class="container-fluid my-4 px-4">
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
-      <h4 class="mb-0">🛵 Delivery Management</h4>
+      <h4 class="mb-0"> Delivery Management</h4>
     </div>
     <div class="card-body">
 

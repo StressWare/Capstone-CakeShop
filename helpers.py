@@ -38,11 +38,9 @@ FAQ = {
     "downpayment": "💰 Customized cakes require 50% downpayment before production starts.\n\nAccepted: GCash, PayMaya, Bank Transfer (BPI, BDO, Metrobank)\n\nWe'll send payment details after confirming your order.",
     "order status": "📦 Check your order:\n1. Go to 'My Profile'\n2. Click 'My Orders'\n\nYou'll also get notifications for updates.\nFor concerns → 'Chat with Owner'",
     "default": "😊 I'm not sure about that. Try the FAQ buttons above or click 'Chat with Owner' for help!",
-    "kunoli" : "ako to si kunoli tutulungan kita"
 }
 
 FAQ_KEYWORDS = {
-    "kunoli":["princess","frencess", "noli","kunoli"],
     "how to order": [
         "order", "how to", "paano", "mag-order", "purchase", "buy", "step",
         "pano", "paano mag", "gusto ko", "bibili", "bili", "i-order",

@@ -2256,8 +2256,23 @@ def edit_cake(cake_id):
         cake_doc = cake_ref.get()
 
         if not cake_doc.exists:
-            flash('Cake not found!', 'danger')
-            return redirect(url_for('admin_cakes'))
+            return jsonify({"success": False, "message": "Cake not found!"}), 404
+
+        existing_data = cake_doc.to_dict()
+        existing_image = existing_data.get('image')
+        new_image_url = existing_image  # default: keep old image
+
+        # Only upload if a new file was actually selected
+        image_file = request.files.get('image')
+        if image_file and image_file.filename:
+            uploaded_url = save_uploaded_image(image_file, 'cake')
+            if uploaded_url:
+                # Delete the old image from Cloudinary
+                if existing_image:
+                    delete_uploaded_image(existing_image)
+                new_image_url = uploaded_url
+            else:
+                return jsonify({"success": False, "message": "Image upload failed. Check format (JPG/PNG) and size (max 2MB)."}), 400
 
         cake_ref.update({
             'name':        request.form.get('name'),
@@ -2266,7 +2281,7 @@ def edit_cake(cake_id):
             'price':       float(request.form.get('price')),
             'quantity':    int(request.form.get('quantity')),
             'status':      request.form.get('status') == 'on',
-            'image':       cake_doc.to_dict().get('image')
+            'image':       new_image_url
         })
         invalidate_cache("all_cakes")
         log_admin_action(
@@ -2278,7 +2293,6 @@ def edit_cake(cake_id):
     except Exception:
         app.logger.exception(f"Error editing cake {cake_id}")
         return jsonify({"success": False, "message": "Failed to update cake."}), 500
-
 # ---------------- DELETE CAKE ----------------
 @app.route('/cake/delete/<cake_id>', methods=['POST'])
 @admin_required
