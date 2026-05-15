@@ -287,15 +287,135 @@
   }
   .btn-download:hover { background: #a01070; }
 
-  @media (max-width: 768px) {
-    .tabs-revenue-row { flex-direction: column; align-items: flex-start; }
-    .order-tabs { flex-wrap: nowrap; overflow-x: auto; }
-    .order-tab-btn { flex: 0 0 auto; min-width: 140px; }
-    #salesTable { font-size: 0.85rem; }
-    .date-filter-btn { font-size: 0.78rem; padding: 5px 10px; }
-    .search-filter-row { flex-direction: column; align-items: stretch; }
-    .date-filter-group { justify-content: flex-start; }
+@media (max-width: 768px) {
+  body, html { overflow-x: hidden; }
+  .container-fluid { padding-left: 10px !important; padding-right: 10px !important; }
+
+  /* Page header */
+  .section-header.d-flex {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
   }
+
+  .section-header h1 {
+    flex: 1;
+    font-size: 1.2rem;
+  }
+
+  .btn-export {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* Tabs and total */
+  .tabs-revenue-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .order-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+
+  .order-tabs::-webkit-scrollbar { display: none; }
+
+  .order-tab-btn {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+
+  .total-display {
+    flex-direction: column;
+    align-items: flex-start;
+    white-space: normal;
+    width: 100%;
+  }
+
+  .total-value {
+    font-size: 1.1rem;
+  }
+
+  /* Filters */
+  .row.mb-3 {
+    gap: 8px;
+  }
+
+  .row.mb-3 .col-md-6,
+  .row.mb-3 .col-md-3 {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .input-group,
+  .form-select {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  /* Hide table header */
+  #salesTable thead { display: none; }
+
+  /* Convert rows to cards */
+  #salesTable tbody tr {
+    display: block;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+
+  /* Each cell becomes flex row with label */
+  #salesTable tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border: none;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  #salesTable tbody td:last-child {
+    border-bottom: none;
+    padding-top: 12px;
+  }
+
+  /* Add labels before each cell */
+  #salesTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #c71585;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  /* Pagination */
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .pagination .page-link {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
 </style>
 {% endblock %}
 
@@ -365,19 +485,19 @@
           <tbody>
             {% for sale in online_sales %}
             <tr data-source="online"
-                class="online-row"
-                data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
-                data-amount="{{ sale.amount }}"
-                data-payment="{{ sale.payment_method or 'N/A' }}"
-                data-item="{{ sale.item }}">
-              <td>
-                <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
-                <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
-              </td>
-              <td>{{ sale.item }}</td>
-              <td><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
-              <td class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
-            </tr>
+              class="online-row"
+              data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
+              data-amount="{{ sale.amount }}"
+              data-payment="{{ sale.payment_method or 'N/A' }}"
+              data-item="{{ sale.item }}">
+            <td data-label="Date">
+              <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
+              <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
+            </td>
+            <td data-label="Order">{{ sale.item }}</td>
+            <td data-label="Payment"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
+            <td data-label="Amount (₱)" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
+          </tr>
             {% endfor %}
             {% for sale in walkin_sales %}
             <tr data-source="walkin"

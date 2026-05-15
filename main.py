@@ -4,7 +4,7 @@ from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
-                     get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp)
+                     get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp,safe_float)
 from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,invalidate_cache
 from firebase_admin import messaging
@@ -15,7 +15,7 @@ import hmac
 import hashlib
 import secrets
 import firebase
-from db import sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations
 from firebase_admin import auth, firestore, messaging
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -146,7 +146,7 @@ def verify_token():
         fname = user_doc.to_dict().get("fname", "") if user_doc.exists else "" #name in admin logs
         is_new_user = not user_doc.exists
 
-        if not user_doc.exists:
+        if not user_doc.exists and is_google:
             users.document(uid).set({
                 'email': email,
                 'username': email.split('@')[0] if email else '',
@@ -321,9 +321,11 @@ def customer_dashboard():
         v = v_doc.to_dict()
         v['id'] = v_doc.id
         expires = v.get('expires_at')
-        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+        if not isinstance(expires, datetime):
+            continue
+        if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
-        if not v.get('used', False) and expires and expires > now_dt:
+        if not v.get('used', False) and expires > now_dt:
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
 
@@ -621,9 +623,11 @@ def place_order():
         v = v_doc.to_dict()
         v['id'] = v_doc.id
         expires = v.get('expires_at')
-        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+        if not isinstance(expires, datetime):
+            continue
+        if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
-        if not v.get('used', False) and expires and expires > now_dt:
+        if not v.get('used', False) and expires > now_dt:
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
             
@@ -720,9 +724,11 @@ def order_cake():
         v = v_doc.to_dict()
         v['id'] = v_doc.id
         expires = v.get('expires_at')
-        if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
+        if not isinstance(expires, datetime):
+            continue
+        if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
-        if not v.get('used', False) and expires and expires > now_dt:
+        if not v.get('used', False) and expires > now_dt:
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
 
@@ -811,6 +817,7 @@ def finalize_order():
                 "price":     real_price,
                 "subtotal":  subtotal,
                 "cake_name": cake_data.get("name", i.get("cake_name", "")),
+                "category":  cake_data.get("category", ""),
             })
 
         selected_items = normalized
@@ -873,11 +880,8 @@ def finalize_order():
         if order_type == 'premade':
             cake_subtotal = 0.0
             for item in selected_items:
-                cake_doc = cakes.document(item.get('cake_id', '')).get()
-                if cake_doc.exists:
-                    category = cake_doc.to_dict().get('category', '')
-                    if category == 'Cake':
-                        cake_subtotal += item.get('subtotal', 0.0)
+                if item.get('category') == 'Cake':
+                    cake_subtotal += float(item.get('subtotal', 0.0))
             discount_amount = round(cake_subtotal * voucher_discount_pct / 100, 2)
         else:
             discount_amount = round(amount * voucher_discount_pct / 100, 2)
@@ -913,33 +917,43 @@ def finalize_order():
             "occasion":  request.form.get("occasion", ""),
             "celebrant": request.form.get("celebrant", ""),
             "age":       request.form.get("age", ""),
-            "lat":       float(request.form.get("lat")) if request.form.get("lat") else None,
-            "lng":       float(request.form.get("lng")) if request.form.get("lng") else None,
+            "lat":       safe_float(request.form.get("lat")),
+            "lng":       safe_float(request.form.get("lng")),
         },
         "created_at": now
     }
 
-    # ── Deduct stock for premade orders ──
-    if order_type == "premade":
-        for item in selected_items:
-            cake_id          = item.get("cake_id")
-            quantity_ordered = int(item.get("quantity", 1))
-            cake_ref         = cakes.document(cake_id)
-            cake_doc         = cake_ref.get()
+    # ── Deduct stock for premade orders (transactional fb built in decorator) ──
+    if order_type == "premade"and payment_method in ["Cash on Delivery", "Bank Transfer"]:
+        @firestore.transactional
+        def deduct_stock(transaction, items):
+            for item in items:
+                cake_id          = item.get("cake_id")
+                quantity_ordered = int(item.get("quantity", 1))
+                cake_ref         = cakes.document(cake_id)
+                cake_snap        = cake_ref.get(transaction=transaction)
 
-            if not cake_doc.exists:
+                if not cake_snap.exists:
+                    raise ValueError(f"NOEXIST:{cake_id}")
+
+                current_qty = cake_snap.to_dict().get("quantity", 0)
+                if quantity_ordered > current_qty:
+                    name = cake_snap.to_dict().get("name", "A cake")
+                    raise ValueError(f"OVERSTOCK:{name}:{current_qty}")
+
+                new_qty = current_qty - quantity_ordered
+                transaction.update(cake_ref, {"quantity": new_qty, "status": new_qty > 0})
+
+        try:
+            transaction = db.transaction()
+            deduct_stock(transaction, selected_items)
+        except ValueError as e:
+            parts = str(e).split(":", 2)
+            if parts[0] == "NOEXIST":
                 flash("One or more cakes no longer exist.", "danger")
-                return redirect(url_for("customer_dashboard"))
-
-            current_qty = cake_doc.to_dict().get("quantity", 0)
-
-            if quantity_ordered > current_qty:          # ← last line of defense
-                name = cake_doc.to_dict().get("name", "A cake")
-                flash(f"{name} only has {current_qty} available.", "danger")
-                return redirect(url_for("customer_dashboard"))
-
-            new_qty = current_qty - quantity_ordered
-            cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
+            else:
+                flash(f"{parts[1]} only has {parts[2]} available.", "danger")
+            return redirect(url_for("customer_dashboard"))
 
     # ── COD or Bank Transfer → save immediately ──
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
@@ -1022,6 +1036,16 @@ def cancel_order(order_id):
     if order.get("status") != "New":
         flash("Order cannot be cancelled anymore.", "warning")
         return redirect(url_for("customer_dashboard"))
+
+    # Restore stock if premade order
+    if order.get("order_type") == "premade":
+        for item in order.get("selected_items", []):
+            cake_ref = cakes.document(item["cake_id"])
+            cake_doc = cake_ref.get()
+            if cake_doc.exists:
+                current_qty = cake_doc.to_dict().get("quantity", 0)
+                restore_qty = int(item.get("quantity", 1))
+                cake_ref.update({"quantity": current_qty + restore_qty, "status": True})
 
     order_ref.update({"status": "Cancelled"})
     flash("Order cancelled successfully.", "info")
@@ -1939,16 +1963,6 @@ def update_order_status(order_id):
         old_status = order_data.get("status")
         order_type = order_data.get("order_type", "custom")
 
-        # Quantity deduction logic 
-        if new_status == "Accepted" and old_status == "New" and order_type == "premade":
-            for i in order_data.get("selected_items", []):
-                cake_ref = cakes.document(i["cake_id"])
-                cake_doc = cake_ref.get()
-                if cake_doc.exists:
-                    current_qty = cake_doc.to_dict().get("quantity", 0)
-                    quantity_ordered = int(i.get("quantity", 1))
-                    new_qty = max(0, current_qty - quantity_ordered)
-                    cake_ref.update({"quantity": new_qty, "status": new_qty > 0})
 
         accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
         if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
@@ -2119,14 +2133,14 @@ def restock_inventory(id):
     # Auto-log restock to expenses
     expenses.add({
         "description": f"Restocked {add_qty} x {item}",
-        "cost": cost,
+        "cost": cost * add_qty,
         "date": now,
         "category": category
     })
  
     log_admin_action(
         action="Restocked inventory item",
-        target=f"{item} — added qty: {add_qty}, cost: ₱{cost}",
+        target=f"{item} — added qty: {add_qty}, cost: ₱{cost * add_qty}",
         category="inventory"
     )
     flash(f'"{item}" restocked by {add_qty} units.', 'success')
@@ -2345,7 +2359,7 @@ def toggle_review(review_id):
 # ================================================================
 # ---------------- PAYMENT WEBHOOK ----------------
 @app.route("/paymongo/webhook", methods=["POST"])
-def paymongo_webhook():
+def paymongo_webhook():  
     raw_body = request.get_data()
     signature_header = request.headers.get("Paymongo-Signature", "")
 
@@ -2407,16 +2421,39 @@ def paymongo_webhook():
         order_data["payment_id"] = payment_id
         order_data["payment_method"] = payment_method
         order_data["paymongo_session_id"] = session_id 
+        
+        # Deduct stock for premade orders
+        if order_data.get("order_type") == "premade":
+            @firestore.transactional
+            def deduct_stock(transaction, items):
+                for item in items:
+                    cake_id          = item.get("cake_id")
+                    quantity_ordered = int(item.get("quantity", 1))
+                    cake_ref         = cakes.document(cake_id)
+                    cake_snap        = cake_ref.get(transaction=transaction)
+                    if not cake_snap.exists:
+                        raise ValueError(f"NOEXIST:{cake_id}")
+                    current_qty = cake_snap.to_dict().get("quantity", 0)
+                    if quantity_ordered > current_qty:
+                        name = cake_snap.to_dict().get("name", "A cake")
+                        raise ValueError(f"OVERSTOCK:{name}:{current_qty}")
+                    new_qty = current_qty - quantity_ordered
+                    transaction.update(cake_ref, {"quantity": new_qty, "status": new_qty > 0})
+
+            try:
+                transaction = db.transaction()
+                deduct_stock(transaction, order_data.get("selected_items", []))
+            except ValueError as e:
+                parts = str(e).split(":", 2)
+                app.logger.error(f"Stock deduction failed in webhook: {parts}")
+                pending_ref.delete()
+                return jsonify({"status": "stock error"}), 200
+
         # Save to orders collection
         orders.add(order_data)
 
         # Delete pending order
         pending_ref.delete()
-    #no balance/insufficienet fund/card declined, etc
-    elif event_type == "payment.failed":
-        if session_id := data.get("attributes", {}).get("checkout_session_id"):
-            pending_orders.document(session_id).delete()
-            app.logger.info(f"Deleted pending order due to failed payment: {session_id}")
     return jsonify({"status": "ok"}), 200
 # ---------------- PAYMENT SUCCESS ----------------
 @app.route("/payment/success")
@@ -2507,15 +2544,16 @@ def payment_success():
         payment_result=payment_result
     )
  
-
 # ---------------- PAYMENT FAILED ----------------
 @app.route("/payment/failed")
 @login_required
 def payment_failed():
-    # Clear pending session
-    session.pop('paymongo_session_id', None)
+    session_id = session.pop('paymongo_session_id', None)
     session.pop('pending_order', None)
- 
+
+    if session_id:
+        pending_orders.document(session_id).delete()
+
     flash("Payment was cancelled or failed. Please try again.", "danger")
     return redirect(url_for("cakes_page"))
 # ================================================================
@@ -2548,7 +2586,7 @@ def send_message():
                 'last_updated': now,
                 'escalated': False
             })
-
+            conv_doc = conv_ref.get()
         conv_data = conv_doc.to_dict() if conv_doc.exists else {'escalated': False}
         is_escalated = conv_data.get('escalated', False)
 
@@ -2669,6 +2707,7 @@ def admin_reply_message():
                 'escalated_at': now,
                 'escalated_by': 'admin'
             })
+            conv_doc = conv_ref.get()
         else:
             # If conversation exists but not escalated, escalate it
             conv_data = conv_doc.to_dict()
@@ -2748,14 +2787,14 @@ def delete_conversation():
         
         conv_ref = users.document(user_id).collection("conversations").document(conversation_id)
         
-        # ✅ Delete messages FIRST before deleting parent
-        messages = conv_ref.collection("messages").stream()
+        # Batch delete messages + top-level conversation doc (batch delete =all or nothing)
+        messages = list(conv_ref.collection("messages").stream())
+        batch = db.batch()
         for msg in messages:
-            msg.reference.delete()
-        
-        # ✅ Then delete the conversation document
-        conv_ref.delete()
-        conversations.document(conversation_id).delete()
+            batch.delete(msg.reference)
+        batch.delete(conv_ref)  
+        batch.delete(conversations.document(conversation_id))
+        batch.commit()
         return jsonify({'success': True})
     except Exception as e:
         app.logger.exception("Error deleting conversation")

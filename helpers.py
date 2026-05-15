@@ -200,6 +200,12 @@ def _today_range():
     end = start + timedelta(days=1)
     return start, end
 
+def safe_float(value):
+    try:
+        return float(value) if value else None
+    except (ValueError, TypeError):
+        return None
+
 def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_ref):
     try:
         earns_stamps = 0

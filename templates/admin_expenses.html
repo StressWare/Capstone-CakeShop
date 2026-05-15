@@ -191,11 +191,150 @@
   .btn-download:hover { background: #a01070; }
 
   /* ── RESPONSIVE ── */
-  @media (max-width: 768px) {
-    #expensesTable { font-size: 0.85rem; }
-    .category-radio-group { gap: 6px; }
-    .add-expense-card { padding: 14px 12px; }
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  body, html { overflow-x: hidden; }
+  .container-fluid { padding-left: 10px !important; padding-right: 10px !important; }
+
+  /* Hide table header on mobile */
+  #expensesTable thead { display: none; }
+
+  /* Each row becomes a card */
+  #expensesTable tbody tr {
+    display: block;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
   }
+
+  /* Each cell becomes a flex row with label */
+  #expensesTable tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border: none;
+    font-size: 0.88rem;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  #expensesTable tbody td:last-child {
+    border-bottom: none;
+    padding-top: 12px;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  /* Add label before each cell */
+  #expensesTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #c71585;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+  /* Hide label for action cell */
+  #expensesTable tbody td:last-child::before {
+    display: none;
+  }
+
+  /* Action buttons */
+  #expensesTable tbody td:last-child .d-flex {
+    width: 100%;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  #expensesTable tbody td:last-child .btn {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 6px 10px;
+  }
+
+  /* Page header */
+  .d-flex.align-items-center.justify-content-between.mb-3 {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h1.mb-0 { 
+    font-size: 1.2rem;
+    flex: 1;
+  }
+
+  .d-flex.align-items-center.justify-content-between.mb-3 > .d-flex {
+    width: auto;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .btn-export {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  /* Total display */
+  .total-display {
+    flex-direction: column;
+    align-items: flex-start;
+    white-space: normal;
+    width: 100%;
+  }
+
+  .total-value {
+    font-size: 1.1rem;
+  }
+
+  /* Category radio group */
+  .category-radio-group { 
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .category-radio-label {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+  }
+
+  /* Add expense card */
+  .add-expense-card { 
+    padding: 14px 12px; 
+  }
+
+  /* Filters stack */
+  .row.mb-3 .col-md-6,
+  .row.mb-3 .col-md-3 { 
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .form-select,
+  .form-control {
+    font-size: 0.85rem;
+  }
+
+  /* Pagination */
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .pagination .page-link {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
 </style>
 {% endblock %}
 
@@ -256,7 +395,7 @@
               <th>Date</th>
               <th>Description</th>
               <th>Category</th>
-              <th>Cost (₱)</th>
+              <th>Total Cost (₱)</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -265,12 +404,12 @@
             <tr data-date="{{ e.date.strftime('%Y-%m-%d') }}"
                 data-amount="{{ e.cost }}"
                 data-category="{{ e.category or 'Others' }}">
-              <td>
+              <td data-label="Date">
                 <small>{{ e.date.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ e.date.strftime('%I:%M %p') }}</small>
               </td>
-              <td><strong>{{ e.description }}</strong></td>
-              <td>
+              <td data-label="Description"><strong>{{ e.description }}</strong></td>
+              <td data-label="Category">
                 {% set cat = e.category or 'Others' %}
                 {% if cat == 'Ingredients' %}
                   <span class="badge badge-ingredients">🥚 Ingredients</span>
@@ -280,8 +419,8 @@
                   <span class="badge badge-others">📦 Others</span>
                 {% endif %}
               </td>
-              <td class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
-              <td>
+              <td data-label="Total Cost (₱)"class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
+              <td >
                 <div class="d-flex gap-2">
                   <button class="btn btn-sm" style="background:#c71585;color:white;border:none;"
                     data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ e.id }}">
@@ -310,7 +449,7 @@
                         <input type="text" class="form-control" value="{{ e.description }}" readonly disabled>
                       </div>
                       <div class="mb-3">
-                        <label class="form-label fw-bold">Cost (₱)</label>
+                        <label class="form-label fw-bold">Total Cost (₱)</label>
                         <input type="number" name="cost" class="form-control" value="{{ e.cost }}" step="0.01" required>
                       </div>
                       <div class="mb-3">
@@ -368,7 +507,7 @@
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label fw-bold">Description</label>
-            <input name="description" class="form-control" placeholder="e.g., Bought flour sack" required>
+            <input name="description" class="form-control" placeholder="e.g.,Electric Bill" required>
           </div>
           <div class="mb-3">
             <label class="form-label fw-bold">Cost (₱)</label>
