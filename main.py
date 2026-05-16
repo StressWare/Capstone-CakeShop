@@ -1954,57 +1954,68 @@ def admin_logs_page():
 @app.route("/order/status/<order_id>", methods=["POST"])
 @admin_required
 def update_order_status(order_id):
-    new_status = request.form["status"]
-    order_ref = orders.document(order_id)
-    order_doc = order_ref.get()
+    try: 
+        new_status = request.form["status"]
+        order_ref = orders.document(order_id)
+        order_doc = order_ref.get()
 
-    if order_doc.exists:
-        order_data = order_doc.to_dict()
-        old_status = order_data.get("status")
-        order_type = order_data.get("order_type", "custom")
+        if order_doc.exists:
+            order_data = order_doc.to_dict()
+            old_status = order_data.get("status")
+            order_type = order_data.get("order_type", "custom")
 
 
-        accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
-        if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
-            for i in order_data.get("selected_items", []):
-                cake_ref = cakes.document(i["cake_id"])
-                cake_doc = cake_ref.get()
-                if cake_doc.exists:
-                    current_qty = cake_doc.to_dict().get("quantity", 0)
-                    restore_qty = int(i.get("quantity", 1))
-                    cake_ref.update({"quantity": current_qty + restore_qty, "status": True})
+            accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
+            if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
+                for i in order_data.get("selected_items", []):
+                    cake_ref = cakes.document(i["cake_id"])
+                    cake_doc = cake_ref.get()
+                    if cake_doc.exists:
+                        current_qty = cake_doc.to_dict().get("quantity", 0)
+                        restore_qty = int(i.get("quantity", 1))
+                        cake_ref.update({"quantity": current_qty + restore_qty, "status": True})
 
-        # Update order status
-        order_ref.update({"status": new_status})
-        
-        # CREATE NOTIFICATION
-        status_messages = {
-            "Accepted": "has been accepted",
-            "Pending": "is now being prepared",
-            "Ready": "is ready for pickup/delivery",
-            "Out for Delivery": "is out for delivery",
-            "Completed": "has been completed",
-            "Cancelled": "has been cancelled"
-        }
-        
-        message = status_messages.get(new_status, f"is now {new_status}")
-        notify_user_id = order_data.get("user_id")
-        notifications.add({
-            "user_id": notify_user_id,
-            "order_id": order_id,
-            "title": f"Order {new_status}",
-            "message": f"Your order #{order_id[:8]} {message}",
-            "type": "status_update",
-            "is_read": False,
-            "created_at": datetime.now(PH_TZ)
-        })
-        print(f"Creating notification for user {notify_user_id}, order {order_id}, status {new_status}")
-        log_admin_action(
-            action=f"Changed order status to '{new_status}'",
-            target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
-            category="order"
-        )
-    return jsonify({"success": True, "message": f"Order status updated to {new_status}"})
+            # Update order status
+            update_data = {"status": new_status}
+            if new_status == "Completed" and order_data.get("payment_method") == "Cash on Delivery":
+                update_data["payment_status"] = "Paid"
+
+            order_ref.update(update_data)
+            
+            # CREATE NOTIFICATION
+            status_messages = {
+                "Accepted": "has been accepted",
+                "Pending": "is now being prepared",
+                "Ready": "is ready for pickup/delivery",
+                "Out for Delivery": "is out for delivery",
+                "Completed": "has been completed",
+                "Cancelled": "has been cancelled"
+            }
+            
+            message = status_messages.get(new_status, f"is now {new_status}")
+            notify_user_id = order_data.get("user_id")
+            print(f"DEBUG user_id value: '{notify_user_id}'")
+            notifications.add({
+                "user_id": notify_user_id,
+                "order_id": order_id,
+                "title": f"Order {new_status}",
+                "message": f"Your order #{order_id[:8]} {message}",
+                "type": "status_update",
+                "is_read": False,
+                "created_at": datetime.now(PH_TZ)
+            })
+            print("DEBUG notification added successfully")
+            print(f"Creating notification for user {notify_user_id}, order {order_id}, status {new_status}")
+            log_admin_action(
+                action=f"Changed order status to '{new_status}'",
+                target=f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
+                category="order"
+            )
+    
+        return jsonify({"success": True, "message": f"Order status updated to {new_status}"})
+    except Exception as e:
+        print(f"ERROR in update_order_status: {e}")            # ← catch silent crashes
+        return jsonify({"success": False, "message": str(e)})
 
 # ---------------- EDIT ORDER ----------------
 @app.route("/order/edit/<order_id>", methods=["POST"])
