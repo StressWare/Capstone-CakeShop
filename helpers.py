@@ -225,16 +225,20 @@ def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_r
         user_ref  = users_ref.document(user_id)
         user_data = user_ref.get().to_dict() or {}
 
-        stamps           = int(user_data.get('loyalty_stamps', 0)) + earns_stamps
+        old_stamps        = int(user_data.get('loyalty_stamps', 0))
         loyalty_unclaimed = user_data.get('loyalty_unclaimed', None)
+        new_stamps        = old_stamps + earns_stamps
 
-        update = {'loyalty_stamps': stamps}
+        update = {}
 
-        if stamps >= 10:
+        if new_stamps >= 10:
+            update['loyalty_stamps']    = new_stamps - 10  # carry overshoot
             update['loyalty_unclaimed'] = '15'
-            update['loyalty_stamps']    = 0
-        elif stamps >= 5 and not loyalty_unclaimed:
+        elif old_stamps < 5 <= new_stamps and not loyalty_unclaimed:
+            update['loyalty_stamps']    = new_stamps
             update['loyalty_unclaimed'] = '10'
+        else:
+            update['loyalty_stamps'] = new_stamps
 
         user_ref.update(update)
 

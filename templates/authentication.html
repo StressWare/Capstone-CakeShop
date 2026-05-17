@@ -12,6 +12,8 @@
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!--ReCaptcha-->
+    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 </head>
 <body>
 
@@ -67,27 +69,28 @@
                 <form id="signupForm" class="form">
                     <h2>Sign Up</h2>
                     <input type="email" id="signupEmail" placeholder="Email" required>
-                    <input type="text" id="signupFname" placeholder="Full Name" required>   <!-- NEW -->
+                    <input type="text" id="signupFname" placeholder="Full Name" required>
                     <input type="text" id="signupUsername" placeholder="Username" required>
-                    <input type="tel" id="signupNumber" placeholder="Phone Number" required> <!-- ID matches Flask 'number' -->
+                    <input type="tel" id="signupNumber" placeholder="Phone Number" required>
                     <input type="text" id="signupAddress" placeholder="Address" required>
-                <div class="password-wrapper">
-                    <input type="password" id="signupPassword" placeholder="Password" required>
-                    <i class="fa-solid fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>
-                </div>
 
-                <div class="password-wrapper">
-                    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-                    <i class="fa-solid fa-eye toggle-eye" onclick="togglePassword('loginPassword')"></i>                
+                    <div class="password-wrapper">
+                        <input type="password" id="signupPassword" placeholder="Password" required>
+                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupPassword')"></i>
                     </div>
+
+                    <div class="password-wrapper">
+                        <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
+                        <i class="fa-regular fa-eye toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
+                    </div>
+
                     <button type="submit">Sign Up</button>
                     <p class="toggle-msg">
                         Already have an account? 
                         <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
                     </p>
-
                     <p class="toggle-msg">
-                    Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
+                        Or <span class="toggle-btn" id="googleSignUpBtn"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
                 </form>
 
@@ -131,13 +134,41 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
+    // Password validation 
+    function validatePassword(password) {
+        if (password.length < 8) {
+            return 'Password must be at least 8 characters.';
+        }
+        if (!/[A-Z]/.test(password)) {
+            return 'Password must contain at least one uppercase letter.';
+        }
+        if (!/[0-9]/.test(password)) {
+            return 'Password must contain at least one number.';
+        }
+        if (!/[!@#$%^&*]/.test(password)) {
+            return 'Password must contain at least one special character (!@#$%^&*).';
+        }
+        return null;
+    }
+    async function getRecaptchaToken(action) {
+        return new Promise(resolve => {
+            grecaptcha.ready(async () => {
+                const token = await grecaptcha.execute(
+                    '{{ recaptcha_site_key }}',
+                    { action: action }
+                );
+                resolve(token);
+            });
+        });
+    }
     // Helper: send ID token to Flask backend
-    async function sendTokenToBackend(user) {
+    async function sendTokenToBackend(user, action = 'login' ) {
     const idToken = await user.getIdToken(true);
+    const recaptchaToken = await getRecaptchaToken(action); 
     const response = await fetch('/verify-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: idToken })
+        body: JSON.stringify({ idToken: idToken,recaptchaToken: recaptchaToken })
     });
     if (response.ok) {
         const data = await response.json();  // ← READ the response
@@ -217,7 +248,16 @@
             });
             return;
         }
-
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Weak Password',
+                text: passwordError,
+                confirmButtonColor: '#C71585'
+            });
+            return;
+        }
         try {
             const userCredential = await auth.createUserWithEmailAndPassword(email, password);
             const user = userCredential.user;

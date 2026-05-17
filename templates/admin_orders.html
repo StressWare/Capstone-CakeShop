@@ -674,6 +674,9 @@ document.addEventListener('hidden.bs.modal', function() {
 
       setupFilters();
       listenToOrders();
+      window.addEventListener('beforeunload', () => {  
+        if (unsubscribe) unsubscribe();
+      });
   }
 
   // ── onSnapshot listener ──
@@ -682,6 +685,7 @@ document.addEventListener('hidden.bs.modal', function() {
 
     unsubscribe = db.collection('orders')
       .orderBy('created_at', 'desc')
+      .limit(50)
       .onSnapshot(snapshot => {
 
         snapshot.docChanges().forEach(change => {

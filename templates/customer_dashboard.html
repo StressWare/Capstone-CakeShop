@@ -819,5 +819,39 @@ document.addEventListener('DOMContentLoaded', function() {
   if (t) t.addEventListener('change', filterOrders);
   updatePaginationDisplay();
 });
+
+/* ── Real-time order status sync ── */
+function initOrderStatusListener() {
+    const userId = document.body.dataset.userId;
+    if (!userId) return;
+
+    const db = firebase.firestore();
+    let isFirstLoad = true;
+
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) return;
+
+        db.collection("orders")
+            .where("user_id", "==", userId)
+            .onSnapshot((snapshot) => {
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    return;
+                }
+
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === "modified") {
+                        location.reload();
+                    }
+                });
+            }, (error) => {
+                console.error('Order status listener error:', error);
+            });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initOrderStatusListener();
+});
 </script>
 {% endblock %}

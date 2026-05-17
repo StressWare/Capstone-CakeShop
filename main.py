@@ -8,6 +8,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
 from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,invalidate_cache
 from firebase_admin import messaging
+import requests as http_requests
 import re
 import os
 import json
@@ -109,10 +110,11 @@ def home_page():
 def privacy_policy():
     return render_template("privacy_policy.html")
 # ---------------- AUTHENTICATION ----------------
-@app.route("/authentication")
+@app.route('/authentication')
 def auth_page():
-    return render_template("authentication.html")
-
+    return render_template('authentication.html',
+        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
+    )
 @app.route('/forgot-password')
 def forgot_password_page():
     return render_template('forgot_password.html')
@@ -129,6 +131,26 @@ def logout():
 def verify_token():
     data = request.get_json()
     id_token = data.get('idToken')
+    recaptcha_token = data.get('recaptchaToken')
+     # ── reCAPTCHA check ──
+    if recaptcha_token:
+        try:
+            r = http_requests.post(
+                'https://www.google.com/recaptcha/api/siteverify',
+                data={
+                    'secret':   os.environ.get('RECAPTCHA_SECRET_KEY'),
+                    'response': recaptcha_token
+                },
+                timeout=5
+            )
+            result = r.json()
+            score = result.get('score', 0)
+            print(f"DEBUG reCAPTCHA score: {score}, success: {result.get('success')}")
+            if not result.get('success') or score < 0.5:
+                app.logger.warning(f"reCAPTCHA failed: score={score}")
+                return jsonify({'error': 'Suspicious activity detected.'}), 403
+        except Exception:
+            app.logger.warning("reCAPTCHA check failed, proceeding anyway")
 
     if not id_token:
         return jsonify({'error': 'No token provided'}), 400
@@ -190,16 +212,29 @@ def save_user_details():
 
         if uid != token_uid:
             return jsonify({'error': 'UID mismatch'}), 403
-
+        
+        username = (data.get('username') or '').strip()
+        fname    = (data.get('fname') or '').strip()
+        number   = (data.get('number') or '').strip()
+        address  = (data.get('address') or '').strip()
+        
+        if not username or len(username) > 50:
+            return jsonify({'error': 'Invalid username'}), 400
+        if not fname or len(fname) > 100:
+            return jsonify({'error': 'Invalid full name'}), 400
+        if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+            return jsonify({'error': 'Invalid phone number'}), 400
+        if not address or len(address) > 255:
+            return jsonify({'error': 'Invalid address'}), 400
         users.document(uid).set({
-            'username': data.get('username'),
-            'number':   data.get('number'),
-            'address':  data.get('address'),
-            'fname':    data.get('fname'),
+            'username': username, 
+            'number':   number,
+            'address':  address,
+            'fname':    fname,
             'email':    decoded_token.get('email', ''),
             'role':     'customer',
             'created_at': firestore.SERVER_TIMESTAMP
-        },  merge=True)
+        }, merge=True)
         return jsonify({'success': True}), 200
 
     except auth.InvalidIdTokenError:
@@ -215,6 +250,7 @@ def save_user_details():
 # ---------------- COMPLETE PROFILE ----------------
 @app.route('/complete-profile', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("5 per minute")
 def complete_profile():
     user_id = session.get('user_id')
     if not user_id:
@@ -233,6 +269,13 @@ def complete_profile():
 
         if not fname or len(fname) > 100:
             flash('Invalid full name length.', 'danger')
+            return redirect(url_for('complete_profile'))
+        if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+            flash('Invalid phone number.', 'danger')
+            return redirect(url_for('complete_profile'))
+
+        if not address or len(address) > 255:
+            flash('Invalid address.', 'danger')
             return redirect(url_for('complete_profile'))
 
         users.document(user_id).update({
@@ -345,6 +388,7 @@ def customer_dashboard():
 @app.route("/favorites/toggle", methods=["POST"])
 @profile_required
 @login_required
+@limiter.limit("30 per minute")
 def favorites_toggle():
     try:
         user_id   = session.get("user_id")
@@ -377,6 +421,7 @@ def favorites_toggle():
 @app.route("/customer/edit", methods=["POST"])
 @profile_required
 @login_required
+@limiter.limit("5 per minute")
 def edit_customer_profile():
     user_id  = session.get("user_id")
 
@@ -391,6 +436,14 @@ def edit_customer_profile():
 
     if not fname or len(fname) > 100:
         flash("Invalid name.", "danger")
+        return redirect(url_for("customer_dashboard"))
+    
+    if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+        flash("Invalid phone number.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if not address or len(address) > 255:
+        flash("Invalid address.", "danger")
         return redirect(url_for("customer_dashboard"))
 
     users.document(user_id).update({
@@ -407,6 +460,7 @@ def edit_customer_profile():
 @app.route("/loyalty/claim", methods=["POST"])
 @profile_required
 @login_required
+@limiter.limit("3 per minute")
 def loyalty_claim():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
@@ -455,6 +509,7 @@ def customize():
 @app.route("/review/add", methods=["POST"])
 @profile_required
 @login_required
+@limiter.limit("5 per minute")
 def add_review():
     user_id  = session.get("user_id")
     now      = datetime.now(PH_TZ)
@@ -769,8 +824,17 @@ def finalize_order():
     order_type     = request.form.get("order_type")
     selected_json  = request.form.get("selected_items", "[]")
     payment_method = request.form.get("payment_method", "Cash on Delivery")
+    # ── Idempotency check ──
+    idempotency_key = request.form.get("idempotency_key", "").strip()
+    if idempotency_key:
+        existing = orders.where("idempotency_key", "==", idempotency_key)\
+                        .where("user_id", "==", user_id)\
+                        .limit(1).stream()
+        if next(existing, None):
+            flash("Order already placed.", "warning")
+            return redirect(url_for("customer_dashboard"))
 
-    # ── Voucher validation ──
+    #  Voucher validation 
     voucher_id           = request.form.get('voucher_id', '').strip()
     voucher_discount_pct = 0
     if voucher_id:
@@ -784,7 +848,37 @@ def finalize_order():
                 expires = expires.replace(tzinfo=PH_TZ)
             if not v_data.get('used', False) and expires and expires > now_dt:
                 voucher_discount_pct = int(v_data.get('discount', 0))
+    #  Customer info validation 
+    customer_name = request.form.get("customer_name", "").strip()
+    contact       = request.form.get("contact", "").strip()
+    occasion      = request.form.get("occasion", "").strip()
+    celebrant     = request.form.get("celebrant", "").strip()
+    age           = request.form.get("age", "").strip()
+    notes         = request.form.get("notes", "").strip()
 
+    if not customer_name or len(customer_name) > 100:
+        flash("Invalid name.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if not contact or not re.match(r'^[0-9+\-\s]{7,15}$', contact):
+        flash("Invalid contact number.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if len(notes) > 500:
+        flash("Notes too long. Max 500 characters.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if len(occasion) > 100:
+        flash("Occasion too long.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if len(celebrant) > 100:
+        flash("Celebrant name too long.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if age and not age.isdigit():
+        flash("Invalid age.", "danger")
+        return redirect(url_for("customer_dashboard"))
     custom_components = []
 
     if order_type == "premade":
@@ -898,7 +992,7 @@ def finalize_order():
         "amount":         amount,
         "status":         "New",
         "rush":           rush,
-        "notes":          request.form.get("notes", ""),
+        "notes":    notes,
         "payment_method": payment_method,
         "payment_status": "Pending",
         "payment_id":     None,
@@ -907,16 +1001,17 @@ def finalize_order():
         "order_type":     order_type,
         "custom_components": custom_components,
         "delivery_token": secrets.token_urlsafe(16),
+        "idempotency_key": idempotency_key,
         "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,
         "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,
         "discount_amount":  discount_amount if voucher_discount_pct > 0 else None,
         "customer": {
-            "name":      request.form.get("customer_name", ""),
-            "contact":   request.form.get("contact", ""),
+            "name":      customer_name,
+            "contact":   contact,
             "address":   address,
-            "occasion":  request.form.get("occasion", ""),
-            "celebrant": request.form.get("celebrant", ""),
-            "age":       request.form.get("age", ""),
+            "occasion":  occasion,
+            "celebrant": celebrant,
+            "age":       age,
             "lat":       safe_float(request.form.get("lat")),
             "lng":       safe_float(request.form.get("lng")),
         },
@@ -959,6 +1054,7 @@ def finalize_order():
     if payment_method in ["Cash on Delivery", "Bank Transfer"]:
         doc_ref  = orders.add(order_data)
         order_id = doc_ref[1].id
+        users.document(user_id).update({"order_count": firestore.Increment(1)})
         invalidate_cache("order_counts", "all_cakes")  # cache reset
 
         # send confirmation email
@@ -1880,27 +1976,29 @@ def admin_cakes():
 def admin_users():
     all_users = []
 
-    # Get all order counts 
-    order_counts = {}
-    for order_doc in orders.stream():  
-        if uid := order_doc.to_dict().get("user_id"):
-            order_counts[uid] = order_counts.get(uid, 0) + 1
+    # ── Fetch all auth users in one call ──
+    auth_users = {}
+    for auth_user in auth.list_users().iterate_all():
+        auth_users[auth_user.uid] = auth_user
 
     users_ref = users.order_by("created_at", direction="DESCENDING").stream()
     for user_doc in users_ref:
         user_data = user_doc.to_dict()
         user_data['uid'] = user_doc.id
-        user_data['order_count'] = order_counts.get(user_doc.id, 0)  
+        user_data['order_count'] = user_data.get('order_count', 0)
 
-        try:
-            auth_user = auth.get_user(user_doc.id)
+        auth_user = auth_users.get(user_doc.id) 
+        if auth_user:
             user_data['disabled'] = auth_user.disabled
             user_data['email_verified'] = auth_user.email_verified
-            user_data['created_at'] = datetime.fromtimestamp(auth_user.user_metadata.creation_timestamp / 1000, tz=PH_TZ)
-        except Exception:
+            user_data['created_at'] = datetime.fromtimestamp(
+                auth_user.user_metadata.creation_timestamp / 1000, tz=PH_TZ
+            )
+        else:
             user_data['disabled'] = False
             user_data['email_verified'] = False
             user_data['created_at'] = None
+
         all_users.append(user_data)
 
     return render_template("admin_users.html", all_users=all_users)
@@ -2427,7 +2525,12 @@ def paymongo_webhook():
 
         if not pending_doc.exists:
             return jsonify({"status": "order not found"}), 404
-
+        
+        existing = orders.where("paymongo_session_id", "==", session_id).limit(1).stream()
+        if next(existing, None):
+            pending_ref.delete()
+            return jsonify({"status": "already processed"}), 200
+        
         pending = pending_doc.to_dict()
         order_data = pending["order_data"]
 
@@ -2476,7 +2579,8 @@ def paymongo_webhook():
 
         # Save to orders collection
         orders.add(order_data)
-
+        users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+        invalidate_cache("order_counts")
         # Delete pending order
         pending_ref.delete()
     return jsonify({"status": "ok"}), 200
@@ -2529,6 +2633,7 @@ def payment_success():
     # Save to orders
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
+    users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
     invalidate_cache("order_counts")
     # send confirmation email
     user_doc = users.document(order_data.get("user_id")).get()
@@ -2574,7 +2679,6 @@ def payment_success():
 @login_required
 def payment_failed():
     session_id = session.pop('paymongo_session_id', None)
-    session.pop('pending_order', None)
 
     if session_id:
         pending_orders.document(session_id).delete()
@@ -2675,6 +2779,7 @@ def send_message():
 # ---------------- RESET/START NEW CONVERSATION ----------------
 @app.route('/reset-conversation', methods=['POST'])
 @login_required
+@limiter.limit("5 per minute")
 def reset_conversation():
     try:
         data = request.get_json()

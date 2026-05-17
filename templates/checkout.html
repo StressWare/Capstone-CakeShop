@@ -30,6 +30,7 @@
     <input type="hidden" name="lat"            id="latInput"          value="">
     <input type="hidden" name="lng"            id="lngInput"          value="">
     <input type="hidden" name="voucher_id" id="voucherIdInput" value="">
+    <input type="hidden" name="idempotency_key" id="idempotencyKey" value="">
     <input type="hidden" name="discount_amount" id="discountAmountInput" value="0">
 
     <div class="checkout-main">
@@ -59,12 +60,12 @@
             <div class="form-group">
               <label>Full Name *</label>
               <input type="text" name="customer_name" class="form-control"
-                     value="{{ customer.fname or '' }}" required>
+                     value="{{ customer.fname or '' }}" required required maxlength="100">
             </div>
             <div class="form-group">
               <label>Contact Number *</label>
               <input type="text" name="contact" class="form-control"
-                     value="{{ customer.number or '' }}" required>
+                     value="{{ customer.number or '' }}" required required maxlength="15">
             </div>
           </div>
 
@@ -103,11 +104,11 @@
             <div class="form-group">
               <label>Occasion *</label>
               <input type="text" name="occasion" class="form-control"
-                     placeholder="Birthday, Wedding..." required>
+                     placeholder="Birthday, Wedding..." required  maxlength="100">
             </div>
             <div class="form-group">
               <label>Celebrant / Dedication</label>
-              <input type="text" name="celebrant" class="form-control">
+              <input type="text" name="celebrant" class="form-control"  maxlength="100">
             </div>
           </div>
           <div class="form-group">
@@ -423,10 +424,16 @@
         e.preventDefault();
         alert('Please select your delivery location on the map.');
         document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+        return;
       }
     }
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Placing Order...';
   });
   window.addEventListener('load', function() { initDeliveryMap(); });
+  document.getElementById('idempotencyKey').value =
+    'order_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
 </script>
 <script>
   // ── Quantity controls for premade orders ──
