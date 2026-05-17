@@ -293,7 +293,7 @@
           <div class="fav-card-stock">{% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %}😔 Sold Out{% endif %}</div>
           {% if cake.quantity > 0 %}
           <div class="fav-btn-group">
-            <form method="POST" action="/order/cake">
+            <form method="POST" action="/order/cake" onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
               <input type="hidden" name="cake_id" value="{{ cake.id }}">
               <input type="hidden" name="cake_name" value="{{ cake.name }}">
               <input type="hidden" name="price" value="{{ cake.price }}">

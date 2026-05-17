@@ -345,18 +345,18 @@
             <div class="field">
               <label for="cakeSize">Cake Size</label>
               <select id="cakeSize" name="cakeSize">
-                <option value="6|1600">6 inches (₱1,600)</option>
-                <option value="8|2300">8 inches (₱2,300)</option>
-                <option value="10|400">10 inches (₱400)</option>
-                <option value="12|600">12 inches (₱600)</option>
+                <option value="6|{{ custom_prices.size['6'] }}">6 inches (₱{{ custom_prices.size['6'] | int }})</option>
+                <option value="8|{{ custom_prices.size['8'] }}">8 inches (₱{{ custom_prices.size['8'] | int }})</option>
+                <option value="10|{{ custom_prices.size['10'] }}">10 inches (₱{{ custom_prices.size['10'] | int }})</option>
+                <option value="12|{{ custom_prices.size['12'] }}">12 inches (₱{{ custom_prices.size['12'] | int }})</option>
               </select>
             </div>
             <div class="field">
               <label for="toppers">Toppers</label>
               <select id="toppers" name="toppers">
-                <option value="0|0">None</option>
-                <option value="1|150">1 set (₱150)</option>
-                <option value="3|250">Set of 3 (₱250)</option>
+                <option value="0|{{ custom_prices.toppers['0'] }}">None</option>
+                <option value="1|{{ custom_prices.toppers['1'] }}">1 set (₱{{ custom_prices.toppers['1'] | int }})</option>
+                <option value="3|{{ custom_prices.toppers['3'] }}">Set of 3 (₱{{ custom_prices.toppers['3'] | int }})</option>
               </select>
             </div>
           </div>
@@ -367,16 +367,16 @@
               <label for="design">Icing Type</label>
               <select id="design" name="design">
                 <option value="0|0">None</option>
-                <option value="fondant|3500">Fondant (₱3,500)</option>
-                <option value="buttercream|2000">Buttercream (₱2,000)</option>
+                <option value="fondant|{{ custom_prices.icing.fondant }}">Fondant (₱{{ custom_prices.icing.fondant | int }})</option>
+                <option value="buttercream|{{ custom_prices.icing.buttercream }}">Buttercream (₱{{ custom_prices.icing.buttercream | int }})</option>
               </select>
             </div>
             <div class="field">
               <label for="layers">Layers</label>
               <select id="layers" name="layers">
-                <option value="1|0">Single Layer (₱0)</option>
-                <option value="2|300">Double Layer (₱300)</option>
-                <option value="3|600">Triple Layer (₱600)</option>
+                <option value="1|{{ custom_prices.layers['1'] }}">Single Layer (₱{{ custom_prices.layers['1'] | int }})</option>
+                <option value="2|{{ custom_prices.layers['2'] }}">Double Layer (₱{{ custom_prices.layers['2'] | int }})</option>
+                <option value="3|{{ custom_prices.layers['3'] }}">Triple Layer (₱{{ custom_prices.layers['3'] | int }})</option>
               </select>
             </div>
             <div class="field">
@@ -397,32 +397,32 @@
           <span class="addons-label">Add-ons</span>
           <div class="addon-grid">
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="100" id="filling" name="filling">
-              Cake Filling (₱100)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.filling }}" id="filling" name="filling">
+              Cake Filling (₱{{ custom_prices.addons.filling | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="700" id="cupcake" name="cupcake">
-              Cupcake Dozen (₱700)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.cupcake }}" id="cupcake" name="cupcake">
+              Cupcake Dozen (₱{{ custom_prices.addons.cupcake | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="250" id="ediblepaper" name="ediblepaper">
-              Edible Paper (₱250)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.ediblepaper }}" id="ediblepaper" name="ediblepaper">
+              Edible Paper (₱{{ custom_prices.addons.ediblepaper | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="450" id="fondanttoppers" name="fondanttoppers">
-              Fondant Toppers (₱450)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.fondanttoppers }}" id="fondanttoppers" name="fondanttoppers">
+              Fondant Toppers (₱{{ custom_prices.addons.fondanttoppers | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="100" id="sprinkles" name="sprinkles">
-              Sprinkles (₱100)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.sprinkles }}" id="sprinkles" name="sprinkles">
+              Sprinkles (₱{{ custom_prices.addons.sprinkles | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="200" id="drip" name="drip">
-              Choco Drip (₱200)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.drip }}" id="drip" name="drip">
+              Choco Drip (₱{{ custom_prices.addons.drip | int }})
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="300" id="flowers" name="flowers">
-              Sugar Flowers (₱300)
+              <input type="checkbox" class="addons" value="{{ custom_prices.addons.flowers }}" id="flowers" name="flowers">
+              Sugar Flowers (₱{{ custom_prices.addons.flowers | int }})
             </label>
           </div>
         </div>
@@ -486,506 +486,506 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-/* =========================================================
-   PRICING HELPERS
-   ========================================================= */
-function getParts(selectId) {
-  const val = document.getElementById(selectId).value;
-  const parts = val.split('|');
-  return {
-    label: document.getElementById(selectId).selectedOptions[0].text,
-    price: parseFloat(parts[1]) || 0
-  };
-}
-
-function calculateTotal() {
-  const design  = getParts('design').price;
-  const size    = getParts('cakeSize').price;
-  const layers  = getParts('layers').price;
-  const toppers = getParts('toppers').price;
-
-  let addons = 0;
-  document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
-
-  const total = design + size + layers + toppers + addons;
-  document.getElementById('totalPrice').innerText = total.toFixed(2);
-  return total;
-}
-
-function updateOrderData() {
-  const total = calculateTotal();
-  document.getElementById('orderAmount').value = total.toFixed(2);
-
-  const cake    = document.getElementById('cakeType').selectedOptions[0].text;
-  const design  = getParts('design').label;
-  const size    = getParts('cakeSize').label;
-  const layers  = getParts('layers').label;
-  const toppers = getParts('toppers').label;
-
-  let addonsArr = [];
-  document.querySelectorAll('.addons:checked').forEach(a => {
-    addonsArr.push(a.parentElement.innerText.trim());
-  });
-
-  let desc = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
-  if (addonsArr.length) desc += `, Add-ons: ${addonsArr.join(', ')}`;
-  document.getElementById('orderItem').value = desc;
-}
-
-function checkFileSize(input) {
-  if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
-    alert('File too large! Maximum size is 2MB.');
-    input.value = '';
+  /* =========================================================
+    PRICING HELPERS
+    ========================================================= */
+  function getParts(selectId) {
+    const val = document.getElementById(selectId).value;
+    const parts = val.split('|');
+    return {
+      label: document.getElementById(selectId).selectedOptions[0].text,
+      price: parseFloat(parts[1]) || 0
+    };
   }
-}
 
-/* =========================================================
-   BADGES
-   ========================================================= */
-function updateBadges() {
-  const flavor  = document.getElementById('cakeType').selectedOptions[0].text.split(' ')[0];
-  const icing   = document.getElementById('design').selectedOptions[0].text.split(' ')[0];
-  const size    = document.getElementById('cakeSize').selectedOptions[0].text.split(' ')[0];
-  const layers  = document.getElementById('layers').selectedOptions[0].text.split(' ')[0];
-  const candles = document.getElementById('candles').value;
+  function calculateTotal() {
+    const design  = getParts('design').price;
+    const size    = getParts('cakeSize').price;
+    const layers  = getParts('layers').price;
+    const toppers = getParts('toppers').price;
 
-  let tags = [flavor, icing, size, layers + ' layer'];
-  if (parseInt(candles) > 0) tags.push(candles + ' candle' + (candles > 1 ? 's' : ''));
-  if (document.getElementById('sprinkles').checked) tags.push('Sprinkles');
-  if (document.getElementById('drip').checked)      tags.push('Choco drip');
-  if (document.getElementById('flowers').checked)   tags.push('Flowers');
+    let addons = 0;
+    document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
 
-  document.getElementById('badges').innerHTML = tags
-    .map(t => `<span class="badge">${t}</span>`).join('');
-}
+    const total = design + size + layers + toppers + addons;
+    document.getElementById('totalPrice').innerText = total.toFixed(2);
+    return total;
+  }
 
-/* =========================================================
-   THREE.JS CAKE — ENHANCED (performance-safe)
-   ========================================================= */
-window.addEventListener('load', function () {
+  function updateOrderData() {
+    const total = calculateTotal();
+    document.getElementById('orderAmount').value = total.toFixed(2);
 
-  const FLAVORS = {
-    chocolate:  { base: 0x4a2c0a, frost: 0x7b4f2e, frostTop: 0x8B5E3C },
-    vanilla:    { base: 0xfff3c4, frost: 0xfde8a0, frostTop: 0xFFECB3 },
-    redvelvet:  { base: 0x8B0000, frost: 0xcc4444, frostTop: 0xdd6666 },
-    ube:        { base: 0x6a0dad, frost: 0xd4a0e8, frostTop: 0xE0B0FF },
-    strawberry: { base: 0xff6b81, frost: 0xffb3bb, frostTop: 0xFFCDD2 },
-    mocha:      { base: 0x5c3317, frost: 0xa0826d, frostTop: 0xBCAAA4 },
-  };
+    const cake    = document.getElementById('cakeType').selectedOptions[0].text;
+    const design  = getParts('design').label;
+    const size    = getParts('cakeSize').label;
+    const layers  = getParts('layers').label;
+    const toppers = getParts('toppers').label;
 
-  const canvas = document.getElementById('cake-canvas');
-  const W = canvas.parentElement.clientWidth || 360;
-  const H = 340;
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setSize(W, H);
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-  const scene  = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-  camera.position.set(0, 3.2, 7.5);
-  camera.lookAt(0, 1.2, 0);
-
-  /* ── LIGHTS ── */
-  scene.add(new THREE.AmbientLight(0xfff5ee, 0.7));
-
-  const sun = new THREE.DirectionalLight(0xffffff, 0.85);
-  sun.position.set(5, 10, 7);
-  sun.castShadow = true;
-  sun.shadow.mapSize.width  = 512; // keep shadow map small = fast
-  sun.shadow.mapSize.height = 512;
-  scene.add(sun);
-
-  const fill = new THREE.DirectionalLight(0xffe0cc, 0.25);
-  fill.position.set(-4, 2, -4);
-  scene.add(fill);
-
-  /* ONE shared candle point light — no shadow, very cheap */
-  const candleLight = new THREE.PointLight(0xffaa44, 0, 3.5);
-  scene.add(candleLight);
-
-  /* ── GROUPS ── */
-  const group = new THREE.Group();
-  scene.add(group);
-
-  /* ── GROUND SHADOW DISC (cheap fake AO) ── */
-  const shadowDisc = new THREE.Mesh(
-    new THREE.CircleGeometry(2.2, 36),
-    new THREE.MeshBasicMaterial({
-      color: 0x000000,
-      transparent: true,
-      opacity: 0.18,
-      depthWrite: false
-    })
-  );
-  shadowDisc.rotation.x = -Math.PI / 2;
-  shadowDisc.position.y = -0.01;
-  scene.add(shadowDisc);
-
-  /* ── DRAG ROTATION ── */
-  let rotY = 0, dragging = false, lastX = 0, autoRotate = true;
-  canvas.addEventListener('mousedown',  e => { dragging = true; autoRotate = false; lastX = e.clientX; });
-  window.addEventListener('mouseup',    () => { 
-    dragging = false; 
-    setTimeout(() => { if(!dragging) autoRotate = true; }, 1000);
-  });
-  canvas.addEventListener('mousemove',  e => { if (dragging) { rotY += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
-  canvas.addEventListener('touchstart', e => { dragging = true; autoRotate = false; lastX = e.touches[0].clientX; }, { passive: true });
-  window.addEventListener('touchend',   () => { dragging = false; });
-  canvas.addEventListener('touchmove',  e => { if (dragging) { rotY += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
-
-  function hex(h) { return new THREE.Color(h); }
-
-  /* ── BUILD CAKE ── */
-  function buildCake() {
-    while (group.children.length) group.remove(group.children[0]);
-
-    const flavorKey    = document.getElementById('cakeType').value.split('|')[0];
-    const icingKey     = document.getElementById('design').value.split('|')[0];
-    const sizeIn       = parseInt(document.getElementById('cakeSize').value.split('|')[0]);
-    const numLayers    = parseInt(document.getElementById('layers').value.split('|')[0]);
-    const toppersN     = parseInt(document.getElementById('toppers').value.split('|')[0]);
-    const candlesN     = parseInt(document.getElementById('candles').value);
-    const hasSprinkles = document.getElementById('sprinkles').checked;
-    const hasDrip      = document.getElementById('drip').checked;
-    const hasFlowers   = document.getElementById('flowers').checked;
-    const shape        = document.getElementById('cakeShape').value;
-
-    const colors  = FLAVORS[flavorKey] || FLAVORS.vanilla;
-    const r       = 0.55 + (sizeIn - 6) * 0.07;
-    const layerH  = 0.72;
-    const frostH  = 0.13;
-    const rectW   = (r + 0.3) * 2;
-    const rectD   = (r - 0.1) * 2;
-
-    const SPRINKLE_COLS = [0xff4455, 0x44aaff, 0xffdd00, 0x44cc66, 0xff88ee];
-    const CANDLE_COLS   = [0xffffff, 0xff6699, 0x66aaff, 0xffdd00, 0xff8844, 0xbb66ff, 0x44ccaa];
-    const TOPPER_COLS   = [0xf9a825, 0xe91e63, 0x1565c0];
-
-    const shinyFrost = icingKey === 'fondant' ? 90 : 18;
-
-    /* Shared materials (re-used across layers = fewer draw calls) */
-    const cakeM     = new THREE.MeshPhongMaterial({ color: hex(colors.base), shininess: 20 });
-    const sideM     = new THREE.MeshPhongMaterial({ color: hex(colors.frost), shininess: shinyFrost });
-    /* MeshStandardMaterial only on the top frosting cap — where it matters visually */
-    const frostTopM = new THREE.MeshStandardMaterial({
-      color: hex(colors.frostTop),
-      roughness: icingKey === 'fondant' ? 0.2 : 0.55,
-      metalness: 0.0
+    let addonsArr = [];
+    document.querySelectorAll('.addons:checked').forEach(a => {
+      addonsArr.push(a.parentElement.innerText.trim());
     });
 
-    let y = 0;
-    for (let i = 0; i < numLayers; i++) {
-      const ri  = r  - i * 0.13;
-      const rw  = rectW - i * 0.18;
-      const rd  = rectD - i * 0.14;
+    let desc = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
+    if (addonsArr.length) desc += `, Add-ons: ${addonsArr.join(', ')}`;
+    document.getElementById('orderItem').value = desc;
+  }
 
-      if (shape === 'circle') {
-        /* Body */
-        const cake = new THREE.Mesh(new THREE.CylinderGeometry(ri, ri + 0.01, layerH, 40), cakeM);
-        cake.position.y = y + layerH / 2;
-        cake.castShadow = true;
-        group.add(cake);
+  function checkFileSize(input) {
+    if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
+      alert('File too large! Maximum size is 2MB.');
+      input.value = '';
+    }
+  }
 
-        /* Side frosting */
-        const side = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.018, ri + 0.018, layerH, 40, 1, true), sideM);
-        side.position.y = y + layerH / 2;
-        group.add(side);
+  /* =========================================================
+    BADGES
+    ========================================================= */
+  function updateBadges() {
+    const flavor  = document.getElementById('cakeType').selectedOptions[0].text.split(' ')[0];
+    const icing   = document.getElementById('design').selectedOptions[0].text.split(' ')[0];
+    const size    = document.getElementById('cakeSize').selectedOptions[0].text.split(' ')[0];
+    const layers  = document.getElementById('layers').selectedOptions[0].text.split(' ')[0];
+    const candles = document.getElementById('candles').value;
 
-        /* Top frosting cap — MeshStandard for sheen */
-        const frostTop = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.012, ri + 0.018, frostH, 40), frostTopM);
-        frostTop.position.y = y + layerH + frostH / 2;
-        group.add(frostTop);
+    let tags = [flavor, icing, size, layers + ' layer'];
+    if (parseInt(candles) > 0) tags.push(candles + ' candle' + (candles > 1 ? 's' : ''));
+    if (document.getElementById('sprinkles').checked) tags.push('Sprinkles');
+    if (document.getElementById('drip').checked)      tags.push('Choco drip');
+    if (document.getElementById('flowers').checked)   tags.push('Flowers');
 
-       
+    document.getElementById('badges').innerHTML = tags
+      .map(t => `<span class="badge">${t}</span>`).join('');
+  }
 
-        /* Sprinkles */
-        if (hasSprinkles) {
-          for (let s = 0; s < 24; s++) {
-            const sp = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
-              new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
-            );
-            const ang = Math.random() * Math.PI * 2, rad = Math.random() * ri * 0.82;
-            sp.position.set(Math.cos(ang) * rad, y + layerH + frostH + 0.015, Math.sin(ang) * rad);
-            sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
-            group.add(sp);
+  /* =========================================================
+    THREE.JS CAKE — ENHANCED (performance-safe)
+    ========================================================= */
+  window.addEventListener('load', function () {
+
+    const FLAVORS = {
+      chocolate:  { base: 0x4a2c0a, frost: 0x7b4f2e, frostTop: 0x8B5E3C },
+      vanilla:    { base: 0xfff3c4, frost: 0xfde8a0, frostTop: 0xFFECB3 },
+      redvelvet:  { base: 0x8B0000, frost: 0xcc4444, frostTop: 0xdd6666 },
+      ube:        { base: 0x6a0dad, frost: 0xd4a0e8, frostTop: 0xE0B0FF },
+      strawberry: { base: 0xff6b81, frost: 0xffb3bb, frostTop: 0xFFCDD2 },
+      mocha:      { base: 0x5c3317, frost: 0xa0826d, frostTop: 0xBCAAA4 },
+    };
+
+    const canvas = document.getElementById('cake-canvas');
+    const W = canvas.parentElement.clientWidth || 360;
+    const H = 340;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(W, H);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+    camera.position.set(0, 3.2, 7.5);
+    camera.lookAt(0, 1.2, 0);
+
+    /* ── LIGHTS ── */
+    scene.add(new THREE.AmbientLight(0xfff5ee, 0.7));
+
+    const sun = new THREE.DirectionalLight(0xffffff, 0.85);
+    sun.position.set(5, 10, 7);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width  = 512; // keep shadow map small = fast
+    sun.shadow.mapSize.height = 512;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0xffe0cc, 0.25);
+    fill.position.set(-4, 2, -4);
+    scene.add(fill);
+
+    /* ONE shared candle point light — no shadow, very cheap */
+    const candleLight = new THREE.PointLight(0xffaa44, 0, 3.5);
+    scene.add(candleLight);
+
+    /* ── GROUPS ── */
+    const group = new THREE.Group();
+    scene.add(group);
+
+    /* ── GROUND SHADOW DISC (cheap fake AO) ── */
+    const shadowDisc = new THREE.Mesh(
+      new THREE.CircleGeometry(2.2, 36),
+      new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.18,
+        depthWrite: false
+      })
+    );
+    shadowDisc.rotation.x = -Math.PI / 2;
+    shadowDisc.position.y = -0.01;
+    scene.add(shadowDisc);
+
+    /* ── DRAG ROTATION ── */
+    let rotY = 0, dragging = false, lastX = 0, autoRotate = true;
+    canvas.addEventListener('mousedown',  e => { dragging = true; autoRotate = false; lastX = e.clientX; });
+    window.addEventListener('mouseup',    () => { 
+      dragging = false; 
+      setTimeout(() => { if(!dragging) autoRotate = true; }, 1000);
+    });
+    canvas.addEventListener('mousemove',  e => { if (dragging) { rotY += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
+    canvas.addEventListener('touchstart', e => { dragging = true; autoRotate = false; lastX = e.touches[0].clientX; }, { passive: true });
+    window.addEventListener('touchend',   () => { dragging = false; });
+    canvas.addEventListener('touchmove',  e => { if (dragging) { rotY += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
+
+    function hex(h) { return new THREE.Color(h); }
+
+    /* ── BUILD CAKE ── */
+    function buildCake() {
+      while (group.children.length) group.remove(group.children[0]);
+
+      const flavorKey    = document.getElementById('cakeType').value.split('|')[0];
+      const icingKey     = document.getElementById('design').value.split('|')[0];
+      const sizeIn       = parseInt(document.getElementById('cakeSize').value.split('|')[0]);
+      const numLayers    = parseInt(document.getElementById('layers').value.split('|')[0]);
+      const toppersN     = parseInt(document.getElementById('toppers').value.split('|')[0]);
+      const candlesN     = parseInt(document.getElementById('candles').value);
+      const hasSprinkles = document.getElementById('sprinkles').checked;
+      const hasDrip      = document.getElementById('drip').checked;
+      const hasFlowers   = document.getElementById('flowers').checked;
+      const shape        = document.getElementById('cakeShape').value;
+
+      const colors  = FLAVORS[flavorKey] || FLAVORS.vanilla;
+      const r       = 0.55 + (sizeIn - 6) * 0.07;
+      const layerH  = 0.72;
+      const frostH  = 0.13;
+      const rectW   = (r + 0.3) * 2;
+      const rectD   = (r - 0.1) * 2;
+
+      const SPRINKLE_COLS = [0xff4455, 0x44aaff, 0xffdd00, 0x44cc66, 0xff88ee];
+      const CANDLE_COLS   = [0xffffff, 0xff6699, 0x66aaff, 0xffdd00, 0xff8844, 0xbb66ff, 0x44ccaa];
+      const TOPPER_COLS   = [0xf9a825, 0xe91e63, 0x1565c0];
+
+      const shinyFrost = icingKey === 'fondant' ? 90 : 18;
+
+      /* Shared materials (re-used across layers = fewer draw calls) */
+      const cakeM     = new THREE.MeshPhongMaterial({ color: hex(colors.base), shininess: 20 });
+      const sideM     = new THREE.MeshPhongMaterial({ color: hex(colors.frost), shininess: shinyFrost });
+      /* MeshStandardMaterial only on the top frosting cap — where it matters visually */
+      const frostTopM = new THREE.MeshStandardMaterial({
+        color: hex(colors.frostTop),
+        roughness: icingKey === 'fondant' ? 0.2 : 0.55,
+        metalness: 0.0
+      });
+
+      let y = 0;
+      for (let i = 0; i < numLayers; i++) {
+        const ri  = r  - i * 0.13;
+        const rw  = rectW - i * 0.18;
+        const rd  = rectD - i * 0.14;
+
+        if (shape === 'circle') {
+          /* Body */
+          const cake = new THREE.Mesh(new THREE.CylinderGeometry(ri, ri + 0.01, layerH, 40), cakeM);
+          cake.position.y = y + layerH / 2;
+          cake.castShadow = true;
+          group.add(cake);
+
+          /* Side frosting */
+          const side = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.018, ri + 0.018, layerH, 40, 1, true), sideM);
+          side.position.y = y + layerH / 2;
+          group.add(side);
+
+          /* Top frosting cap — MeshStandard for sheen */
+          const frostTop = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.012, ri + 0.018, frostH, 40), frostTopM);
+          frostTop.position.y = y + layerH + frostH / 2;
+          group.add(frostTop);
+
+        
+
+          /* Sprinkles */
+          if (hasSprinkles) {
+            for (let s = 0; s < 24; s++) {
+              const sp = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
+                new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
+              );
+              const ang = Math.random() * Math.PI * 2, rad = Math.random() * ri * 0.82;
+              sp.position.set(Math.cos(ang) * rad, y + layerH + frostH + 0.015, Math.sin(ang) * rad);
+              sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
+              group.add(sp);
+            }
           }
-        }
 
-        /* Choco drip */
-        if (hasDrip && i === 0) {
-          const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
-          for (let d = 0; d < 12; d++) {
-            const ang  = (d / 12) * Math.PI * 2;
-            const dlen = 0.16 + Math.random() * 0.14;
-            const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
-            drip.position.set(Math.cos(ang) * (ri - 0.01), y + layerH - dlen / 2 + 0.06, Math.sin(ang) * (ri - 0.01));
-            group.add(drip);
+          /* Choco drip */
+          if (hasDrip && i === 0) {
+            const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
+            for (let d = 0; d < 12; d++) {
+              const ang  = (d / 12) * Math.PI * 2;
+              const dlen = 0.16 + Math.random() * 0.14;
+              const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
+              drip.position.set(Math.cos(ang) * (ri - 0.01), y + layerH - dlen / 2 + 0.06, Math.sin(ang) * (ri - 0.01));
+              group.add(drip);
+            }
           }
-        }
 
-        /* Sugar flowers */
-        if (hasFlowers) {
-          const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
-          for (let f = 0; f < 5; f++) {
-            const ang  = (f / 5) * Math.PI * 2 + i * 0.5;
-            const frad = ri * 0.62;
-            const petal = new THREE.Mesh(
-              new THREE.CircleGeometry(0.09, 10),
-              new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
-            );
-            petal.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.025, Math.sin(ang) * frad);
-            petal.rotation.x = -Math.PI / 2;
-            group.add(petal);
-            const centre = new THREE.Mesh(
-              new THREE.CircleGeometry(0.033, 10),
-              new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
-            );
-            centre.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.03, Math.sin(ang) * frad);
-            centre.rotation.x = -Math.PI / 2;
-            group.add(centre);
+          /* Sugar flowers */
+          if (hasFlowers) {
+            const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
+            for (let f = 0; f < 5; f++) {
+              const ang  = (f / 5) * Math.PI * 2 + i * 0.5;
+              const frad = ri * 0.62;
+              const petal = new THREE.Mesh(
+                new THREE.CircleGeometry(0.09, 10),
+                new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
+              );
+              petal.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.025, Math.sin(ang) * frad);
+              petal.rotation.x = -Math.PI / 2;
+              group.add(petal);
+              const centre = new THREE.Mesh(
+                new THREE.CircleGeometry(0.033, 10),
+                new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
+              );
+              centre.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.03, Math.sin(ang) * frad);
+              centre.rotation.x = -Math.PI / 2;
+              group.add(centre);
+            }
           }
-        }
 
-      } else {
-        /* RECTANGLE */
-        const cake = new THREE.Mesh(new THREE.BoxGeometry(rw, layerH, rd), cakeM);
-        cake.position.y = y + layerH / 2;
-        cake.castShadow = true;
-        group.add(cake);
+        } else {
+          /* RECTANGLE */
+          const cake = new THREE.Mesh(new THREE.BoxGeometry(rw, layerH, rd), cakeM);
+          cake.position.y = y + layerH / 2;
+          cake.castShadow = true;
+          group.add(cake);
 
-        /* Side frosting panels */
-        const sideThick = 0.035;
-        [1, -1].forEach(sign => {
-          const s = new THREE.Mesh(new THREE.BoxGeometry(rw + sideThick * 2, layerH, sideThick), sideM);
-          s.position.set(0, y + layerH / 2, sign * (rd / 2 + sideThick / 2));
-          group.add(s);
-        });
-        [1, -1].forEach(sign => {
-          const s = new THREE.Mesh(new THREE.BoxGeometry(sideThick, layerH, rd), sideM);
-          s.position.set(sign * (rw / 2 + sideThick / 2), y + layerH / 2, 0);
-          group.add(s);
-        });
-
-        /* Top frosting cap — MeshStandard */
-        const frostTop = new THREE.Mesh(new THREE.BoxGeometry(rw + 0.04, frostH, rd + 0.04), frostTopM);
-        frostTop.position.y = y + layerH + frostH / 2;
-        group.add(frostTop);
-
-
-        /* Sprinkles */
-        if (hasSprinkles) {
-          for (let s = 0; s < 28; s++) {
-            const sp = new THREE.Mesh(
-              new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
-              new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
-            );
-            sp.position.set(
-              (Math.random() - 0.5) * rw * 0.85,
-              y + layerH + frostH + 0.015,
-              (Math.random() - 0.5) * rd * 0.85
-            );
-            sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
-            group.add(sp);
-          }
-        }
-
-        /* Choco drip */
-        if (hasDrip && i === 0) {
-          const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
-          const edges = [];
-          for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9,  rd / 2]);
-          for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, -rd / 2]);
-          for (let e = 0; e < 5; e++) edges.push([ rw / 2, (Math.random() - 0.5) * rd * 0.9]);
-          for (let e = 0; e < 5; e++) edges.push([-rw / 2, (Math.random() - 0.5) * rd * 0.9]);
-          edges.forEach(([ex, ez]) => {
-            const dlen = 0.14 + Math.random() * 0.14;
-            const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
-            drip.position.set(ex, y + layerH - dlen / 2 + 0.06, ez);
-            group.add(drip);
+          /* Side frosting panels */
+          const sideThick = 0.035;
+          [1, -1].forEach(sign => {
+            const s = new THREE.Mesh(new THREE.BoxGeometry(rw + sideThick * 2, layerH, sideThick), sideM);
+            s.position.set(0, y + layerH / 2, sign * (rd / 2 + sideThick / 2));
+            group.add(s);
           });
-        }
+          [1, -1].forEach(sign => {
+            const s = new THREE.Mesh(new THREE.BoxGeometry(sideThick, layerH, rd), sideM);
+            s.position.set(sign * (rw / 2 + sideThick / 2), y + layerH / 2, 0);
+            group.add(s);
+          });
 
-        /* Sugar flowers */
-        if (hasFlowers) {
-          const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
-          for (let f = 0; f < 6; f++) {
-            const fx = (Math.random() - 0.5) * rw * 0.7;
-            const fz = (Math.random() - 0.5) * rd * 0.7;
-            const petal = new THREE.Mesh(
-              new THREE.CircleGeometry(0.09, 10),
-              new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
-            );
-            petal.position.set(fx, y + layerH + frostH + 0.025, fz);
-            petal.rotation.x = -Math.PI / 2;
-            group.add(petal);
-            const centre = new THREE.Mesh(
-              new THREE.CircleGeometry(0.033, 10),
-              new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
-            );
-            centre.position.set(fx, y + layerH + frostH + 0.03, fz);
-            centre.rotation.x = -Math.PI / 2;
-            group.add(centre);
+          /* Top frosting cap — MeshStandard */
+          const frostTop = new THREE.Mesh(new THREE.BoxGeometry(rw + 0.04, frostH, rd + 0.04), frostTopM);
+          frostTop.position.y = y + layerH + frostH / 2;
+          group.add(frostTop);
+
+
+          /* Sprinkles */
+          if (hasSprinkles) {
+            for (let s = 0; s < 28; s++) {
+              const sp = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
+                new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
+              );
+              sp.position.set(
+                (Math.random() - 0.5) * rw * 0.85,
+                y + layerH + frostH + 0.015,
+                (Math.random() - 0.5) * rd * 0.85
+              );
+              sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
+              group.add(sp);
+            }
+          }
+
+          /* Choco drip */
+          if (hasDrip && i === 0) {
+            const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
+            const edges = [];
+            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9,  rd / 2]);
+            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, -rd / 2]);
+            for (let e = 0; e < 5; e++) edges.push([ rw / 2, (Math.random() - 0.5) * rd * 0.9]);
+            for (let e = 0; e < 5; e++) edges.push([-rw / 2, (Math.random() - 0.5) * rd * 0.9]);
+            edges.forEach(([ex, ez]) => {
+              const dlen = 0.14 + Math.random() * 0.14;
+              const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
+              drip.position.set(ex, y + layerH - dlen / 2 + 0.06, ez);
+              group.add(drip);
+            });
+          }
+
+          /* Sugar flowers */
+          if (hasFlowers) {
+            const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
+            for (let f = 0; f < 6; f++) {
+              const fx = (Math.random() - 0.5) * rw * 0.7;
+              const fz = (Math.random() - 0.5) * rd * 0.7;
+              const petal = new THREE.Mesh(
+                new THREE.CircleGeometry(0.09, 10),
+                new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
+              );
+              petal.position.set(fx, y + layerH + frostH + 0.025, fz);
+              petal.rotation.x = -Math.PI / 2;
+              group.add(petal);
+              const centre = new THREE.Mesh(
+                new THREE.CircleGeometry(0.033, 10),
+                new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
+              );
+              centre.position.set(fx, y + layerH + frostH + 0.03, fz);
+              centre.rotation.x = -Math.PI / 2;
+              group.add(centre);
+            }
           }
         }
+
+        y += layerH + frostH;
       }
 
-      y += layerH + frostH;
-    }
+      /* ── TOP AREA: plate, toppers, candles ── */
+      const topR = shape === 'circle'
+        ? r - (numLayers - 1) * 0.13
+        : (rectW - (numLayers - 1) * 0.18) / 2 * 0.75;
+      const topY = y;
 
-    /* ── TOP AREA: plate, toppers, candles ── */
-    const topR = shape === 'circle'
-      ? r - (numLayers - 1) * 0.13
-      : (rectW - (numLayers - 1) * 0.18) / 2 * 0.75;
-    const topY = y;
+      /* CAKE PLATE / STAND */
+      const plateR = shape === 'circle' ? r + 0.35 : Math.max(rectW, rectD) / 2 + 0.35;
 
-    /* CAKE PLATE / STAND */
-    const plateR = shape === 'circle' ? r + 0.35 : Math.max(rectW, rectD) / 2 + 0.35;
-
-    /* Stand pillar */
-    const pillar = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.18, 0.22, 0.22, 24),
-      new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 })
-    );
-    pillar.position.y = -0.11;
-    group.add(pillar);
-
-    /* Plate disc */
-    const plate = new THREE.Mesh(
-      new THREE.CylinderGeometry(plateR, plateR, 0.06, 40),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.05 })
-    );
-    plate.position.y = 0.03;
-    plate.receiveShadow = true;
-    group.add(plate);
-
-
-
-    /* Toppers */
-    if (toppersN > 0) {
-      for (let t = 0; t < toppersN; t++) {
-        const ang  = (t / toppersN) * Math.PI * 2;
-        const trad = toppersN === 1 ? 0 : topR * 0.48;
-        const top  = new THREE.Mesh(
-          new THREE.ConeGeometry(0.1, 0.3, 8),
-          new THREE.MeshPhongMaterial({ color: hex(TOPPER_COLS[t % 3]), shininess: 60 })
-        );
-        top.position.set(Math.cos(ang) * trad, topY + 0.15, Math.sin(ang) * trad);
-        group.add(top);
-      }
-    }
-
-    /* Candles + update shared point light */
-    if (candlesN > 0) {
-      const candleR = candlesN === 1 ? 0 : topR * 0.58;
-      let avgX = 0, avgZ = 0;
-
-      for (let c = 0; c < candlesN; c++) {
-        const ang = (c / candlesN) * Math.PI * 2;
-        const cx  = Math.cos(ang) * candleR;
-        const cz  = Math.sin(ang) * candleR;
-        avgX += cx; avgZ += cz;
-
-        const candle = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.04, 0.04, 0.38, 9),
-          new THREE.MeshPhongMaterial({ color: hex(CANDLE_COLS[c % CANDLE_COLS.length]) })
-        );
-        candle.position.set(cx, topY + 0.19, cz);
-        group.add(candle);
-
-        const wick = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.005, 0.005, 0.07, 5),
-          new THREE.MeshBasicMaterial({ color: 0x1a1a1a })
-        );
-        wick.position.set(cx, topY + 0.415, cz);
-        group.add(wick);
-
-        const flameGeo = new THREE.SphereGeometry(0.052, 7, 7);
-        flameGeo.scale(0.55, 1.5, 0.55);
-        const flame = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
-        flame.position.set(cx, topY + 0.495, cz);
-        flame.userData = { isFlame: true, baseY: topY + 0.495, ox: cx, oz: cz };
-        group.add(flame);
-      }
-
-      /* Position shared candle light at average candle position, lifted to flame height */
-      candleLight.position.set(
-        avgX / candlesN,
-        topY + 0.55,
-        avgZ / candlesN
+      /* Stand pillar */
+      const pillar = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.22, 0.22, 24),
+        new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 })
       );
-      candleLight.intensity = Math.min(candlesN * 0.35, 1.2);
-    } else {
-      candleLight.intensity = 0;
+      pillar.position.y = -0.11;
+      group.add(pillar);
+
+      /* Plate disc */
+      const plate = new THREE.Mesh(
+        new THREE.CylinderGeometry(plateR, plateR, 0.06, 40),
+        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.05 })
+      );
+      plate.position.y = 0.03;
+      plate.receiveShadow = true;
+      group.add(plate);
+
+
+
+      /* Toppers */
+      if (toppersN > 0) {
+        for (let t = 0; t < toppersN; t++) {
+          const ang  = (t / toppersN) * Math.PI * 2;
+          const trad = toppersN === 1 ? 0 : topR * 0.48;
+          const top  = new THREE.Mesh(
+            new THREE.ConeGeometry(0.1, 0.3, 8),
+            new THREE.MeshPhongMaterial({ color: hex(TOPPER_COLS[t % 3]), shininess: 60 })
+          );
+          top.position.set(Math.cos(ang) * trad, topY + 0.15, Math.sin(ang) * trad);
+          group.add(top);
+        }
+      }
+
+      /* Candles + update shared point light */
+      if (candlesN > 0) {
+        const candleR = candlesN === 1 ? 0 : topR * 0.58;
+        let avgX = 0, avgZ = 0;
+
+        for (let c = 0; c < candlesN; c++) {
+          const ang = (c / candlesN) * Math.PI * 2;
+          const cx  = Math.cos(ang) * candleR;
+          const cz  = Math.sin(ang) * candleR;
+          avgX += cx; avgZ += cz;
+
+          const candle = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.04, 0.04, 0.38, 9),
+            new THREE.MeshPhongMaterial({ color: hex(CANDLE_COLS[c % CANDLE_COLS.length]) })
+          );
+          candle.position.set(cx, topY + 0.19, cz);
+          group.add(candle);
+
+          const wick = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.005, 0.005, 0.07, 5),
+            new THREE.MeshBasicMaterial({ color: 0x1a1a1a })
+          );
+          wick.position.set(cx, topY + 0.415, cz);
+          group.add(wick);
+
+          const flameGeo = new THREE.SphereGeometry(0.052, 7, 7);
+          flameGeo.scale(0.55, 1.5, 0.55);
+          const flame = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+          flame.position.set(cx, topY + 0.495, cz);
+          flame.userData = { isFlame: true, baseY: topY + 0.495, ox: cx, oz: cz };
+          group.add(flame);
+        }
+
+        /* Position shared candle light at average candle position, lifted to flame height */
+        candleLight.position.set(
+          avgX / candlesN,
+          topY + 0.55,
+          avgZ / candlesN
+        );
+        candleLight.intensity = Math.min(candlesN * 0.35, 1.2);
+      } else {
+        candleLight.intensity = 0;
+      }
+
+      const totalH = topY;
+      
+      /* ✅ FIXED ANCHOR: Plate stays in place, cake grows upwards */
+      /* We set a fixed position so the plate never slides off-screen */
+      group.position.y = -0.65; 
+
+      /* Camera looks higher for taller cakes so the top doesn't get cut off */
+      camera.lookAt(0, 1.0 + (numLayers - 1) * 0.3, 0);
+
+      /* Scale shadow disc to match cake plate */
+      shadowDisc.scale.setScalar(plateR / 2.2 * 1.1);
+      shadowDisc.position.y = group.position.y - 0.28;
     }
 
-    const totalH = topY;
-    
-    /* ✅ FIXED ANCHOR: Plate stays in place, cake grows upwards */
-    /* We set a fixed position so the plate never slides off-screen */
-    group.position.y = -0.65; 
+    /* ── ANIMATION LOOP ── */
+    let t = 0;
+    (function animate() {
+      requestAnimationFrame(animate);
+      t += 0.04;
+      if (autoRotate) rotY += 0.007;
+      group.rotation.y = rotY;
 
-    /* Camera looks higher for taller cakes so the top doesn't get cut off */
-    camera.lookAt(0, 1.0 + (numLayers - 1) * 0.3, 0);
+      group.children.forEach(obj => {
+        if (obj.userData.isFlame) {
+          obj.position.y = obj.userData.baseY + Math.sin(t * 5 + obj.userData.ox * 12) * 0.012;
+          obj.scale.x    = 0.55 + Math.sin(t * 6) * 0.05;
+        }
+      });
 
-    /* Scale shadow disc to match cake plate */
-    shadowDisc.scale.setScalar(plateR / 2.2 * 1.1);
-    shadowDisc.position.y = group.position.y - 0.28;
-  }
-
-  /* ── ANIMATION LOOP ── */
-  let t = 0;
-  (function animate() {
-    requestAnimationFrame(animate);
-    t += 0.04;
-    if (autoRotate) rotY += 0.007;
-    group.rotation.y = rotY;
-
-    group.children.forEach(obj => {
-      if (obj.userData.isFlame) {
-        obj.position.y = obj.userData.baseY + Math.sin(t * 5 + obj.userData.ox * 12) * 0.012;
-        obj.scale.x    = 0.55 + Math.sin(t * 6) * 0.05;
+      /* Gentle candle light flicker — cheap: just tweak intensity */
+      if (candleLight.intensity > 0) {
+        candleLight.intensity += (Math.random() - 0.5) * 0.04;
+        candleLight.intensity  = Math.max(0.1, Math.min(candleLight.intensity, 1.4));
       }
+
+      renderer.render(scene, camera);
+    })();
+
+    /* ── CHANGE HANDLERS ── */
+    function onAnyChange() {
+      calculateTotal();
+      buildCake();
+      updateBadges();
+    }
+
+    ['cakeType','cakeShape','design','cakeSize','layers','toppers','candles'].forEach(id =>
+      document.getElementById(id).addEventListener('change', onAnyChange)
+    );
+    document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
+    ['sprinkles','drip','flowers'].forEach(id =>
+      document.getElementById(id).addEventListener('change', onAnyChange)
+    );
+
+    buildCake();
+    calculateTotal();
+    updateBadges();
+
+    window.addEventListener('resize', () => {
+      const w = canvas.parentElement.clientWidth;
+      renderer.setSize(w, 340);
+      camera.aspect = w / 340;
+      camera.updateProjectionMatrix();
     });
 
-    /* Gentle candle light flicker — cheap: just tweak intensity */
-    if (candleLight.intensity > 0) {
-      candleLight.intensity += (Math.random() - 0.5) * 0.04;
-      candleLight.intensity  = Math.max(0.1, Math.min(candleLight.intensity, 1.4));
-    }
-
-    renderer.render(scene, camera);
-  })();
-
-  /* ── CHANGE HANDLERS ── */
-  function onAnyChange() {
-    calculateTotal();
-    buildCake();
-    updateBadges();
-  }
-
-  ['cakeType','cakeShape','design','cakeSize','layers','toppers','candles'].forEach(id =>
-    document.getElementById(id).addEventListener('change', onAnyChange)
-  );
-  document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
-  ['sprinkles','drip','flowers'].forEach(id =>
-    document.getElementById(id).addEventListener('change', onAnyChange)
-  );
-
-  buildCake();
-  calculateTotal();
-  updateBadges();
-
-  window.addEventListener('resize', () => {
-    const w = canvas.parentElement.clientWidth;
-    renderer.setSize(w, 340);
-    camera.aspect = w / 340;
-    camera.updateProjectionMatrix();
-  });
-
-}); // end load
+  }); // end load
 </script>
 {% endblock %}

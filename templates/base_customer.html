@@ -226,6 +226,36 @@
     overlay.addEventListener("click", closeMenu);
   }
 </script> 
+<script>
+// ── Shared shop-open check (used by home, cakes, cart) ──
+  async function checkShopOpen(proceedFn, orderType = 'premade') {
+    try {
+      const res  = await fetch('/locked-date-today');
+      const data = await res.json();
+
+      if (data.locked) {
+        const isBlocked =
+          (orderType === 'premade' && data.lock_premade) ||
+          (orderType === 'custom'  && data.lock_custom);
+
+        if (isBlocked) {
+          Swal.fire({
+            icon:             'info',
+            title:            '🔒 Orders Unavailable Today',
+            text:             data.reason,
+            confirmButtonText:'Got it',
+            confirmButtonColor:'#d63384',
+            footer:           'Please try ordering on another day.'
+          });
+          return; // ← blocked, don't proceed
+        }
+      }
+      proceedFn(); // ← not locked for this type, proceed
+    } catch (e) {
+      proceedFn(); // fail open
+    }
+  }
+</script>
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}
 {% if session.get('user_id') %}

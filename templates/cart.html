@@ -117,7 +117,7 @@
     update();
   });
 
-  function submitCheckout() {
+  async function submitCheckout() {
     var selected = [];
     cbs.forEach(cb => {
       if (cb.checked) {
@@ -133,7 +133,8 @@
       }
     });
     document.getElementById('selectedItemsInput').value = JSON.stringify(selected);
-    document.getElementById('checkoutForm').submit();
+    // ── Check before submitting ──
+    checkShopOpen(() => document.getElementById('checkoutForm').submit());
   }
 </script>
 {% endblock %}

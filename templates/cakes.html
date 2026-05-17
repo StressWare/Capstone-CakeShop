@@ -193,7 +193,8 @@
                 </form>
 
                 <!-- Order Now SA BABA -->
-                <form method="POST" action="/order/cake">
+                <form method="POST" action="/order/cake"
+      onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
                     <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                     <input type="hidden" name="cake_name" value="{{ cake.name }}">
                     <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -310,7 +311,8 @@
         </div>
 
         <div class="d-flex gap-2">
-          <form method="POST" action="/order/cake" class="flex-fill">
+          <form method="POST" action="/order/cake"  class="flex-fill"
+      onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
             <input type="hidden" name="cake_name" value="{{ cake.name }}">
             <input type="hidden" name="price"     value="{{ cake.price }}">

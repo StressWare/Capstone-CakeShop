@@ -6,7 +6,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp,safe_float)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts,invalidate_cache
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_locked_dates_cached,invalidate_cache
 from firebase_admin import messaging
 import requests as http_requests
 import re
@@ -16,7 +16,7 @@ import hmac
 import hashlib
 import secrets
 import firebase
-from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref
 from firebase_admin import auth, firestore, messaging
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -494,16 +494,11 @@ def loyalty_claim():
 
     return redirect(url_for("customer_dashboard") + "#loyalty")
 
-# ---------------- CUSTOMIZE CAKE PAGE ----------------
-@app.route('/customize_cake')
+@app.route("/customize_cake")
 def customize():
-    user_id = session.get('user_id')
-    customer = None
-    if user_id:
-        doc = users.document(user_id).get()
-        if doc.exists:
-            customer = doc.to_dict()
-    return render_template('customization.html', customer=customer)
+    customer = session.get("user_id")
+    custom_prices = get_custom_prices()
+    return render_template("customization.html", customer=customer, custom_prices=custom_prices)
 
 # ---------------- ADD REVIEW PAGE ----------------
 @app.route("/review/add", methods=["POST"])
@@ -652,11 +647,12 @@ def place_order():
         layers_key  = request.form.get("layers", "").split("|")[0]
         toppers_key = request.form.get("toppers", "").split("|")[0]
 
-        icing_prices   = custom_cake_price.document("icing").get().to_dict()   or {}
-        size_prices    = custom_cake_price.document("size").get().to_dict()     or {}
-        layers_prices  = custom_cake_price.document("layers").get().to_dict()   or {}
-        toppers_prices = custom_cake_price.document("toppers").get().to_dict()  or {}
-        addon_prices   = custom_cake_price.document("addons").get().to_dict()   or {}
+        prices         = get_custom_prices()
+        icing_prices   = prices["icing"]
+        size_prices    = prices["size"]
+        layers_prices  = prices["layers"]
+        toppers_prices = prices["toppers"]
+        addon_prices   = prices["addons"]
 
         amount  = 0.0
         amount += float(icing_prices.get(icing_key, 0))
@@ -664,7 +660,7 @@ def place_order():
         amount += float(layers_prices.get(layers_key, 0))
         amount += float(toppers_prices.get(toppers_key, 0))
 
-        for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
+        for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
             if request.form.get(addon_key):
                 amount += float(addon_prices.get(addon_key, 0))
 
@@ -709,8 +705,6 @@ def order_cake():
 
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
-    min_date     = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
-
     selected_json  = request.form.get('selected_items', '[]')
     selected_items = json.loads(selected_json)
 
@@ -792,7 +786,6 @@ def order_cake():
         selected_items  = selected_items,
         amount          = amount,
         customer        = customer,
-        min_date        = min_date,
         active_vouchers = active_vouchers,
     )
  
@@ -805,23 +798,27 @@ def finalize_order():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
 
-    try:
-        date_str = request.form["delivery_date"]
-        time_str = request.form["delivery_time"]
-        delivery_datetime = datetime.strptime(
-            f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
-        ).replace(tzinfo=PH_TZ)
-    except (KeyError, ValueError):
-        flash("Invalid delivery date or time.", "danger")
-        return redirect(url_for("customer_dashboard"))
+    order_type    = request.form.get("order_type")
+    delivery_type = request.form.get("delivery_type", "Delivery")
+    address       = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
 
-    if delivery_datetime < datetime.now(PH_TZ):
-        flash("Delivery date must be in the future.", "danger")
-        return redirect(url_for("customer_dashboard"))
+    if order_type == "premade":
+        delivery_datetime = datetime.now(PH_TZ)
+    else:
+        try:
+            date_str = request.form["delivery_date"]
+            time_str = request.form["delivery_time"]
+            delivery_datetime = datetime.strptime(
+                f"{date_str} {time_str}", "%Y-%m-%d %H:%M"
+            ).replace(tzinfo=PH_TZ)
+        except (KeyError, ValueError):
+            flash("Invalid delivery date or time.", "danger")
+            return redirect(url_for("customer_dashboard"))
 
-    delivery_type  = request.form.get("delivery_type", "Delivery")
-    address        = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
-    order_type     = request.form.get("order_type")
+        if delivery_datetime < datetime.now(PH_TZ):
+            flash("Delivery date must be in the future.", "danger")
+            return redirect(url_for("customer_dashboard"))
+    
     selected_json  = request.form.get("selected_items", "[]")
     payment_method = request.form.get("payment_method", "Cash on Delivery")
     # ── Idempotency check ──
@@ -934,11 +931,12 @@ def finalize_order():
             layers_key  = request.form.get("layers", "").split("|")[0]
             toppers_key = request.form.get("toppers", "").split("|")[0]
 
-            icing_prices   = custom_cake_price.document("icing").get().to_dict()   or {}
-            size_prices    = custom_cake_price.document("size").get().to_dict()     or {}
-            layers_prices  = custom_cake_price.document("layers").get().to_dict()   or {}
-            toppers_prices = custom_cake_price.document("toppers").get().to_dict()  or {}
-            addon_prices   = custom_cake_price.document("addons").get().to_dict()   or {}
+            prices         = get_custom_prices()
+            icing_prices   = prices["icing"]
+            size_prices    = prices["size"]
+            layers_prices  = prices["layers"]
+            toppers_prices = prices["toppers"]
+            addon_prices   = prices["addons"]
 
             amount  = 0.0
             amount += float(icing_prices.get(icing_key, 0))
@@ -946,7 +944,7 @@ def finalize_order():
             amount += float(layers_prices.get(layers_key, 0))
             amount += float(toppers_prices.get(toppers_key, 0))
 
-            for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
+            for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
                 if request.form.get(addon_key):
                     amount += float(addon_prices.get(addon_key, 0))
 
@@ -1075,7 +1073,7 @@ def finalize_order():
                 "used":    True,
                 "used_at": datetime.now(PH_TZ)
             })
-        flash("Order placed successfully! 🎂", "success")
+        flash("Order placed successfully!", "success")
         return redirect(url_for("customer_dashboard"))
 
     # ── Online Payment → PayMongo ──
@@ -1406,6 +1404,7 @@ def remove_from_cart(cake_id):
 # ---------------- ADMIN DASHBOARD ----------------
 @app.route("/admin/dashboard")
 @admin_required
+@limiter.exempt
 def admin_page():
     # ---- Low Stock ----
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
@@ -1562,6 +1561,7 @@ def admin_page():
     )
 @app.route("/admin/calendar-orders")
 @admin_required
+@limiter.exempt
 def calendar_orders():
     """
     Returns orders whose delivery_date matches the requested date or month.
@@ -1968,7 +1968,8 @@ def admin_analytics():
 @admin_required
 def admin_cakes():
     cakes_list = get_all_cakes()
-    return render_template("admin_cakes.html", cakes=cakes_list)
+    custom_prices = get_custom_prices()
+    return render_template("admin_cakes.html", cakes=cakes_list, custom_prices=custom_prices)
 
 # ---------------- ADMIN USERS ----------------
 @app.route("/admin/users")
@@ -2047,6 +2048,65 @@ def admin_logs_page():
 # ================================================================
 # ADMIN ACTION ROUTES
 # ================================================================
+
+# ---------------- CUSTOMER ORDER RESTRICTION----------------
+@app.route("/locked-date-today")
+@limiter.exempt
+def locked_date_today():
+    today  = datetime.now(PH_TZ).strftime("%Y-%m-%d")
+    dates  = get_locked_dates_cached()
+    info   = dates.get(today)
+    if info:
+        return jsonify({
+            "locked":       True,
+            "reason":       info.get("reason", "Unavailable"),
+            "lock_custom":  info.get("lock_custom", False),
+            "lock_premade": info.get("lock_premade", False)
+        })
+    return jsonify({"locked": False, "lock_custom": False, "lock_premade": False})
+
+# ---------------- CUSTOMER CUSTOM ORDER RESTRICTION----------------
+@app.route("/locked-dates")
+@limiter.exempt
+def get_locked_dates():
+    dates = get_locked_dates_cached()
+    return jsonify({"locked_dates": dates})
+
+# ---------------- ADMIN LOCK DATE----------------
+@app.route("/admin/lock-date", methods=["POST"])
+@admin_required
+@limiter.exempt
+def lock_date():
+    data         = request.get_json()
+    date         = data.get("date")
+    reason       = data.get("reason", "").strip()
+    lock_custom  = data.get("lock_custom", False)
+    lock_premade = data.get("lock_premade", False)
+
+    if not date or not reason:
+        return jsonify({"error": "Date and reason required"}), 400
+
+    if not lock_custom and not lock_premade:
+        return jsonify({"error": "Select at least one order type to lock"}), 400
+
+    locked_dates_ref.document(date).set({
+        "reason":       reason,
+        "lock_custom":  lock_custom,
+        "lock_premade": lock_premade,
+        "locked_at":    datetime.now(PH_TZ),
+        "locked_by":    session.get("admin_id")
+    })
+    invalidate_cache("locked_dates")
+    return jsonify({"success": True})
+
+# ---------------- ADMIN UNLOCK DATE----------------
+@app.route("/admin/lock-date/<date>", methods=["DELETE"])
+@admin_required
+@limiter.exempt
+def unlock_date(date):
+    locked_dates_ref.document(date).delete()
+    invalidate_cache("locked_dates")
+    return jsonify({"success": True})
 
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<order_id>", methods=["POST"])
@@ -2429,6 +2489,29 @@ def delete_cake(cake_id):
     except Exception:
         app.logger.exception(f"Error deleting cake {cake_id}")
         return jsonify({"success": False, "message": "Failed to delete cake."}), 500
+    
+# ---------------- EDIT CUSTOM CAKE PRICE ----------------
+@app.route("/update-custom-pricing", methods=["POST"])
+@admin_required
+def update_custom_pricing():
+    try:
+        data = request.get_json()
+        category = data.get("category")  # e.g. "icing", "size", "layers", "toppers", "addons"
+        fields   = data.get("fields")    # e.g. {"fondant": 3500, "buttercream": 2000}
+
+        allowed = {"icing", "size", "layers", "toppers", "addons"}
+        if category not in allowed:
+            return jsonify({"success": False, "message": "Invalid category"}), 400
+
+        custom_cake_price.document(category).update(
+            {k: int(v) for k, v in fields.items()}
+        )
+        invalidate_cache("custom_prices")
+
+        return jsonify({"success": True, "message": f"{category.capitalize()} prices updated!"})
+    except Exception as e:
+        app.logger.exception("Error updating custom pricing")
+        return jsonify({"success": False, "message": "Update failed"}), 500
 
 # ---------------- DISABLE USER ----------------
 @app.route('/admin/user/disable/<uid>', methods=['POST'])

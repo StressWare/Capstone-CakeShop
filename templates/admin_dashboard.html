@@ -634,38 +634,203 @@ async function renderCalendar() {
   }
 }
 
-// ── Select day ─────────────────────────────────────────────────────────
-async function selectDay(dateStr, d, clickedCell) {
-  selectedDate = dateStr;
-  document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
-  clickedCell.classList.add('selected');
+  // ── Select day 
+  async function selectDay(dateStr, d, clickedCell) {
+    selectedDate = dateStr;
+    document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+    clickedCell.classList.add('selected');
 
-  document.getElementById('cal-detail-title').textContent = `${MONTHS[calMonth]} ${d}, ${calYear}`;
-  document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Loading orders…</p>';
+    document.getElementById('cal-detail-title').textContent = `${MONTHS[calMonth]} ${d}, ${calYear}`;
+    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">Loading orders…</p>';
 
-  const orders = await fetchDayOrders(dateStr);
+    const orders = await fetchDayOrders(dateStr);
 
-  if (!orders.length) {
-    document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">No active orders for this day.</p>';
-    return;
+    if (!orders.length) {
+      document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">No active orders for this day.</p>';
+    } else {
+      document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
+        <div class="cal-order-card ${o.rush ? 'rush' : ''}" onclick='openOrderModal(${JSON.stringify(o)})'>
+          <div class="cal-order-top">
+            <span class="cal-order-name">${o.customer}</span>
+            <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
+          </div>
+          <div class="cal-order-item">${o.item}</div>
+          <div class="cal-order-meta">
+            <span>🕐 ${o.time}</span>
+            <span class="type-label ${o.order_type === 'premade' ? 'type-premade' : 'type-custom'}">${o.order_type === 'premade' ? 'Premade' : 'Custom'}</span>
+            ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+// ── Replace the lockBtn innerHTML in selectDay() with this: ──
+
+    const lockBtn = document.createElement('div');
+    lockBtn.style.cssText = 'margin-top:16px; padding-top:12px; border-top:1px solid #f3f4f6;';
+
+    // Check if date is already locked
+    const lockRes  = await fetch('/locked-dates');
+    const lockData = await lockRes.json();
+    const locked   = lockData.locked_dates || {};
+    const isLocked = !!locked[dateStr];
+
+    if (isLocked) {
+      const lockInfo = locked[dateStr];
+      const lockedTypes = [];
+      if (lockInfo.lock_custom) lockedTypes.push("Custom");
+      if (lockInfo.lock_premade) lockedTypes.push("Premade");
+      
+      lockBtn.innerHTML = `
+        <div style="margin-bottom:8px;padding:10px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+          <div style="font-size:12px;color:#dc3545;font-weight:600;margin-bottom:4px;"><i class="fa-solid fa-lock"></i> Locked</div>
+          <div style="font-size:11px;color:#991b1b;">Type: ${lockedTypes.join(", ")}</div>
+          <div style="font-size:11px;color:#991b1b;">Reason: ${lockInfo.reason}</div>
+        </div>
+        <button onclick="unlockDate('${dateStr}')"
+          style="width:100%;padding:8px;border-radius:8px;border:1px solid #dc2626;
+                background:#fef2f2;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;">
+          Unlock ${dateStr}
+        </button>`;
+    } else {
+      lockBtn.innerHTML = `
+        <div style="margin-bottom:8px;">
+          <select id="lockReason"
+            style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid #d1d5db;
+                  font-size:13px;margin-bottom:10px;">
+            <option value="">Select reason...</option>
+            <option value="Fully Booked">Fully Booked</option>
+            <option value="Rest Day">Rest Day</option>
+            <option value="Family / Personal">Family / Personal</option>
+            <option value="Holiday">Emergency</option>
+          </select>
+        </div>
+
+        <div style="background:#f9fafb;padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid #e5e7eb;">
+          <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:10px;">Lock order type:</div>
+          
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;">
+            <input type="radio" name="lockType" value="custom" style="cursor:pointer;width:16px;height:16px;">
+            <span style="font-size:13px;color:#374151;">Custom Orders Only</span>
+          </label>
+          
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;">
+            <input type="radio" name="lockType" value="premade" style="cursor:pointer;width:16px;height:16px;">
+            <span style="font-size:13px;color:#374151;">Premade Orders Only</span>
+          </label>
+          
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="radio" name="lockType" value="both" style="cursor:pointer;width:16px;height:16px;">
+            <span style="font-size:13px;color:#374151;">Both Custom & Premade</span>
+          </label>
+        </div>
+        
+        <button onclick="lockDate('${dateStr}')"
+          style="width:100%;padding:8px;border-radius:8px;border:none;
+                background:#6B1A3A;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+          Lock This Date
+        </button>`;
+    }
+
+    document.getElementById('cal-detail-body').appendChild(lockBtn);
   }
+    async function lockDate(dateStr) {
+    const sel    = document.getElementById('lockReason');
+    const custom = document.getElementById('lockReasonCustom');
+    const reason = sel.value;
+    
+    
+    // ── GET RADIO BUTTON VALUES ──
+    const lockType = document.querySelector('input[name="lockType"]:checked');
+    
+    if (!reason) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        title: 'Please select or enter a reason.',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true
+      });
+      return;
+    }
 
-  document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
-    <div class="cal-order-card ${o.rush ? 'rush' : ''}" onclick='openOrderModal(${JSON.stringify(o)})'>
-      <div class="cal-order-top">
-        <span class="cal-order-name">${o.customer}</span>
-        <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
-      </div>
-      <div class="cal-order-item">${o.item}</div>
-      <div class="cal-order-meta">
-        <span>🕐 ${o.time}</span>
-        <span class="type-label ${o.order_type === 'premade' ? 'type-premade' : 'type-custom'}">${o.order_type === 'premade' ? 'Premade' : 'Custom'}</span>
-        ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
-      </div>
-    </div>
-  `).join('');
+    if (!lockType) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        title: 'Select which order type to lock.',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true
+      });
+      return;
+    }
+
+    const lockValue = lockType.value;
+    let lock_custom = false;
+    let lock_premade = false;
+
+    if (lockValue === 'custom') {
+      lock_custom = true;
+    } else if (lockValue === 'premade') {
+      lock_premade = true;
+    } else if (lockValue === 'both') {
+      lock_custom = true;
+      lock_premade = true;
+    }
+
+    await fetch('/admin/lock-date', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ 
+        date: dateStr, 
+        reason,
+        lock_custom: lock_custom,
+        lock_premade: lock_premade
+      })
+    });
+
+    const typeLabels = {
+      'custom': 'Custom Orders',
+      'premade': 'Premade Orders',
+      'both': 'Custom & Premade'
+    };
+
+    Swal.fire({
+      toast: true, 
+      position: 'top-end', 
+      icon: 'success',
+      title: `<i class="fa-solid fa-lock"></i> ${dateStr} locked (${typeLabels[lockValue]})`,
+      showConfirmButton: false, 
+      timer: 2500, 
+      timerProgressBar: true
+    });
+
+    delete monthCache[`${calYear}-${String(calMonth+1).padStart(2,'0')}`];
+    delete dayCache[dateStr];
+    await renderCalendar();
+    await selectDay(dateStr, parseInt(dateStr.split('-')[2]),
+      document.querySelector('.cal-cell.selected'));
+  }
+  async function unlockDate(dateStr) {
+  await fetch(`/admin/lock-date/${dateStr}`, { method: 'DELETE' });
+  Swal.fire({
+    toast: true, 
+    position: 'top-end', 
+    icon: 'success',
+    title: `<i class="fa-solid fa-unlock"></i> ${dateStr} unlocked`,
+    showConfirmButton: false, 
+    timer: 2500, 
+    timerProgressBar: true
+  });
+  delete monthCache[`${calYear}-${String(calMonth+1).padStart(2,'0')}`];
+  delete dayCache[dateStr];
+  await renderCalendar();
+  await selectDay(dateStr, parseInt(dateStr.split('-')[2]),
+    document.querySelector('.cal-cell.selected'));
 }
-
 // ── Order modal ────────────────────────────────────────────────────────
 function openOrderModal(o) {
   document.getElementById('modal-name').textContent    = o.customer;

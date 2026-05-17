@@ -17,9 +17,8 @@ limiter = Limiter(
 # Resend
 resend.api_key = os.environ.get("RESEND_API_KEY")
 
-# ── Replace with your real logo URL once deployed ──────────────────────────────
-LOGO_URL = "https://www.facebook.com/photo/?fbid=1241983524609194&set=a.449827707158117"
-# ──────────────────────────────────────────────────────────────────────────────
+LOGO_URL = "https://res.cloudinary.com/dnystscn8/image/upload/v1779012991/logo_fburga.png"
+
 
 def send_order_confirmation(fname, email, order_id, amount, payment_method):
     try:

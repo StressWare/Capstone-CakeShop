@@ -11,10 +11,17 @@
 {% block content %}
 <div class="checkout-container">
 
-  <div class="checkout-header text-white">
+  <div class="checkout-header text-white" style="position:relative;">
+    <a href="/cakes" style="position:absolute;left:0;top:50%;transform:translateY(-50%);
+        display:inline-flex;align-items:center;gap:6px;
+        color:rgba(255,255,255,0.7);font-size:13px;text-decoration:none;
+        transition:color 0.15s;"
+      onmouseover="this.style.color='#fff'"
+      onmouseout="this.style.color='rgba(255,255,255,0.7)'">
+      ← Back to Cakes
+    </a>
     <h1>Checkout</h1>
   </div>
-
   <form method="POST" action="/place-order">
 
     <!-- Hidden fields -->
@@ -118,7 +125,8 @@
         </div>
         {% endif %}
 
-        <!-- 4. Date & Time -->
+        <!-- 4. Date & Time (custom orders only) -->
+        {% if order_type == 'custom' %}
         <div class="checkout-form-section">
           <div class="section-title" id="dateTitle">Delivery Details</div>
           <div class="form-row">
@@ -134,6 +142,7 @@
             </div>
           </div>
         </div>
+        {% endif %}
 
         <!-- 5. Payment -->
         <div class="checkout-form-section">
@@ -366,9 +375,11 @@
     document.getElementById('addressInput').required            = !isPickup;
     document.getElementById('btnPickup').classList.toggle('active',   isPickup);
     document.getElementById('btnDelivery').classList.toggle('active', !isPickup);
-    document.getElementById('dateTitle').textContent = isPickup ? 'Pick Up Details'  : 'Delivery Details';
-    document.getElementById('dateLabel').textContent = isPickup ? 'Pick Up Date *'   : 'Delivery Date *';
-    document.getElementById('timeLabel').textContent = isPickup ? 'Pick Up Time *'   : 'Delivery Time *';
+    if (document.getElementById('dateTitle')) {
+      document.getElementById('dateTitle').textContent = isPickup ? 'Pick Up Details' : 'Delivery Details';
+      document.getElementById('dateLabel').textContent = isPickup ? 'Pick Up Date *'  : 'Delivery Date *';
+      document.getElementById('timeLabel').textContent = isPickup ? 'Pick Up Time *'  : 'Delivery Time *';
+    }
     document.querySelectorAll('.payment-method-label').forEach(function(el) {
       if (isPickup && el.textContent === 'Cash on Delivery') el.textContent = 'Cash';
       if (!isPickup && el.textContent === 'Cash') el.textContent = 'Cash on Delivery';
@@ -434,6 +445,64 @@
   window.addEventListener('load', function() { initDeliveryMap(); });
   document.getElementById('idempotencyKey').value =
     'order_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+    // ── Leave page confirmation ──
+  let orderPlaced = false;
+  let handledBySwal = false;
+
+  document.querySelector('form').addEventListener('submit', function() {
+      orderPlaced = true;
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+      if (!orderPlaced && !handledBySwal) {
+          e.preventDefault();
+          e.returnValue = '';
+      }
+  });
+
+  // Override back button / navigation with SweetAlert2
+  history.pushState(null, null, location.href);
+  window.addEventListener('popstate', async function() {
+      const result = await Swal.fire({
+          icon: 'question',
+          title: 'Leave Checkout?',
+          text: 'Your order has not been placed yet. Are you sure you want to leave?',
+          showCancelButton: true,
+          confirmButtonText: 'Leave',
+          cancelButtonText: 'Stay',
+          confirmButtonColor: '#6c757d',
+          cancelButtonColor: '#d63384',
+      });
+        if (result.isConfirmed) {
+          handledBySwal = true;
+          history.back();
+      } else {
+          history.pushState(null, null, location.href);
+      }
+  });
+
+  document.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', async function(e) {
+        if (orderPlaced) return;
+        const href = this.href;
+        if (!href || href === '#' || href === location.href) return;
+        e.preventDefault();
+        const result = await Swal.fire({
+            icon: 'question',
+            title: 'Leave Checkout?',
+            text: 'Your order has not been placed yet. Are you sure you want to leave?',
+            showCancelButton: true,
+            confirmButtonText: 'Leave',
+            cancelButtonText: 'Stay',
+            confirmButtonColor: '#6c757d',
+            cancelButtonColor: '#d63384',
+        });
+        if (result.isConfirmed) {
+            handledBySwal = true;
+            window.location.href = href;
+        }
+    });
+});
 </script>
 <script>
   // ── Quantity controls for premade orders ──
@@ -530,5 +599,32 @@
       discountRow.remove();
     }
   }
+
+  // ── Disable locked dates on the date picker ──
+  (async function() {
+    const dateInput = document.querySelector('input[name="delivery_date"]');
+    if (!dateInput) return; // premade has no date picker, safe to exit
+
+    try {
+      const res  = await fetch('/locked-dates');
+      const data = await res.json();
+      const locked = data.locked_dates || {};
+
+      // This is always custom order — only date picker is on custom checkout
+      dateInput.addEventListener('input', function() {
+        const val = this.value;
+        if (locked[val] && locked[val].lock_custom) {
+          Swal.fire({
+            icon:             'info',
+            title:            '🔒 Date Unavailable for Custom Orders',
+            text:             locked[val].reason,
+            confirmButtonText:'Pick Another Date',
+            confirmButtonColor:'#d63384',
+          });
+          this.value = ''; // clear selection
+        }
+      });
+    } catch(e) {}
+  })();
 </script>
 {% endblock %}
