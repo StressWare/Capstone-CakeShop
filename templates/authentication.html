@@ -61,7 +61,7 @@
                     </p>
                     
                     <p class="toggle-msg">
-                    Or <span class="toggle-btn" id="googleSignIn"><i class="fab fa-google"></i> Sign in with Google</span>
+                    Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
                 </form>
 
@@ -90,7 +90,7 @@
                         <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
                     </p>
                     <p class="toggle-msg">
-                        Or <span class="toggle-btn" id="googleSignUpBtn"><i class="fab fa-google"></i> Sign in with Google</span>
+                        Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
                 </form>
 
@@ -346,26 +346,27 @@
 }
 
     // ===== GOOGLE SIGN-IN =====
-    document.getElementById('googleSignIn').addEventListener('click', async () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        try {
-            const result = await auth.signInWithPopup(provider);
-            await sendTokenToBackend(result.user);
-        } catch (error) {
-            const messages = {
-                'auth/popup-closed-by-user': 'Sign-in cancelled.',
-                'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
-                'auth/cancelled-popup-request': 'Sign-in cancelled.',
-                'auth/account-exists-with-different-credential': 'This email is already registered with password login. Please sign in with your email and password instead.'
-            };
-            Swal.fire({
-                icon: 'error',
-                title: 'Google Sign-In Failed',
-                text: error.code === 'auth/popup-closed-by-user' ? 'Sign-in cancelled.' : 
-                    'Google sign-in failed. Please try again.',
-                confirmButtonColor: '#C71585'
-            });
-        }
+    document.querySelectorAll('.google-signin-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const result = await auth.signInWithPopup(provider);
+                await sendTokenToBackend(result.user);
+            } catch (error) {
+                const messages = {
+                    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+                    'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
+                    'auth/cancelled-popup-request': 'Sign-in cancelled.',
+                    'auth/account-exists-with-different-credential': 'This email is already registered with password login. Please sign in with your email and password instead.'
+                };
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Google Sign-In Failed',
+                    text: messages[error.code] || 'Google sign-in failed. Please try again.',
+                    confirmButtonColor: '#C71585'
+                });
+            }
+        });
     });
 
     // ===== Toggle between login/signup forms =====
