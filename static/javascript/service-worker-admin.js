@@ -69,7 +69,10 @@ self.addEventListener('activate', event => {
 
 // Fetch strategy
 self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
+    if (event.request.method !== 'GET') {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     if (!event.request.url.startsWith(self.location.origin)) return;
 
     const url = new URL(event.request.url);

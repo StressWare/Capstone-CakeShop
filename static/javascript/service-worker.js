@@ -38,7 +38,10 @@ self.addEventListener('activate', event => {
 // Fetch — network first, fallback to cache
 self.addEventListener('fetch', event => {
     // Skip non-GET and browser extension requests
-    if (event.request.method !== 'GET') return;
+    if (event.request.method !== 'GET') {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     if (!event.request.url.startsWith(self.location.origin)) return;
 
     // Skip admin, auth, and API routes — always go to network

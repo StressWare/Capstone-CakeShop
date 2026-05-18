@@ -36,8 +36,10 @@ self.addEventListener('activate', event => {
 
 // Fetch — Cache First strategy
 self.addEventListener('fetch', event => {
-    if (event.request.method !== 'GET') return;
-
+    if (event.request.method !== 'GET') {
+        event.respondWith(fetch(event.request));
+        return;
+    }
     const url = new URL(event.request.url);
 
     // Cache map tiles from OpenStreetMap
