@@ -135,7 +135,7 @@ input::placeholder {
 .password-wrapper {
     position: relative; /* CRITICAL: anchors the absolute icon to this div */
     width: 100%;
-    margin-bottom: 15px; /* Fixes the spacing gap you mentioned */
+    margin-bottom: 5px; /* Fixes the spacing gap you mentioned */
 }
 
 .password-wrapper input {
