@@ -98,7 +98,7 @@
       {% if session.get('user_id') %}
         <a href="/customer_dashboard">My Profile</a>
         <a href="/cart">My Cart</a>
-        <a href="/logout">Logout</a>
+        <a href="#" onclick="handleLogout()">Logout</a>
       {% else %}
         <a href="/authentication">Login</a>
       {% endif %}
@@ -255,6 +255,20 @@
       proceedFn(); // fail open
     }
   }
+</script>
+<script>
+  async function handleLogout() {
+    try {
+      await firebase.auth().signOut();
+    } catch(e) {}
+    window.location.href = "/logout";
+  }
+
+  window.addEventListener("pageshow", function(e) {
+    if (e.persisted) {
+      window.location.reload();
+    }
+  });
 </script>
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}

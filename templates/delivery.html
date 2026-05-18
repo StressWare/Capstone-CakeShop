@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery — Ms. Brave Cake Shop</title>
+  <link rel="icon" href="/static/img/logo.png" type="image/png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="manifest" href="/manifest-delivery.json">
   <meta name="theme-color" content="#d63384">
@@ -249,15 +250,17 @@
     <div class="legend-item"><div class="legend-dot dot-customer"></div> Customer</div>
   </div>
 
-  <div class="card">
-    <div class="card-header">⏰ Delivery Schedule</div>
-    <div class="card-body">
-      <div class="time-box">
-        <div class="time-label">Deliver By</div>
-        <div class="time-value">{{ order.delivery_date.strftime('%B %d, %Y — %I:%M %p') }}</div>
-      </div>
+{% if order.order_type == 'custom' and order.delivery_date %}
+<div class="card">
+  <div class="card-header">⏰ Delivery Schedule</div>
+  <div class="card-body">
+    <div class="time-box">
+      <div class="time-label">Deliver By</div>
+      <div class="time-value">{{ order.delivery_date.strftime('%B %d, %Y — %I:%M %p') }}</div>
     </div>
   </div>
+</div>
+{% endif %}
 
   <div class="card">
     <div class="card-header">👤 Customer Information</div>

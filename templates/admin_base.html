@@ -195,7 +195,7 @@
         </ul>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
-            <a href="/logout" style="color: #ffffff; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
+            <a href="#" onclick="handleLogout()" style="color: #ffffff; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
                 <i class="fas fa-sign-out-alt me-2"></i>Logout
             </a>
         </div>
@@ -379,6 +379,20 @@
         console.error('[FCM] Token registration failed:', err);
     }
 })();
+</script>
+<script>
+  async function handleLogout() {
+    try {
+      await firebase.auth().signOut();
+    } catch(e) {}
+    window.location.href = "/logout";
+  }
+
+    window.addEventListener("pageshow", function(e) {
+    if (e.persisted) {
+      window.location.reload();
+    }
+  });
 </script>
     {% block extra_js %}{% endblock %}
 </body>
