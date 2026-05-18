@@ -12,7 +12,8 @@ body {
     display: flex;
     flex-direction: column;
     background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
-    background-attachment: fixed;}
+    background-attachment: fixed;
+}
 
 /* NAVBAR STYLES */
 .navbar {
@@ -171,7 +172,6 @@ input::placeholder {
     color: #e05585 !important; /* Slightly darker pink on hover */
 }
 
-
 .toggle-eye:hover {
     color: #ff6b9d;
 }
@@ -229,7 +229,7 @@ button[type="submit"]:active {
     text-decoration: underline;
 }
 
-.toggle-msg{
+.toggle-msg {
     color: white;
 }
 
@@ -238,7 +238,7 @@ button[type="submit"]:active {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 50px;
+    gap: 0px;
     flex-wrap: wrap;
 }
 
@@ -263,112 +263,101 @@ button[type="submit"]:active {
     justify-content: center;
 }
 
-/* ===== FOOTER ===== */
+/*======= FOOTER =====*/
+
 .custom-footer {
     background: linear-gradient(135deg, #ffb6c1, #ff69b4);
     color: white;
-    padding: 15px 40px;
+    padding: 6px 15px;
+    margin-top: auto;
 }
 
 .footer-container {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
+    text-align: center;
+    gap: 10px;
+    flex-wrap: nowrap;
 }
 
+/* title */
 .footer-left h2 {
     color: white;
-    font-size: 20px;
+    font-size: 10px;
     margin: 0;
+    line-height: 1;
 }
 
+/* right side */
 .footer-right {
     display: flex;
     align-items: center;
-    gap: 25px;
+    gap: 10px;
 }
 
+/* text */
 .footer-right p {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 14px;
+    gap: 4px;
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
 }
 
+/* facebook icon */
 .footer-right a {
     color: white;
-    font-size: 18px;
+    font-size: 14px;
     transition: 0.3s ease;
+    display: flex;
+    align-items: center;
 }
 
 .footer-right a:hover {
     opacity: 0.8;
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 /* RESPONSIVE STACKING */
-@media (max-width: 768px) {
-    .auth-layout {
-        flex-direction: column;
-        align-items: center;   /* centers logo + form */
-        gap: 1px;             /* smaller, cleaner spacing */
-    }
-
-    .auth-left {
-        margin-bottom: -100px;    /* controls space BELOW logo */
-        display: flex;
-        justify-content: center;
-    }
-
+@media (max-width: 576px) {
     .auth-left .auth-logo {
         max-width: 180px;
-        max-height: 180px;
+        width: 55vw;
     }
-
     .form-container {
-        width: 100%;
-        margin-right: 0;
-        margin-top: 0;         /* important: removes extra gap */
+        padding: 25px 25px;  /* ← first value = top/bottom, second = left/right */
+        margin-left: 65px;
+        margin-top: 15px;
     }
 
     .form {
         width: 100%;
-    }
-
-    body {
-        overflow-y: auto;
-    }
-}
-    
-@media (max-width: 576px) {
-    .form-container {
-        padding: 25px 25px;
-        margin-right: 0; /* ADD THIS */
-    }
-
-    .form {
-        width: 100%; /* ADD THIS */
     }
 
     h2 {
         font-size: 1.6rem;
     }
 
+    input[type="email"],
     input[type="text"],
-    input[type="password"],
-    input[type="number"] {
-        padding: 14px 16px;
+    input[type="password"] {
+        padding: 16px 20px;  /* ← top/bottom padding makes inputs taller or shorter */
+        font-size: 1rem;     /* ← bigger font = bigger input feel */
     }
 
     button[type="submit"] {
-        padding: 16px;
+        padding: 18px;      /* ← increase for taller button */
+        font-size: 1.1rem;  /* ← increase for bigger text */
     }
 
     body {
-        overflow-y: auto; /* ADD THIS */
+            overflow-y: auto;
+        }
     }
-}
+
 
 /* ANIMATIONS */
 @keyframes fadeIn {
@@ -376,6 +365,7 @@ button[type="submit"]:active {
         opacity: 0;
         transform: translateY(20px);
     }
+
     to {
         opacity: 1;
     }

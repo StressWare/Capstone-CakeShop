@@ -798,10 +798,9 @@ h2 {
 ===================================================== */
 
 .services-section {
-    padding: 50px 15px;
+    padding: 50px 15px 0;   /* ← remove bottom padding */
     text-align: center;
 }
-
 .services-row {
     display: flex;
     flex-wrap: wrap;
@@ -1025,7 +1024,7 @@ label[for="notes"] {
 @media (max-width: 768px) {
 
     .intro-logo {
-        margin-top: -40px;
+        margin-top: 15px;
         width: 200px;
     }
 
@@ -1053,8 +1052,16 @@ label[for="notes"] {
     }
 
     .footer-container {
-        flex-direction: column;
-        gap: 10px;
+        display: flex;
+        flex-direction: row; /* keep items in one line */
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        padding: 6px 6px; /* thinner */
+        gap: 4px; /* smaller spacing */
+
+        flex-wrap: nowrap; /* prevent line break */
     }
 
     .review-card-img {
