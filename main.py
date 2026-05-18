@@ -130,6 +130,8 @@ def logout():
 @limiter.limit("10 per minute")
 def verify_token():
     data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
     id_token = data.get('idToken')
     recaptcha_token = data.get('recaptchaToken')
      # ── reCAPTCHA check ──
@@ -626,7 +628,13 @@ def order_receipt(order_id):
 @login_required
 def place_order():
     user_id = session.get("user_id")
-
+     #Shop lock check 
+    today = datetime.now(PH_TZ).strftime("%Y-%m-%d")
+    info  = get_locked_dates_cached().get(today)
+    if info and info.get('lock_custom'):
+        flash("Custom cake orders are unavailable today.", "danger")
+        return redirect(url_for("customize"))
+    
     file = request.files.get('image')
     if file and file.filename:
         inspo_image = save_uploaded_image(file, 'order')
@@ -702,7 +710,12 @@ def place_order():
 @limiter.limit("5 per minute")
 def order_cake():
     user_id = session.get("user_id")
-
+    # Shop lock check
+    today = datetime.now(PH_TZ).strftime("%Y-%m-%d")
+    info  = get_locked_dates_cached().get(today)
+    if info and info.get('lock_premade'):
+        flash("Orders are unavailable today.", "danger")
+        return redirect(url_for("cakes_page"))
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
     selected_json  = request.form.get('selected_items', '[]')
@@ -801,7 +814,47 @@ def finalize_order():
     order_type    = request.form.get("order_type")
     delivery_type = request.form.get("delivery_type", "Delivery")
     address       = "Pick Up at Shop" if delivery_type == "Pickup" else request.form.get("address", "")
+    if order_type not in ("premade", "custom"):
+        flash("Invalid order type.", "danger")
+        return redirect(url_for("customer_dashboard"))
 
+    if delivery_type not in ("Delivery", "Pickup"):
+        delivery_type = "Delivery"
+
+    ALLOWED_PAYMENTS = {"Cash on Delivery", "Online Payment"}
+    payment_method = request.form.get("payment_method", "Cash on Delivery")
+    if payment_method not in ALLOWED_PAYMENTS:
+        flash("Invalid payment method.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    selected_json = request.form.get("selected_items", "[]")
+    try:
+        parsed = json.loads(selected_json)
+        if not isinstance(parsed, list):
+            raise ValueError
+    except (json.JSONDecodeError, ValueError):
+        flash("Invalid order data.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    inspo_image_raw = request.form.get("inspo_image", "").strip()
+    if inspo_image_raw and not inspo_image_raw.startswith("https://res.cloudinary.com/"):
+        flash("Invalid image reference.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    if delivery_type == "Delivery" and len(address) > 300:
+        flash("Address too long. Max 300 characters.", "danger")
+        return redirect(url_for("customer_dashboard"))
+    
+    # Shop lock check
+    today = datetime.now(PH_TZ).strftime("%Y-%m-%d")
+    info  = get_locked_dates_cached().get(today)
+    if info:
+        if order_type == 'premade' and info.get('lock_premade'):
+            flash("Orders are unavailable today.", "danger")
+            return redirect(url_for("customer_dashboard"))
+        if order_type == 'custom' and info.get('lock_custom'):
+            flash("Orders are unavailable today.", "danger")
+            return redirect(url_for("customer_dashboard"))
     if order_type == "premade":
         delivery_datetime = datetime.now(PH_TZ)
     else:
@@ -818,9 +871,6 @@ def finalize_order():
         if delivery_datetime < datetime.now(PH_TZ):
             flash("Delivery date must be in the future.", "danger")
             return redirect(url_for("customer_dashboard"))
-    
-    selected_json  = request.form.get("selected_items", "[]")
-    payment_method = request.form.get("payment_method", "Cash on Delivery")
     # ── Idempotency check ──
     idempotency_key = request.form.get("idempotency_key", "").strip()
     if idempotency_key:
@@ -1048,8 +1098,8 @@ def finalize_order():
                 flash(f"{parts[1]} only has {parts[2]} available.", "danger")
             return redirect(url_for("customer_dashboard"))
 
-    # ── COD or Bank Transfer → save immediately ──
-    if payment_method in ["Cash on Delivery", "Bank Transfer"]:
+    # ── COD  save immediately ──
+    if payment_method == "Cash on Delivery":
         doc_ref  = orders.add(order_data)
         order_id = doc_ref[1].id
         users.document(user_id).update({"order_count": firestore.Increment(1)})

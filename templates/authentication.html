@@ -69,11 +69,10 @@
                 <!-- Sign Up Form (with fname and correct field names) -->
                 <form id="signupForm" class="form">
                     <h2>Sign Up</h2>
-                    <input type="email" id="signupEmail" placeholder="Email" required>
-                    <input type="text" id="signupFname" placeholder="Full Name" required>
-                    <input type="text" id="signupUsername" placeholder="Username" required>
-                    <input type="tel" id="signupNumber" placeholder="Phone Number" required>
-                    <input type="text" id="signupAddress" placeholder="Address" required>
+                    <input type="text" id="signupFname" placeholder="Full Name" required maxlength="100">
+                    <input type="text" id="signupUsername" placeholder="Username" required maxlength="50">
+                    <input type="tel" id="signupNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+\-\s]{7,15}">
+                    <input type="text" id="signupAddress" placeholder="Address" required maxlength="255">
 
                     <div class="password-wrapper">
                         <input type="password" id="signupPassword" placeholder="Password" required>
