@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask_wtf.csrf import CSRFProtect
 from extensions import limiter, send_order_confirmation
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
@@ -24,8 +25,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-
 app.secret_key = os.getenv('SECRET_KEY')
+csrf = CSRFProtect(app)
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
 limiter.init_app(app)
 @app.errorhandler(RateLimitExceeded)
@@ -1221,6 +1222,7 @@ def delivery_page(token):
     return render_template("delivery.html", order=order, expired=False)
 # ---------------- NOTIFY DELIVERY TO ADMIN ----------------
 @app.route("/delivery/<token>/notify", methods=["POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def notify_delivery(token):
     try:

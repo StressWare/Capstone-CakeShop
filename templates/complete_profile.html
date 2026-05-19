@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Complete Your Profile</title>
     <link href="../static/css/authentication.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="../static/img/logo.png">    
@@ -33,6 +34,7 @@
         <!-- RIGHT SIDE: FORM -->
         <div class="form-container">
             <form method="POST" action="/complete-profile">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <h2>Complete Your Profile</h2>
                 <p style="color: gray; margin-bottom: 20px;">
                     Please fill in your details to continue.

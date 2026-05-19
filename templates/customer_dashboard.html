@@ -294,6 +294,7 @@
           {% if cake.quantity > 0 %}
           <div class="fav-btn-group">
             <form method="POST" action="/order/cake" onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="cake_id" value="{{ cake.id }}">
               <input type="hidden" name="cake_name" value="{{ cake.name }}">
               <input type="hidden" name="price" value="{{ cake.price }}">
@@ -301,6 +302,7 @@
               <button type="submit" class="btn btn-sm w-100" style="background:var(--pink);color:white;border:none;"><i class="fas fa-bolt me-1"></i> Order Now</button>
             </form>
             <form method="POST" action="/cart/add">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="cake_id" value="{{ cake.id }}">
               <input type="hidden" name="cake_name" value="{{ cake.name }}">
               <input type="hidden" name="price" value="{{ cake.price }}">
@@ -387,6 +389,7 @@
       <!-- Claim button -->
       {% if loyalty_unclaimed %}
       <form method="POST" action="/loyalty/claim">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="loyalty-claim-btn">
           <i class="bi bi-gift me-2"></i>Claim {{ loyalty_unclaimed }}% Discount Voucher
         </button>
@@ -447,6 +450,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <form method="POST" action="{{ url_for('edit_customer_profile') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="modal-header">
             <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -550,6 +554,7 @@
           {% endif %}
           {% if order.status == 'New' %}
           <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Are you sure you want to cancel this order?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-danger"><i class="fas fa-times me-2"></i>Cancel Order</button>
           </form>
           {% endif %}
@@ -566,6 +571,7 @@
       <div class="modal fade" id="reviewModal{{ order.id }}_{{ item.cake_id }}" tabindex="-1" aria-modal="true" role="dialog">
         <div class="modal-dialog"><div class="modal-content">
           <form method="POST" action="/review/add">
+             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="cake_id" value="{{ item.cake_id }}">
             <input type="hidden" name="cake_name" value="{{ item.cake_name }}">
             <input type="hidden" name="order_id" value="{{ order.id }}">
@@ -599,6 +605,7 @@
     <div class="modal fade" id="reviewModal{{ order.id }}" tabindex="-1" aria-modal="true" role="dialog">
       <div class="modal-dialog"><div class="modal-content">
         <form method="POST" action="/review/add">
+           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="cake_id" value="custom">
           <input type="hidden" name="cake_name" value="Custom Cake">
           <input type="hidden" name="order_id" value="{{ order.id }}">

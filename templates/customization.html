@@ -320,6 +320,7 @@
     <div class="form-panel">
       <!-- FIX: added id="orderForm" so the submit button can reference it -->
       <form method="POST" action="/order" enctype="multipart/form-data" id="orderForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="dropdowns-grid">
           <!-- COL 1 -->

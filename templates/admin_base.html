@@ -158,7 +158,7 @@
 
     <link rel="manifest" href="/manifest-admin.json">
     <meta name="theme-color" content="#d63384">
-
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker-admin.js')
@@ -393,6 +393,14 @@
       window.location.reload();
     }
   });
+</script>
+<script>
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    options.headers = options.headers || {};
+    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
+    return originalFetch(url, options);
+  };
 </script>
     {% block extra_js %}{% endblock %}
 </body>

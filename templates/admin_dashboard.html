@@ -901,30 +901,38 @@ const pre_top     = "{{ pre_top }}";
 
 function downloadPDF() {
   const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
-  const content = document.createElement('div');
-  content.style.cssText = 'font-family: Arial, sans-serif; padding: 24px; color: #111; background: #fff;';
-  content.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
-      <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
-      <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p></div>
-    </div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead><tr style="background:#6B1A3A;color:#fff;">
-        <th style="padding:10px 12px;text-align:left;">Channel</th>
-        <th style="padding:10px 12px;text-align:right;">Total Sales</th>
-        <th style="padding:10px 12px;text-align:right;">Transactions</th>
-        <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
-        <th style="padding:10px 12px;text-align:right;">Bank / E-wallet</th>
-      </tr></thead>
-      <tbody>
-        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
-        <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">₱${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
-        <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
-        <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales+pre_sales+cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn+pre_txn+cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash+pre_cash+cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet+pre_ewallet+cus_ewallet}</td></tr>
-      </tbody>
-    </table>
-    <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>`;
-  const opt = { margin:12, filename:`daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`, image:{type:'jpeg',quality:0.98}, html2canvas:{scale:2,useCORS:true}, jsPDF:{unit:'mm',format:'a4',orientation:'landscape'} };
+  const content = `
+    <div style="font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;width:800px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
+        <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
+        <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#6B1A3A;color:#fff;">
+          <th style="padding:10px 12px;text-align:left;">Channel</th>
+          <th style="padding:10px 12px;text-align:right;">Total Sales</th>
+          <th style="padding:10px 12px;text-align:right;">Transactions</th>
+          <th style="padding:10px 12px;text-align:right;">Cash / COD</th>
+          <th style="padding:10px 12px;text-align:right;">Bank / E-wallet</th>
+        </tr></thead>
+        <tbody>
+          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Walk-in</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet}</td></tr>
+          <tr><td style="padding:10px 12px;font-weight:600;">Online Premade Cake</td><td style="padding:10px 12px;text-align:right;">₱${pre_sales}</td><td style="padding:10px 12px;text-align:right;">${pre_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pre_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pre_ewallet}</td></tr>
+          <tr style="background:#faf5f7;"><td style="padding:10px 12px;font-weight:600;">Online Customize Cake</td><td style="padding:10px 12px;text-align:right;">₱${cus_sales}</td><td style="padding:10px 12px;text-align:right;">${cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${cus_ewallet}</td></tr>
+          <tr style="background:#6B1A3A;color:#fff;font-weight:700;"><td style="padding:10px 12px;">TOTAL</td><td style="padding:10px 12px;text-align:right;">₱${pos_sales+pre_sales+cus_sales}</td><td style="padding:10px 12px;text-align:right;">${pos_txn+pre_txn+cus_txn}</td><td style="padding:10px 12px;text-align:right;">₱${pos_cash+pre_cash+cus_cash}</td><td style="padding:10px 12px;text-align:right;">₱${pos_ewallet+pre_ewallet+cus_ewallet}</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:32px;font-size:10px;color:#aaa;text-align:center;">Ms. Brave Cake Shop — Confidential</p>
+    </div>`;
+
+  const opt = {
+    margin: 12,
+    filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, windowWidth: 850, scrollX: 0, scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  };
+
   html2pdf().set(opt).from(content).save();
 }
 

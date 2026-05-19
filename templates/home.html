@@ -262,6 +262,7 @@
                       {% elif customer %}
                           <form method="POST" action="/order/cake" style="margin:0;"
                             onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                               <input type="hidden" name="cake_name" value="{{ cake.name }}">
                               <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -310,6 +311,7 @@
                       {% elif customer %}
                           <form method="POST" action="/order/cake" style="margin:0;"
                                 onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                               <input type="hidden" name="cake_name" value="{{ cake.name }}">
                               <input type="hidden" name="price"     value="{{ cake.price }}">

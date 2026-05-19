@@ -182,6 +182,7 @@
               </div>
               <!-- Add to Cart MUNA (nasa taas) -->
                 <form method="POST" action="/cart/add">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                     <input type="hidden" name="cake_name" value="{{ cake.name }}">
                     <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -195,6 +196,7 @@
                 <!-- Order Now SA BABA -->
                 <form method="POST" action="/order/cake"
       onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                     <input type="hidden" name="cake_name" value="{{ cake.name }}">
                     <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -313,6 +315,7 @@
         <div class="d-flex gap-2">
           <form method="POST" action="/order/cake"  class="flex-fill"
       onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
             <input type="hidden" name="cake_name" value="{{ cake.name }}">
             <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -323,6 +326,7 @@
             </button>
           </form>
           <form method="POST" action="/cart/add" class="flex-fill">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
             <input type="hidden" name="cake_name" value="{{ cake.name }}">
             <input type="hidden" name="price"     value="{{ cake.price }}">

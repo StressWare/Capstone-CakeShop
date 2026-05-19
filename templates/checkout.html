@@ -23,7 +23,7 @@
     <h1>Checkout</h1>
   </div>
   <form method="POST" action="/place-order">
-
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- Hidden fields -->
     <input type="hidden" name="order_type"     value="{{ order_type }}">
     <input type="hidden" name="order_item"     value="{{ order_item }}">

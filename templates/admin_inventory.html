@@ -484,6 +484,7 @@
                   <li>
                     <form method="POST" action="/inventory/delete/{{ i.id }}"
                       onsubmit="return confirm('Delete {{ i.item }}?')" style="display:inline;">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                       <button type="submit" class="dropdown-item text-danger" style="border:none;background:none;width:100%;text-align:left;padding:0.5rem 1rem;cursor:pointer;">
                         <i class="fas fa-trash"></i> Delete
                       </button>
@@ -513,6 +514,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <form method="POST" action="/inventory/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header bg-pink">
           <h5 class="modal-title">+ Add Inventory Item</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -556,6 +558,7 @@
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
       <form method="POST" id="restockForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header bg-pink">
           <h5 class="modal-title">Restock: <span id="restockItemName"></span></h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -585,6 +588,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <form method="POST" action="/inventory/edit/{{ i.id }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header bg-pink">
           <h5 class="modal-title">Edit Inventory Item</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

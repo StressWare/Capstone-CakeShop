@@ -428,6 +428,7 @@
                   </button>
                   <form method="POST" action="/expenses/delete/{{ e.id }}"
                     onsubmit="return confirm('Delete this expense?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                   </form>
                 </div>
@@ -439,6 +440,7 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <form method="POST" action="/expenses/edit/{{ e.id }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="modal-header" style="background:#c71585;color:white;">
                       <h5 class="modal-title">Edit Expense</h5>
                       <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -500,6 +502,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <form method="POST" action="/expenses/add">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-header" style="background:#c71585;color:white;">
           <h5 class="modal-title">+ Add New Expense</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

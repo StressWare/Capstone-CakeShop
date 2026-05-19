@@ -358,6 +358,7 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
     </div>
 
     <form method="POST" action="/pos/order" id="posForm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="items"          id="itemsInput"   value="[]">
       <input type="hidden" name="amount"         id="amountInput"  value="0">
       <input type="hidden" name="payment_method" id="paymentInput" value="Cash">
