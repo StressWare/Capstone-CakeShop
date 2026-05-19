@@ -111,23 +111,26 @@
 <!-- ── FLASH MESSAGES ── -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const flashes = {{ messages | tojson }};
-          const Toast = Swal.mixin({
-            toast: true, position: 'top-end', showConfirmButton: false,
-            timer: 3500, timerProgressBar: true,
-            didOpen: (toast) => {
-              toast.addEventListener('mouseenter', Swal.stopTimer);
-              toast.addEventListener('mouseleave', Swal.resumeTimer);
-            }
-          });
-          const iconMap = { 'success': 'success', 'danger': 'error', 'warning': 'warning', 'info': 'info' };
-          flashes.forEach(([category, message]) => {
-            Toast.fire({ icon: iconMap[category] || 'info', title: message });
-          });
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const flashes = {{ messages | tojson }};
+        const Toast = Swal.mixin({
+          toast: true, position: 'top-end', showConfirmButton: false,
+          timer: 3500, timerProgressBar: true,
+          background: 'rgba(255, 255, 255, 0.82)',
+          color: '#1a1a1a',
+          customClass: { popup: 'glass-popup' },
+          didOpen: (toast) => {
+            toast.addEventListener('mouseenter', Swal.stopTimer);
+            toast.addEventListener('mouseleave', Swal.resumeTimer);
+          }
         });
-      </script>
+        const iconMap = { 'success': 'success', 'danger': 'error', 'warning': 'warning', 'info': 'info' };
+        flashes.forEach(([category, message]) => {
+          Toast.fire({ icon: iconMap[category] || 'info', title: message });
+        });
+      });
+    </script>
     {% endif %}
   {% endwith %}
 
@@ -240,15 +243,14 @@
           (orderType === 'custom'  && data.lock_custom);
 
         if (isBlocked) {
-          Swal.fire({
-            icon:             'info',
-            title:            '🔒 Orders Unavailable Today',
-            text:             data.reason,
-            confirmButtonText:'Got it',
-            confirmButtonColor:'#d63384',
-            footer:           'Please try ordering on another day.'
+          glassAlert({
+            icon: 'info',
+            title: '🔒 Orders Unavailable Today',
+            text: data.reason,
+            confirmButtonText: 'Got it',
+            footer: 'Please try ordering on another day.'
           });
-          return; // ← blocked, don't proceed
+          return;
         }
       }
       proceedFn(); // ← not locked for this type, proceed
@@ -285,6 +287,147 @@ window.fetch = function(url, options = {}) {
   
   return originalFetch(url, options);
 };
+</script>
+<script>
+  (function injectGlassStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* === Popup container === */
+        .glass-popup {
+            background: rgba(255,255,255, 0.82) !important;
+            border: 1px solid rgba(255, 192, 203, 0.45) !important;
+            border-radius: 20px !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            box-shadow: 0 8px 32px rgba(199, 21, 133, 0.15) !important;
+        }
+ 
+        /* === Title === */
+        .glass-title {
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+            font-size: 1.4rem !important;
+        
+        }
+
+        /* === Remove default title underline === */
+        .glass-popup .swal2-title::after,
+        .glass-popup .swal2-title::before {
+            display: none !important;
+        }
+        .glass-popup .swal2-header {
+            border-bottom: none !important;
+        }
+ 
+        /* === Body text === */
+        .glass-popup .swal2-html-container {
+            color: #2a2a2a !important;
+            font-size: 0.95rem !important;
+        }
+ 
+        /* === Confirm button (pink) === */
+        .glass-confirm-btn {
+            background: linear-gradient(135deg, #e75480, #C71585) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 10px 28px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.4px !important;
+            box-shadow: 0 4px 15px rgba(199, 21, 133, 0.35) !important;
+            transition: all 0.2s ease !important;
+            color: #fff !important;
+        }
+        .glass-confirm-btn:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 20px rgba(199, 21, 133, 0.5) !important;
+        }
+ 
+        /* === Cancel button (outlined black) === */
+        .glass-cancel-btn {
+            background: transparent !important;
+            border: 1px solid rgba(26, 26, 26, 0.4) !important;
+            border-radius: 12px !important;
+            padding: 10px 28px !important;
+            font-weight: 600 !important;
+            color: #1a1a1a !important;
+            transition: all 0.2s ease !important;
+        }
+        .glass-cancel-btn:hover {
+            background: rgba(0,0,0,0.06) !important;
+        }
+ 
+        /* === Icon colors per type === */
+        /* Warning */
+        .glass-popup.swal2-icon-warning .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-warning .swal2-icon .swal2-icon-content {
+            color: #e75480 !important;
+        }
+ 
+        /* Error */
+        .glass-popup.swal2-icon-error .swal2-icon {
+            border-color: #C71585 !important;
+            color: #C71585 !important;
+        }
+        .glass-popup.swal2-icon-error .swal2-icon [class^="swal2-x-mark-line"] {
+            background-color: #C71585 !important;
+        }
+ 
+        /* Success */
+        .glass-popup.swal2-icon-success .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-success .swal2-success-ring {
+            border-color: rgba(231, 84, 128, 0.3) !important;
+        }
+        .glass-popup.swal2-icon-success [class^="swal2-success-line"] {
+            background-color: #e75480 !important;
+        }
+ 
+        /* Info */
+        .glass-popup.swal2-icon-info .swal2-icon {
+            border-color: #C71585 !important;
+            color: #C71585 !important;
+        }
+        .glass-popup.swal2-icon-info .swal2-icon-content {
+            color: #C71585 !important;
+        }
+ 
+        /* Question */
+        .glass-popup.swal2-icon-question .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-question .swal2-icon-content {
+            color: #e75480 !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+ 
+/* ============================================================
+   SHARED SWAL HELPER
+   Wraps Swal.fire() with the glass theme pre-applied.
+   Usage: glassAlert({ icon, title, text, ...extraOptions })
+   ============================================================ */
+function glassAlert(options = {}) {
+    return Swal.fire({
+        background: 'rgba(255, 255, 255, 0.12)',
+        color: '#1a1a1a',
+        backdrop: 'rgba(0, 0, 0, 0.6)',
+        customClass: {
+            popup: 'glass-popup',
+            title: 'glass-title',
+            confirmButton: 'glass-confirm-btn',
+            cancelButton: 'glass-cancel-btn',
+        },
+        buttonsStyling: false,
+        ...options
+    });
+}
 </script>
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}

@@ -463,46 +463,42 @@
   // Override back button / navigation with SweetAlert2
   history.pushState(null, null, location.href);
   window.addEventListener('popstate', async function() {
-      const result = await Swal.fire({
-          icon: 'question',
-          title: 'Leave Checkout?',
-          text: 'Your order has not been placed yet. Are you sure you want to leave?',
-          showCancelButton: true,
-          confirmButtonText: 'Leave',
-          cancelButtonText: 'Stay',
-          confirmButtonColor: '#6c757d',
-          cancelButtonColor: '#d63384',
-      });
-        if (result.isConfirmed) {
-          handledBySwal = true;
-          history.back();
-      } else {
-          history.pushState(null, null, location.href);
-      }
+    const result = await glassAlert({
+      icon: 'question',
+      title: 'Leave Checkout?',
+      text: 'Your order has not been placed yet. Are you sure you want to leave?',
+      showCancelButton: true,
+      confirmButtonText: 'Leave',
+      cancelButtonText: 'Stay',
+    });
+    if (result.isConfirmed) {
+      handledBySwal = true;
+      history.back();
+    } else {
+      history.pushState(null, null, location.href);
+    }
   });
 
   document.querySelectorAll('a').forEach(function(link) {
     link.addEventListener('click', async function(e) {
-        if (orderPlaced) return;
-        const href = this.href;
-        if (!href || href === '#' || href === location.href) return;
-        e.preventDefault();
-        const result = await Swal.fire({
-            icon: 'question',
-            title: 'Leave Checkout?',
-            text: 'Your order has not been placed yet. Are you sure you want to leave?',
-            showCancelButton: true,
-            confirmButtonText: 'Leave',
-            cancelButtonText: 'Stay',
-            confirmButtonColor: '#6c757d',
-            cancelButtonColor: '#d63384',
-        });
-        if (result.isConfirmed) {
-            handledBySwal = true;
-            window.location.href = href;
-        }
+      if (orderPlaced) return;
+      const href = this.href;
+      if (!href || href === '#' || href === location.href) return;
+      e.preventDefault();
+      const result = await glassAlert({
+        icon: 'question',
+        title: 'Leave Checkout?',
+        text: 'Your order has not been placed yet. Are you sure you want to leave?',
+        showCancelButton: true,
+        confirmButtonText: 'Leave',
+        cancelButtonText: 'Stay',
+      });
+      if (result.isConfirmed) {
+        handledBySwal = true;
+        window.location.href = href;
+      }
     });
-});
+  });
 </script>
 <script>
   // ── Quantity controls for premade orders ──
@@ -614,12 +610,11 @@
       dateInput.addEventListener('input', function() {
         const val = this.value;
         if (locked[val] && locked[val].lock_custom) {
-          Swal.fire({
+          glassAlert({
             icon:             'info',
             title:            '🔒 Date Unavailable for Custom Orders',
             text:             locked[val].reason,
             confirmButtonText:'Pick Another Date',
-            confirmButtonColor:'#d63384',
           });
           this.value = ''; // clear selection
         }

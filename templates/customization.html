@@ -535,7 +535,12 @@
 
   function checkFileSize(input) {
     if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
-      alert('File too large! Maximum size is 2MB.');
+      glassAlert({
+        icon: 'error',
+        title: 'File Too Large',
+        text: 'Maximum allowed size is 2MB.',
+        confirmButtonText: 'OK'
+      });
       input.value = '';
     }
   }
