@@ -272,13 +272,19 @@
   });
 </script>
 <script>
-  //csrf 
-  const originalFetch = window.fetch;
-  window.fetch = function(url, options = {}) {
+const originalFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+  const isOwnServer = typeof url === 'string' && !url.startsWith('http') 
+    || (typeof url === 'string' && url.includes(window.location.hostname));
+  
+  if (isOwnServer) {
+    options = options || {};
     options.headers = options.headers || {};
-    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
-    return originalFetch(url, options);
-  };
+    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+  
+  return originalFetch(url, options);
+};
 </script>
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}

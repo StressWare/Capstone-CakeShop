@@ -70,6 +70,7 @@
                 <!-- Sign Up Form (with fname and correct field names) -->
                 <form id="signupForm" class="form">
                     <h2>Sign Up</h2>
+                    <input type="email" id="signupEmail" placeholder="Email" required maxlength="254">
                     <input type="text" id="signupFname" placeholder="Full Name" required maxlength="100">
                     <input type="text" id="signupUsername" placeholder="Username" required maxlength="50">
                     <input type="tel" id="signupNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+\-\s]{7,15}">
@@ -392,12 +393,19 @@
     }
 </script>
 <script>
-  const originalFetch = window.fetch;
-  window.fetch = function(url, options = {}) {
+const originalFetch = window.fetch;
+window.fetch = function(url, options = {}) {
+  const isOwnServer = typeof url === 'string' && 
+    (!url.startsWith('http') || url.includes(window.location.hostname));
+  
+  if (isOwnServer) {
+    options = options || {};
     options.headers = options.headers || {};
-    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').content;
-    return originalFetch(url, options);
-  };
+    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  }
+  
+  return originalFetch(url, options);
+};
 </script>
 </body>
 </html>
