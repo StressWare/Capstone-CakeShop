@@ -3,70 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>403 – Forbidden | Mrs. Brave's</title>
+  <title>500 – Server Error | Mrs. Brave's</title>
   <link rel="icon" type="image/png" href="/static/img/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --pink: #d63384;
-      --pink-dark: #a0205e;
-      --pink-light: #fde8f1;
-      --pink-mid: #f8b8d4;
-    }
+    :root { --pink: #d63384; --pink-dark: #a0205e; }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body { height: 100%; overflow: hidden; }
 
     body {
-      background: #1a0a12;
+      height: 100%; background: #1a0a12;
       display: flex; align-items: center; justify-content: center;
       font-family: 'DM Sans', sans-serif;
       position: relative;
     }
 
-    /* Background blobs */
-    .blob {
-      position: fixed; border-radius: 50%;
-      filter: blur(80px); opacity: 0.18; pointer-events: none;
-    }
+    .blob { position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.18; pointer-events: none; }
     .blob-1 { width: 400px; height: 400px; background: var(--pink); top: -100px; left: -100px; animation: drift 8s ease-in-out infinite alternate; }
     .blob-2 { width: 300px; height: 300px; background: #ff6bb5; bottom: -80px; right: -80px; animation: drift 10s ease-in-out infinite alternate-reverse; }
-    .blob-3 { width: 180px; height: 180px; background: var(--pink-dark); top: 50%; left: 60%; animation: drift 6s ease-in-out infinite alternate; }
-
     @keyframes drift {
-      from { transform: translate(0, 0) scale(1); }
-      to   { transform: translate(30px, 20px) scale(1.08); }
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px,20px) scale(1.08); }
     }
 
-    /* Floating cake emojis */
     .floaties { position: absolute; inset: 0; pointer-events: none; }
-    .floaty {
-      position: absolute; font-size: 1.5rem; opacity: 0.12;
-      animation: floatUp linear infinite;
-    }
-    .floaty:nth-child(1)  { left: 8%;  animation-duration: 12s; animation-delay: 0s;   font-size: 1.2rem; }
-    .floaty:nth-child(2)  { left: 20%; animation-duration: 15s; animation-delay: 2s;   font-size: 2rem; }
-    .floaty:nth-child(3)  { left: 35%; animation-duration: 10s; animation-delay: 4s; }
-    .floaty:nth-child(4)  { left: 55%; animation-duration: 14s; animation-delay: 1s;   font-size: 1.1rem; }
-    .floaty:nth-child(5)  { left: 72%; animation-duration: 11s; animation-delay: 3s;   font-size: 1.8rem; }
-    .floaty:nth-child(6)  { left: 88%; animation-duration: 13s; animation-delay: 5s; }
+    .floaty { position: absolute; font-size: 1.5rem; opacity: 0.12; animation: floatUp linear infinite; }
+    .floaty:nth-child(1) { left: 8%;  animation-duration: 12s; animation-delay: 0s; }
+    .floaty:nth-child(2) { left: 25%; animation-duration: 15s; animation-delay: 2s; font-size: 2rem; }
+    .floaty:nth-child(3) { left: 50%; animation-duration: 10s; animation-delay: 4s; }
+    .floaty:nth-child(4) { left: 70%; animation-duration: 14s; animation-delay: 1s; }
+    .floaty:nth-child(5) { left: 88%; animation-duration: 11s; animation-delay: 3s; font-size: 1.8rem; }
     @keyframes floatUp {
-      0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
       10%  { opacity: 0.12; }
       90%  { opacity: 0.12; }
       100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
     }
 
-    /* Card */
     .card {
       position: relative; z-index: 10;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(214,51,132,0.25);
       backdrop-filter: blur(20px);
-      border-radius: 28px;
-      padding: 56px 52px;
-      text-align: center;
-      max-width: 480px; width: 90%;
+      border-radius: 28px; padding: 56px 52px;
+      text-align: center; max-width: 480px; width: 90%;
       box-shadow: 0 0 60px rgba(214,51,132,0.12), 0 24px 80px rgba(0,0,0,0.4);
       animation: cardIn 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
     }
@@ -75,18 +56,17 @@
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .lock-icon {
-      font-size: 3.5rem;
-      margin-bottom: 8px;
-      display: block;
-      animation: wobble 3s ease-in-out infinite;
+    .error-icon {
+      font-size: 3.5rem; margin-bottom: 8px; display: block;
+      animation: shake 2.5s ease-in-out infinite;
     }
-    @keyframes wobble {
+    @keyframes shake {
       0%,100% { transform: rotate(0deg); }
-      20%      { transform: rotate(-8deg); }
-      40%      { transform: rotate(8deg); }
-      60%      { transform: rotate(-4deg); }
-      80%      { transform: rotate(4deg); }
+      15%      { transform: rotate(-10deg); }
+      30%      { transform: rotate(10deg); }
+      45%      { transform: rotate(-6deg); }
+      60%      { transform: rotate(6deg); }
+      75%      { transform: rotate(-2deg); }
     }
 
     .error-code {
@@ -94,55 +74,32 @@
       font-size: 7rem; font-weight: 900; line-height: 1;
       background: linear-gradient(135deg, var(--pink) 0%, #ff8dc7 50%, var(--pink-dark) 100%);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-      letter-spacing: -4px;
+      background-clip: text; margin-bottom: 8px; letter-spacing: -4px;
     }
 
-    .divider {
-      width: 60px; height: 3px;
-      background: linear-gradient(90deg, var(--pink), var(--pink-dark));
-      border-radius: 2px; margin: 16px auto;
-    }
-
-    h2 {
-      font-family: 'Playfair Display', serif;
-      color: #fff; font-size: 1.6rem; margin-bottom: 12px;
-    }
-
-    p {
-      color: rgba(255,255,255,0.55);
-      font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px;
-    }
+    .divider { width: 60px; height: 3px; background: linear-gradient(90deg, var(--pink), var(--pink-dark)); border-radius: 2px; margin: 16px auto; }
+    h2 { font-family: 'Playfair Display', serif; color: #fff; font-size: 1.6rem; margin-bottom: 12px; }
+    p  { color: rgba(255,255,255,0.55); font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px; }
 
     .btn {
       display: inline-flex; align-items: center; gap: 8px;
       background: linear-gradient(135deg, var(--pink), var(--pink-dark));
       color: #fff; text-decoration: none;
       padding: 14px 32px; border-radius: 50px;
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 500; font-size: 0.95rem;
+      font-family: 'DM Sans', sans-serif; font-weight: 500; font-size: 0.95rem;
       transition: all 0.25s ease;
       box-shadow: 0 4px 20px rgba(214,51,132,0.4);
     }
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(214,51,132,0.55);
-      color: #fff;
-    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(214,51,132,0.55); color: #fff; }
 
-    .brand {
-      margin-top: 32px;
-      color: rgba(255,255,255,0.2);
-      font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase;
-    }
+    .brand { margin-top: 32px; color: rgba(255,255,255,0.2); font-size: 0.78rem; letter-spacing: 2px; text-transform: uppercase; }
 
     @media (max-width: 575px) {
       .card { padding: 32px 20px; width: 88%; }
       .error-code { font-size: 4.5rem; letter-spacing: -2px; }
       h2 { font-size: 1.2rem; }
       p  { font-size: 0.85rem; }
-      .lock-icon { font-size: 2.5rem; }
+      .error-icon { font-size: 2.5rem; }
       .btn { padding: 11px 18px; font-size: 0.85rem; }
     }
   </style>
@@ -150,7 +107,6 @@
 <body>
   <div class="blob blob-1"></div>
   <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
 
   <div class="floaties">
     <span class="floaty">🎂</span>
@@ -158,15 +114,14 @@
     <span class="floaty">🎂</span>
     <span class="floaty">🍰</span>
     <span class="floaty">🎂</span>
-    <span class="floaty">🍰</span>
   </div>
 
   <div class="card">
-    <span class="lock-icon">🔒</span>
-    <div class="error-code">403</div>
+    <span class="error-icon">⚠️</span>
+    <div class="error-code">500</div>
     <div class="divider"></div>
-    <h2>Access Forbidden</h2>
-    <p>Sorry, you don't have permission to view this page. Please make sure you're logged in with the right account.</p>
+    <h2>Something Went Wrong</h2>
+    <p>Our kitchen had an unexpected mishap! Our team has been notified. Please try again in a moment.</p>
     <a href="/" class="btn">🏠 Back to Home</a>
     <div class="brand">Mrs. Brave's Cake Shop</div>
   </div>

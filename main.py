@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_wtf.csrf import CSRFProtect
+from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
@@ -26,8 +27,21 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-csrf = CSRFProtect(app)
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
+is_production = os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_SECURE'] = is_production   
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  
+PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
+
+csrf = CSRFProtect(app)
+Talisman(app,
+    force_https=is_production,
+    session_cookie_secure=is_production,
+    session_cookie_http_only=True,
+    session_cookie_samesite='Lax',
+    content_security_policy=False
+)
+
 limiter.init_app(app)
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
@@ -35,7 +49,7 @@ def handle_rate_limit(e):
         return jsonify({"error": "Too many requests. Please slow down."}), 429
     flash("Too many attempts. Please wait a moment.", "danger")
     return redirect(url_for("customer_dashboard")), 429
-PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
+
 @app.after_request
 def add_common_headers(response):
     # remove ngrok intro page
@@ -44,11 +58,26 @@ def add_common_headers(response):
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
 
-# BLUEPRINT REGISTRATION
+# POS BLUEPRINT REGISTRATION
 from pos import pos_bp
 app.register_blueprint(pos_bp)
 
+#ERROR HANDLER
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('403.html'), 403
 
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('500.html'), 500
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return render_template('405.html'), 405
 
 # ================================================================
 # PUBLIC ROUTES
@@ -2617,6 +2646,7 @@ def toggle_review(review_id):
 # ================================================================
 # ---------------- PAYMENT WEBHOOK ----------------
 @app.route("/paymongo/webhook", methods=["POST"])
+@csrf.exempt
 def paymongo_webhook():  
     raw_body = request.get_data()
     signature_header = request.headers.get("Paymongo-Signature", "")
@@ -3170,10 +3200,10 @@ def service_worker_pos():
 # ================================================================
 if __name__ == "__main__":
     #indi pag kaksa ang comment pang live server lng na
-    '''
+    
     if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         ngrok.kill()
         public_url = ngrok.connect(5000)
         print(f"\n🌐 Public URL: {public_url}\n")
-    '''
+    
     app.run(debug=True)
