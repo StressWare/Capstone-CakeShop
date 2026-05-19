@@ -121,290 +121,452 @@
 
 
 <script>
-    // Your Firebase configuration (from console)
-    const firebaseConfig = {
-        apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
-        authDomain: "cakeshop-2faf4.firebaseapp.com",
-        projectId: "cakeshop-2faf4",
-        storageBucket: "cakeshop-2faf4.firebasestorage.app",
-        messagingSenderId: "470246706853",
-        appId: "1:470246706853:web:339c4084715b0286b6474c",
-        measurementId: "G-8PLLYZRD9Y"
-    };
+(function injectGlassStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* === Popup container === */
+        .glass-popup {
+            background: rgba(255,255,255, 0.82) !important;
+            border: 1px solid rgba(255, 192, 203, 0.45) !important;
+            border-radius: 20px !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            box-shadow: 0 8px 32px rgba(199, 21, 133, 0.15) !important;
+        }
+ 
+        /* === Title === */
+        .glass-title {
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+            font-size: 1.4rem !important;
+        
+        }
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-
-    // Password validation 
-    function validatePassword(password) {
-        if (password.length < 8) {
-            return 'Password must be at least 8 characters.';
+        /* === Remove default title underline === */
+        .glass-popup .swal2-title::after,
+        .glass-popup .swal2-title::before {
+            display: none !important;
         }
-        if (!/[A-Z]/.test(password)) {
-            return 'Password must contain at least one uppercase letter.';
+        .glass-popup .swal2-header {
+            border-bottom: none !important;
         }
-        if (!/[0-9]/.test(password)) {
-            return 'Password must contain at least one number.';
+ 
+        /* === Body text === */
+        .glass-popup .swal2-html-container {
+            color: #2a2a2a !important;
+            font-size: 0.95rem !important;
         }
-        if (!/[!@#$%^&*]/.test(password)) {
-            return 'Password must contain at least one special character (!@#$%^&*).';
+ 
+        /* === Confirm button (pink) === */
+        .glass-confirm-btn {
+            background: linear-gradient(135deg, #e75480, #C71585) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 10px 28px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.4px !important;
+            box-shadow: 0 4px 15px rgba(199, 21, 133, 0.35) !important;
+            transition: all 0.2s ease !important;
+            color: #fff !important;
         }
-        return null;
+        .glass-confirm-btn:hover {
+            transform: translateY(-1px) !important;
+            box-shadow: 0 6px 20px rgba(199, 21, 133, 0.5) !important;
+        }
+ 
+        /* === Cancel button (outlined black) === */
+        .glass-cancel-btn {
+            background: transparent !important;
+            border: 1px solid rgba(26, 26, 26, 0.4) !important;
+            border-radius: 12px !important;
+            padding: 10px 28px !important;
+            font-weight: 600 !important;
+            color: #1a1a1a !important;
+            transition: all 0.2s ease !important;
+        }
+        .glass-cancel-btn:hover {
+            background: rgba(0,0,0,0.06) !important;
+        }
+ 
+        /* === Icon colors per type === */
+        /* Warning */
+        .glass-popup.swal2-icon-warning .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-warning .swal2-icon .swal2-icon-content {
+            color: #e75480 !important;
+        }
+ 
+        /* Error */
+        .glass-popup.swal2-icon-error .swal2-icon {
+            border-color: #C71585 !important;
+            color: #C71585 !important;
+        }
+        .glass-popup.swal2-icon-error .swal2-icon [class^="swal2-x-mark-line"] {
+            background-color: #C71585 !important;
+        }
+ 
+        /* Success */
+        .glass-popup.swal2-icon-success .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-success .swal2-success-ring {
+            border-color: rgba(231, 84, 128, 0.3) !important;
+        }
+        .glass-popup.swal2-icon-success [class^="swal2-success-line"] {
+            background-color: #e75480 !important;
+        }
+ 
+        /* Info */
+        .glass-popup.swal2-icon-info .swal2-icon {
+            border-color: #C71585 !important;
+            color: #C71585 !important;
+        }
+        .glass-popup.swal2-icon-info .swal2-icon-content {
+            color: #C71585 !important;
+        }
+ 
+        /* Question */
+        .glass-popup.swal2-icon-question .swal2-icon {
+            border-color: #e75480 !important;
+            color: #e75480 !important;
+        }
+        .glass-popup.swal2-icon-question .swal2-icon-content {
+            color: #e75480 !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+ 
+/* ============================================================
+   SHARED SWAL HELPER
+   Wraps Swal.fire() with the glass theme pre-applied.
+   Usage: glassAlert({ icon, title, text, ...extraOptions })
+   ============================================================ */
+function glassAlert(options = {}) {
+    return Swal.fire({
+        background: 'rgba(255, 255, 255, 0.12)',
+        color: '#1a1a1a',
+        backdrop: 'rgba(0, 0, 0, 0.6)',
+        customClass: {
+            popup: 'glass-popup',
+            title: 'glass-title',
+            confirmButton: 'glass-confirm-btn',
+            cancelButton: 'glass-cancel-btn',
+        },
+        buttonsStyling: false,
+        ...options
+    });
+}
+ 
+/* ============================================================
+   FIREBASE CONFIG
+   ============================================================ */
+const firebaseConfig = {
+    apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
+    authDomain: "cakeshop-2faf4.firebaseapp.com",
+    projectId: "cakeshop-2faf4",
+    storageBucket: "cakeshop-2faf4.firebasestorage.app",
+    messagingSenderId: "470246706853",
+    appId: "1:470246706853:web:339c4084715b0286b6474c",
+    measurementId: "G-8PLLYZRD9Y"
+};
+ 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+ 
+/* ============================================================
+   PASSWORD VALIDATION
+   ============================================================ */
+function validatePassword(password) {
+    if (password.length < 8) {
+        return 'Password must be at least 8 characters.';
     }
-    async function getRecaptchaToken(action) {
-        return new Promise(resolve => {
-            grecaptcha.ready(async () => {
-                const token = await grecaptcha.execute(
-                    '{{ recaptcha_site_key }}',
-                    { action: action }
-                );
-                resolve(token);
-            });
+    if (!/[A-Z]/.test(password)) {
+        return 'Password must contain at least one uppercase letter.';
+    }
+    if (!/[0-9]/.test(password)) {
+        return 'Password must contain at least one number.';
+    }
+    if (!/[!@#$%^&*]/.test(password)) {
+        return 'Password must contain at least one special character (!@#$%^&*).';
+    }
+    return null;
+}
+ 
+/* ============================================================
+   RECAPTCHA
+   ============================================================ */
+async function getRecaptchaToken(action) {
+    return new Promise(resolve => {
+        grecaptcha.ready(async () => {
+            const token = await grecaptcha.execute(
+                '{{ recaptcha_site_key }}',
+                { action: action }
+            );
+            resolve(token);
         });
-    }
-    // Helper: send ID token to Flask backend
-    async function sendTokenToBackend(user, action = 'login' ) {
+    });
+}
+ 
+/* ============================================================
+   SEND TOKEN TO BACKEND
+   ============================================================ */
+async function sendTokenToBackend(user, action = 'login') {
     const idToken = await user.getIdToken(true);
-    const recaptchaToken = await getRecaptchaToken(action); 
+    const recaptchaToken = await getRecaptchaToken(action);
     const response = await fetch('/verify-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: idToken,recaptchaToken: recaptchaToken })
+        body: JSON.stringify({ idToken: idToken, recaptchaToken: recaptchaToken })
     });
+ 
     if (response.ok) {
-        const data = await response.json();  // ← READ the response
+        const data = await response.json();
         if (data.needs_verification) {
-            Swal.fire({
+            await glassAlert({
                 icon: 'warning',
                 title: 'Email Not Verified',
                 text: 'Please check your email (and spam folder) before logging in.',
-                confirmButtonColor: '#C71585'
-            })
-            await auth.signOut()
-            return
+                confirmButtonText: 'Got it'
+            });
+            await auth.signOut();
+            return;
         }
         if (data.is_admin) {
-            window.location.href = '/admin/dashboard';  // ← admin goes here
+            window.location.href = '/admin/dashboard';
         } else if (data.needs_profile) {
-            window.location.href = '/complete-profile';  // ← new google user
+            window.location.href = '/complete-profile';
         } else {
-            window.location.href = '/customer_dashboard';  // ← existing user
+            window.location.href = '/customer_dashboard';
         }
     } else {
         const error = await response.json();
-        Swal.fire({
+        glassAlert({
             icon: 'error',
             title: 'Authentication Failed',
             text: error.error || 'Unknown error',
-            confirmButtonColor: '#C71585'
-        })
+            confirmButtonText: 'OK'
+        });
     }
 }
-
-    // ===== LOGIN =====
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-
+ 
+/* ============================================================
+   LOGIN
+   ============================================================ */
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+ 
+    try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        await sendTokenToBackend(userCredential.user);
+    } catch (error) {
+        const messages = {
+            'auth/invalid-login-credentials': 'Invalid email or password. Please try again.',
+            'auth/user-not-found': 'No account found with this email.',
+            'auth/wrong-password': 'Incorrect password. Please try again.',
+            'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
+            'auth/invalid-email': 'Please enter a valid email address.',
+            'auth/user-disabled': 'This account has been disabled.'
+        };
+        glassAlert({
+            icon: 'error',
+            title: 'Login Failed',
+            text: messages[error.code] || 'Login failed. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    }
+});
+ 
+/* ============================================================
+   SIGNUP
+   ============================================================ */
+document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('signupEmail').value;
+    const fname = document.getElementById('signupFname').value;
+    const username = document.getElementById('signupUsername').value;
+    const number = document.getElementById('signupNumber').value;
+    const address = document.getElementById('signupAddress').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirm = document.getElementById('signupConfirmPassword').value;
+ 
+    if (password !== confirm) {
+        glassAlert({
+            icon: 'error',
+            title: 'Passwords Do Not Match',
+            text: 'Please make sure both passwords are the same.',
+            confirmButtonText: 'Try Again'
+        });
+        return;
+    }
+ 
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+        glassAlert({
+            icon: 'error',
+            title: 'Weak Password',
+            text: passwordError,
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+ 
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        await user.sendEmailVerification();
+        const idToken = await user.getIdToken();
+ 
+        const response = await fetch('/save-user-details', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + idToken
+            },
+            body: JSON.stringify({
+                uid: user.uid,
+                username: username,
+                number: number,
+                address: address,
+                fname: fname
+            })
+        });
+ 
+        if (response.ok) {
+            await auth.signOut();
+            await glassAlert({
+                icon: 'success',
+                title: 'Account Created!',
+                text: 'Please verify your email before logging in.',
+                confirmButtonText: 'Go to Login'
+            });
+            toggleForms();
+        } else {
+            glassAlert({
+                icon: 'error',
+                title: 'Save Failed',
+                text: 'Failed to save profile data. Please try again.',
+                confirmButtonText: 'OK'
+            });
+        }
+    } catch (error) {
+        const messages = {
+            'auth/email-already-in-use': 'This email is already registered.',
+            'auth/invalid-email': 'Please enter a valid email address.',
+            'auth/weak-password': 'Password must be at least 6 characters.',
+            'auth/operation-not-allowed': 'Sign-up is currently disabled.'
+        };
+        glassAlert({
+            icon: 'error',
+            title: 'Signup Failed',
+            text: messages[error.code] || 'Signup failed. Please try again.',
+            confirmButtonText: 'OK'
+        });
+    }
+});
+ 
+/* ============================================================
+   FORGOT PASSWORD
+   ============================================================ */
+async function forgotPassword() {
+    const email = document.getElementById('loginEmail').value;
+ 
+    if (!email) {
+        glassAlert({
+            icon: 'warning',
+            title: 'Email Required',
+            text: 'Please enter your email address first.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
+ 
+    try {
+        await auth.sendPasswordResetEmail(email);
+        glassAlert({
+            icon: 'success',
+            title: 'Reset Email Sent',
+            text: 'Check your inbox (and spam folder) for the reset link.',
+            confirmButtonText: 'OK'
+        });
+    } catch (error) {
+        glassAlert({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            confirmButtonText: 'OK'
+        });
+    }
+}
+ 
+/* ============================================================
+   GOOGLE SIGN-IN
+   ============================================================ */
+document.querySelectorAll('.google-signin-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
         try {
-            const userCredential = await auth.signInWithEmailAndPassword(email, password);
-            await sendTokenToBackend(userCredential.user);
+            const result = await auth.signInWithPopup(provider);
+            await sendTokenToBackend(result.user);
         } catch (error) {
             const messages = {
-                'auth/invalid-login-credentials': 'Invalid email or password. Please try again.',
-                'auth/user-not-found': 'No account found with this email.',
-                'auth/wrong-password': 'Incorrect password. Please try again.',
-                'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
-                'auth/invalid-email': 'Please enter a valid email address.',
-                'auth/user-disabled': 'This account has been disabled.'
+                'auth/popup-closed-by-user': 'Sign-in cancelled.',
+                'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
+                'auth/cancelled-popup-request': 'Sign-in cancelled.',
+                'auth/account-exists-with-different-credential': 'This email is already registered with password login. Please sign in with your email and password instead.'
             };
-            Swal.fire({
+            glassAlert({
                 icon: 'error',
-                title: 'Login Failed',
-                text: messages[error.code] || 'Login failed. Please try again.',
-                confirmButtonColor: '#C71585',
+                title: 'Google Sign-In Failed',
+                text: messages[error.code] || 'Google sign-in failed. Please try again.',
                 confirmButtonText: 'OK'
             });
         }
     });
-
-    // ===== SIGNUP =====
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('signupEmail').value;
-        const fname = document.getElementById('signupFname').value;          
-        const username = document.getElementById('signupUsername').value;
-        const number = document.getElementById('signupNumber').value;        
-        const address = document.getElementById('signupAddress').value;
-        const password = document.getElementById('signupPassword').value;
-        const confirm = document.getElementById('signupConfirmPassword').value;
-
-        if (password !== confirm) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Passwords Do Not Match',
-                text: 'Please try again.',
-                confirmButtonColor: '#C71585'
-            });
-            return;
-        }
-        const passwordError = validatePassword(password);
-        if (passwordError) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Weak Password',
-                text: passwordError,
-                confirmButtonColor: '#C71585'
-            });
-            return;
-        }
-        try {
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-            await user.sendEmailVerification()
-            const idToken = await user.getIdToken();
-
-            const response = await fetch('/save-user-details', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + idToken
-                },
-                body: JSON.stringify({
-                    uid: user.uid,
-                    username: username,
-                    number: number,       
-                    address: address,
-                    fname: fname
-                })
-            });
-
-            if (response.ok) {
-                await auth.signOut();            // ← sign out first
-                Swal.fire({
-                    icon: 'success',
-                    title: '✅ Account Created!',
-                    text: 'Please check your email before logging in.',
-                    confirmButtonColor: '#C71585'
-                });
-                toggleForms();                   // ← switch to login form
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Save Failed',
-                    text: 'Failed to save profile data.',
-                    confirmButtonColor: '#C71585'
-                });
-            }
-        } catch (error) {
-            const messages = {
-                'auth/email-already-in-use': 'This email is already registered.',
-                'auth/invalid-email': 'Please enter a valid email address.',
-                'auth/weak-password': 'Password should be at least 6 characters.',
-                'auth/operation-not-allowed': 'Sign-up is currently disabled.'
-            };
-            Swal.fire({
-                icon: 'error',
-                title: 'Signup Failed',
-                text: error.code === 'auth/email-already-in-use' ? 'This email is already registered.' : 
-                    error.code === 'auth/weak-password' ? 'Password must be at least 6 characters.' : 
-                    'Signup failed. Please try again.',
-                confirmButtonColor: '#C71585'
-            });
-        }
-    });
-
-    async function forgotPassword() {
-    const email = document.getElementById('loginEmail').value;
-
-    if (!email) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Email Required',
-            text: 'Please enter your email first.',
-            confirmButtonColor: '#C71585'
-        });
-        return;
-    }
-
-    try {
-        await auth.sendPasswordResetEmail(email);
-        Swal.fire({
-            icon: 'success',
-            title: 'Reset Email Sent',
-            text: 'Check your Gmail (and spam folder).',
-            confirmButtonColor: '#C71585'
-        })
-    } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.message,
-            confirmButtonColor: '#C71585'
-        });
+});
+ 
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function toggleForms() {
+    document.getElementById("loginForm").classList.toggle("active");
+    document.getElementById("signupForm").classList.toggle("active");
+}
+ 
+function togglePassword(id) {
+    const input = document.getElementById(id);
+    const icon = input.nextElementSibling;
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
     }
 }
-
-    // ===== GOOGLE SIGN-IN =====
-    document.querySelectorAll('.google-signin-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            try {
-                const result = await auth.signInWithPopup(provider);
-                await sendTokenToBackend(result.user);
-            } catch (error) {
-                const messages = {
-                    'auth/popup-closed-by-user': 'Sign-in cancelled.',
-                    'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
-                    'auth/cancelled-popup-request': 'Sign-in cancelled.',
-                    'auth/account-exists-with-different-credential': 'This email is already registered with password login. Please sign in with your email and password instead.'
-                };
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Google Sign-In Failed',
-                    text: messages[error.code] || 'Google sign-in failed. Please try again.',
-                    confirmButtonColor: '#C71585'
-                });
-            }
-        });
-    });
-
-    // ===== Toggle between login/signup forms =====
-    function toggleForms() {
-        document.getElementById("loginForm").classList.toggle("active");
-        document.getElementById("signupForm").classList.toggle("active");
-    }
-
-    // ===== Toggle password visibility =====
-    function togglePassword(id) {
-        const input = document.getElementById(id);
-        const icon = input.nextElementSibling;
-        if (input.type === "password") {
-            input.type = "text";
-            icon.classList.remove("fa-eye");
-            icon.classList.add("fa-eye-slash");
-        } else {
-            input.type = "password";
-            icon.classList.remove("fa-eye-slash");
-            icon.classList.add("fa-eye");
-        }
-    }
-</script>
-<script>
+ 
+/* ============================================================
+   CSRF FETCH INTERCEPTOR
+   ============================================================ */
 const originalFetch = window.fetch;
 window.fetch = function(url, options = {}) {
-  const isOwnServer = typeof url === 'string' && 
-    (!url.startsWith('http') || url.includes(window.location.hostname));
-  
-  if (isOwnServer) {
-    options = options || {};
-    options.headers = options.headers || {};
-    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
-  }
-  
-  return originalFetch(url, options);
+    const isOwnServer = typeof url === 'string' &&
+        (!url.startsWith('http') || url.includes(window.location.hostname));
+ 
+    if (isOwnServer) {
+        options = options || {};
+        options.headers = options.headers || {};
+        options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
+    }
+ 
+    return originalFetch(url, options);
 };
 </script>
 </body>

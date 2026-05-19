@@ -205,74 +205,74 @@
         <div class="col-6 col-md-3">
           <select id="statusFilter" class="form-select">
             <option value="">All Status</option>
-            <option value="New">New</option>
-            <option value="Accepted">Accepted</option>
-            <option value="Pending">Pending</option>
-            <option value="Ready">Ready</option>
-            <option value="Out for Delivery">Out for Delivery</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+              <option value="New">New</option>
+              <option value="Accepted">Accepted</option>
+              <option value="Pending">Pending</option>
+              <option value="Ready">Ready</option>
+              <option value="Out for Delivery">Out for Delivery</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-3">
+            <select id="typeFilter" class="form-select">
+              <option value="">All Types</option>
+              <option value="premade">Premade</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
         </div>
-        <div class="col-6 col-md-3">
-          <select id="typeFilter" class="form-select">
-            <option value="">All Types</option>
-            <option value="premade">Premade</option>
-            <option value="custom">Custom</option>
-          </select>
+
+        <div class="table-responsive table-wrapper">
+          <table class="table table-hover align-middle custom-table">
+            <thead>
+              <tr>
+                <th>Items</th>
+                <th>Total (₱)</th>
+                <th>Delivery Date</th>
+                <th>Ordered On</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in orders %}
+              <tr data-type="{{ order.order_type }}">
+                <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
+                <td>{{ "%.2f"|format(order.amount) }}</td>
+                <td style="white-space:nowrap;">{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
+                <td style="white-space:nowrap;">{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</td>
+                <td class="status-col">
+                  {% set s = order.status %}
+                  {% if s == 'New' %}<span class="badge-new">New</span>
+                  {% elif s == 'Accepted' %}<span class="badge-accepted">Accepted</span>
+                  {% elif s == 'Pending' %}<span class="badge-pending">Pending</span>
+                  {% elif s == 'Ready' %}<span class="badge-ready">Ready</span>
+                  {% elif s == 'Out for Delivery' %}<span class="badge-out">Out for Delivery</span>
+                  {% elif s == 'Completed' %}<span class="badge-completed">Completed</span>
+                  {% elif s == 'Cancelled' %}<span class="badge-cancelled">Cancelled</span>
+                  {% else %}<span class="badge bg-secondary">{{ s }}</span>
+                  {% endif %}
+                </td>
+                <td style="white-space:nowrap;">
+                  <button class="btn-view-order"
+                          data-bs-toggle="modal"
+                          data-bs-target="#orderModal{{ order.id }}">View</button>
+                  {% if order.status == 'Completed' %}
+                  <a href="/cakes" class="btn-reorder">Reorder</a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% else %}
+              <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">No orders yet! <a href="/cakes" style="color:var(--pink);">Browse our cakes 🎂</a></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-      </div>
+        <nav class="mt-3"><ul class="pagination justify-content-end" id="ordersPagination"></ul></nav>
+      </section>
 
-      <div class="table-responsive table-wrapper">
-        <table class="table table-hover align-middle custom-table">
-          <thead>
-            <tr>
-              <th>Items</th>
-              <th>Total (₱)</th>
-              <th>Delivery Date</th>
-              <th>Ordered On</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for order in orders %}
-            <tr data-type="{{ order.order_type }}">
-              <td>{{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}</td>
-              <td>{{ "%.2f"|format(order.amount) }}</td>
-              <td style="white-space:nowrap;">{{ order.delivery_date.strftime('%b %d, %Y %I:%M %p') }}</td>
-              <td style="white-space:nowrap;">{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</td>
-              <td class="status-col">
-                {% set s = order.status %}
-                {% if s == 'New' %}<span class="badge-new">New</span>
-                {% elif s == 'Accepted' %}<span class="badge-accepted">Accepted</span>
-                {% elif s == 'Pending' %}<span class="badge-pending">Pending</span>
-                {% elif s == 'Ready' %}<span class="badge-ready">Ready</span>
-                {% elif s == 'Out for Delivery' %}<span class="badge-out">Out for Delivery</span>
-                {% elif s == 'Completed' %}<span class="badge-completed">Completed</span>
-                {% elif s == 'Cancelled' %}<span class="badge-cancelled">Cancelled</span>
-                {% else %}<span class="badge bg-secondary">{{ s }}</span>
-                {% endif %}
-              </td>
-              <td style="white-space:nowrap;">
-                <button class="btn-view-order"
-                        data-bs-toggle="modal"
-                        data-bs-target="#orderModal{{ order.id }}">View</button>
-                {% if order.status == 'Completed' %}
-                <a href="/cakes" class="btn-reorder">Reorder</a>
-                {% endif %}
-              </td>
-            </tr>
-            {% else %}
-            <tr><td colspan="6" class="text-center py-4" style="color:var(--text-muted);">No orders yet! <a href="/cakes" style="color:var(--pink);">Browse our cakes 🎂</a></td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <nav class="mt-3"><ul class="pagination justify-content-end" id="ordersPagination"></ul></nav>
-    </section>
-
-  </div><!-- /ordersTab -->
+    </div><!-- /ordersTab -->
 
   <!-- ===== FAVORITES TAB ===== -->
   <div id="favoritesTab" style="display:none;">
