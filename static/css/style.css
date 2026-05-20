@@ -526,6 +526,8 @@ h2 {
 .top-cakes-scroll .card {
     background-color: transparent !important;
     color: white !important;
+    align-items: center;
+    justify-content: center;
 }
 
 .top-cakes-scroll {
