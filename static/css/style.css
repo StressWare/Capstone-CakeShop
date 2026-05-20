@@ -632,10 +632,11 @@ h2 {
 
 .card {
     position: relative;
-    border-radius: 8px;
+    border-radius: 15px;
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.3s ease;
+    border-color: #57002c;
 }
 
 .card:hover {
@@ -727,6 +728,8 @@ h2 {
     flex-wrap: wrap;
     justify-content: center;
     gap: 20px;
+    margin-bottom: 40px;
+
 }
 
 .service-card {
