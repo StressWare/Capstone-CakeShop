@@ -296,7 +296,58 @@
     font-weight: 700;
     color: var(--pink-d);
   }
-
+/* ── Downpayment notice banner ── */
+.downpayment-notice {
+  background: linear-gradient(135deg, rgba(214,51,132,0.18), rgba(160,32,94,0.12));
+  border: 1px solid rgba(214,51,132,0.45);
+  border-left: 4px solid #d63384;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-top: 18px;
+  color: white;
+  font-size: 13px;
+}
+.downpayment-notice .notice-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #f9a8d4;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.downpayment-notice ul {
+  margin: 6px 0 10px 16px;
+  padding: 0;
+  color: rgba(75, 71, 71, 0.75);
+  font-size: 12px;
+  line-height: 1.8;
+}
+.agree-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.agree-row input[type="checkbox"] {
+  accent-color: #d63384;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.agree-row label {
+  font-size: 12px;
+  color: rgba(75, 71, 71, 0.75);
+  cursor: pointer;
+  margin: 0;
+}
+.btn-checkout.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
   @media (max-width: 720px) {
     .layout { flex-direction: column-reverse; }
     .preview-panel { width: 100%; min-width: 0; position: static; }
@@ -468,11 +519,34 @@
           <span class="total-label">Total</span>
           <span class="total-amount">₱<span id="totalPrice">0.00</span></span>
         </div>
+
+        <!-- ── Downpayment Notice ── -->
         {% if customer %}
-          <!-- FIX: form="orderForm" now correctly links to the form above via id -->
-          <button type="submit" form="orderForm" class="btn-checkout" onclick="updateOrderData()">
-            Proceed to Checkout &rarr;
-          </button>
+        <div class="downpayment-notice">
+          <div class="notice-title">
+            <i class="bi bi-info-circle-fill"></i> Downpayment Required
+          </div>
+          <p style="margin:0 0 4px; color:rgba(75, 71, 71, 0.75); font-size:12px;">
+            All custom cake orders require an online downpayment before processing.
+            You will select 50% or 75% on the next step.
+          </p>
+          <ul>
+            <li>50% downpayment — balance paid on delivery/pickup</li>
+            <li>75% downpayment — balance paid on delivery/pickup</li>
+            <li>Full payment — no balance remaining</li>
+          </ul>
+          <div class="agree-row">
+            <input type="checkbox" id="downpaymentAgree">
+            <label for="downpaymentAgree">
+              I understand a downpayment is required to proceed
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" form="orderForm" class="btn-checkout locked"
+                id="proceedBtn" onclick="updateOrderData()">
+          Proceed to Checkout &rarr;
+        </button>
         {% else %}
           <a href="/authentication" class="btn-checkout">Login to Order</a>
         {% endif %}
@@ -504,11 +578,12 @@
     const size    = getParts('cakeSize').price;
     const layers  = getParts('layers').price;
     const toppers = getParts('toppers').price;
+    const rush    = document.getElementById('rush').checked ? 300 : 0;
 
     let addons = 0;
     document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
 
-    const total = design + size + layers + toppers + addons;
+    const total = design + size + layers + toppers + addons + rush;
     document.getElementById('totalPrice').innerText = total.toFixed(2);
     return total;
   }
@@ -544,7 +619,33 @@
       input.value = '';
     }
   }
+// ── Downpayment agree checkbox — unlocks Proceed button ──
+  document.addEventListener('DOMContentLoaded', function() {
+    const agreeBox  = document.getElementById('downpaymentAgree');
+    const proceedBtn = document.getElementById('proceedBtn');
+    if (!agreeBox || !proceedBtn) return;
 
+    agreeBox.addEventListener('change', function() {
+      if (this.checked) {
+        proceedBtn.classList.remove('locked');
+      } else {
+        proceedBtn.classList.add('locked');
+      }
+    });
+
+    // Safety: block form submit if checkbox not ticked
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+      if (agreeBox && !agreeBox.checked) {
+        e.preventDefault();
+        Swal.fire({
+          icon: 'warning',
+          title: 'Please Agree First',
+          text: 'You must acknowledge the downpayment requirement to proceed.',
+          confirmButtonColor: '#d63384'
+        });
+      }
+    });
+  });
   /* =========================================================
     BADGES
     ========================================================= */
@@ -976,6 +1077,7 @@
     ['cakeType','cakeShape','design','cakeSize','layers','toppers','candles'].forEach(id =>
       document.getElementById(id).addEventListener('change', onAnyChange)
     );
+    document.getElementById('rush').addEventListener('change', onAnyChange);
     document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
     ['sprinkles','drip','flowers'].forEach(id =>
       document.getElementById(id).addEventListener('change', onAnyChange)

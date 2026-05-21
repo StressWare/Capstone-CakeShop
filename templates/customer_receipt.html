@@ -67,6 +67,11 @@
     color: #155724;
     font-weight: 600;
   }
+  .receipt-status-banner.downpayment {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+  }
 
   .receipt-info-grid {
     display: grid;
@@ -108,6 +113,24 @@
   .receipt-item-name { color: #333; font-weight: 500; }
   .receipt-item-price { color: #d63384; font-weight: 600; }
 
+  /* ── TOTALS SECTION ── */
+  .receipt-subtotal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.88rem;
+    color: #555;
+  }
+  .receipt-discount-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.88rem;
+    color: #28a745;
+    font-weight: 500;
+  }
   .receipt-total-row {
     display: flex;
     justify-content: space-between;
@@ -120,11 +143,52 @@
   }
   .receipt-total-amount { color: #d63384; font-size: 1.3rem; }
 
+  /* ── DOWNPAYMENT BREAKDOWN ── */
+  .receipt-downpayment-box {
+    background: #fff8f0;
+    border: 1px solid #fde8cc;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 16px;
+  }
+  .receipt-downpayment-box .dp-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .dp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    padding: 4px 0;
+  }
+  .dp-row .dp-label { color: #555; }
+  .dp-row .dp-value { font-weight: 600; color: #333; }
+  .dp-row.dp-paid .dp-value { color: #28a745; }
+  .dp-row.dp-balance .dp-value { color: #d63384; font-size: 1rem; }
+  .dp-divider {
+    border: none;
+    border-top: 1px dashed #fde8cc;
+    margin: 8px 0;
+  }
+  .dp-balance-note {
+    font-size: 0.78rem;
+    color: #856404;
+    margin-top: 8px;
+    background: #fff3cd;
+    border-radius: 6px;
+    padding: 6px 10px;
+  }
+
   .receipt-payment {
     background: #f9f9f9;
     border-radius: 8px;
     padding: 14px 16px;
-    margin-top: 20px;
+    margin-top: 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -143,6 +207,14 @@
   .payment-pending-badge {
     background: #fff3cd;
     color: #856404;
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .payment-downpayment-badge {
+    background: #cce5ff;
+    color: #004085;
     border-radius: 20px;
     padding: 3px 12px;
     font-size: 0.78rem;
@@ -204,6 +276,21 @@
 {% endblock %}
 
 {% block content %}
+
+{# ── Derive useful flags once ── #}
+{% set is_downpayment = order.payment_status == 'Downpayment Paid' %}
+{% set is_paid        = order.payment_status == 'Paid' %}
+{% set dp_type        = order.downpayment_type %}
+{% set dp_amount      = order.downpayment_amount | float if order.downpayment_amount else 0 %}
+{% set remaining      = order.remaining_balance  | float if order.remaining_balance  else 0 %}
+{% set discount       = order.discount_amount    | float if order.discount_amount    else 0 %}
+{% set voucher_pct    = order.voucher_discount   | int   if order.voucher_discount   else 0 %}
+{% set delivery_fee   = order.delivery_fee       | float if order.delivery_fee       else 0 %}
+{% set rush_fee       = order.rush_fee           | float if order.rush_fee           else 0 %}
+
+{# Compute subtotal before fees and discount for display #}
+{% set subtotal_before = order.amount | float + discount - delivery_fee - rush_fee %}
+
 <div class="receipt-wrapper">
   <div class="receipt-doc" id="receiptDoc">
 
@@ -223,11 +310,20 @@
     <!-- ── BODY ── -->
     <div class="receipt-body">
 
-      <div class="receipt-status-banner">
-        <i class="fas fa-check-circle fa-lg"></i>
-        Order Completed – Thank you for your purchase!
-      </div>
+      <!-- Status banner -->
+      {% if is_downpayment %}
+        <div class="receipt-status-banner downpayment">
+          <i class="fas fa-clock fa-lg"></i>
+          Downpayment Received – Remaining balance due upon {{ order.delivery_type == 'Pickup' and 'pick up' or 'delivery' }}.
+        </div>
+      {% else %}
+        <div class="receipt-status-banner">
+          <i class="fas fa-check-circle fa-lg"></i>
+          Order Confirmed – Thank you for your purchase!
+        </div>
+      {% endif %}
 
+      <!-- Info grid -->
       <div class="receipt-info-grid">
         <div class="receipt-info-item">
           <div class="info-label">Order ID</div>
@@ -283,6 +379,7 @@
         {% endif %}
       </div>
 
+      <!-- Items -->
       <div class="receipt-items-title">Items Ordered</div>
 
       {% if order.order_type == 'premade' and order.selected_items %}
@@ -323,11 +420,33 @@
         {% endif %}
       {% endif %}
 
-      {% if order.discount_amount %}
-      <div style="display:flex;justify-content:space-between;align-items:center;
-                  padding:8px 0;font-size:0.88rem;color:#d63384;">
-        <span>Discount ({{ order.voucher_discount }}% on Cakes)</span>
-        <span>-₱{{ "%.2f"|format(order.discount_amount|float) }}</span>
+      <!-- Subtotal + Fees + Voucher Discount + Total -->
+      <div class="receipt-subtotal-row" style="margin-top: 12px; color: #888;">
+        <span>Subtotal</span>
+        <span>₱{{ "%.2f"|format(subtotal_before) }}</span>
+      </div>
+
+      {% if rush_fee > 0 %}
+      <div class="receipt-subtotal-row" style="color: #e65c00;">
+        <span><i class="fas fa-bolt me-1"></i>Rush Fee</span>
+        <span>+₱{{ "%.2f"|format(rush_fee) }}</span>
+      </div>
+      {% endif %}
+
+      {% if delivery_fee > 0 %}
+      <div class="receipt-subtotal-row" style="color: #555;">
+        <span><i class="fas fa-truck me-1"></i>Delivery Fee</span>
+        <span>+₱{{ "%.2f"|format(delivery_fee) }}</span>
+      </div>
+      {% endif %}
+
+      {% if discount > 0 %}
+      <div class="receipt-discount-row">
+        <span>
+          <i class="fas fa-tag me-1"></i>
+          Voucher Discount ({{ voucher_pct }}%)
+        </span>
+        <span>−₱{{ "%.2f"|format(discount) }}</span>
       </div>
       {% endif %}
 
@@ -336,15 +455,59 @@
         <span class="receipt-total-amount">₱{{ "%.2f"|format(order.amount) }}</span>
       </div>
 
+      <!-- Downpayment breakdown (custom orders only) -->
+      {% if dp_amount and order.order_type == 'custom' %}
+      <div class="receipt-downpayment-box">
+        <div class="dp-title">
+          <i class="fas fa-receipt me-1"></i>Payment Breakdown
+        </div>
+
+        <div class="dp-row">
+          <span class="dp-label">Payment Plan</span>
+          <span class="dp-value">
+            {% if dp_type == '50' %}50% Downpayment
+            {% elif dp_type == '75' %}75% Downpayment
+            {% else %}Full Payment
+            {% endif %}
+          </span>
+        </div>
+
+        <hr class="dp-divider">
+
+        <div class="dp-row dp-paid">
+          <span class="dp-label">
+            <i class="fas fa-check-circle me-1"></i>
+            {% if dp_type == 'full' %}Amount Paid{% else %}Downpayment Paid{% endif %}
+          </span>
+          <span class="dp-value">₱{{ "%.2f"|format(dp_amount) }}</span>
+        </div>
+
+        {% if remaining > 0 %}
+        <div class="dp-row dp-balance" style="margin-top: 6px;">
+          <span class="dp-label"><strong>Remaining Balance</strong></span>
+          <span class="dp-value">₱{{ "%.2f"|format(remaining) }}</span>
+        </div>
+        <div class="dp-balance-note">
+          <i class="fas fa-exclamation-circle me-1"></i>
+          Please prepare <strong>₱{{ "%.2f"|format(remaining) }}</strong> upon
+          {% if order.delivery_type == 'Pickup' %}pick up{% else %}delivery{% endif %}.
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Payment method row -->
       <div class="receipt-payment">
         <div>
           <div class="payment-method-label">Payment Method</div>
           <div class="payment-method-value">{{ order.payment_method or 'N/A' }}</div>
         </div>
-        {% if order.payment_status == 'Paid' %}
-          <span >Paid</span>
+        {% if is_paid %}
+          <span class="payment-paid-badge"><i class="fas fa-check me-1"></i>Paid</span>
+        {% elif is_downpayment %}
+          <span class="payment-downpayment-badge"><i class="fas fa-clock me-1"></i>Downpayment Paid</span>
         {% else %}
-          <span >Cash on Delivery</span>
+          <span class="payment-pending-badge">Cash on Delivery</span>
         {% endif %}
       </div>
 
@@ -365,7 +528,7 @@
 
   </div>
 
-  <!-- ── ACTION BUTTONS (outside receipt-doc so not captured in PDF) ── -->
+  <!-- ── ACTION BUTTONS ── -->
   <div class="receipt-actions">
     <button onclick="downloadReceipt()" class="btn-print">
       <i class="fas fa-download me-2"></i>Download Receipt

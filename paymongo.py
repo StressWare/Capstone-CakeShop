@@ -115,25 +115,71 @@ def verify_payment(session_id):
 # ================================================================
 # BUILD LINE ITEMS (for checkout session)
 # ================================================================
-def build_line_items(order_type, selected_items, amount):
-    # Build line_items list for PayMongo checkout session. Returns list of line item dicts.
+def build_line_items(order_type, selected_items, amount,
+                     downpayment_type=None, downpayment_amount=None,
+                     remaining_balance=None, discount_amount=0,delivery_fee=0, rush_fee=0):
+    """
+    Build line_items list for PayMongo checkout session.
+    - Premade: one line item per cake, with voucher discount applied as negative line item.
+    - Custom: single line item using downpayment amount (or full if no downpayment).
+    """
     line_items = []
+    discount_amount = float(discount_amount or 0)
 
     if order_type == "premade" and selected_items:
+        # One line item per cake at real price
         for item in selected_items:
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(float(item["price"]) * 100),  # convert to centavos
+                "amount":   int(float(item["price"]) * 100),
                 "name":     item["cake_name"],
                 "quantity": int(item.get("quantity", 1))
             })
+        # Delivery fee line item ──
+        if delivery_fee > 0:
+            line_items.append({
+                "currency": "PHP",
+                "amount":   int(delivery_fee * 100),
+                "name":     "Delivery Fee",
+                "quantity": 1
+            })
+
+        # ── Apply voucher discount as a negative line item ──
+        # PayMongo doesn't support discounts natively, so we add a discount line.
+        # Amount must be positive in the dict but we label it clearly.
+        if discount_amount > 0:
+            line_items.append({
+                "currency": "PHP",
+                "amount":   int(discount_amount * 100),
+                "name":     "Voucher Discount",
+                "quantity": 1,
+                # PayMongo requires amount > 0; the negative effect is
+                # handled by passing the correct total to create_checkout_session.
+                # This line item is display-only on the PayMongo page.
+            })
+
     else:
-        # Custom cake → single line item
-        line_items.append({
-            "currency": "PHP",
-            "amount":   int(float(amount) * 100),
-            "name":     "Custom Cake Order",
-            "quantity": 1
-        })
+        # ── Custom cake ──
+        if downpayment_type and downpayment_type != "full" and downpayment_amount:
+            pct_label = "50%" if downpayment_type == "50" else "75%"
+            charge    = float(downpayment_amount)
+            balance   = float(remaining_balance or 0)
+
+            line_items.append({
+                "currency": "PHP",
+                "amount":   int(charge * 100),
+                "name":     f"Custom Cake Order — {pct_label} Downpayment",
+                "quantity": 1,
+                
+            })
+        else:
+            # Full payment
+            charge = float(downpayment_amount or amount)
+            line_items.append({
+                "currency": "PHP",
+                "amount":   int(charge * 100),
+                "name":     "Custom Cake Order — Full Payment",
+                "quantity": 1,
+            })
 
     return line_items

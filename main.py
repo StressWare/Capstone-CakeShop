@@ -615,39 +615,41 @@ def add_review():
     
     flash("Review submitted! Thank you 🎂", "success")
     return redirect(url_for("customer_dashboard"))
-# ---------------- RECIEPT PAGE ----------------
+# ---------------- RECEIPT PAGE ----------------
 @app.route("/order/receipt/<order_id>")
 @profile_required
 @login_required
 def order_receipt(order_id):
     user_id = session.get("user_id")
-    
-    # Get order from top-level collection
-    order_ref = orders.document(order_id)  # ← CHANGED
+
+    order_ref = orders.document(order_id)
     order_doc = order_ref.get()
-    
+
     if not order_doc.exists:
         flash("Receipt not found.", "danger")
         return redirect(url_for("customer_dashboard"))
-    
+
     order = order_doc.to_dict()
-    
+
     # Verify order belongs to current user
     if order.get("user_id") != user_id:
         flash("Unauthorized access.", "danger")
         return redirect(url_for("customer_dashboard"))
-    
+
     order["id"] = order_id
     order = convert_timestamps(order)
-    
-    if order.get("status") != "Completed" and order.get("payment_status") != "Paid":
+
+    # ── FIXED: use OR so any valid payment state grants access ──
+    status  = order.get("status")
+    payment = order.get("payment_status")
+
+    if status != "Completed" and payment not in ("Paid", "Downpayment Paid"):
         flash("Receipt is only available for completed or paid orders.", "warning")
         return redirect(url_for("customer_dashboard"))
-    
-    order["calculated_total"] = calculate_order_total(order)
-    
-    return render_template("customer_receipt.html", order=order)
 
+    order["calculated_total"] = calculate_order_total(order)
+
+    return render_template("customer_receipt.html", order=order)
 # ================================================================
 # ORDER ROUTES
 # ================================================================
@@ -701,8 +703,12 @@ def place_order():
         for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
             if request.form.get(addon_key):
                 amount += float(addon_prices.get(addon_key, 0))
+                
 
     except Exception as e:
+        print(f"DEBUG custom amount after recompute: {amount}")
+        print(f"DEBUG icing_key: {icing_key}, size_key: {size_key}, layers_key: {layers_key}, toppers_key: {toppers_key}")
+        print(f"DEBUG prices — icing: {icing_prices}, size: {size_prices}")
         app.logger.exception("Error computing custom cake price")
         flash("Unable to compute order price. Please try again.", "danger")
         return redirect(url_for('customize'))
@@ -731,6 +737,17 @@ def place_order():
         customer       = customer,
         min_date       = min_date,
         active_vouchers = active_vouchers,
+        cake_design         = request.form.get('design', '0|0'),
+        cake_size           = request.form.get('cakeSize', '6|0'),
+        cake_layers         = request.form.get('layers', '1|0'),
+        cake_toppers        = request.form.get('toppers', '0|0'),
+        cake_filling        = request.form.get('filling', ''),
+        cake_cupcake        = request.form.get('cupcake', ''),
+        cake_ediblepaper    = request.form.get('ediblepaper', ''),
+        cake_fondanttoppers = request.form.get('fondanttoppers', ''),
+        cake_sprinkles      = request.form.get('sprinkles', ''),
+        cake_drip           = request.form.get('drip', ''),
+        cake_flowers        = request.form.get('flowers', ''),
     )
 
 # ---------------- PREMADE ORDER ----------------
@@ -856,7 +873,9 @@ def finalize_order():
     if payment_method not in ALLOWED_PAYMENTS:
         flash("Invalid payment method.", "danger")
         return redirect(url_for("customer_dashboard"))
-
+    if order_type == "custom" and payment_method != "Online Payment":
+        flash("Custom cake orders require online payment.", "danger")
+        return redirect(url_for("customize"))
     selected_json = request.form.get("selected_items", "[]")
     try:
         parsed = json.loads(selected_json)
@@ -910,7 +929,15 @@ def finalize_order():
         if next(existing, None):
             flash("Order already placed.", "warning")
             return redirect(url_for("customer_dashboard"))
-
+        
+    downpayment_type   = None
+    downpayment_amount = None
+    remaining_balance  = None
+    if order_type == "custom":
+        raw_dp_type = request.form.get("downpayment_type", "full").strip()
+        if raw_dp_type not in ("50", "75", "full"):
+            raw_dp_type = "full"
+        downpayment_type = raw_dp_type
     #  Voucher validation 
     voucher_id           = request.form.get('voucher_id', '').strip()
     voucher_discount_pct = 0
@@ -1019,6 +1046,8 @@ def finalize_order():
             addon_prices   = prices["addons"]
 
             amount  = 0.0
+            print(f"DEBUG keys — icing:{icing_key} size:{size_key} layers:{layers_key} toppers:{toppers_key}")
+            print(f"DEBUG prices — size:{size_prices}")
             amount += float(icing_prices.get(icing_key, 0))
             amount += float(size_prices.get(size_key, 0))
             amount += float(layers_prices.get(layers_key, 0))
@@ -1028,8 +1057,11 @@ def finalize_order():
                 if request.form.get(addon_key):
                     amount += float(addon_prices.get(addon_key, 0))
 
-        except Exception:
+        except Exception as e:
             app.logger.exception("Error recomputing custom price in place-order")
+            print(f"DEBUG recompute error: {e}")
+            import traceback
+            traceback.print_exc()
             flash("Unable to verify order price. Please try again.", "danger")
             return redirect(url_for('customize'))
 
@@ -1046,8 +1078,15 @@ def finalize_order():
                 component_name  = match2[1].strip()
                 component_price = float(match2[2].replace(',', ''))
                 custom_components.append({"name": component_name, "price": component_price})
-
-    # ── Apply voucher discount ──
+    #  Rush fee (custom only) 
+    RUSH_FEE = 300.0
+    if rush:
+        amount = round(amount + RUSH_FEE, 2)
+    #  Add delivery fee 
+    DELIVERY_FEE = 50.0
+    if delivery_type == "Delivery":
+        amount = round(amount + DELIVERY_FEE, 2)
+    # Apply voucher discount 
     if voucher_discount_pct > 0:
         if order_type == 'premade':
             cake_subtotal = 0.0
@@ -1056,7 +1095,9 @@ def finalize_order():
                     cake_subtotal += float(item.get('subtotal', 0.0))
             discount_amount = round(cake_subtotal * voucher_discount_pct / 100, 2)
         else:
-            discount_amount = round(amount * voucher_discount_pct / 100, 2)
+            # discount on cake amount only, not delivery fee
+            cake_amount = amount - (DELIVERY_FEE if delivery_type == "Delivery" else 0.0)
+            discount_amount = round(cake_amount * voucher_discount_pct / 100, 2)
         amount = round(amount - discount_amount, 2)
     else:
         discount_amount = 0
@@ -1075,6 +1116,8 @@ def finalize_order():
         "payment_status": "Pending",
         "payment_id":     None,
         "delivery_type":  delivery_type,
+        "rush_fee": RUSH_FEE if rush else 0.0,
+        "delivery_fee": DELIVERY_FEE if delivery_type == "Delivery" else 0.0,
         "inspo_image":    inspo_image,
         "order_type":     order_type,
         "custom_components": custom_components,
@@ -1083,6 +1126,9 @@ def finalize_order():
         "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,
         "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,
         "discount_amount":  discount_amount if voucher_discount_pct > 0 else None,
+        "downpayment_type":   downpayment_type,
+        "downpayment_amount": None,  # filled below after amount is final
+        "remaining_balance":  None,
         "customer": {
             "name":      customer_name,
             "contact":   contact,
@@ -1095,7 +1141,31 @@ def finalize_order():
         },
         "created_at": now
     }
+    # ── Compute final downpayment/balance amounts for custom orders ──
+    if order_type == "custom" and downpayment_type:
+        if downpayment_type == "50":
+            dp_amt  = round(amount * 0.50, 2)
+            bal_amt = round(amount - dp_amt, 2)
+        elif downpayment_type == "75":
+            dp_amt  = round(amount * 0.75, 2)
+            bal_amt = round(amount - dp_amt, 2)
+        else:  # full
+            dp_amt  = amount
+            bal_amt = 0.0
 
+        order_data["downpayment_amount"] = dp_amt
+        order_data["remaining_balance"]  = bal_amt
+
+        # payment_status reflects whether fully or partially paid
+        if downpayment_type == "full":
+            order_data["payment_status"] = "Pending"  # will be set to Paid on PayMongo success
+        else:
+            order_data["payment_status"] = "Pending"  # will be set to Downpayment Paid on success
+
+        # The actual amount charged to PayMongo = downpayment amount
+        charge_amount = dp_amt
+    else:
+        charge_amount = amount
     # ── Deduct stock for premade orders (transactional fb built in decorator) ──
     if order_type == "premade"and payment_method in ["Cash on Delivery", "Bank Transfer"]:
         @firestore.transactional
@@ -1148,7 +1218,7 @@ def finalize_order():
         )
 
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
-        if voucher_id and voucher_discount_pct > 0:
+        if voucher_id and discount_amount > 0:
             users.document(user_id).collection("vouchers").document(voucher_id).update({
                 "used":    True,
                 "used_at": datetime.now(PH_TZ)
@@ -1157,14 +1227,28 @@ def finalize_order():
         return redirect(url_for("customer_dashboard"))
 
     # ── Online Payment → PayMongo ──
-    line_items = build_line_items(order_type, selected_items, amount)
+    line_items = build_line_items(
+        order_type         = order_type,
+        selected_items     = selected_items,
+        amount             = amount,           # full discounted amount (for premade line items)
+        downpayment_type   = downpayment_type,
+        downpayment_amount = order_data.get("downpayment_amount"),
+        remaining_balance  = order_data.get("remaining_balance"),
+        discount_amount    = discount_amount,
+        delivery_fee       = order_data.get("delivery_fee", 0),
+        rush_fee           = order_data.get("rush_fee", 0),
+    )
 
     base_url    = request.host_url.rstrip('/')
     success_url = f"{base_url}/payment/success"
     cancel_url  = f"{base_url}/payment/failed"
-
+    print(f"DEBUG charge_amount: {charge_amount}")
+    print(f"DEBUG charge_amount * 100: {int(charge_amount * 100)}")
+    print(f"DEBUG downpayment_type: {downpayment_type}")
+    print(f"DEBUG downpayment_amount in order_data: {order_data.get('downpayment_amount')}")
+    print(f"DEBUG line_items: {line_items}")
     checkout = create_checkout_session(
-        amount            = int(amount * 100),
+        amount            = int(charge_amount * 100),  # ← downpayment or full
         order_description = f"Ms. Brave Cake Shop - {item_names[:100]}",
         line_items        = line_items,
         success_url       = success_url,
@@ -2129,7 +2213,57 @@ def admin_logs_page():
 # ================================================================
 # ADMIN ACTION ROUTES
 # ================================================================
+# ---------------- MARK BALANCE COLLECTED ----------------
+@app.route("/order/balance-collected/<order_id>", methods=["POST"])
+@admin_required
+def mark_balance_collected(order_id):
+    """Admin marks the remaining balance as collected from customer."""
+    try:
+        order_ref = orders.document(order_id)
+        order_doc = order_ref.get()
 
+        if not order_doc.exists:
+            return jsonify({"success": False, "message": "Order not found."})
+
+        order_data = order_doc.to_dict()
+
+        # Guard: only valid for custom orders with downpayment
+        if order_data.get("order_type") != "custom":
+            return jsonify({"success": False, "message": "Only custom orders can have balance collected."})
+
+        if order_data.get("payment_status") != "Downpayment Paid":
+            return jsonify({"success": False, "message": "Order is not in Downpayment Paid status."})
+
+        order_ref.update({
+            "payment_status":  "Fully Paid",
+            "remaining_balance": 0,
+            "balance_collected_at": datetime.now(PH_TZ)
+        })
+
+        log_admin_action(
+            action   = "Marked balance as collected",
+            target   = f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
+            category = "order"
+        )
+
+        # Notify customer
+        notify_user_id = order_data.get("user_id")
+        if notify_user_id:
+            notifications.add({
+                "user_id":    notify_user_id,
+                "order_id":   order_id,
+                "title":      "Payment Complete",
+                "message":    f"Your remaining balance for order #{order_id[:8]} has been collected. You're fully paid! 🎂",
+                "type":       "payment_update",
+                "is_read":    False,
+                "created_at": datetime.now(PH_TZ)
+            })
+
+        return jsonify({"success": True, "message": "Balance marked as collected. Order is now Fully Paid."})
+
+    except Exception as e:
+        app.logger.exception("Error in mark_balance_collected")
+        return jsonify({"success": False, "message": str(e)})
 # ---------------- CUSTOMER ORDER RESTRICTION----------------
 @app.route("/locked-date-today")
 @limiter.exempt
@@ -2710,7 +2844,11 @@ def paymongo_webhook():
         # Update order data
         order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
         order_data["created_at"] = datetime.fromisoformat(order_data["created_at"])
-        order_data["payment_status"] = "Paid"
+        dp_type = order_data.get("downpayment_type")
+        if dp_type and dp_type != "full":
+            order_data["payment_status"] = "Downpayment Paid"
+        else:
+            order_data["payment_status"] = "Paid"
         order_data["payment_id"] = payment_id
         order_data["payment_method"] = payment_method
         order_data["paymongo_session_id"] = session_id 
@@ -2743,9 +2881,36 @@ def paymongo_webhook():
                 return jsonify({"status": "stock error"}), 200
 
         # Save to orders collection
-        orders.add(order_data)
+        doc_ref  = orders.add(order_data)        # was  orders.add(order_data)
+        order_id = doc_ref[1].id
         users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
         invalidate_cache("order_counts")
+         # Confirmation email 
+        user_doc = users.document(order_data.get("user_id")).get()
+        fname    = user_doc.to_dict().get("fname", "Customer")
+        email    = user_doc.to_dict().get("email", "")
+        send_order_confirmation(
+            fname=fname,
+            email=email,
+            order_id=order_id,
+            amount=order_data.get("amount", 0),
+            payment_method=order_data.get("payment_method")
+        )
+        # Mark voucher as used
+        v_id = order_data.get('voucher_id', '')
+        if v_id:
+            users.document(order_data['user_id']).collection("vouchers").document(v_id).update({
+                "used":    True,
+                "used_at": datetime.now(PH_TZ)
+            })
+        # Loyalty stamp
+        handle_loyalty_stamp(
+            users,
+            order_data.get('user_id'),
+            order_data.get('order_type'),
+            order_data.get('selected_items', []),
+            cakes
+        )
         # Delete pending order
         pending_ref.delete()
     return jsonify({"status": "ok"}), 200
@@ -2790,7 +2955,12 @@ def payment_success():
 
     order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
     order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
-    order_data["payment_status"] = "Paid"
+    # ── Set correct payment status based on downpayment type ──
+    dp_type = order_data.get("downpayment_type")
+    if dp_type and dp_type != "full":
+        order_data["payment_status"] = "Downpayment Paid"
+    else:
+        order_data["payment_status"] = "Paid"
     order_data["payment_id"]     = payment_result.get("reference")
     order_data["payment_method"] = payment_result.get("payment_method", order_data["payment_method"]).upper()
     order_data["paymongo_session_id"] = session_id

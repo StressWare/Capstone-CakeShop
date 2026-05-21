@@ -39,6 +39,21 @@
     <input type="hidden" name="voucher_id" id="voucherIdInput" value="">
     <input type="hidden" name="idempotency_key" id="idempotencyKey" value="">
     <input type="hidden" name="discount_amount" id="discountAmountInput" value="0">
+    <input type="hidden" name="downpayment_type" id="downpaymentTypeInput" value="full">
+    <input type="hidden" name="downpayment_amount" id="downpaymentAmountInput" value="0">
+    {% if order_type == 'custom' %}
+    <input type="hidden" name="design"          value="{{ cake_design }}">
+    <input type="hidden" name="cakeSize"        value="{{ cake_size }}">
+    <input type="hidden" name="layers"          value="{{ cake_layers }}">
+    <input type="hidden" name="toppers"         value="{{ cake_toppers }}">
+    <input type="hidden" name="filling"         value="{{ cake_filling }}">
+    <input type="hidden" name="cupcake"         value="{{ cake_cupcake }}">
+    <input type="hidden" name="ediblepaper"     value="{{ cake_ediblepaper }}">
+    <input type="hidden" name="fondanttoppers"  value="{{ cake_fondanttoppers }}">
+    <input type="hidden" name="sprinkles"       value="{{ cake_sprinkles }}">
+    <input type="hidden" name="drip"            value="{{ cake_drip }}">
+    <input type="hidden" name="flowers"         value="{{ cake_flowers }}">
+    {% endif %}
 
     <div class="checkout-main">
 
@@ -148,23 +163,118 @@
         <div class="checkout-form-section">
           <div class="section-title">Payment Method</div>
 
-          <div class="payment-group-label text-white">Manual Payment</div>
-          <div class="payment-options">
-            <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
-              <i class="fas fa-money-bill-wave"></i>
-              <span class="payment-method-label">Cash on Delivery</span>
+          {% if order_type == 'custom' %}
+            <!-- Custom orders: Online Payment ONLY -->
+            <div class="payment-options">
+              <div class="payment-method active" id="onlinePaymentBtn"
+                   onclick="selectPayment(this, 'Online Payment')">
+                <i class="fa-solid fa-credit-card"></i>
+                <span class="payment-method-label">Online Payment</span>
+              </div>
             </div>
-            <div class="payment-method" onclick="selectPayment(this, 'Online Payment')">
-              <i class="fa-solid fa-credit-card"></i>
-              <span class="payment-method-label">Online Payment</span>
+            <div class="paymongo-notice" id="paymongoNotice" style="display:block;">
+              <i class="fas fa-lock me-2"></i>
+              Custom cake orders require online payment (downpayment or full).
+              You'll be redirected to PayMongo's secure checkout page.
             </div>
-          </div>
 
-          <div class="paymongo-notice" id="paymongoNotice">
-            <i class="fas fa-lock me-2"></i>
-            You'll be redirected to PayMongo's secure checkout page.
-          </div>
+            <!-- ── Downpayment Selector (custom only) ── -->
+            <div style="margin-top:16px;">
+              <div class="section-title" style="font-size:13px; margin-bottom:10px;">
+                Downpayment Option
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px;" id="downpaymentOptions">
+
+                <div class="downpayment-opt" id="dp-50"
+                     onclick="selectDownpayment('50')"
+                     style="padding:12px 14px; border-radius:9px;
+                            border:1px solid rgba(214,51,132,0.4);
+                            cursor:pointer; transition:all 0.2s;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <div style="font-size:14px; font-weight:700; color:#fff;">50% Downpayment</div>
+                      <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px;">
+                        Pay half now — balance due on delivery/pickup
+                      </div>
+                    </div>
+                    <div style="font-size:13px; font-weight:700; color:#d63384;"
+                         id="dp-50-amount">₱0.00</div>
+                  </div>
+                </div>
+
+                <div class="downpayment-opt" id="dp-75"
+                     onclick="selectDownpayment('75')"
+                     style="padding:12px 14px; border-radius:9px;
+                            border:1px solid rgba(214,51,132,0.4);
+                            cursor:pointer; transition:all 0.2s;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <div style="font-size:14px; font-weight:700; color:#fff;">75% Downpayment</div>
+                      <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px;">
+                        Pay ¾ now — small balance due on delivery/pickup
+                      </div>
+                    </div>
+                    <div style="font-size:13px; font-weight:700; color:#d63384;"
+                         id="dp-75-amount">₱0.00</div>
+                  </div>
+                </div>
+
+                <div class="downpayment-opt" id="dp-full"
+                     onclick="selectDownpayment('full')"
+                     style="padding:12px 14px; border-radius:9px;
+                            border:2px solid #d63384;
+                            background:rgba(214,51,132,0.1);
+                            cursor:pointer; transition:all 0.2s;">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <div style="font-size:14px; font-weight:700; color:#fff;">
+                        Full Payment
+                        <span style="font-size:10px; background:#d63384; color:#fff;
+                               padding:1px 6px; border-radius:8px; margin-left:4px;">
+                          Recommended
+                        </span>
+                      </div>
+                      <div style="font-size:11px; color:rgba(255,255,255,0.5); margin-top:2px;">
+                        Pay the full amount now — no balance remaining
+                      </div>
+                    </div>
+                    <div style="font-size:13px; font-weight:700; color:#d63384;"
+                         id="dp-full-amount">₱0.00</div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Balance remaining info box -->
+              <div id="balanceInfoBox"
+                   style="display:none; margin-top:10px; padding:10px 14px;
+                          background:rgba(255,193,7,0.1); border:1px solid rgba(255,193,7,0.4);
+                          border-radius:8px; font-size:12px; color:rgba(255,255,255,0.8);">
+                <i class="fas fa-info-circle me-1" style="color:#ffc107;"></i>
+                <span id="balanceInfoText"></span>
+              </div>
+            </div>
+
+          {% else %}
+            <!-- Premade orders: COD or Online Payment -->
+            <div class="payment-group-label text-white">Manual Payment</div>
+            <div class="payment-options">
+              <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
+                <i class="fas fa-money-bill-wave"></i>
+                <span class="payment-method-label">Cash on Delivery</span>
+              </div>
+              <div class="payment-method" onclick="selectPayment(this, 'Online Payment')">
+                <i class="fa-solid fa-credit-card"></i>
+                <span class="payment-method-label">Online Payment</span>
+              </div>
+            </div>
+            <div class="paymongo-notice" id="paymongoNotice">
+              <i class="fas fa-lock me-2"></i>
+              You'll be redirected to PayMongo's secure checkout page.
+            </div>
+          {% endif %}
         </div>
+
         <!-- Voucher selector -->
         <div class="checkout-form-section" style="margin-top:12px;">
           <div class="section-title">Your Vouchers</div>
@@ -256,8 +366,8 @@
                 </div>
               </div>
             {% endif %}
-
           </div>
+
           <div class="order-summary-price" style="font-size:0.9rem; opacity:0.8;">
               <span>Subtotal</span>
               <span id="displaySubtotal">₱{{ "%.2f"|format(amount|float) }}</span>
@@ -266,8 +376,20 @@
               <span>Delivery Fee</span>
               <span id="displayDeliveryFee">₱50.00</span>
           </div>
+          <!-- Downpayment row — only shown for custom orders -->
+          <div class="order-summary-price" id="downpaymentRow"
+               style="font-size:0.9rem; color:#f9a8d4; display:none;">
+              <span id="downpaymentRowLabel">Downpayment (50%)</span>
+              <span id="displayDownpayment">₱0.00</span>
+          </div>
+          <!-- Balance row — only shown when downpayment selected -->
+          <div class="order-summary-price" id="balanceRow"
+               style="font-size:0.9rem; color:rgba(255,193,7,0.85); display:none;">
+              <span>Balance Due on Delivery</span>
+              <span id="displayBalance">₱0.00</span>
+          </div>
           <div class="order-summary-price total">
-              <span>Total</span>
+              <span id="totalLabel">Total</span>
               <span id="displayTotal">₱{{ "%.2f"|format((amount|float) + 50) }}</span>
           </div>
           <div style="margin-top: 20px;">
@@ -501,6 +623,39 @@
   });
 </script>
 <script>
+    // ── Downpayment state (custom orders only) ──
+  var currentDownpaymentType = 'full'; // '50', '75', or 'full'
+  var ORDER_TYPE = '{{ order_type }}';
+  var IS_RUSH = '{{ rush }}' === 'yes';
+
+  // Set payment method hidden input to Online Payment for custom orders on load
+  if (ORDER_TYPE === 'custom') {
+    document.getElementById('paymentInput').value = 'Online Payment';
+    document.getElementById('submitBtn').innerHTML =
+      '<i class="fas fa-lock me-2"></i>Proceed to Payment';
+  }
+
+  function selectDownpayment(type) {
+    currentDownpaymentType = type;
+
+    // Reset all option styles
+    ['50','75','full'].forEach(function(t) {
+      var el = document.getElementById('dp-' + t);
+      if (!el) return;
+      el.style.border  = '1px solid rgba(214,51,132,0.4)';
+      el.style.background = 'transparent';
+    });
+
+    // Highlight selected
+    var selected = document.getElementById('dp-' + type);
+    if (selected) {
+      selected.style.border = '2px solid #d63384';
+      selected.style.background = 'rgba(214,51,132,0.1)';
+    }
+
+    document.getElementById('downpaymentTypeInput').value = type;
+    recalcTotal();
+  }
   // ── Quantity controls for premade orders ──
   var currentDeliveryType = 'Delivery';
   var orderItems = {{ selected_items | tojson }};
@@ -555,30 +710,104 @@
     recalcTotal();
   }
 
-  function recalcTotal() {
-      var subtotal = orderItems.length > 0
-        ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
-        : baseAmount;
-      var deliveryFee  = currentDeliveryType === 'Delivery' ? 50 : 0;
+function recalcTotal() {
+    var subtotal = orderItems.length > 0
+      ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
+      : baseAmount;
+    var deliveryFee = currentDeliveryType === 'Delivery' ? 50 : 0;
 
-      // Only apply discount to Cake category items (or full amount for custom)
-      var discountBase = 0;
-      if (orderItems.length > 0) {
-        orderItems.forEach(function(i) {
-          if (i.category === 'Cake') discountBase += i.subtotal;
-        });
+    // ── Voucher discount (only on Cake category for premade, full amount for custom) ──
+    var discountBase = 0;
+    if (orderItems.length > 0) {
+      orderItems.forEach(function(i) {
+        if (i.category === 'Cake') discountBase += i.subtotal;
+      });
+    } else {
+      discountBase = baseAmount; // custom cake
+    }
+    var discountAmt = discountBase * activeDiscount / 100;
+    var discountedSubtotal = subtotal - discountAmt;
+
+    var rushFee = IS_RUSH ? 300 : 0;
+    var grandTotal = discountedSubtotal + deliveryFee + rushFee;
+        // ── Show rush fee row ──
+    if (IS_RUSH && !document.getElementById('displayRushRow')) {
+        var deliveryRow = document.getElementById('displayDeliveryFee').closest('.order-summary-price');
+        var row = document.createElement('div');
+        row.id = 'displayRushRow';
+        row.className = 'order-summary-price';
+        row.style.cssText = 'font-size:0.9rem;color:#e65c00;opacity:0.9;';
+        row.innerHTML = '<span>⚡ Rush Fee</span><span>₱300.00</span>';
+        deliveryRow.insertAdjacentElement('afterend', row);
+    }
+    // ── Downpayment logic (custom orders only) ──
+    var payNow = grandTotal; // default: full payment
+    var balance = 0;
+
+    if (ORDER_TYPE === 'custom') {
+      var dp50  = Math.round(grandTotal * 0.50 * 100) / 100;
+      var dp75  = Math.round(grandTotal * 0.75 * 100) / 100;
+
+      // Update the amount labels on each option card
+      var el50 = document.getElementById('dp-50-amount');
+      var el75 = document.getElementById('dp-75-amount');
+      var elFull = document.getElementById('dp-full-amount');
+      if (el50)   el50.textContent   = '₱' + dp50.toFixed(2);
+      if (el75)   el75.textContent   = '₱' + dp75.toFixed(2);
+      if (elFull) elFull.textContent = '₱' + grandTotal.toFixed(2);
+
+      if (currentDownpaymentType === '50') {
+        payNow  = dp50;
+        balance = Math.round((grandTotal - dp50) * 100) / 100;
+      } else if (currentDownpaymentType === '75') {
+        payNow  = dp75;
+        balance = Math.round((grandTotal - dp75) * 100) / 100;
       } else {
-        // Custom cake — full amount is cake
-        discountBase = baseAmount;
+        payNow  = grandTotal;
+        balance = 0;
       }
-      var discountAmt = discountBase * activeDiscount / 100;
-      var total       = subtotal + deliveryFee - discountAmt;
 
-    document.getElementById('displaySubtotal').textContent = '₱' + subtotal.toFixed(2);
-    document.getElementById('totalAmountInput').value      = total.toFixed(2);
-    document.getElementById('displayTotal').textContent    = '₱' + total.toFixed(2);
+      // Store downpayment amount for backend
+      document.getElementById('downpaymentAmountInput').value = payNow.toFixed(2);
 
-    // Show/hide discount row
+      // Show/hide downpayment rows in summary
+      var dpRow  = document.getElementById('downpaymentRow');
+      var balRow = document.getElementById('balanceRow');
+      var balBox = document.getElementById('balanceInfoBox');
+      var totalLabel = document.getElementById('totalLabel');
+
+      if (currentDownpaymentType !== 'full') {
+        var pctLabel = currentDownpaymentType === '50' ? '50%' : '75%';
+        document.getElementById('downpaymentRowLabel').textContent = 'Downpayment (' + pctLabel + ')';
+        document.getElementById('displayDownpayment').textContent  = '₱' + payNow.toFixed(2);
+        document.getElementById('displayBalance').textContent      = '₱' + balance.toFixed(2);
+        if (dpRow)  dpRow.style.display  = 'flex';
+        if (balRow) balRow.style.display = 'flex';
+
+        // Balance info box
+        if (balBox) {
+          balBox.style.display = 'block';
+          document.getElementById('balanceInfoText').textContent =
+            'You will pay ₱' + payNow.toFixed(2) + ' now. The remaining ₱' +
+            balance.toFixed(2) + ' is due on delivery or pickup.';
+        }
+
+        totalLabel.textContent = 'Pay Now';
+      } else {
+        if (dpRow)  dpRow.style.display  = 'none';
+        if (balRow) balRow.style.display = 'none';
+        if (balBox) balBox.style.display = 'none';
+        totalLabel.textContent = 'Total';
+      }
+    }
+
+    // ── Update display ──
+    document.getElementById('displaySubtotal').textContent  = '₱' + subtotal.toFixed(2);
+    // totalAmountInput holds what actually gets charged (downpayment or full)
+    document.getElementById('totalAmountInput').value       = payNow.toFixed(2);
+    document.getElementById('displayTotal').textContent     = '₱' + payNow.toFixed(2);
+
+    // ── Discount row ──
     var discountRow = document.getElementById('displayDiscountRow');
     if (discountAmt > 0) {
       if (!discountRow) {
@@ -621,5 +850,8 @@
       });
     } catch(e) {}
   })();
+    if (ORDER_TYPE === 'custom') {
+    selectDownpayment('full'); // default: full selected
+  }
 </script>
 {% endblock %}

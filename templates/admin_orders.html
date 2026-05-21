@@ -461,6 +461,8 @@
                 <option value="New">New</option>
                 <option value="Accepted">Accepted</option>
                 <option value="Pending">Pending</option>
+                <option value="Downpayment Paid">Downpayment Paid</option>
+                <option value="Fully Paid">Fully Paid</option>
                 <option value="Ready">Ready</option>
                 <option value="Out for Delivery">Out for Delivery</option>
                 <option value="Delivered">Delivered</option>
@@ -817,10 +819,14 @@ document.addEventListener('hidden.bs.modal', function() {
 
     const statusBadge = getStatusBadge(o.status);
 
-    const paymentCell = o.payment_status === 'Paid'
-      ? `<span class="badge bg-success">✅ Paid</span>`
-      : `<span class="badge bg-warning text-dark">⏳ Pending</span>`;
-
+    const paymentStatusMap = {
+      'Paid':             '<span class="badge bg-success">✅ Fully Paid</span>',
+      'Fully Paid':       '<span class="badge bg-success">✅ Fully Paid</span>',
+      'Downpayment Paid': '<span class="badge bg-info text-dark">💰 Downpayment Paid</span>',
+      'Pending':          '<span class="badge bg-warning text-dark">⏳ Pending</span>',
+    };
+    const paymentCell = paymentStatusMap[o.payment_status] ||
+      `<span class="badge bg-secondary">${o.payment_status || 'Unknown'}</span>`;
     const detailsCell = `
       <button class="btn btn-sm btn-outline-info" onclick="showDetails('${o.id}')">View</button>
       ${o.status === 'Out for Delivery' && o.delivery_type === 'Delivery' && o.delivery_token
@@ -940,6 +946,47 @@ document.addEventListener('hidden.bs.modal', function() {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
     }
+    window.markBalanceCollected = async function(orderId) {
+    const confirm = await Swal.fire({
+      icon: 'question',
+      title: 'Mark Balance as Collected?',
+      html: `<div style="font-size:0.88rem; color:#555;">
+               This will set the payment status to <strong>Fully Paid</strong>.<br>
+               Make sure you have collected the remaining balance from the customer.
+             </div>`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Collected',
+      cancelButtonText:  'Cancel',
+      confirmButtonColor: '#198754',
+      cancelButtonColor:  '#6c757d',
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res    = await fetch(`/order/balance-collected/${orderId}`, { method: 'POST' });
+      const result = await res.json();
+
+      Swal.fire({
+        toast: true, position: 'top-end',
+        icon:  result.success ? 'success' : 'error',
+        title: result.message,
+        showConfirmButton: false,
+        timer: 2500, timerProgressBar: true
+      });
+
+      if (result.success) {
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById('orderDetailsModal')
+        );
+        if (modal) modal.hide();
+      }
+    } catch (err) {
+      Swal.fire({ toast: true, position: 'top-end', icon: 'error',
+                  title: 'Network error', showConfirmButton: false, timer: 3000 });
+    }
+  };
   };
 
   // ── Show Details Modal ──
@@ -1001,7 +1048,29 @@ document.addEventListener('hidden.bs.modal', function() {
               ? `<span class="badge bg-success">Paid</span>${o.payment_id ? `<small class="text-muted ms-1" style="font-size:0.72rem;">Ref: ${o.payment_id.substring(0,16)}...</small>` : ''}`
               : '<span class="badge bg-warning text-dark">Pending</span>'}
           </span></p>
-          <p class="mb-2"><strong>Amount:</strong><br><span class="ms-4 fw-bold text-success">₱${parseFloat(o.amount || 0).toFixed(2)}</span></p>
+          <p class="mb-2"><strong>Total Amount:</strong><br>
+            <span class="ms-4 fw-bold text-success">₱${parseFloat(o.amount || 0).toFixed(2)}</span>
+          </p>
+          ${o.order_type === 'custom' && o.downpayment_type ? `
+          <p class="mb-2"><strong>Downpayment Type:</strong><br>
+            <span class="ms-4">
+              ${o.downpayment_type === 'full'
+                ? '<span class="badge bg-success">Full Payment</span>'
+                : `<span class="badge bg-info text-dark">${o.downpayment_type === '50' ? '50%' : '75%'} Downpayment</span>`}
+            </span>
+          </p>
+          <p class="mb-2"><strong>Amount Paid (Downpayment):</strong><br>
+            <span class="ms-4 fw-bold" style="color:#d63384;">
+              ₱${parseFloat(o.downpayment_amount || o.amount || 0).toFixed(2)}
+            </span>
+          </p>
+          ${parseFloat(o.remaining_balance || 0) > 0 ? `
+          <p class="mb-2"><strong>Balance Remaining:</strong><br>
+            <span class="ms-4 fw-bold" style="color:#ffc107;">
+              ₱${parseFloat(o.remaining_balance).toFixed(2)}
+            </span>
+          </p>` : ''}
+          ` : ''}
           <p class="mb-2"><strong>Ordered On:</strong><br><span class="ms-4">${createdAt ? formatDateFull(createdAt) : 'N/A'}</span></p>
         </div>
         <div class="col-md-6">
@@ -1025,8 +1094,12 @@ document.addEventListener('hidden.bs.modal', function() {
       ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
         ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
         : ''}
+      ${o.order_type === 'custom' && o.payment_status === 'Downpayment Paid'
+        ? `<button type="button" class="btn btn-success" onclick="markBalanceCollected('${o.id}')">
+             <i class="fas fa-check-circle me-2"></i>Mark Balance Collected
+           </button>`
+        : ''}
       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
-
     new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
   };
 
