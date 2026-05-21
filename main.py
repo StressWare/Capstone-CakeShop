@@ -1233,8 +1233,7 @@ def finalize_order():
                 "used":    True,
                 "used_at": datetime.now(PH_TZ)
             })
-        flash("Order placed successfully!", "success")
-        return redirect(url_for("customer_dashboard"))
+        return redirect(url_for("cod_success", order_id=order_id))
 
     # ── Online Payment → PayMongo ──
     line_items = build_line_items(
@@ -3030,7 +3029,17 @@ def payment_success():
         order=saved_order,
         payment_result=payment_result
     )
- 
+# ---------------- PAYMENT SUCCESS COD ----------------
+@app.route("/order/success/<order_id>")
+@login_required
+def cod_success(order_id):
+    order_doc = orders.document(order_id).get()
+    if not order_doc.exists:
+        return redirect(url_for("customer_dashboard"))
+    order = order_doc.to_dict()
+    order["id"] = order_doc.id
+    order = convert_timestamps(order)
+    return render_template("cod_success.html", order=order)
 # ---------------- PAYMENT FAILED ----------------
 @app.route("/payment/failed")
 @login_required

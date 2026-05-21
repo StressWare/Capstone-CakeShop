@@ -1,6 +1,6 @@
 {% extends 'base_customer.html' %}
 {% set show_chatbot = false %}
-{% block title %}Order Confirmed – Ms. Brave Cake Shop{% endblock %}
+{% block title %}Order Placed – Ms. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -99,10 +99,10 @@
     line-height: 1.6;
   }
 
-  .payment-badge {
+  .cod-badge {
     display: inline-flex; align-items: center; gap: 8px;
-    background: linear-gradient(135deg, #d4edda, #c3e6cb);
-    color: #155724;
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
+    color: #856404;
     border-radius: 30px;
     padding: 7px 20px;
     font-size: 0.82rem;
@@ -130,18 +130,10 @@
   }
   .info-row:last-child { border-bottom: none; }
 
-  .info-label {
-    font-size: 0.8rem;
-    color: #aaa;
-    font-weight: 500;
-  }
-  .info-value {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #333;
-  }
+  .info-label { font-size: 0.8rem; color: #aaa; font-weight: 500; }
+  .info-value { font-size: 0.88rem; font-weight: 600; color: #333; }
 
-  .balance-alert {
+  .cod-reminder {
     background: linear-gradient(135deg, #fff8e1, #fff3cd);
     border: 1px solid #ffc107;
     border-radius: 12px;
@@ -152,9 +144,9 @@
     gap: 12px;
     align-items: flex-start;
   }
-  .balance-alert-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
-  .balance-alert-text { font-size: 0.82rem; color: #856404; line-height: 1.6; font-family: 'DM Sans', sans-serif; }
-  .balance-alert-amount { font-size: 1rem; font-weight: 700; color: #856404; margin-top: 4px; }
+  .cod-reminder-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+  .cod-reminder-text { font-size: 0.82rem; color: #856404; line-height: 1.6; font-family: 'DM Sans', sans-serif; }
+  .cod-reminder-amount { font-size: 1rem; font-weight: 700; color: #856404; margin-top: 4px; }
 
   .action-buttons {
     display: flex; gap: 12px;
@@ -197,12 +189,6 @@
     transform: translateY(-2px);
   }
 
-  .divider {
-    height: 1px;
-    background: linear-gradient(90deg, transparent, #f5c2dc, transparent);
-    margin: 24px 0;
-  }
-
   .shop-note {
     font-size: 0.78rem;
     color: #bbb;
@@ -219,26 +205,26 @@
       <i class="fas fa-check"></i>
     </div>
 
-    <div class="success-title">Payment Confirmed!</div>
+    <div class="success-title">Order Placed!</div>
     <div class="success-subtitle">
-      Thank you, your order is in! We'll start preparing your cake soon.<br>
+      Thank you, {{ order.customer.name }}! Your order is confirmed.<br>
       A confirmation email has been sent to you.
     </div>
 
-    <div class="payment-badge">
-      Paid via {{ order.payment_method }}
+    <div class="cod-badge">
+      Cash on Delivery
     </div>
 
     <div class="order-info-box">
-      {% if payment_result.reference %}
-      <div class="info-row">
-        <span class="info-label">Reference No.</span>
-        <span class="info-value" style="font-size:0.76rem; word-break:break-all;">{{ payment_result.reference[:20] }}...</span>
-      </div>
-      {% endif %}
       <div class="info-row">
         <span class="info-label">Order ID</span>
         <span class="info-value" style="font-size:0.76rem;">{{ order.id[:14] }}...</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Items</span>
+        <span class="info-value" style="font-size:0.82rem; max-width:60%; text-align:right;">
+          {{ order.item[:40] }}{% if order.item|length > 40 %}...{% endif %}
+        </span>
       </div>
       <div class="info-row">
         <span class="info-label">Delivery Type</span>
@@ -252,38 +238,34 @@
           {% if order.delivery_type == 'Pickup' %}Pick Up Date{% else %}Delivery Date{% endif %}
         </span>
         <span class="info-value">
-          {{ order.delivery_date.strftime('%b %d, %Y · %I:%M %p') if order.delivery_date is not string else order.delivery_date[:10] }}
+          {{ order.delivery_date.strftime('%b %d, %Y · %I:%M %p') }}
         </span>
       </div>
       {% endif %}
       <div class="info-row">
-        <span class="info-label">Amount Paid</span>
-        <span class="info-value" style="color:#d63384;">
-          ₱{{ "%.2f"|format(order.downpayment_amount | float if order.downpayment_amount else order.amount | float) }}
-        </span>
+        <span class="info-label">Total Amount</span>
+        <span class="info-value" style="color:#d63384;">₱{{ "%.2f"|format(order.amount | float) }}</span>
       </div>
       <div class="info-row">
-        <span class="info-label">Payment Status</span>
-        <span class="info-value" style="color:#28a745;">{{ order.payment_status }}</span>
+        <span class="info-label">Status</span>
+        <span class="info-value" style="color:#f59e0b;">Awaiting Confirmation</span>
       </div>
     </div>
 
-    {% if order.remaining_balance and order.remaining_balance | float > 0 %}
-    <div class="balance-alert">
-      <div class="balance-alert-icon">️</div>
+    <div class="cod-reminder">
+      <div class="cod-reminder-icon"></div>
       <div>
-        <div class="balance-alert-text">You have a remaining balance due on delivery/pickup.</div>
-        <div class="balance-alert-amount">₱{{ "%.2f"|format(order.remaining_balance | float) }} remaining</div>
+        <div class="cod-reminder-text">Please prepare the exact amount upon delivery or pickup.</div>
+        <div class="cod-reminder-amount">₱{{ "%.2f"|format(order.amount | float) }} due on {{ 'pickup' if order.delivery_type == 'Pickup' else 'delivery' }}</div>
       </div>
     </div>
-    {% endif %}
 
     <div class="action-buttons">
-      <a href="{{ url_for('order_receipt', order_id=order.id) }}" class="btn-pink">
-        View Receipt
+      <a href="{{ url_for('customer_dashboard') }}" class="btn-pink">
+         Track My Order
       </a>
-      <a href="{{ url_for('customer_dashboard') }}" class="btn-outline">
-        Dashboard
+      <a href="{{ url_for('cakes_page') }}" class="btn-outline">
+        Order Again
       </a>
     </div>
 
