@@ -105,7 +105,12 @@
               <div id="map"></div>
             </div>
           </div>
-
+          <div class="form-group" id="landmarkSection" style="margin-top:10px;">
+            <label>Landmark / Delivery Instructions</label>
+            <input type="text" name="delivery_instructions" class="form-control"
+                   placeholder="e.g. Landmark"
+                   maxlength="300">
+          </div>
           <div class="pickup-info" id="pickupInfo">
             <i class="fas fa-store"></i>
             <strong>Pick Up Location:</strong><br>
@@ -360,7 +365,7 @@
                   <div class="order-item-name">Custom Cake</div>
                   <div class="order-item-spec">{{ order_item }}</div>
                   {% if rush == 'yes' %}
-                    <div class="order-item-spec" style="color:#d63384;">⚡ Rush Order</div>
+                    <div class="order-item-spec" style="color:#d63384;">Rush Order</div>
                   {% endif %}
                   <div class="order-item-price">₱{{ "%.2f"|format(amount|float) }}</div>
                 </div>
@@ -482,7 +487,7 @@
       document.getElementById('searchSuggestions').style.display = 'none';
   });
 
-  function selectDelivery(type) {
+function selectDelivery(type) {
      currentDeliveryType = type;  // ← ADD THIS LINE
       var deliveryFee = type === 'Delivery' ? 50 : 0;
     var subtotal = orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0);
@@ -510,6 +515,7 @@
       if (isPickup) { initPickupMap(); if (pickupMap) pickupMap.invalidateSize(); }
       else          { initDeliveryMap(); if (deliveryMap) deliveryMap.invalidateSize(); }
     }, 100);
+    document.getElementById('landmarkSection').style.display = isPickup ? 'none' : 'block';
   }
 
   var onlinePayments = ['GCash', 'PayMaya', 'Card'];
@@ -737,7 +743,7 @@ function recalcTotal() {
         row.id = 'displayRushRow';
         row.className = 'order-summary-price';
         row.style.cssText = 'font-size:0.9rem;color:#e65c00;opacity:0.9;';
-        row.innerHTML = '<span>⚡ Rush Fee</span><span>₱300.00</span>';
+        row.innerHTML = '<span>Rush Fee</span><span>₱300.00</span>';
         deliveryRow.insertAdjacentElement('afterend', row);
     }
     // ── Downpayment logic (custom orders only) ──

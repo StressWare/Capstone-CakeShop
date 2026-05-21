@@ -278,6 +278,12 @@
         <span class="info-value" style="text-align:right;">—</span>
       </div>
       <div class="address-box">{{ order.customer.address }}</div>
+            {% if order.delivery_instructions %}
+      <div class="info-row" style="margin-top:8px;">
+        <span class="info-label">Instructions</span>
+        <span class="info-value">{{ order.delivery_instructions }}</span>
+      </div>
+      {% endif %}
     </div>
   </div>
 
@@ -310,24 +316,60 @@
         </div>
       {% endif %}
 
-      <div class="total-row">
-        <span>Total Amount</span>
-        <span class="amount">₱{{ "%.2f"|format(order.amount|float) }}</span>
+      {% set d_discount = order.discount_amount | float if order.discount_amount else 0 %}
+      {% set d_delivery = order.delivery_fee    | float if order.delivery_fee    else 0 %}
+      {% set d_rush     = order.rush_fee        | float if order.rush_fee        else 0 %}
+      {% set d_subtotal = order.amount | float + d_discount - d_delivery - d_rush %}
+
+      <div style="padding: 8px 0; border-top: 1px solid #fce8f3; margin-top: 8px; font-size:0.88rem;">
+        <div class="order-item"><span style="color:#888;">Subtotal</span><span class="item-price">₱{{ "%.2f"|format(d_subtotal) }}</span></div>
+        {% if d_rush > 0 %}
+        <div class="order-item"><span style="color:#e65c00;">Rush Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_rush) }}</span></div>
+        {% endif %}
+        {% if d_delivery > 0 %}
+        <div class="order-item"><span style="color:#888;">Delivery Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_delivery) }}</span></div>
+        {% endif %}
+        {% if d_discount > 0 %}
+        <div class="order-item"><span style="color:#28a745;">Voucher Discount</span><span class="item-price" style="color:#28a745;">-₱{{ "%.2f"|format(d_discount) }}</span></div>
+        {% endif %}
       </div>
 
-      <div class="info-row" style="margin-top:12px;">
-        <span class="info-label">Payment</span>
-        <span class="info-value">
-          <span class="payment-badge {{ 'payment-paid' if order.payment_status == 'Paid' else 'payment-cod' }}">
-            {{ order.payment_method }}
-            {% if order.payment_status == 'Paid' %} ✅{% endif %}
-          </span>
-        </span>
+      {% set remaining = order.remaining_balance | float if order.remaining_balance else 0 %}
+
+      {% if remaining > 0 %}
+      <div class="total-row" style="background:#d1e7dd; margin-top:8px;">
+        <span style="color:#0f5132; font-weight:700;">To Collect</span>
+        <span style="color:#0f5132; font-size:1.2rem; font-weight:800;">₱{{ "%.2f"|format(remaining) }}</span>
       </div>
+      <div class="info-row">
+        <span class="info-label">Payment</span>
+        <span class="info-value">{{ order.payment_method }} (Downpayment)</span>
+      </div>
+
+      {% elif order.payment_status == 'Paid' %}
+      <div class="total-row" style="background:#d1e7dd; margin-top:8px;">
+        <span style="color:#0f5132; font-weight:700;">Nothing to Collect</span>
+        <span style="color:#0f5132; font-weight:800;">✅ Fully Paid</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Payment</span>
+        <span class="info-value">{{ order.payment_method }} (Paid)</span>
+      </div>
+
+      {% else %}
+      <div class="total-row" style="background:#fff3cd; margin-top:8px;">
+        <span style="color:#856404; font-weight:700;">To Collect</span>
+        <span style="color:#856404; font-size:1.2rem; font-weight:800;">₱{{ "%.2f"|format(order.amount|float) }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Payment</span>
+        <span class="info-value">{{ order.payment_method }}</span>
+      </div>
+      {% endif %}
 
       {% if order.notes %}
       <div class="address-box" style="margin-top:12px; background:#f3e5f5; border-color:#ce93d8; color:#4a148c;">
-        <strong>📝 Special Instructions:</strong><br>{{ order.notes }}
+        <strong>Special Instructions:</strong><br>{{ order.notes }}
       </div>
       {% endif %}
     </div>

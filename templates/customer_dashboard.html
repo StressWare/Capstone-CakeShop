@@ -159,7 +159,7 @@
               {% elif s == 'Ready' %}<span class="status-pill pill-ready">Ready</span>
               {% elif s == 'Out for Delivery' %}<span class="status-pill pill-out">Out for delivery</span>
               {% endif %}
-              {% if order.rush %}<span class="status-pill pill-rush">⚡ Rush</span>{% endif %}
+              {% if order.rush %}<span class="status-pill pill-rush">Rush</span>{% endif %}
             </div>
           </div>
 
@@ -498,71 +498,175 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Order Info</h6>
-          <div class="row g-2 mb-4 text-black">
-            <div class="col-6"><p class="mb-1"><strong>Order ID:</strong></p><small class="text-muted">{{ order.id }}</small></div>
-            <div class="col-6"><p class="mb-1"><strong>Ordered On:</strong></p><p>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</p></div>
-            <div class="col-6"><p class="mb-1"><strong>Delivery Date:</strong></p><p>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</p></div>
-            <div class="col-6"><p class="mb-1"><strong>Delivery Type:</strong></p><p>{% if order.delivery_type == 'Pickup' %}<span class="badge bg-warning text-white">🏪 Pick Up</span>{% else %}<span class="badge bg-info text-white">🚚 Delivery</span>{% endif %}</p></div>
-            <div class="col-6"><p class="mb-1"><strong>Payment Method:</strong></p><p>{{ order.payment_method or 'N/A' }}</p></div>
-            <div class="col-6"><p class="mb-1"><strong>Rush Order:</strong></p><p>{% if order.rush %}<span class="badge bg-danger">⚡ Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</p></div>
-            <div class="col-6"><p class="mb-1"><strong>Status:</strong></p><p>{{ order.status }}</p></div>
-          </div>
-          <hr>
-          <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Items</h6>
-          {% if order.order_type == 'premade' and order.selected_items %}
-            {% for item in order.selected_items %}
-            <div class="order-item-row">
-              <div><div class="order-item-name">{{ item.cake_name }}</div><div class="order-item-qty">₱{{ "%.2f"|format(item.price|float) }}{% if item.get('quantity',1) > 1 %} × {{ item.get('quantity',1) }}{% endif %}</div></div>
-              <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal',item.price)|float) }}</div>
-            </div>
-            {% endfor %}
-          {% elif order.order_type == 'custom' and order.custom_components %}
-            {% for component in order.custom_components %}
-            <div class="order-item-row">
-              <div><div class="order-item-name">{{ component.name }}</div><div class="order-item-qty">₱{{ "%.2f"|format(component.price|float) }}</div></div>
-              <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
-            </div>
-            {% endfor %}
-          {% else %}<p>{{ order.item }}</p>{% endif %}
-          <p class="mt-2"><strong>Total: ₱{{ "%.2f"|format(order.calculated_total) }}</strong></p>
-          <hr>
-          <h6 class="fw-bold mb-3 text-muted text-uppercase" style="font-size:0.75rem;letter-spacing:0.08em;">Delivery Info</h6>
-          <div class="row g-2">
-            <div class="col-12 col-sm-6"><p class="mb-1"><strong>Address:</strong></p><p>{{ order.customer.address or 'N/A' }}</p></div>
-            {% if order.customer.occasion %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Occasion:</strong></p><p>{{ order.customer.occasion }}</p></div>{% endif %}
-            {% if order.customer.celebrant %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Celebrant:</strong></p><p>{{ order.customer.celebrant }}</p></div>{% endif %}
-            {% if order.customer.age %}<div class="col-12 col-sm-6"><p class="mb-1"><strong>Age:</strong></p><p>{{ order.customer.age }}</p></div>{% endif %}
-          </div>
-          {% if order.notes %}
-          <hr>
-          <div class="alert alert-info mt-2"><strong>Special Instructions:</strong><p class="mb-0">{{ order.notes }}</p></div>
-          {% endif %}
+  {% set modal_discount = order.discount_amount | float if order.discount_amount else 0 %}
+  {% set modal_delivery = order.delivery_fee    | float if order.delivery_fee    else 0 %}
+  {% set modal_rush     = order.rush_fee        | float if order.rush_fee        else 0 %}
+  {% set modal_subtotal = order.amount | float + modal_discount - modal_delivery - modal_rush %}
+
+  <div class="row g-3">
+
+    <!-- LEFT COLUMN -->
+    <div class="col-md-6 d-flex flex-column gap-3">
+
+      <!-- Box 1: Order Info -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">Order Info</div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Order ID</span>
+          <small>{{ order.id }}</small>
         </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Ordered On</span>
+          <span>{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y - %I:%M %p') }}{% else %}N/A{% endif %}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Delivery Date</span>
+          <span>{{ order.delivery_date.strftime('%b %d, %Y - %I:%M %p') }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Delivery Type</span>
+          <span>{% if order.delivery_type == 'Pickup' %}<span class="badge bg-warning text-white">Pick Up</span>{% else %}<span class="badge bg-info text-white">Delivery</span>{% endif %}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Payment Method</span>
+          <span>{{ order.payment_method or 'N/A' }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Rush Order</span>
+          <span>{% if order.rush %}<span class="badge bg-danger">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="font-size:0.88rem;">
+          <span class="text-muted">Status</span>
+          <span>{{ order.status }}</span>
+        </div>
+      </div>
+
+      <!-- Box 2: Items -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">Items</div>
+        {% if order.order_type == 'premade' and order.selected_items %}
+          {% for item in order.selected_items %}
+          <div class="order-item-row">
+            <div>
+              <div class="order-item-name">{{ item.cake_name }}</div>
+              <div class="order-item-qty">₱{{ "%.2f"|format(item.price|float) }}{% if item.get('quantity',1) > 1 %} x {{ item.get('quantity',1) }}{% endif %}</div>
+            </div>
+            <div class="order-item-sub">₱{{ "%.2f"|format(item.get('subtotal',item.price)|float) }}</div>
+          </div>
+          {% endfor %}
+        {% elif order.order_type == 'custom' and order.custom_components %}
+          {% for component in order.custom_components %}
+          <div class="order-item-row">
+            <div>
+              <div class="order-item-name">{{ component.name }}</div>
+              <div class="order-item-qty">₱{{ "%.2f"|format(component.price|float) }}</div>
+            </div>
+            <div class="order-item-sub">₱{{ "%.2f"|format(component.price|float) }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p>{{ order.item }}</p>
+        {% endif %}
+
+        <!-- Breakdown -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid #f5c2dc;">
+          <div class="d-flex justify-content-between text-muted" style="font-size:0.88rem;">
+            <span>Subtotal</span><span>₱{{ "%.2f"|format(modal_subtotal) }}</span>
+          </div>
+          {% if modal_rush > 0 %}
+          <div class="d-flex justify-content-between" style="font-size:0.88rem; color:#e65c00;">
+            <span>Rush Fee</span><span>+₱{{ "%.2f"|format(modal_rush) }}</span>
+          </div>
+          {% endif %}
+          {% if modal_delivery > 0 %}
+          <div class="d-flex justify-content-between text-muted" style="font-size:0.88rem;">
+            <span>Delivery Fee</span><span>+₱{{ "%.2f"|format(modal_delivery) }}</span>
+          </div>
+          {% endif %}
+          {% if modal_discount > 0 %}
+          <div class="d-flex justify-content-between" style="font-size:0.88rem; color:#28a745;">
+            <span>Voucher Discount</span><span>-₱{{ "%.2f"|format(modal_discount) }}</span>
+          </div>
+          {% endif %}
+          <div class="d-flex justify-content-between fw-bold mt-1 pt-1" style="border-top:2px solid #f0e8f0; color:#d63384; font-size:0.95rem;">
+            <span>Total</span><span>₱{{ "%.2f"|format(order.amount) }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="col-md-6 d-flex flex-column gap-3">
+
+      <!-- Box 3: Customer Info -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">Customer Info</div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Name</span>
+          <span class="fw-bold">{{ order.customer.name or 'N/A' }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Contact</span>
+          <span>{{ order.customer.contact or 'N/A' }}</span>
+        </div>
+        <div class="py-1" style="font-size:0.88rem;">
+          <span class="text-muted d-block mb-1">Address</span>
+          <span>{{ order.customer.address or 'N/A' }}</span>
+        </div>
+      </div>
+
+      <!-- Box 4: Order Specifics -->
+      {% if order.customer.occasion or order.customer.celebrant or order.customer.age or order.notes or order.inspo_image %}
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">Order Specifics</div>
+        {% if order.customer.occasion %}
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Occasion</span>
+          <span>{{ order.customer.occasion }}</span>
+        </div>
+        {% endif %}
+        {% if order.customer.celebrant %}
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Celebrant</span>
+          <span>{{ order.customer.celebrant }}</span>
+        </div>
+        {% endif %}
+        {% if order.customer.age %}
+        <div class="d-flex justify-content-between align-items-center py-1" style="{% if order.notes or order.inspo_image %}border-bottom:1px solid #fce8f3;{% endif %} font-size:0.88rem;">
+          <span class="text-muted">Age</span>
+          <span>{{ order.customer.age }}</span>
+        </div>
+        {% endif %}
+        {% if order.notes %}
+        <div class="py-1" style="{% if order.inspo_image %}border-bottom:1px solid #fce8f3;{% endif %} font-size:0.88rem;">
+          <span class="text-muted d-block mb-1">Special Instructions</span>
+          <span>{{ order.notes }}</span>
+        </div>
+        {% endif %}
+        {% if order.inspo_image %}
+        <div class="py-1" style="font-size:0.88rem;">
+          <span class="text-muted d-block mb-2">Cake Inspo</span>
+          <img src="{{ order.inspo_image }}" class="img-fluid rounded" style="max-width:100%; max-height:180px; object-fit:cover;">
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+</div>
+  </div>
+        </div><!-- /modal-body -->
         <div class="modal-footer">
-          {% if order.status == 'Completed' or order.payment_status == 'Paid' or order.payment_status == 'Downpayment Paid' %}
-          <a href="/order/receipt/{{ order.id }}" class="btn btn-success btn-sm"><i class="fas fa-receipt me-1"></i>View Receipt</a>
-          {% endif %}
-          {% if order.status == 'Completed' and not order.reviewed %}
-            {% if order.order_type == 'premade' %}
-              {% for item in order.selected_items %}
-              <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}"><i class="fas fa-star me-1"></i>Review {{ item.cake_name }}</button>
-              {% endfor %}
-            {% elif order.order_type == 'custom' %}
-            <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal{{ order.id }}"><i class="fas fa-star me-1"></i>Review Order</button>
-            {% endif %}
-          {% endif %}
           {% if order.status == 'New' %}
-          <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Are you sure you want to cancel this order?')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-danger"><i class="fas fa-times me-2"></i>Cancel Order</button>
+          <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Cancel this order?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">Cancel Order</button>
           </form>
           {% endif %}
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
-      </div>
-    </div>
-  </div>
+      </div><!-- /modal-content -->
+    </div><!-- /modal-dialog -->
+  </div><!-- /orderModal -->
 
   <!-- REVIEW MODALS -->
   {% if order.status == 'Completed' and not order.reviewed %}

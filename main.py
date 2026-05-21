@@ -959,7 +959,7 @@ def finalize_order():
     celebrant     = request.form.get("celebrant", "").strip()
     age           = request.form.get("age", "").strip()
     notes         = request.form.get("notes", "").strip()
-
+    delivery_instructions = request.form.get("delivery_instructions", "").strip()
     if not customer_name or len(customer_name) > 100:
         flash("Invalid name.", "danger")
         return redirect(url_for("customer_dashboard"))
@@ -971,7 +971,10 @@ def finalize_order():
     if len(notes) > 500:
         flash("Notes too long. Max 500 characters.", "danger")
         return redirect(url_for("customer_dashboard"))
-
+    delivery_instructions = request.form.get("delivery_instructions", "").strip()
+    if len(delivery_instructions) > 300:
+        flash("Delivery instructions too long. Max 300 characters.", "danger")
+        return redirect(url_for("customer_dashboard"))
     if len(occasion) > 100:
         flash("Occasion too long.", "danger")
         return redirect(url_for("customer_dashboard"))
@@ -1096,7 +1099,7 @@ def finalize_order():
             discount_amount = round(cake_subtotal * voucher_discount_pct / 100, 2)
         else:
             # discount on cake amount only, not delivery fee
-            cake_amount = amount - (DELIVERY_FEE if delivery_type == "Delivery" else 0.0)
+            cake_amount = amount - (DELIVERY_FEE if delivery_type == "Delivery" else 0.0) - (RUSH_FEE if rush else 0.0)
             discount_amount = round(cake_amount * voucher_discount_pct / 100, 2)
         amount = round(amount - discount_amount, 2)
     else:
@@ -1112,6 +1115,7 @@ def finalize_order():
         "status":         "New",
         "rush":           rush,
         "notes":    notes,
+        "delivery_instructions": delivery_instructions,
         "payment_method": payment_method,
         "payment_status": "Pending",
         "payment_id":     None,
@@ -1214,7 +1218,13 @@ def finalize_order():
             email=email,
             order_id=order_id,
             amount=order_data.get("amount", 0),
-            payment_method=payment_method
+            payment_method=payment_method,
+            rush_fee=order_data.get("rush_fee", 0),
+            delivery_fee=order_data.get("delivery_fee", 0),
+            discount_amount=order_data.get("discount_amount", 0),
+            downpayment_type=order_data.get("downpayment_type"),
+            downpayment_amount=order_data.get("downpayment_amount"),
+            remaining_balance=order_data.get("remaining_balance"),
         )
 
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
@@ -2894,7 +2904,13 @@ def paymongo_webhook():
             email=email,
             order_id=order_id,
             amount=order_data.get("amount", 0),
-            payment_method=order_data.get("payment_method")
+            payment_method=payment_method,
+            rush_fee=order_data.get("rush_fee", 0),
+            delivery_fee=order_data.get("delivery_fee", 0),
+            discount_amount=order_data.get("discount_amount", 0),
+            downpayment_type=order_data.get("downpayment_type"),
+            downpayment_amount=order_data.get("downpayment_amount"),
+            remaining_balance=order_data.get("remaining_balance"),
         )
         # Mark voucher as used
         v_id = order_data.get('voucher_id', '')
@@ -2975,12 +2991,18 @@ def payment_success():
     fname    = user_doc.to_dict().get("fname", "Customer")
     email    = user_doc.to_dict().get("email", "")
     send_order_confirmation(
-        fname=fname,
-        email=email,
-        order_id=order_id,
-        amount=order_data.get("amount", 0),
-        payment_method=order_data.get("payment_method")
-    )
+    fname=fname,
+    email=email,
+    order_id=order_id,
+    amount=order_data.get("amount", 0),
+    payment_method=order_data.get("payment_method"),
+    rush_fee=order_data.get("rush_fee", 0),
+    delivery_fee=order_data.get("delivery_fee", 0),
+    discount_amount=order_data.get("discount_amount", 0),
+    downpayment_type=order_data.get("downpayment_type"),
+    downpayment_amount=order_data.get("downpayment_amount"),
+    remaining_balance=order_data.get("remaining_balance"),
+)
     handle_loyalty_stamp(
         users,
         order_data.get('user_id'),

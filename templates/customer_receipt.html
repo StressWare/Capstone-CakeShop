@@ -428,14 +428,14 @@
 
       {% if rush_fee > 0 %}
       <div class="receipt-subtotal-row" style="color: #e65c00;">
-        <span><i class="fas fa-bolt me-1"></i>Rush Fee</span>
+        <span></i>Rush Fee</span>
         <span>+₱{{ "%.2f"|format(rush_fee) }}</span>
       </div>
       {% endif %}
 
       {% if delivery_fee > 0 %}
       <div class="receipt-subtotal-row" style="color: #555;">
-        <span><i class="fas fa-truck me-1"></i>Delivery Fee</span>
+        <span>Delivery Fee</span>
         <span>+₱{{ "%.2f"|format(delivery_fee) }}</span>
       </div>
       {% endif %}

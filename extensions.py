@@ -20,11 +20,15 @@ resend.api_key = os.environ.get("RESEND_API_KEY")
 LOGO_URL = "https://res.cloudinary.com/dnystscn8/image/upload/v1779012991/logo_fburga.png"
 
 
-def send_order_confirmation(fname, email, order_id, amount, payment_method):
+def send_order_confirmation(fname, email, order_id, amount, payment_method,
+                             rush_fee=0, delivery_fee=0, discount_amount=0,
+                             downpayment_type=None, downpayment_amount=None,
+                             remaining_balance=None):
     try:
         if payment_method == "Cash on Delivery":
             payment_note = f"Please prepare <b>₱{amount:,.2f}</b> upon delivery."
-            
+        elif downpayment_type and downpayment_type != 'full' and downpayment_amount:
+            payment_note = f"Downpayment of <b>₱{float(downpayment_amount):,.2f}</b> received! Remaining balance of <b>₱{float(remaining_balance):,.2f}</b> is due upon delivery/pickup."
         else:
             payment_note = f"Payment of <b>₱{amount:,.2f}</b> received!"
             
@@ -100,8 +104,37 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method):
 
                       <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #f5c6db;">
-                          <span style="color:#999; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Amount</span><br>
-                          <span style="color:#d63384; font-size:20px; font-weight:700;">₱{amount:,.2f}</span>
+                          <span style="color:#999; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Order Breakdown</span><br>
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                            <tr>
+                              <td style="color:#888; font-size:13px;">Subtotal</td>
+                              <td style="color:#333; font-size:13px; text-align:right;">₱{(amount + (discount_amount or 0) - (delivery_fee or 0) - (rush_fee or 0)):,.2f}</td>
+                            </tr>
+                            {f'''<tr>
+                              <td style="color:#e65c00; font-size:13px;">Rush Fee</td>
+                              <td style="color:#e65c00; font-size:13px; text-align:right;">+₱{rush_fee:,.2f}</td>
+                            </tr>''' if rush_fee and rush_fee > 0 else ''}
+                            {f'''<tr>
+                              <td style="color:#888; font-size:13px;">Delivery Fee</td>
+                              <td style="color:#888; font-size:13px; text-align:right;">+₱{delivery_fee:,.2f}</td>
+                            </tr>''' if delivery_fee and delivery_fee > 0 else ''}
+                            {f'''<tr>
+                              <td style="color:#28a745; font-size:13px;">Voucher Discount</td>
+                              <td style="color:#28a745; font-size:13px; text-align:right;">-₱{discount_amount:,.2f}</td>
+                            </tr>''' if discount_amount and discount_amount > 0 else ''}
+                            <tr>
+                              <td style="color:#d63384; font-size:15px; font-weight:700; padding-top:6px; border-top:1px solid #f5c6db;">Total</td>
+                              <td style="color:#d63384; font-size:15px; font-weight:700; text-align:right; padding-top:6px; border-top:1px solid #f5c6db;">₱{amount:,.2f}</td>
+                            </tr>
+                              {f'''<tr>
+                                <td style="color:#888; font-size:12px; padding-top:4px;">Amount Paid Now ({downpayment_type}% Downpayment)</td>
+                                <td style="color:#d63384; font-size:13px; font-weight:700; text-align:right; padding-top:4px;">₱{float(downpayment_amount):,.2f}</td>
+                              </tr>
+                              <tr>
+                                <td style="color:#856404; font-size:12px;">Balance Due on Delivery/Pickup</td>
+                                <td style="color:#856404; font-size:13px; font-weight:700; text-align:right;">₱{float(remaining_balance):,.2f}</td>
+                              </tr>''' if downpayment_type and downpayment_type != 'full' and remaining_balance and float(remaining_balance) > 0 else ''}
+                          </table>
                         </td>
                       </tr>
 

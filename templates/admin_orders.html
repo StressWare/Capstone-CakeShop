@@ -822,8 +822,8 @@ document.addEventListener('hidden.bs.modal', function() {
     const paymentStatusMap = {
       'Paid':             '<span class="badge bg-success">✅ Fully Paid</span>',
       'Fully Paid':       '<span class="badge bg-success">✅ Fully Paid</span>',
-      'Downpayment Paid': '<span class="badge bg-info text-dark">💰 Downpayment Paid</span>',
-      'Pending':          '<span class="badge bg-warning text-dark">⏳ Pending</span>',
+      'Downpayment Paid': '<span class="badge bg-info text-dark">Downpayment Paid</span>',
+      'Pending':          '<span class="badge bg-warning text-dark">Pending</span>',
     };
     const paymentCell = paymentStatusMap[o.payment_status] ||
       `<span class="badge bg-secondary">${o.payment_status || 'Unknown'}</span>`;
@@ -1029,67 +1029,145 @@ document.addEventListener('hidden.bs.modal', function() {
     const deliveryDate = toDate(o.delivery_date);
     const createdAt = toDate(o.created_at);
 
-    body.innerHTML = `
-      <div class="row">
-        <div class="col-md-6">
-          <h6 class="text-muted mb-3">ORDER INFORMATION</h6>
-          <p class="mb-1"><strong>Order:</strong></p>
-          <div class="mb-2">${itemsHtml}</div>
-          ${deliveryDate ? `<p class="mb-2"><strong>Delivery Date:</strong><br><span class="ms-4">${formatDateFull(deliveryDate)}</span></p>` : ''}
-          <p class="mb-2"><strong>Status:</strong><br><span class="ms-4">${getStatusBadge(o.status)}</span></p>
-          <p class="mb-2"><strong>Delivery Type:</strong><br><span class="ms-4">
-            ${o.delivery_type === 'Pickup'
-              ? '<span class="badge bg-warning text-dark">Pick Up</span>'
-              : '<span class="badge bg-info text-dark">Delivery</span>'}
-          </span></p>
-          <p class="mb-2"><strong>Payment Method:</strong><br><span class="ms-4">${esc(o.payment_method || 'N/A')}</span></p>
-          <p class="mb-2"><strong>Payment Status:</strong><br><span class="ms-4">
-            ${o.payment_status === 'Paid'
-              ? `<span class="badge bg-success">Paid</span>${o.payment_id ? `<small class="text-muted ms-1" style="font-size:0.72rem;">Ref: ${o.payment_id.substring(0,16)}...</small>` : ''}`
-              : '<span class="badge bg-warning text-dark">Pending</span>'}
-          </span></p>
-          <p class="mb-2"><strong>Total Amount:</strong><br>
-            <span class="ms-4 fw-bold text-success">₱${parseFloat(o.amount || 0).toFixed(2)}</span>
-          </p>
-          ${o.order_type === 'custom' && o.downpayment_type ? `
-          <p class="mb-2"><strong>Downpayment Type:</strong><br>
-            <span class="ms-4">
-              ${o.downpayment_type === 'full'
-                ? '<span class="badge bg-success">Full Payment</span>'
-                : `<span class="badge bg-info text-dark">${o.downpayment_type === '50' ? '50%' : '75%'} Downpayment</span>`}
-            </span>
-          </p>
-          <p class="mb-2"><strong>Amount Paid (Downpayment):</strong><br>
-            <span class="ms-4 fw-bold" style="color:#d63384;">
-              ₱${parseFloat(o.downpayment_amount || o.amount || 0).toFixed(2)}
-            </span>
-          </p>
-          ${parseFloat(o.remaining_balance || 0) > 0 ? `
-          <p class="mb-2"><strong>Balance Remaining:</strong><br>
-            <span class="ms-4 fw-bold" style="color:#ffc107;">
-              ₱${parseFloat(o.remaining_balance).toFixed(2)}
-            </span>
-          </p>` : ''}
-          ` : ''}
-          <p class="mb-2"><strong>Ordered On:</strong><br><span class="ms-4">${createdAt ? formatDateFull(createdAt) : 'N/A'}</span></p>
-        </div>
-        <div class="col-md-6">
-          <h6 class="text-muted mb-3">CUSTOMER INFORMATION</h6>
-          <p class="mb-2"><strong>Name:</strong><br><span class="ms-4">${esc(o.customer?.name || '')}</span></p>
-          <p class="mb-2"><strong>Contact:</strong><br><span class="ms-4">${esc(o.customer?.contact || '')}</span></p>
-          <p class="mb-2"><strong>Address:</strong><br><span class="ms-4">${esc(o.customer?.address || '')}</span></p>
-        </div>
-      </div>
-      <hr>
-      <div class="row">
-        <div class="col-md-6"><p class="mb-2"><strong>Occasion:</strong><br><span class="ms-4">${esc(o.customer?.occasion || 'N/A')}</span></p></div>
-        <div class="col-md-6"><p class="mb-2"><strong>Celebrant:</strong><br><span class="ms-4">${esc(o.customer?.celebrant || 'N/A')}</span></p></div>
-        <div class="col-md-6"><p class="mb-2"><strong>Age:</strong><br><span class="ms-4">${esc(o.customer?.age || 'N/A')}</span></p></div>
-      </div>
-      ${o.notes ? `<hr><div class="alert alert-info mb-0"><h6 class="alert-heading">Special Instructions</h6><p class="mb-0">${esc(o.notes)}</p></div>` : ''}
-      ${o.inspo_image ? `<hr><div class="mb-3"><h6 class="text-muted mb-3"><i class="fas fa-image me-2"></i>CAKE INSPO IMAGE</h6><img src="${o.inspo_image}" alt="Cake inspo" class="img-fluid rounded" style="max-width:300px;max-height:300px;object-fit:cover;"></div>` : ''}
-    `;
+body.innerHTML = `
+  <div class="row g-3">
 
+    <!-- ═══ LEFT COLUMN ═══ -->
+    <div class="col-md-6 d-flex flex-column gap-3">
+
+      <!-- Box 1: Items -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">
+          <i class="fas fa-cake-candles me-1"></i> Order Items
+        </div>
+        ${itemsHtml}
+      </div>
+
+      
+
+      <!-- Box 3: Payment -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">
+          <i class="fas fa-credit-card me-1"></i> Payment
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Method</span><span>${esc(o.payment_method || 'N/A')}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Status</span>
+          <span>${o.payment_status === 'Paid'
+            ? `<span class="badge bg-success">✅ Paid</span>${o.payment_id ? `<small class="text-muted ms-1" style="font-size:0.72rem;">Ref: ${o.payment_id.substring(0,16)}...</small>` : ''}`
+            : o.payment_status === 'Downpayment Paid'
+              ? '<span class="badge bg-info text-dark">Downpayment Paid</span>'
+              : '<span class="badge bg-warning text-dark">Pending</span>'}</span>
+        </div>
+        ${o.order_type === 'custom' && o.downpayment_type ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Plan</span>
+          <span>${o.downpayment_type === 'full'
+            ? '<span class="badge bg-success">Full Payment</span>'
+            : `<span class="badge bg-info text-dark">${o.downpayment_type === '50' ? '50%' : '75%'} Downpayment</span>`}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="${parseFloat(o.remaining_balance || 0) > 0 ? 'border-bottom:1px solid #fce8f3;' : ''} font-size:0.88rem;">
+          <span class="text-muted">Amount Paid</span>
+          <span class="fw-bold" style="color:#d63384;">₱${parseFloat(o.downpayment_amount || o.amount || 0).toFixed(2)}</span>
+        </div>
+        ${parseFloat(o.remaining_balance || 0) > 0 ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="font-size:0.88rem;">
+          <span class="text-muted">Balance Remaining</span>
+          <span class="fw-bold" style="color:#ffc107;">₱${parseFloat(o.remaining_balance).toFixed(2)}</span>
+        </div>` : ''}` : ''}
+
+        <!-- Breakdown -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid #f5c2dc;">
+          <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:8px;">Breakdown</div>
+          ${(() => {
+            const rushFee     = parseFloat(o.rush_fee || 0);
+            const deliveryFee = parseFloat(o.delivery_fee || 0);
+            const discount    = parseFloat(o.discount_amount || 0);
+            const subtotal    = parseFloat(o.amount || 0) + discount - deliveryFee - rushFee;
+            return `
+              <div class="d-flex justify-content-between" style="font-size:0.88rem; color:#888;">
+                <span>Subtotal</span><span>₱${subtotal.toFixed(2)}</span>
+              </div>
+              ${rushFee > 0 ? `<div class="d-flex justify-content-between" style="font-size:0.88rem; color:#e65c00;"><span>Rush Fee</span><span>+₱${rushFee.toFixed(2)}</span></div>` : ''}
+              ${deliveryFee > 0 ? `<div class="d-flex justify-content-between" style="font-size:0.88rem; color:#888;"><span>Delivery Fee</span><span>+₱${deliveryFee.toFixed(2)}</span></div>` : ''}
+              ${discount > 0 ? `<div class="d-flex justify-content-between" style="font-size:0.88rem; color:#28a745;"><span>Voucher Discount</span><span>−₱${discount.toFixed(2)}</span></div>` : ''}
+              <div class="d-flex justify-content-between fw-bold mt-1 pt-1" style="border-top:2px solid #f0e8f0; color:#d63384; font-size:0.95rem;">
+                <span>Total</span><span>₱${parseFloat(o.amount || 0).toFixed(2)}</span>
+              </div>`;
+          })()}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══ RIGHT COLUMN ═══ -->
+    <div class="col-md-6 d-flex flex-column gap-3">
+
+      <!-- Box 4: Customer Info -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">
+          <i class="fas fa-user me-1"></i> Customer Information
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Name</span><span class="fw-bold">${esc(o.customer?.name || 'N/A')}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Contact</span><span>${esc(o.customer?.contact || 'N/A')}</span>
+        </div>
+        <div class="py-1" style="font-size:0.88rem;">
+          <span class="text-muted d-block mb-1">Address</span>
+          <span>${esc(o.customer?.address || 'N/A')}</span>
+        </div>
+      </div>
+            <!-- Box 2: Order Details -->
+      <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">
+          <i class="fas fa-clipboard-list me-1"></i> Order Details
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Status</span><span>${getStatusBadge(o.status)}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Ordered On</span><span>${createdAt ? formatDateFull(createdAt) : 'N/A'}</span>
+        </div>
+        ${deliveryDate ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Delivery Date</span><span>${formatDateFull(deliveryDate)}</span>
+        </div>` : ''}
+        <div class="d-flex justify-content-between align-items-center py-1" style="font-size:0.88rem;">
+          <span class="text-muted">Delivery Type</span>
+          <span>${o.delivery_type === 'Pickup'
+            ? '<span class="badge bg-warning text-dark">Pick Up</span>'
+            : '<span class="badge bg-info text-dark">Delivery</span>'}</span>
+        </div>
+        ${o.customer?.occasion ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Occasion</span><span>${esc(o.customer.occasion)}</span>
+        </div>` : ''}
+        ${o.customer?.celebrant ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Celebrant</span><span>${esc(o.customer.celebrant)}</span>
+        </div>` : ''}
+        ${o.customer?.age ? `
+        <div class="d-flex justify-content-between align-items-center py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted">Age</span><span>${esc(o.customer.age)}</span>
+        </div>` : ''}
+        ${o.notes ? `
+        <div class="py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted d-block mb-1">Special Instructions</span>
+          <span style="color:#0dcaf0;">${esc(o.notes)}</span>
+        </div>` : ''}
+        ${o.inspo_image ? `
+        <div class="py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <span class="text-muted d-block mb-2">Cake Inspo</span>
+          <img src="${o.inspo_image}" alt="Cake inspo" class="img-fluid rounded" style="max-width:100%; max-height:180px; object-fit:cover;">
+        </div>` : ''}
+      </div>
+    </div>
+  </div>
+`;
     footer.innerHTML = `
       ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
         ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
