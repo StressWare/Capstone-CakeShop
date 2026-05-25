@@ -116,3 +116,22 @@ def get_locked_dates_cached():
         }
     set_cache("locked_dates", dates)
     return dates
+
+
+def get_completed_cancelled_orders():
+    cached = get_cache("completed_cancelled_orders")
+    if cached:
+        print("✅ CACHE HIT — completed/cancelled orders")
+        return cached
+    with _lock:
+        cached = get_cache("completed_cancelled_orders")
+        if cached:
+            return cached
+        print("🔥 FIRESTORE READ — completed/cancelled orders")
+        result = []
+        for doc in orders.where("status", "in", ["Completed", "Cancelled"]).stream():
+            d = doc.to_dict()
+            d["id"] = doc.id
+            result.append(d)
+        set_cache("completed_cancelled_orders", result)
+        return result

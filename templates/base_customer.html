@@ -50,7 +50,22 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body data-user-id="{{ session.get('user_id') }}">
+<script>
+  (function() {
+    const ua = navigator.userAgent;
+    const isMessenger = /FBAN|FBAV|FB_IAB|Messenger/i.test(ua);
 
+    if (isMessenger) {
+      const url = window.location.href;
+      // Android: open in Chrome
+      window.location.href = 'intent://' + url.replace(/https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+      // iOS fallback
+      setTimeout(function() {
+        window.location.href = url;
+      }, 500);
+    }
+  })();
+</script>
 <!-- ── NAVBAR ── -->
 <nav class="navbar">
   <div class="navbar-container">

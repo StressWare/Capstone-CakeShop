@@ -500,13 +500,7 @@
           <tbody id="ordersTableBody">
             <tr>
               <td colspan="9" class="table-loading">
-                <div style="text-align:center; padding: 40px;">
-                  <img src="/static/img/chathead.jpg" 
-                      alt="Loading..." 
-                      style="width: 60px; height: 60px; border-radius: 50%; 
-                              animation: spin 1s linear infinite;">
-                  <p class="mt-2 mb-0" style="color: var(--pink-primary);">Loading orders...</p>
-                </div>
+                <div class="spinner-border text-pink" style="color: var(--pink-primary);"></div>
               </td>
             </tr>
           </tbody>
@@ -653,6 +647,8 @@ document.addEventListener('hidden.bs.modal', function() {
   // ── State ──
   let db = null;
   let allOrders = [];
+  let historicalOrders = [];    
+  let historicalLoaded = false;
   let currentTab = 'all';
   let currentPage = 1;
   const ordersPerPage = 6;
@@ -690,6 +686,16 @@ document.addEventListener('hidden.bs.modal', function() {
     if (unsubscribe) unsubscribe();
 
     unsubscribe = db.collection('orders')
+      .where('status', 'in', [
+      'New',
+      'Accepted',
+      'Pending',
+      'Downpayment Paid',
+      'Fully Paid',
+      'Ready',
+      'Out for Delivery',
+      'Delivered'
+      ])
       .orderBy('created_at', 'desc')
       .limit(50)
       .onSnapshot(snapshot => {
@@ -743,7 +749,37 @@ document.addEventListener('hidden.bs.modal', function() {
     const statusFilter = document.getElementById('statusFilter').value;
     const rushFilter = document.getElementById('rushFilter').value;
 
-    let filtered = allOrders.filter(o => {
+    // ✅ If Completed or Cancelled selected, use historicalOrders
+    const isHistoryView = statusFilter === 'Completed' || statusFilter === 'Cancelled';
+
+    if (isHistoryView && !historicalLoaded) {
+      // Show spinner while loading
+      document.getElementById('ordersTableBody').innerHTML = `
+        <tr><td colspan="9" class="text-center py-4">
+          <div class="spinner-border" style="color: var(--pink-primary);"></div>
+          <div class="mt-2 text-muted" style="font-size:0.85rem;">Loading history...</div>
+        </td></tr>`;
+
+      fetch('/admin/orders/history')
+        .then(res => res.json())
+        .then(data => {
+          historicalOrders = data.orders || [];
+          historicalLoaded = true;
+          renderTable(); // re-render with data
+        })
+        .catch(() => {
+          document.getElementById('ordersTableBody').innerHTML = `
+            <tr><td colspan="9" class="text-center text-danger py-4">
+              <i class="fas fa-exclamation-triangle me-2"></i>Failed to load history. Please try again.
+            </td></tr>`;
+        });
+      return;
+    }
+
+    // ✅ Pick the right source
+    let source = isHistoryView ? historicalOrders : allOrders;
+
+    let filtered = source.filter(o => {
       const matchTab = currentTab === 'all' ||
         (currentTab === 'custom' && o.order_type === 'custom') ||
         (currentTab === 'premade' && o.order_type === 'premade');
@@ -940,6 +976,10 @@ document.addEventListener('hidden.bs.modal', function() {
         title: result.message || (result.success ? 'Updated!' : 'Failed'),
         showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
       });
+      if (result.success && (newStatus === 'Completed' || newStatus === 'Cancelled')) {
+        historicalLoaded = false;
+        historicalOrders = [];
+      }
     } catch (err) {
       Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
     } finally {

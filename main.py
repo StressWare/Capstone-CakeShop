@@ -8,7 +8,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp,safe_float)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_locked_dates_cached,invalidate_cache
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache
 from firebase_admin import messaging
 import requests as http_requests
 import re
@@ -706,9 +706,6 @@ def place_order():
                 
 
     except Exception as e:
-        print(f"DEBUG custom amount after recompute: {amount}")
-        print(f"DEBUG icing_key: {icing_key}, size_key: {size_key}, layers_key: {layers_key}, toppers_key: {toppers_key}")
-        print(f"DEBUG prices — icing: {icing_prices}, size: {size_prices}")
         app.logger.exception("Error computing custom cake price")
         flash("Unable to compute order price. Please try again.", "danger")
         return redirect(url_for('customize'))
@@ -1251,11 +1248,6 @@ def finalize_order():
     base_url    = request.host_url.rstrip('/')
     success_url = f"{base_url}/payment/success"
     cancel_url  = f"{base_url}/payment/failed"
-    print(f"DEBUG charge_amount: {charge_amount}")
-    print(f"DEBUG charge_amount * 100: {int(charge_amount * 100)}")
-    print(f"DEBUG downpayment_type: {downpayment_type}")
-    print(f"DEBUG downpayment_amount in order_data: {order_data.get('downpayment_amount')}")
-    print(f"DEBUG line_items: {line_items}")
     checkout = create_checkout_session(
         amount            = int(charge_amount * 100),  # ← downpayment or full
         order_description = f"Ms. Brave Cake Shop - {item_names[:100]}",
@@ -2361,8 +2353,9 @@ def update_order_status(order_id):
             update_data = {"status": new_status}
             if new_status == "Completed" and order_data.get("payment_method") == "Cash on Delivery":
                 update_data["payment_status"] = "Paid"
-
             order_ref.update(update_data)
+            if new_status in ("Completed", "Cancelled"):
+                invalidate_cache("completed_cancelled_orders")
             
             # CREATE NOTIFICATION
             status_messages = {
@@ -2398,6 +2391,12 @@ def update_order_status(order_id):
     except Exception as e:
         print(f"ERROR in update_order_status: {e}")            # ← catch silent crashes
         return jsonify({"success": False, "message": str(e)})
+
+@app.route("/admin/orders/history")
+@admin_required
+def admin_orders_history():
+    data = get_completed_cancelled_orders()
+    return jsonify({"orders": data})
 
 # ---------------- EDIT ORDER ----------------
 @app.route("/order/edit/<order_id>", methods=["POST"])
