@@ -548,7 +548,6 @@ showBadge() {
             border: 2px solid white;
             pointer-events: none;
         `;
-        this.toggleBtn.style.position = 'relative';
         this.toggleBtn.appendChild(badge);
     }
     badge.style.display = 'block';
@@ -620,7 +619,8 @@ class GuestChatbotWidget {
     }
 
     setupEventListeners() {
-        this.toggleBtn?.addEventListener('click', () => this.toggleWindow());
+        this._toggleHandler = () => this.toggleWindow();
+        this.toggleBtn?.addEventListener('click', this._toggleHandler);
         this.closeBtn?.addEventListener('click', () => this.toggleWindow());
         this.sendBtn?.addEventListener('click', () => this.sendMessage());
         this.input?.addEventListener('keypress', (e) => {
@@ -634,8 +634,82 @@ class GuestChatbotWidget {
                 }
             });
         });
+        this.setupDraggable();
     }
+    setupDraggable() {
+        if (window.innerWidth > 768) return;
 
+        interact(this.toggleBtn).draggable({
+            inertia: true,
+            listeners: {
+                move(event) {
+                    const target = event.target;
+                    const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                    const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
+                    // Get button size
+                    const btnRect = target.getBoundingClientRect();
+                    const btnW = btnRect.width;
+                    const btnH = btnRect.height;
+
+                    // Current position in viewport (before transform)
+                    const currentLeft = btnRect.left - (parseFloat(target.getAttribute('data-x')) || 0);
+                    const currentTop = btnRect.top - (parseFloat(target.getAttribute('data-y')) || 0);
+
+                    // Clamp so it never goes outside viewport
+                    const minX = -currentLeft + 10;
+                    const minY = -currentTop + 10;
+                    const maxX = window.innerWidth - currentLeft - btnW - 10;
+                    const maxY = window.innerHeight - currentTop - btnH - 10;
+
+                    const clampedX = Math.min(Math.max(x, minX), maxX);
+                    const clampedY = Math.min(Math.max(y, minY), maxY);
+
+                    target.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+                    target.setAttribute('data-x', clampedX);
+                    target.setAttribute('data-y', clampedY);
+                },
+
+                end(event) {
+                    const target = event.target;
+                    const btnRect = target.getBoundingClientRect();
+                    const btnW = btnRect.width;
+                    const btnH = btnRect.height;
+
+                    const currentLeft = btnRect.left - (parseFloat(target.getAttribute('data-x')) || 0);
+                    const currentTop  = btnRect.top  - (parseFloat(target.getAttribute('data-y')) || 0);
+
+                    // Current center of button in viewport
+                    const btnCenterX = btnRect.left + btnW / 2;
+
+                    // Snap to left or right edge
+                    const snapToRight = btnCenterX > window.innerWidth / 2;
+
+                    const targetX = snapToRight
+                        ? window.innerWidth - currentLeft - btnW - 10   // right edge
+                        : -currentLeft + 10;                             // left edge
+
+                    const currentY = parseFloat(target.getAttribute('data-y')) || 0;
+
+                    // Clamp Y so it doesn't go off screen
+                    const minY = -currentTop + 10;
+                    const maxY = window.innerHeight - currentTop - btnH - 10;
+                    const clampedY = Math.min(Math.max(currentY, minY), maxY);
+
+                    // Smooth transition to edge
+                    target.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                    target.style.transform = `translate(${targetX}px, ${clampedY}px)`;
+                    target.setAttribute('data-x', targetX);
+                    target.setAttribute('data-y', clampedY);
+
+                    // Remove transition after snap so drag feels instant again
+                    setTimeout(() => {
+                        target.style.transition = '';
+                    }, 300);
+                }
+            }
+        });
+    }
     setupFaqToggle() {
         const toggleBtn = document.getElementById('faqToggleBtn');
         const faqContainer = document.getElementById('faqButtons');
