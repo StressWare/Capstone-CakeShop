@@ -49,7 +49,7 @@
   <link href="{{ url_for('static', filename='css/mobileresponsive.css') }}" rel="stylesheet">
   {% block extra_css %}{% endblock %}
 </head>
-<body data-user-id="{{ session.get('user_id') }}">
+<body {% if session.get('user_id') %}data-user-id="{{ session.get('user_id') }}"{% endif %}>
 <script>
   (function() {
     const ua = navigator.userAgent;
@@ -172,15 +172,17 @@
 
 <!-- ── CHATBOT WIDGET (hidden on pages that set show_chatbot = false) ── -->
 {% if show_chatbot != false %}
-{% if session.get('user_id') %}
-<div id="chatbot-widget" class="chatbot-container" data-user-id="{{ session.get('user_id') }}">
+<div id="chatbot-widget" class="chatbot-container" {% if session.get('user_id') %}data-user-id="{{ session.get('user_id') }}"{% endif %}>
   <button class="chatbot-toggle-btn" id="chatbotToggle" title="Open Chat">
-    <span class="chat-icon"><img src="../static/img/chathead.jpg" alt="Chat" style="width: 60px; height: 60px; border-radius: 50%;"></span>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+    <span class="chat-label">Chat with us</span>
   </button>
   <div class="chatbot-window" id="chatbotWindow" style="display:none;">
     <div class="chatbot-header">
       <div class="header-content">
-        <h5>🎂 Ms. Brave Support</h5>
+        <h5>🎂 Mrs. Brave Support</h5>
         <p class="status-text" id="chatStatusText">Online - Instant replies</p>
       </div>
       <button class="close-btn" id="chatbotClose">✕</button>
@@ -191,19 +193,21 @@
       </div>
     </div>
     <button class="faq-toggle-btn" id="faqToggleBtn">
-    💬 Quick Questions <span id="faqToggleIcon">▼</span>
+      💬 Quick Questions <span id="faqToggleIcon">▼</span>
     </button>
     <div class="faq-buttons" id="faqButtons" style="display:none;">
-        <button class="faq-btn" data-question="how to order">📝 How to Order?</button>
-        <button class="faq-btn" data-question="delivery time">🚚 Delivery Time?</button>
-        <button class="faq-btn" data-question="customization">🎨 Customization?</button>
-        <button class="faq-btn" data-question="payment methods">💳 Payment Methods?</button>
-        <button class="faq-btn" data-question="return policy">🔄 Return Policy?</button>
+      <button class="faq-btn" data-question="how to order">📝 How to Order?</button>
+      <button class="faq-btn" data-question="delivery time">🚚 Delivery Time?</button>
+      <button class="faq-btn" data-question="customization">🎨 Customization?</button>
+      <button class="faq-btn" data-question="payment methods">💳 Payment Methods?</button>
+      <button class="faq-btn" data-question="return policy">🔄 Return Policy?</button>
     </div>
+    {% if session.get('user_id') %}
     <div class="support-section" id="supportSection">
       <p class="support-text">Can't find what you need?</p>
       <button class="btn-support" id="escalateBtn">👤 Chat with Owner</button>
     </div>
+    {% endif %}
     <div class="chatbot-input-area">
       <input type="text" id="chatbotInput" class="chatbot-input"
              placeholder="Ask a question..." autocomplete="off">
@@ -211,7 +215,6 @@
     </div>
   </div>
 </div>
-{% endif %}
 {% endif %}
 
 <!-- ── MODALS (rendered outside all containers to avoid stacking context issues) ── -->
@@ -446,9 +449,7 @@ function glassAlert(options = {}) {
 </script>
 <!-- ── CHATBOT JS ── -->
 {% if show_chatbot != false %}
-{% if session.get('user_id') %}
 <script src="{{ url_for('static', filename='javascript/chatbot.js') }}"></script>
-{% endif %}
 {% endif %}
 
 

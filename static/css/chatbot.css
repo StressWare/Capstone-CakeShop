@@ -22,27 +22,53 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+  height: 56px;
+  width: 56px;
+  border-radius: 50px;
   background: linear-gradient(135deg, var(--primary-color), #ff4757);
   border: none;
   color: white;
-  font-size: 28px;
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(255, 107, 157, 0.4);
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
+  gap: 0px;
+  padding: 0 16px;
+  overflow: visible;
+  white-space: nowrap;
+  transition: width 0.3s ease, gap 0.3s ease, box-shadow 0.3s ease;
   z-index: 999;
   touch-action: none;
 }
 
 .chatbot-toggle-btn:hover {
-  transform: scale(1.1);
+  width: 165px;
+  gap: 10px;
   box-shadow: 0 8px 30px rgba(255, 107, 157, 0.6);
 }
+
+.chatbot-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.chat-label {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-width 0.3s ease, opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.chatbot-toggle-btn:hover .chat-label {
+  max-width: 120px;
+  opacity: 1;
+}
+
+
 
 .chatbot-toggle-btn:active {
   transform: scale(0.95);

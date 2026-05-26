@@ -30,14 +30,14 @@ class ChatbotWidget {
     }
     
     async init() {
-        console.log('🚀 Initializing chatbot...');
         await this.getOrCreateConversationId();
         await this.checkEscalationStatus();
         this.setupEventListeners();
-        this.listenMessages();
-        this.listenAdminTyping()
+        if (this.isEscalated) {
+            this.listenMessages();      // only listen if already escalated
+            this.listenAdminTyping();
+        }
         this.updateUIForEscalation();
-        console.log('✅ Chatbot initialized successfully');
     }
     
     async getOrCreateConversationId() {
@@ -264,8 +264,10 @@ class ChatbotWidget {
             
             if (data.success) {
                 this.isEscalated = true;
+                this.messagesContainer.innerHTML = ''; // clear local messages
+                this.listenMessages();                 // ← start Firestore listener now
+                this.listenAdminTyping();              // ← start admin typing listener
                 this.updateUIForEscalation();
-                console.log('✅ Escalated successfully');
             }
         } catch (error) {
             console.error('Error escalating:', error);
@@ -363,52 +365,48 @@ class ChatbotWidget {
         }
     }
     async resetConversation() {
-        try {
-            const response = await fetch('/reset-conversation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    conversation_id: this.conversationId
-                })
-            });
+    try {
+        const response = await fetch('/reset-conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                conversation_id: this.conversationId
+            })
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (data.success) {
-                // Update state
-                this.conversationId = data.new_conversation_id;
-                this.isEscalated = false;
-
-                // Clear messages
-                this.messagesContainer.innerHTML = '';
-
-                // Restart listeners with new conversation
-                if (this.unsubscribe) this.unsubscribe();
-                this.listenMessages();
-                this.listenAdminTyping();
-
-                // Reset UI
-                this.showFaqButtons();
-                if (this.escalateBtn) {
-                    this.escalateBtn.textContent = '👤 Chat with Owner';
-                    this.escalateBtn.disabled = false;
-                    this.escalateBtn.style.opacity = '1';
-                    this.escalateBtn.style.cursor = 'pointer';
-                    this.escalateBtn.onclick = () => this.escalateToOwner();
-                }
-
-                // Remove reset button
-                const resetBtn = document.getElementById('resetConversationBtn');
-                if (resetBtn) resetBtn.remove();
-
-                // Welcome message
-                this.addMessage('👋 Starting a new conversation! How can we help you?', 'bot');
+        if (data.success) {
+            if (this.unsubscribe) {
+                this.unsubscribe();
+                this.unsubscribe = null;
             }
-        } catch (error) {
-            console.error('Error resetting conversation:', error);
-            this.addMessage('Sorry, could not reset. Please try again.', 'bot');
+
+            this.conversationId = data.new_conversation_id;
+            this.isEscalated = false;
+
+            this.messagesContainer.innerHTML = '';
+            this.lastDateLabel = null;
+
+            this.showFaqButtons();
+            if (this.escalateBtn) {
+                this.escalateBtn.textContent = '👤 Chat with Owner';
+                this.escalateBtn.disabled = false;
+                this.escalateBtn.style.opacity = '1';
+                this.escalateBtn.style.cursor = 'pointer';
+                this.escalateBtn.onclick = () => this.escalateToOwner();
+            }
+
+            const resetBtn = document.getElementById('resetConversationBtn');
+            if (resetBtn) resetBtn.remove();
+
+            this.addMessage('👋 Starting a new conversation! How can we help you?', 'bot');
         }
+    } catch (error) {
+        console.error('Error resetting conversation:', error);
+        this.addMessage('Sorry, could not reset. Please try again.', 'bot');
     }
+}
     
     listenMessages() {
         if (!this.userId || !this.conversationId || typeof firebase === 'undefined') return;
@@ -457,9 +455,10 @@ class ChatbotWidget {
     async sendMessage() {
         const message = this.input?.value.trim();
         if (!message) return;
-        
+        console.log('🔍 Current state - isEscalated:', this.isEscalated);
         
         if (this.input) this.input.value = '';
+        this.addMessage(message, 'customer', new Date());
         if (!this.isEscalated) this.showTyping();
         try {
             const response = await fetch('/send-message', {
@@ -474,10 +473,13 @@ class ChatbotWidget {
             });
             
             const data = await response.json();
+            this.hideTyping();
             if (!data.success) {
-                this.hideTyping();
                 console.error('Failed to send:', data.error);
                 this.addMessage('Sorry, there was an error. Please try again.', 'bot');
+            } else if (!this.isEscalated && data.reply) {
+                this.addMessage(data.reply, 'bot', new Date());  // ← add timestamp
+                // Not escalated — show bot reply directly instead of waiting for Firestore
             }
         } catch (error) {
             this.hideTyping();
@@ -602,24 +604,164 @@ showBadge() {
         return div.innerHTML;
     }
 }
+class GuestChatbotWidget {
+    constructor() {
+        this.storageKey = 'guestChatHistory';
+        this.toggleBtn = document.getElementById('chatbotToggle');
+        this.chatWindow = document.getElementById('chatbotWindow');
+        this.closeBtn = document.getElementById('chatbotClose');
+        this.messagesContainer = document.getElementById('chatbotMessages');
+        this.input = document.getElementById('chatbotInput');
+        this.sendBtn = document.getElementById('chatbotSendBtn');
+        this.faqBtns = document.querySelectorAll('.faq-btn');
+        this.setupEventListeners();
+        this.setupFaqToggle();
+        this.loadHistory();
+    }
 
+    setupEventListeners() {
+        this.toggleBtn?.addEventListener('click', () => this.toggleWindow());
+        this.closeBtn?.addEventListener('click', () => this.toggleWindow());
+        this.sendBtn?.addEventListener('click', () => this.sendMessage());
+        this.input?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.sendMessage();
+        });
+        this.faqBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (this.input) {
+                    this.input.value = btn.dataset.question;
+                    this.sendMessage();
+                }
+            });
+        });
+    }
+
+    setupFaqToggle() {
+        const toggleBtn = document.getElementById('faqToggleBtn');
+        const faqContainer = document.getElementById('faqButtons');
+        const icon = document.getElementById('faqToggleIcon');
+        if (!toggleBtn || !faqContainer) return;
+        toggleBtn.addEventListener('click', () => {
+            const isOpen = faqContainer.style.display === 'grid';
+            faqContainer.style.display = isOpen ? 'none' : 'grid';
+            if (icon) icon.textContent = isOpen ? '▼' : '▲';
+        });
+    }
+
+    toggleWindow() {
+        if (!this.chatWindow) return;
+        const isHidden = this.chatWindow.style.display === 'none' || !this.chatWindow.style.display;
+        this.chatWindow.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden && this.input) this.input.focus();
+        if (isHidden) {
+            setTimeout(() => {
+                this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }, 50);
+        }
+    }
+
+    loadHistory() {
+        const history = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+        if (history.length === 0) return;
+        this.messagesContainer.innerHTML = '';
+        history.forEach(msg => this.addMessage(msg.text, msg.sender, msg.time ? new Date(msg.time) : null));
+    }
+
+    saveMessage(sender, text) {
+        const history = JSON.parse(localStorage.getItem(this.storageKey) || '[]');
+        history.push({ sender, text, time: Date.now() });
+        localStorage.setItem(this.storageKey, JSON.stringify(history));
+    }
+
+    async sendMessage() {
+        const message = this.input?.value.trim();
+        if (!message) return;
+        this.input.value = '';
+        this.addMessage(message, 'customer', new Date());
+        this.saveMessage('customer', message);
+        this.showTyping();
+        try {
+            const response = await fetch('/send-message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: message,
+                    user_id: 'guest',
+                    conversation_id: 'guest_session',
+                    is_escalation: false
+                })
+            });
+            const data = await response.json();
+            console.log('Response:', data);
+            this.hideTyping();
+            if (data.reply) {
+                this.addMessage(data.reply, 'bot', new Date());
+                this.saveMessage('bot', data.reply);
+            }
+        } catch (error) {
+            this.hideTyping();
+            this.addMessage('Connection error. Please try again.', 'bot');
+        }
+    }
+
+    showTyping() {
+        const typing = document.createElement('div');
+        typing.id = 'typingIndicator';
+        typing.className = 'message bot-message';
+        typing.innerHTML = `<p class="typing-bubble"><span></span><span></span><span></span></p>`;
+        this.messagesContainer.appendChild(typing);
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    hideTyping() {
+        document.getElementById('typingIndicator')?.remove();
+    }
+
+    addMessage(text, sender, timestamp) {
+        if (!this.messagesContainer) return;
+        const msgDiv = document.createElement('div');
+        
+        const timeStr = timestamp
+            ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '';
+        const timeHtml = timeStr ? `<span class="msg-timestamp-inline">${timeStr}</span>` : '';
+
+        if (sender === 'customer') {
+            msgDiv.className = 'message customer-message';
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
+        } else {
+            msgDiv.className = 'message bot-message';
+            msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
+        }
+        this.messagesContainer.appendChild(msgDiv);
+        this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+}
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     console.log('📄 DOM loaded');
-    
+
     const userContainer = document.querySelector('[data-user-id]');
-    console.log('User container:', userContainer);
-    console.log('User ID:', userContainer?.dataset.userId);
+    const userId = userContainer?.dataset.userId;
+
+    console.log('User ID:', userId);
     console.log('Chatbot toggle button:', document.getElementById('chatbotToggle'));
     console.log('Chatbot window:', document.getElementById('chatbotWindow'));
-    
-    if (userContainer) {
+
+    if (userId && userId !== 'None' && userId !== '') {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
                 window.chatbot = new ChatbotWidget();
             }
         });
     } else {
-        console.error('❌ No user ID found - chatbot will not work!');
+        // Guest — no login required
+        window.chatbot = new GuestChatbotWidget();
     }
 });

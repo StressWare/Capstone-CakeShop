@@ -219,112 +219,124 @@
      RESPONSIVE — MOBILE (≤ 575px)
   ════════════════════════════════════════════════ */
   @media (max-width: 575px) {
-
-    /* ── Page / card layout ── */
-    .container-fluid.mt-4.mb-0.px-4, .container-fluid.my-4.px-4 {
-      padding-left: 8px !important;
-      padding-right: 8px !important;
-      margin-top: 10px !important;
-      margin-bottom: 10px !important;
-    }
-
-    .card-body {
-      padding: 12px 10px;
-    }
-
-    .card-header-custom {
-      padding: 12px 14px;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 6px;
-    }
-    .card-header-custom h4 {
-      font-size: 1rem;
-    }
-
-    /* ── Tabs: scroll horizontally, no wrap ── */
-    .order-tabs {
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      margin-bottom: 14px;
-      gap: 3px;
-    }
-    .order-tabs::-webkit-scrollbar { display: none; }
-    .order-tab-btn {
-      white-space: nowrap;
-      padding: 7px 10px;
-      font-size: 0.74rem;
-      flex-shrink: 0;
-    }
-    .tab-count {
-      padding: 1px 6px;
-      font-size: 0.68rem;
-    }
-
-    /* ── Filters ── */
-    .row.mb-3 > .col-md-6,
-    .row.mb-3 .row.g-2 > .col-md-6 {
-      width: 100%;
-      margin-bottom: 8px;
-    }
-    .row.mb-3 .row.g-2 {
-      row-gap: 8px;
-    }
-
-    /* ── Table: collapse to key columns ── */
-    /* Hide: Type, Delivery Date, Payment on very small screens */
-    #ordersTable thead th:nth-child(2),
-    #ordersTable tbody td:nth-child(2),
-    #ordersTable thead th:nth-child(5),
-    #ordersTable tbody td:nth-child(5),
-    #ordersTable thead th:nth-child(7),
-    #ordersTable tbody td:nth-child(7) {
-      display: none;
-    }
-
-    #ordersTable thead th,
-    #ordersTable tbody td {
-      font-size: 0.72rem;
-      padding: 8px 6px;
-    }
-
-    /* Make update-status cell more compact */
-    #ordersTable .form-select-sm {
-      font-size: 0.72rem;
-    }
-    #ordersTable .btn-primary.btn-sm {
-      font-size: 0.72rem;
-      padding: 4px 6px;
-    }
-
-    /* Item truncation tighter */
-    #ordersTable .text-truncate {
-      max-width: 100px !important;
-    }
-
-    /* ── Pagination ── */
-    #ordersPagination {
-      justify-content: center !important;
-      flex-wrap: wrap;
-      gap: 2px;
-    }
-    .pagination .page-link {
-      font-size: 0.75rem;
-      padding: 5px 9px;
-    }
-
-    /* ── Empty state ── */
-    #emptyTabMsg {
-      padding: 30px 10px !important;
-    }
-
-    /* ── Edit modal: stack selects ── */
-    #editOrderForm .mt-3 {
-      margin-top: 10px !important;
-    }
+    
+  /* ── Page / card layout ── */
+  .container-fluid.mt-4.mb-0.px-4, .container-fluid.my-4.px-4 {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    margin-top: 10px !important;
+    margin-bottom: 10px !important;
   }
+
+  .card-body {
+    padding: 12px 10px;
+  }
+
+  .card-header-custom {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .card-header-custom h4 {
+    font-size: 1rem;
+  }
+
+  /* ── Tabs ── */
+  .order-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-bottom: 14px;
+    gap: 3px;
+  }
+  .order-tabs::-webkit-scrollbar { display: none; }
+  .order-tab-btn {
+    white-space: nowrap;
+    padding: 7px 10px;
+    font-size: 0.74rem;
+    flex-shrink: 0;
+  }
+  .tab-count {
+    padding: 1px 6px;
+    font-size: 0.68rem;
+  }
+
+  /* ── Filters ── */
+  .row.mb-3 > .col-md-6,
+  .row.mb-3 .row.g-2 > .col-md-6 {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .row.mb-3 .row.g-2 {
+    row-gap: 8px;
+  }
+
+  /* ── Pagination ── */
+  #ordersPagination {
+    justify-content: center !important;
+    flex-wrap: wrap;
+    gap: 2px;
+  }
+  .pagination .page-link {
+    font-size: 0.75rem;
+    padding: 5px 9px;
+  }
+
+  /* ── Empty state ── */
+  #emptyTabMsg {
+    padding: 30px 10px !important;
+  }
+
+  /* ── Edit modal ── */
+  #editOrderForm .mt-3 {
+    margin-top: 10px !important;
+  }
+
+  /* ── TABLE: card layout ── */
+  #ordersTable thead { display: none; }
+
+  #ordersTable tbody tr {
+    display: block;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    background: #fff;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+  }
+
+  #ordersTable tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border: none;
+    font-size: 0.82rem;
+    border-bottom: 1px solid #f5f5f5;
+    white-space: normal;
+  }
+
+  #ordersTable tbody td:last-child {
+    border-bottom: none;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  #ordersTable tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #d63384;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+    margin-right: 8px;
+  }
+
+
+}
 
   /* ════════════════════════════════════════════════
      MODAL — PROPERLY SIZED & CENTERED ON MOBILE
@@ -417,9 +429,12 @@
     min-height: 0 !important;
   }
 
-  .table-responsive {
-    min-height: 0 !important;
+ .table-responsive {
+  min-height: 0 !important;
+  overflow-x: auto;
+  max-width: 100%;
   }
+
 </style>
 {% endblock %}
 
@@ -875,15 +890,15 @@ document.addEventListener('hidden.bs.modal', function() {
 
     return `
       <tr class="${isRush}" data-id="${o.id}" data-type="${o.order_type || 'unknown'}">
-        <td>${dateOrdered}</td>
-        <td>${typeBadge}</td>
-        <td>${customerCell}</td>
-        <td>${itemCell}</td>
-        <td>${deliveryCell}</td>
-        <td>${statusBadge}</td>
-        <td>${paymentCell}</td>
-        <td>${detailsCell}</td>
-        <td>${updateCell}</td>
+        <td data-label="Date">${dateOrdered}</td>
+        <td data-label="Type">${typeBadge}</td>
+        <td data-label="Customer">${customerCell}</td>
+        <td data-label="Order Item">${itemCell}</td>
+        <td data-label="Delivery">${deliveryCell}</td>
+        <td data-label="Status">${statusBadge}</td>
+        <td data-label="Payment">${paymentCell}</td>
+        <td data-label="Details">${detailsCell}</td>
+        <td data-label="Update Status">${updateCell}</td>
       </tr>`;
   }
 
@@ -1031,7 +1046,7 @@ document.addEventListener('hidden.bs.modal', function() {
 
   // ── Show Details Modal ──
   window.showDetails = function(orderId) {
-    const o = allOrders.find(x => x.id === orderId);
+    const o = allOrders.find(x => x.id === orderId) || historicalOrders.find(x => x.id === orderId)
     if (!o) return;
 
     const header = document.getElementById('detailsModalHeader');

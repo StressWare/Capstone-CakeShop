@@ -3056,17 +3056,24 @@ def payment_failed():
 
 # ---------------- SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
-@login_required
 @limiter.limit("20 per minute")
 def send_message():
     try:
         data = request.get_json()
-        user_id = session['user_id']
+        user_id = data.get('user_id')
         message = data.get('message', '').strip()
         conversation_id = data.get('conversation_id')
         is_escalation = data.get('is_escalation', False)
 
-        if not message or not conversation_id:
+        if not message:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+        # Guest user — just return bot reply, skip Firestore
+        if not user_id or user_id == 'guest':
+            bot_response = get_faq_response(message)
+            return jsonify({'success': True, 'reply': bot_response})
+
+        if not conversation_id:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
 
         now = datetime.now(PH_TZ)
@@ -3094,50 +3101,65 @@ def send_message():
 
         # Save customer message ✅ CORRECT
         messages_ref = conv_ref.collection("messages")
-        messages_ref.add({
-            "text": message,
-            "sender": "customer",
-            "timestamp": now,
-            "created_at": now
-        })
 
-        conv_ref.update({'last_updated': now})
-
-        user_data = users.document(user_id).get().to_dict() or {}
-        conversations.document(conversation_id).set({
-            'user_id': user_id,
-            'conversation_id': conversation_id,
-            'customer_name': user_data.get('fname') or user_data.get('username') or 'Customer',
-            'email': user_data.get('email') or '',
-            'last_message': message[:50],
-            'last_updated': now,
-            'escalated': is_escalated,
-            'unread': True
-        }, merge=True)
-
-        # Only send bot response if NOT escalated
-        if not is_escalated:
-            bot_response = (
-                "✅ Thank you! The shop owner has been notified and will respond shortly. You're now chatting with the owner."
-                if is_escalation
-                else get_faq_response(message)
-            )
+        # Only save to Firestore if escalated
+        if is_escalated:
             messages_ref.add({
-                "text": bot_response,
-                "sender": "bot",
-                "timestamp": now + timedelta(seconds=1),
-                "created_at": now + timedelta(seconds=1)
+                "text": message,
+                "sender": "customer",
+                "timestamp": now,
+                "created_at": now
             })
-        elif is_escalation:
+
+            conv_ref.update({'last_updated': now})
+
+            user_data = users.document(user_id).get().to_dict() or {}
+            conversations.document(conversation_id).set({
+                'user_id': user_id,
+                'conversation_id': conversation_id,
+                'customer_name': user_data.get('fname') or user_data.get('username') or 'Customer',
+                'email': user_data.get('email') or '',
+                'last_message': message[:50],
+                'last_updated': now,
+                'escalated': is_escalated,
+                'unread': True
+            }, merge=True)
+
+            if is_escalation:
+                messages_ref.add({
+                    "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
+                    "sender": "bot",
+                    "timestamp": now + timedelta(seconds=1),
+                    "created_at": now + timedelta(seconds=1)
+                })
+
+            return jsonify({'success': True, 'escalated': is_escalated})
+
+        # Not escalated — just return bot reply directly, nothing saved
+        if is_escalation:
+            # First time escalating — save to Firestore now
+            conv_ref.update({
+                'escalated': True,
+                'escalated_at': now,
+                'escalated_by': 'customer'
+            })
+            messages_ref.add({
+                "text": message,
+                "sender": "customer",
+                "timestamp": now,
+                "created_at": now
+            })
             messages_ref.add({
                 "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
                 "sender": "bot",
                 "timestamp": now + timedelta(seconds=1),
                 "created_at": now + timedelta(seconds=1)
             })
+            conv_ref.update({'last_updated': now})
+            return jsonify({'success': True, 'escalated': True})
 
-        return jsonify({'success': True, 'escalated': is_escalated})
-
+        bot_response = get_faq_response(message)
+        return jsonify({'success': True, 'escalated': False, 'reply': bot_response})
     except Exception:
         app.logger.exception("Error in send_message")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
