@@ -164,7 +164,10 @@ def verify_token():
         return jsonify({'error': 'Invalid request'}), 400
     id_token = data.get('idToken')
     recaptcha_token = data.get('recaptchaToken')
-     # ── reCAPTCHA check ──
+    # ── reCAPTCHA check ──
+    if not recaptcha_token:
+        return jsonify({'error': 'reCAPTCHA token missing'}), 403
+
     if recaptcha_token:
         try:
             r = http_requests.post(
@@ -177,12 +180,13 @@ def verify_token():
             )
             result = r.json()
             score = result.get('score', 0)
-            print(f"DEBUG reCAPTCHA score: {score}, success: {result.get('success')}")
+            app.logger.info(f"reCAPTCHA: success={result.get('success')}, score={score}")
             if not result.get('success') or score < 0.5:
                 app.logger.warning(f"reCAPTCHA failed: score={score}")
                 return jsonify({'error': 'Suspicious activity detected.'}), 403
-        except Exception:
-            app.logger.warning("reCAPTCHA check failed, proceeding anyway")
+        except Exception as e:
+            app.logger.warning(f"reCAPTCHA check failed: {e}")
+            return jsonify({'error': 'reCAPTCHA verification failed'}), 403
 
     if not id_token:
         return jsonify({'error': 'No token provided'}), 400
@@ -762,8 +766,20 @@ def order_cake():
         return redirect(url_for("cakes_page"))
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
-    selected_json  = request.form.get('selected_items', '[]')
-    selected_items = json.loads(selected_json)
+    selected_json = request.form.get('selected_items', '[]')
+    try:
+        selected_items = json.loads(selected_json)
+        if not isinstance(selected_items, list):
+            raise ValueError("must be a list")
+        for item in selected_items:
+            if not isinstance(item, dict) or 'cake_id' not in item:
+                raise ValueError("invalid item")
+            qty = int(item.get('quantity', 1))
+            if qty < 1 or qty > 999:
+                raise ValueError("invalid quantity")
+    except (json.JSONDecodeError, ValueError):
+        flash("Invalid order data.", "danger")
+        return redirect(url_for("customer_dashboard"))
 
     if selected_items:
         for i in selected_items:
@@ -875,9 +891,15 @@ def finalize_order():
         return redirect(url_for("customize"))
     selected_json = request.form.get("selected_items", "[]")
     try:
-        parsed = json.loads(selected_json)
-        if not isinstance(parsed, list):
-            raise ValueError
+        selected_items = json.loads(selected_json)
+        if not isinstance(selected_items, list):
+            raise ValueError("must be a list")
+        for item in selected_items:
+            if not isinstance(item, dict) or 'cake_id' not in item:
+                raise ValueError("invalid item")
+            qty = int(item.get('quantity', 1))
+            if qty < 1 or qty > 999:
+                raise ValueError("invalid quantity")
     except (json.JSONDecodeError, ValueError):
         flash("Invalid order data.", "danger")
         return redirect(url_for("customer_dashboard"))
@@ -986,7 +1008,6 @@ def finalize_order():
     custom_components = []
 
     if order_type == "premade":
-        selected_items = json.loads(selected_json)
         amount         = 0.0
         normalized     = []
 

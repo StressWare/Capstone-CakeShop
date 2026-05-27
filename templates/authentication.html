@@ -300,8 +300,10 @@ function validatePassword(password) {
    RECAPTCHA
    ============================================================ */
 async function getRecaptchaToken(action) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
+        const timeout = setTimeout(() => resolve(null), 3000);
         grecaptcha.ready(async () => {
+            clearTimeout(timeout);
             const token = await grecaptcha.execute(
                 '{{ recaptcha_site_key }}',
                 { action: action }
