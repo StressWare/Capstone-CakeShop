@@ -1171,10 +1171,21 @@ body.innerHTML = `
         <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
           <span class="text-muted">Contact</span><span>${esc(o.customer?.contact || 'N/A')}</span>
         </div>
-        <div class="py-1" style="font-size:0.88rem;">
+        <div class="py-1" style="font-size:0.88rem; ${o.customer?.lat && o.customer?.lng && o.delivery_type !== 'Pickup' ? 'border-bottom:1px solid #fce8f3;' : ''}">
           <span class="text-muted d-block mb-1">Address</span>
           <span>${esc(o.customer?.address || 'N/A')}</span>
         </div>
+        ${o.customer?.lat && o.customer?.lng && o.delivery_type !== 'Pickup' ? `
+        <div class="py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
+          <a href="/order-map/${o.id}" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style="display:inline-flex; align-items:center; gap:6px; background:#d63384; color:white; 
+                    padding:7px 14px; border-radius:8px; font-size:0.82rem; font-weight:600; 
+                    text-decoration:none; margin-top:6px;">
+            <i class="fas fa-map-marker-alt"></i> View on Map
+          </a>
+        </div>` : ''}
       </div>
             <!-- Box 2: Order Details -->
       <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">

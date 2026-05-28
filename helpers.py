@@ -198,9 +198,16 @@ def _today_range():
     end = start + timedelta(days=1)
     return start, end
 
-def safe_float(value):
+def safe_float(value, min_val=None, max_val=None):
     try:
-        return float(value) if value else None
+        f = float(value) if value else None
+        if f is None:
+            return None
+        if min_val is not None and f < min_val:
+            return None
+        if max_val is not None and f > max_val:
+            return None
+        return f
     except (ValueError, TypeError):
         return None
 

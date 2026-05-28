@@ -73,7 +73,7 @@
                     <input type="email" id="signupEmail" placeholder="Email" required maxlength="254">
                     <input type="text" id="signupFname" placeholder="Full Name" required maxlength="100">
                     <input type="text" id="signupUsername" placeholder="Username" required maxlength="50">
-                    <input type="tel" id="signupNumber" placeholder="Phone Number" required maxlength="15" pattern="[0-9+\-\s]{7,15}">
+                    <input type="tel" id="signupNumber" placeholder="Phone Number" required maxlength="13" pattern="(\+63|0)[0-9]{9,10}">
                     <input type="text" id="signupAddress" placeholder="Address" required maxlength="255">
 
                     <div class="password-wrapper">
@@ -111,7 +111,7 @@
         <p><i class="fas fa-phone"></i> 0956 350 4486</p>
         <p><i class="fas fa-location-dot"></i> R Mapa Street, Mandurriao, Iloilo City</p>
         <p>
-            <a href="https://www.facebook.com/mrsbraveonline" target="_blank">
+            <a href="https://www.facebook.com/mrsbraveonline" target="_blank" rel="noopener noreferrer">
             <i class="fab fa-facebook"></i>
             </a>
         </p>
@@ -497,10 +497,15 @@ async function forgotPassword() {
             confirmButtonText: 'OK'
         });
     } catch (error) {
+        const messages = {
+            'auth/user-not-found': 'No account found with this email.',
+            'auth/invalid-email': 'Please enter a valid email address.',
+            'auth/too-many-requests': 'Too many requests. Please try again later.'
+        };
         glassAlert({
             icon: 'error',
             title: 'Error',
-            text: error.message,
+            text: messages[error.code] || 'Unable to send reset email. Please try again.',
             confirmButtonText: 'OK'
         });
     }

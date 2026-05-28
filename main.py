@@ -157,7 +157,7 @@ def logout():
 
 # ---------------- VERIFY TOKEN ----------------
 @app.route('/verify-token', methods=['POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("5 per minute")
 def verify_token():
     data = request.get_json()
     if not data:
@@ -258,7 +258,8 @@ def save_user_details():
             return jsonify({'error': 'Invalid username'}), 400
         if not fname or len(fname) > 100:
             return jsonify({'error': 'Invalid full name'}), 400
-        if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+        number = number.replace(' ', '')
+        if not number or not re.match(r'^(\+63|0)[0-9]{9,10}$', number):
             return jsonify({'error': 'Invalid phone number'}), 400
         if not address or len(address) > 255:
             return jsonify({'error': 'Invalid address'}), 400
@@ -306,7 +307,8 @@ def complete_profile():
         if not fname or len(fname) > 100:
             flash('Invalid full name length.', 'danger')
             return redirect(url_for('complete_profile'))
-        if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+        number = number.replace(' ', '')
+        if not number or not re.match(r'^(\+63|0)[0-9]{9,10}$', number):
             flash('Invalid phone number.', 'danger')
             return redirect(url_for('complete_profile'))
 
@@ -474,7 +476,8 @@ def edit_customer_profile():
         flash("Invalid name.", "danger")
         return redirect(url_for("customer_dashboard"))
     
-    if not number or not re.match(r'^[0-9+\-\s]{7,15}$', number):
+    number = number.replace(' ', '')
+    if not number or not re.match(r'^(\+63|0)[0-9]{9,10}$', number):
         flash("Invalid phone number.", "danger")
         return redirect(url_for("customer_dashboard"))
 
@@ -941,13 +944,16 @@ def finalize_order():
             return redirect(url_for("customer_dashboard"))
     # ── Idempotency check ──
     idempotency_key = request.form.get("idempotency_key", "").strip()
-    if idempotency_key:
-        existing = orders.where("idempotency_key", "==", idempotency_key)\
-                        .where("user_id", "==", user_id)\
-                        .limit(1).stream()
-        if next(existing, None):
-            flash("Order already placed.", "warning")
-            return redirect(url_for("customer_dashboard"))
+    if not idempotency_key or len(idempotency_key) < 16:
+        flash("Invalid request.", "danger")
+        return redirect(url_for("customer_dashboard"))
+
+    existing = orders.where("idempotency_key", "==", idempotency_key)\
+                    .where("user_id", "==", user_id)\
+                    .limit(1).stream()
+    if next(existing, None):
+        flash("Order already placed.", "warning")
+        return redirect(url_for("customer_dashboard"))
         
     downpayment_type   = None
     downpayment_amount = None
@@ -983,7 +989,8 @@ def finalize_order():
         flash("Invalid name.", "danger")
         return redirect(url_for("customer_dashboard"))
 
-    if not contact or not re.match(r'^[0-9+\-\s]{7,15}$', contact):
+    contact = contact.replace(' ', '')
+    if not contact or not re.match(r'^(\+63|0)[0-9]{9,10}$', contact):
         flash("Invalid contact number.", "danger")
         return redirect(url_for("customer_dashboard"))
 
@@ -1067,8 +1074,6 @@ def finalize_order():
             addon_prices   = prices["addons"]
 
             amount  = 0.0
-            print(f"DEBUG keys — icing:{icing_key} size:{size_key} layers:{layers_key} toppers:{toppers_key}")
-            print(f"DEBUG prices — size:{size_prices}")
             amount += float(icing_prices.get(icing_key, 0))
             amount += float(size_prices.get(size_key, 0))
             amount += float(layers_prices.get(layers_key, 0))
@@ -1080,9 +1085,6 @@ def finalize_order():
 
         except Exception as e:
             app.logger.exception("Error recomputing custom price in place-order")
-            print(f"DEBUG recompute error: {e}")
-            import traceback
-            traceback.print_exc()
             flash("Unable to verify order price. Please try again.", "danger")
             return redirect(url_for('customize'))
 
@@ -1143,7 +1145,7 @@ def finalize_order():
         "inspo_image":    inspo_image,
         "order_type":     order_type,
         "custom_components": custom_components,
-        "delivery_token": secrets.token_urlsafe(16),
+        "delivery_token": secrets.token_urlsafe(32),
         "idempotency_key": idempotency_key,
         "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,
         "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,
@@ -1158,8 +1160,8 @@ def finalize_order():
             "occasion":  occasion,
             "celebrant": celebrant,
             "age":       age,
-            "lat":       safe_float(request.form.get("lat")),
-            "lng":       safe_float(request.form.get("lng")),
+            "lat": safe_float(request.form.get("lat"), -90, 90),
+            "lng": safe_float(request.form.get("lng"), -180, 180),
         },
         "created_at": now
     }
@@ -1864,6 +1866,16 @@ def admin_orders():
     # No more Firestore fetching here!
     # onSnapshot in the frontend handles everything
     return render_template("admin_orders.html")
+
+@app.route("//order-map/<order_id>")
+@admin_required
+def order_map(order_id):
+    order_doc = orders.document(order_id).get()
+    if not order_doc.exists:
+        return "Order not found", 404
+    order = order_doc.to_dict()
+    order = convert_timestamps(order)
+    return render_template("admin_orders_map.html", order=order)
 # ---------------- ADMIN DELIVERY ----------------
 @app.route("/admin/delivery")
 @admin_required
