@@ -287,6 +287,9 @@ function validatePassword(password) {
     if (!/[A-Z]/.test(password)) {
         return 'Password must contain at least one uppercase letter.';
     }
+    if (!/[a-z]/.test(password)) {
+        return 'Password must contain at least one lowercase letter.';
+    }
     if (!/[0-9]/.test(password)) {
         return 'Password must contain at least one number.';
     }
@@ -423,6 +426,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
         const user = userCredential.user;
         await user.sendEmailVerification();
         const idToken = await user.getIdToken();
+        const recaptchaToken = await getRecaptchaToken('signup');
  
         const response = await fetch('/save-user-details', {
             method: 'POST',
@@ -435,7 +439,8 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
                 username: username,
                 number: number,
                 address: address,
-                fname: fname
+                fname: fname,
+                recaptchaToken: recaptchaToken
             })
         });
  

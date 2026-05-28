@@ -239,11 +239,34 @@ def save_user_details():
         return jsonify({'error': 'Missing or invalid token'}), 401
 
     id_token = auth_header.split('Bearer ')[1]
-
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
+        
+    # ── reCAPTCHA check 
+    recaptcha_token = data.get('recaptchaToken')
+    if not recaptcha_token:
+        return jsonify({'error': 'reCAPTCHA token missing'}), 403
+    try:
+        r = http_requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
+                'response': recaptcha_token
+            },
+            timeout=5
+        )
+        result = r.json()
+        score = result.get('score', 0)
+        if not result.get('success') or score < 0.5:
+            app.logger.warning(f"reCAPTCHA failed on signup: score={score}")
+            return jsonify({'error': 'Suspicious activity detected.'}), 403
+    except Exception as e:
+        app.logger.warning(f"reCAPTCHA check failed: {e}")
+        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
     try:
         decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=10)
         token_uid = decoded_token['uid']
-        data = request.get_json()
         uid = data.get('uid')
 
         if uid != token_uid:
