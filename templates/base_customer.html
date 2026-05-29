@@ -86,7 +86,14 @@
 </div>
            </div>
           <div class="dropdown-list" id="notificationList" style="max-height: 350px; overflow-y: auto;">
-            <div style="text-align: center; padding: 25px 16px; color: #aaa;">Loading...</div>
+            <div id="notifSkeleton" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
+                <div class="notif-sk" style="height:13px; width:75%;"></div>
+                <div class="notif-sk" style="height:11px; width:90%;"></div>
+                <div class="notif-sk" style="height:13px; width:60%; margin-top:6px;"></div>
+                <div class="notif-sk" style="height:11px; width:80%;"></div>
+                <div class="notif-sk" style="height:13px; width:70%; margin-top:6px;"></div>
+                <div class="notif-sk" style="height:11px; width:55%;"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -122,32 +129,30 @@
   </div>
 
   <div style="margin-top: 70px;"></div>
-
 <!-- ── FLASH MESSAGES ── -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const flashes = {{ messages | tojson }};
-        const Toast = Swal.mixin({
-          toast: true, position: 'top-end', showConfirmButton: false,
-          timer: 3500, timerProgressBar: true,
-          background: 'rgba(255, 255, 255, 0.82)',
-          color: '#1a1a1a',
-          customClass: { popup: 'glass-popup' },
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const flashes = {{ messages | tojson }};
+      const iconMap = { 'success': 'success', 'danger': 'error', 'warning': 'warning', 'info': 'info' };
+      flashes.forEach(([category, message]) => {
+        glassToast({
+          icon: iconMap[category] || 'info',
+          title: message,
+          showConfirmButton: false,
+          timer: 3500,
+          timerProgressBar: true,
           didOpen: (toast) => {
             toast.addEventListener('mouseenter', Swal.stopTimer);
             toast.addEventListener('mouseleave', Swal.resumeTimer);
           }
         });
-        const iconMap = { 'success': 'success', 'danger': 'error', 'warning': 'warning', 'info': 'info' };
-        flashes.forEach(([category, message]) => {
-          Toast.fire({ icon: iconMap[category] || 'info', title: message });
-        });
       });
-    </script>
-    {% endif %}
-  {% endwith %}
+    });
+  </script>
+  {% endif %}
+{% endwith %}
 
 <!-- ── PAGE CONTENT ── -->
 {% block content %}{% endblock %}
@@ -298,12 +303,27 @@ window.fetch = function(url, options = {}) {
     || (typeof url === 'string' && url.includes(window.location.hostname));
   
   if (isOwnServer) {
-    options = options || {};
     options.headers = options.headers || {};
     options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
   }
   
-  return originalFetch(url, options);
+  return originalFetch(url, options).then(response => {
+    if (response.status === 400) {
+      response.clone().json().then(data => {
+        if (data?.error === 'csrf_expired') {
+          glassToast({
+            icon: 'warning',
+            title: 'Session expired. Refreshing...',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
+          });
+          setTimeout(() => window.location.reload(), 1500);
+        }
+      }).catch(() => {});
+    }
+    return response;
+  });
 };
 </script>
 <script>
@@ -436,6 +456,20 @@ function glassAlert(options = {}) {
         background: 'rgba(255, 255, 255, 0.12)',
         color: '#1a1a1a',
         backdrop: 'rgba(0, 0, 0, 0.6)',
+        customClass: {
+            popup: 'glass-popup',
+            title: 'glass-title',
+            confirmButton: 'glass-confirm-btn',
+            cancelButton: 'glass-cancel-btn',
+        },
+        buttonsStyling: false,
+        ...options
+    });
+}
+function glassToast(options = {}) {
+    return Swal.fire({
+        toast: true,
+        position: 'top-end',
         customClass: {
             popup: 'glass-popup',
             title: 'glass-title',

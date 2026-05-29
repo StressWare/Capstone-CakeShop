@@ -2085,3 +2085,12 @@ body {
     border: 1px solid ButtonText;
   }
 }
+
+#ordersTab, #favoritesTab, #loyaltyTab {
+    animation: fadeInTab 0.3s ease;
+}
+
+@keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}

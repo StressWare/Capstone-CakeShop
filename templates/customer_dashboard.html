@@ -3,7 +3,6 @@
 
 {% block extra_css %}
 <link href="../static/css/customer_dashboard.css" rel="stylesheet">
-<link href="../static/css/customer_dashboard_responsive.css" rel="stylesheet">
 <link href="../static/css/chatbot.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 {% endblock %}
@@ -749,16 +748,27 @@
 <script>
 /* ── Tab switcher ── */
 function showTab(tab) {
-  document.getElementById("ordersTab").style.display    = tab === 'orders'    ? 'block' : 'none';
-  document.getElementById("favoritesTab").style.display = tab === 'favorites' ? 'block' : 'none';
-  document.getElementById("loyaltyTab").style.display   = tab === 'loyalty'   ? 'block' : 'none';
-  document.querySelectorAll(".nav-icon").forEach((btn, i) => {
-    btn.classList.toggle("active",
-      (tab === 'orders'    && i === 0) ||
-      (tab === 'favorites' && i === 1) ||
-      (tab === 'loyalty'   && i === 2)
-    );
-  });
+    const tabs = { orders: 'ordersTab', favorites: 'favoritesTab', loyalty: 'loyaltyTab' };
+    
+    Object.values(tabs).forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+
+    const activeTab = document.getElementById(tabs[tab]);
+    activeTab.style.display = 'block';
+
+    // Re-trigger animation
+    activeTab.style.animation = 'none';
+    activeTab.offsetHeight; // force reflow
+    activeTab.style.animation = 'fadeInTab 0.3s ease';
+
+    document.querySelectorAll(".nav-icon").forEach((btn, i) => {
+        btn.classList.toggle("active",
+            (tab === 'orders'    && i === 0) ||
+            (tab === 'favorites' && i === 1) ||
+            (tab === 'loyalty'   && i === 2)
+        );
+    });
 }
 
 /* ── Active orders pagination (3 per page) ── */

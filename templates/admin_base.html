@@ -177,7 +177,75 @@
         .catch(err => console.warn('Admin SW failed:', err));
     }
     </script>
+        <script>
+(function injectGlassStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .glass-popup {
+            background: rgba(255,255,255, 0.97) !important;
+            border: 1px solid rgba(255, 192, 203, 0.45) !important;
+            border-radius: 20px !important;
+            backdrop-filter: blur(8px) !important;
+            -webkit-backdrop-filter: blur(8px) !important;
+            box-shadow: 0 8px 32px rgba(199, 21, 133, 0.15) !important;
+        }
+        .glass-title { color: #1a1a1a !important; font-weight: 700 !important; font-size: 1.1rem !important; }
+        .glass-popup .swal2-title::after, .glass-popup .swal2-title::before { display: none !important; }
+        .glass-popup .swal2-header { border-bottom: none !important; }
+        .glass-popup .swal2-html-container { color: #2a2a2a !important; font-size: 0.88rem !important; }
+        .glass-confirm-btn {
+            background: linear-gradient(135deg, #e75480, #C71585) !important;
+            border: none !important; border-radius: 12px !important;
+            padding: 8px 20px !important; font-weight: 600 !important; color: #fff !important;
+        }
+        .glass-cancel-btn {
+            background: transparent !important;
+            border: 1px solid rgba(26,26,26,0.4) !important;
+            border-radius: 12px !important; padding: 8px 20px !important;
+            font-weight: 600 !important; color: #1a1a1a !important;
+        }
+        .glass-popup.swal2-icon-success .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
+        .glass-popup.swal2-icon-success .swal2-success-ring { border-color: rgba(231,84,128,0.3) !important; }
+        .glass-popup.swal2-icon-success [class^="swal2-success-line"] { background-color: #e75480 !important; }
+        .glass-popup.swal2-icon-success .swal2-success-circular-line-left,
+        .glass-popup.swal2-icon-success .swal2-success-circular-line-right,
+        .glass-popup.swal2-icon-success .swal2-success-fix { background-color: transparent !important; }
+        .glass-popup.swal2-icon-error .swal2-icon { border-color: #C71585 !important; }
+        .glass-popup.swal2-icon-error .swal2-icon [class^="swal2-x-mark-line"] { background-color: #C71585 !important; }
+        .glass-popup.swal2-icon-warning .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
+        .glass-popup.swal2-icon-warning .swal2-icon .swal2-icon-content { color: #e75480 !important; }
+    `;
+    document.head.appendChild(style);
+})();
 
+function glassToast(options = {}) {
+    return Swal.fire({
+        toast: true,
+        position: 'top-end',
+        customClass: {
+            popup: 'glass-popup',
+            title: 'glass-title',
+            confirmButton: 'glass-confirm-btn',
+            cancelButton: 'glass-cancel-btn',
+        },
+        buttonsStyling: false,
+        ...options
+    });
+}
+
+function glassAlert(options = {}) {
+    return Swal.fire({
+        customClass: {
+            popup: 'glass-popup',
+            title: 'glass-title',
+            confirmButton: 'glass-confirm-btn',
+            cancelButton: 'glass-cancel-btn',
+        },
+        buttonsStyling: false,
+        ...options
+    });
+}
+</script>
     {% block extra_css %}{% endblock %}
 </head>
 
@@ -225,15 +293,22 @@
 
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const flashes = {{ messages | tojson }};
-                        
-                        // SweetAlert2 Toast Instance
-                        const Toast = Swal.mixin({
-                            toast: true,
-                            position: 'top-end',
+        {% if messages %}
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const flashes = {{ messages | tojson }};
+
+                    const iconMap = {
+                        'success': 'success',
+                        'danger':  'error',
+                        'warning': 'warning',
+                        'info':    'info'
+                    };
+
+                    flashes.forEach(([category, message]) => {
+                        glassToast({
+                            icon: iconMap[category] || 'info',
+                            title: message,
                             showConfirmButton: false,
                             timer: 3500,
                             timerProgressBar: true,
@@ -242,26 +317,11 @@
                                 toast.addEventListener('mouseleave', Swal.resumeTimer);
                             }
                         });
-
-                        // Map Flask categories → SweetAlert2 icons
-                        const iconMap = {
-                            'success': 'success',
-                            'danger':  'error',
-                            'warning': 'warning',
-                            'info':    'info'
-                        };
-
-                        // Fire each toast
-                        flashes.forEach(([category, message]) => {
-                            Toast.fire({
-                                icon: iconMap[category] || 'info',
-                                title: message
-                            });
-                        });
                     });
-                </script>
-            {% endif %}
-        {% endwith %}
+                });
+            </script>
+        {% endif %}
+    {% endwith %}
 
         {% block content %}{% endblock %}
     </div>
@@ -354,12 +414,23 @@
             // 5. Handle FOREGROUND messages (when tab is open)
             messaging.onMessage((payload) => {
                 console.log('[FCM] Foreground message received:', payload);
-                const title = payload.notification?.title || '🛵 Delivery Update';
-                const body = payload.notification?.body || '';
-                new Notification(title, {
-                    body: body,
-                    icon: '/static/img/logo.png'
-                });
+                const data = payload.data || {};
+
+                if (data.type === 'new_order') {
+                    if (typeof window.handleNewOrderNotification === 'function') {
+                        window.handleNewOrderNotification({
+                            customerName: data.customer_name || 'Customer',
+                            orderType:    data.order_type    || 'custom',
+                            rush:         data.rush === 'true',
+                            orderId:      data.order_id      || ''
+                        });
+                    }
+                } else {
+                    // Delivery notification — existing behavior
+                    const title = payload.notification?.title || '🛵 Delivery Update';
+                    const body  = payload.notification?.body  || '';
+                    new Notification(title, { body, icon: '/static/img/logo.png' });
+                }
             });
 
             // 6. Request permission + get token
@@ -412,12 +483,27 @@ window.fetch = function(url, options = {}) {
     || (typeof url === 'string' && url.includes(window.location.hostname));
   
   if (isOwnServer) {
-    options = options || {};
     options.headers = options.headers || {};
     options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
   }
   
-  return originalFetch(url, options);
+  return originalFetch(url, options).then(response => {
+    if (response.status === 400) {
+      response.clone().json().then(data => {
+        if (data?.error === 'csrf_expired') {
+        glassToast({
+            icon: 'warning',
+            title: 'Session expired. Refreshing...',
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true
+        });
+        setTimeout(() => window.location.reload(), 1500);
+        }
+      }).catch(() => {});
+    }
+    return response;
+  });
 };
 </script>
     {% block extra_js %}{% endblock %}

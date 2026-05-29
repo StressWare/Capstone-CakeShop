@@ -178,13 +178,19 @@
               <td><small>{% if u.created_at %}{{ u.created_at.strftime('%b %d, %Y') }}{% else %}N/A{% endif %}</small></td>
               <td>
                 {% if u.disabled %}
-                  <form method="POST" action="/admin/user/enable/{{ u.uid }}" onsubmit="return confirm('Enable this user?')">
-                    <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Enable</button>
-                  </form>
+                    <form method="POST" action="/admin/user/enable/{{ u.uid }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-sm btn-success" onclick="handleUserAction(this, 'enable')">
+                            <i class="fas fa-check me-1"></i>Enable
+                        </button>
+                    </form>
                 {% else %}
-                  <form method="POST" action="/admin/user/disable/{{ u.uid }}" onsubmit="return confirm('Disable this user?')">
-                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-ban me-1"></i>Disable</button>
-                  </form>
+                    <form method="POST" action="/admin/user/disable/{{ u.uid }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="handleUserAction(this, 'disable')">
+                            <i class="fas fa-ban me-1"></i>Disable
+                        </button>
+                    </form>
                 {% endif %}
               </td>
             </tr>
@@ -202,6 +208,28 @@
 
 {% block extra_js %}
 <script>
+function handleUserAction(btn, action) {
+    const isDisable = action === 'disable';
+    glassAlert({
+        icon: 'warning',
+        title: isDisable ? 'Disable this user?' : 'Enable this user?',
+        html: isDisable 
+            ? `<div style="font-size:0.88rem; color:#555;">
+                This user will <strong>lose access</strong> to their account immediately.<br><br>
+                They will <strong>not be able to login</strong> or place orders until re-enabled.
+               </div>`
+            : `<div style="font-size:0.88rem; color:#555;">
+                This user will <strong>regain full access</strong> to their account.<br><br>
+                They will be able to <strong>login and place orders</strong> again.
+               </div>`,
+        showCancelButton: true,
+        confirmButtonText: isDisable ? 'Yes, Disable' : 'Yes, Enable',
+        cancelButtonText: 'Cancel',
+    }).then(result => {
+        if (result.isConfirmed) btn.closest('form').submit();
+    });
+}
+
 let currentUsersPage = 1;
 const usersPerPage = 5;
 function updateUsersDisplay() {

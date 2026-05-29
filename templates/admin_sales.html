@@ -423,7 +423,7 @@
 <div class="container-fluid my-4 px-4">
   <div class="section-header d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Sales Records</h1>
-    <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
+    <button class="btn-export" onclick="openExportModal()">Export</button>
   </div>
 
   <div class="card shadow-sm">
@@ -532,7 +532,7 @@
 <div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
   <div class="export-modal">
     <button class="export-modal-close" onclick="closeExportModal()">×</button>
-    <h5>⬇ Export Sales</h5>
+    <h5>Export Sales</h5>
 
     <!-- Date Range -->
     <div class="date-range-row">
@@ -551,10 +551,10 @@
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
         <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">
-          📄 PDF
+          PDF
         </button>
         <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">
-          📊 CSV
+          CSV
         </button>
       </div>
     </div>
@@ -572,7 +572,6 @@
     </div>
 
     <button class="btn-download" onclick="runExport()">
-      <span id="downloadBtnIcon">📄</span>
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
   </div>

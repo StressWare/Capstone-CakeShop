@@ -295,6 +295,20 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
   h3 { font-size: 16px; }
   .container-fluid { padding-left: 8px; padding-right: 8px; }
 }
+
+@keyframes modalIn {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+}
+.btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    border: 1.5px solid #6B1A3A; border-radius: 8px;
+    background: #6B1A3A; color: white;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+}
+.btn-export:hover { background: #8b2250; border-color: #8b2250; }
 </style>
 {% endblock %}
 
@@ -411,8 +425,7 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h3 class="mb-0">Daily Sale Report</h3>
         <div class="d-flex gap-2">
-          <button class="btn btn-danger btn-sm" onclick="downloadPDF()">Download PDF</button>
-          <button class="btn btn-success btn-sm" onclick="downloadCSV()">Download CSV</button>
+          <button class="btn-export" onclick="openDashExportModal()">Export</button>
         </div>
       </div>
       <div class="row g-3">
@@ -513,7 +526,42 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
       </div>
     </div>
   </div><!-- /view-calendar -->
+  <div class="export-modal-overlay" id="dashExportOverlay" onclick="if(event.target===this)closeDashExportModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(107,26,58,0.18);padding:32px 28px 24px;width:100%;max-width:420px;position:relative;animation:modalIn 0.22s ease;">
+    <button onclick="closeDashExportModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;">×</button>
+    <h5 style="margin:0 0 20px;font-size:1.1rem;font-weight:700;color:#6B1A3A;">Export Daily Report</h5>
 
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:8px;">Format</label>
+      <div style="display:flex;gap:10px;">
+        <button class="dash-fmt-btn active" id="dashFmtPDF" onclick="selectDashFormat('pdf')"
+          style="flex:1;padding:10px 0;border:1.5px solid #6B1A3A;border-radius:10px;background:#f5eef0;color:#6B1A3A;font-weight:700;font-size:0.92rem;cursor:pointer;">
+          PDF
+        </button>
+        <button class="dash-fmt-btn" id="dashFmtCSV" onclick="selectDashFormat('csv')"
+          style="flex:1;padding:10px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f8f8f8;color:#666;font-weight:700;font-size:0.92rem;cursor:pointer;">
+          CSV
+        </button>
+      </div>
+    </div>
+
+    <div style="background:#f9f5f7;border:1.5px solid #e8d0db;border-radius:10px;padding:10px 16px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:0.8rem;color:#999;font-weight:600;">Preview</div>
+        <div style="font-size:0.85rem;color:#555;margin-top:2px;">Today's sales report</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:0.9rem;font-weight:700;color:#6B1A3A;">₱{{ "{:,.0f}".format(pos_sales + pre_sales + cus_sales) }}</div>
+        <div style="font-size:0.8rem;color:#999;">Total Sales</div>
+      </div>
+    </div>
+
+    <button onclick="runDashExport()"
+      style="width:100%;padding:11px 0;border:none;border-radius:10px;background:#6B1A3A;color:white;font-weight:700;font-size:0.97rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <span id="dashDownloadLabel">Download PDF</span>
+    </button>
+  </div>
+</div>
 </div><!-- /container-fluid -->
 
 <!-- ORDER QUICK-VIEW MODAL -->
@@ -538,6 +586,29 @@ p, small { font-size: clamp(12px, 2vw, 14px); }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+  let dashExportFormat = 'pdf';
+
+function openDashExportModal() {
+    document.getElementById('dashExportOverlay').style.display = 'flex';
+}
+function closeDashExportModal() {
+    document.getElementById('dashExportOverlay').style.display = 'none';
+}
+function selectDashFormat(fmt) {
+    dashExportFormat = fmt;
+    document.getElementById('dashFmtPDF').style.borderColor = fmt === 'pdf' ? '#6B1A3A' : '#e0e0e0';
+    document.getElementById('dashFmtPDF').style.background  = fmt === 'pdf' ? '#f5eef0' : '#f8f8f8';
+    document.getElementById('dashFmtPDF').style.color       = fmt === 'pdf' ? '#6B1A3A' : '#666';
+    document.getElementById('dashFmtCSV').style.borderColor = fmt === 'csv' ? '#6B1A3A' : '#e0e0e0';
+    document.getElementById('dashFmtCSV').style.background  = fmt === 'csv' ? '#f5eef0' : '#f8f8f8';
+    document.getElementById('dashFmtCSV').style.color       = fmt === 'csv' ? '#6B1A3A' : '#666';
+    document.getElementById('dashDownloadLabel').textContent = fmt === 'pdf' ? '📄 Download PDF' : '📊 Download CSV';
+}
+function runDashExport() {
+    closeDashExportModal();
+    if (dashExportFormat === 'pdf') downloadPDF();
+    else downloadCSV();
+}
 document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-PH', {
   weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
 });
@@ -902,7 +973,7 @@ const pre_top     = "{{ pre_top }}";
 function downloadPDF() {
   const today = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
   const content = `
-    <div style="font-family:Arial,sans-serif;padding:24px;color:#111;background:#fff;width:800px;">
+    <div style="font-family:Arial,sans-serif;padding:16px;color:#111;background:#fff;width:260mm;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #6B1A3A;">
         <div><h2 style="margin:0;font-size:20px;color:#6B1A3A;font-weight:700;">Ms. Brave Cake Shop</h2><p style="margin:4px 0 0;font-size:12px;color:#666;">Daily Sale Report</p></div>
         <div style="text-align:right;"><p style="margin:0;font-size:12px;color:#666;">${today}</p><p style="margin:3px 0 0;font-size:11px;color:#999;">Generated ${new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</p></div>
@@ -926,10 +997,15 @@ function downloadPDF() {
     </div>`;
 
   const opt = {
-    margin: 12,
+    margin: [10, 10, 10, 10],
     filename: `daily-sale-report-${new Date().toISOString().slice(0,10)}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, windowWidth: 850, scrollX: 0, scrollY: 0 },
+    html2canvas: { 
+        scale: 1.5,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0
+    },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
   };
 

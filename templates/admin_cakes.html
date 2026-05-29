@@ -599,8 +599,7 @@
     for (const [key, inputId] of Object.entries(fieldMap)) {
       const val = document.getElementById(inputId).value;
       if (val === '' || isNaN(val)) {
-        Swal.fire({ toast: true, position: 'top-end', icon: 'warning',
-          title: 'Please enter valid numbers', showConfirmButton: false, timer: 2500 });
+        glassToast({ icon: 'warning', title: 'Please enter valid numbers', showConfirmButton: false, timer: 2500 });
         return;
       }
       fields[key] = parseInt(val);
@@ -614,23 +613,21 @@
 
     try {
       const res = await fetch('/update-custom-pricing', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, fields })
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category, fields })
       });
       const result = await res.json();
-      Swal.fire({
-        toast: true, position: 'top-end',
-        icon: result.success ? 'success' : 'error',
-        title: result.message,
-        showConfirmButton: false, timer: 2500, timerProgressBar: true
+      glassToast({
+          icon: result.success ? 'success' : 'error',
+          title: result.message,
+          showConfirmButton: false, timer: 2500, timerProgressBar: true
       });
     } catch {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error',
-        title: 'Network error', showConfirmButton: false, timer: 2500 });
+        glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 2500 });
     } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
     }
   }
 
@@ -679,11 +676,12 @@
     document.querySelectorAll('.cake-card form').forEach(form => {
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        const result = await Swal.fire({
-          toast: true, position: 'top-end', icon: 'warning',
-          title: 'Delete this cake?', showConfirmButton: true, showCancelButton: true,
+        const result = await glassToast({
+          icon: 'warning',
+          title: 'Delete this cake?',
+          showConfirmButton: true, showCancelButton: true,
           confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel',
-          confirmButtonColor: '#dc3545', cancelButtonColor: '#6c757d', timer: 0
+          timer: 0
         });
         if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');
       });
@@ -695,7 +693,7 @@
     updateCakesDisplay();
   });
 
-  async function handleCakeFormSubmit(form, type) {
+async function handleCakeFormSubmit(form, type) {
     const btn = form.querySelector('button[type="submit"]');
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
@@ -704,8 +702,7 @@
       const formData = new FormData(form);
       const response = await fetch(form.action, { method: 'POST', body: formData });
       const result   = await response.json();
-      Swal.fire({
-        toast: true, position: 'top-end',
+      glassToast({
         icon: result.success ? 'success' : 'error',
         title: result.message,
         showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
@@ -715,7 +712,7 @@
         setTimeout(() => location.reload(), 800);
       }
     } catch (err) {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+      glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalHTML;

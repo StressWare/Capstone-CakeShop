@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
-                     get_faq_response, save_uploaded_image, delete_uploaded_image, handle_loyalty_stamp,safe_float)
+                     get_faq_response, save_uploaded_image, delete_uploaded_image, 
+                     handle_loyalty_stamp,safe_float, send_new_order_fcm)
 from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache
 from firebase_admin import messaging
@@ -34,6 +35,12 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
 
 csrf = CSRFProtect(app)
+@app.errorhandler(CSRFError)
+def csrf_error(_):
+    if 'application/json' in request.headers.get('Accept', '') or \
+       'application/json' in request.headers.get('Content-Type', ''):
+        return jsonify({'error': 'csrf_expired', 'message': 'Session expired.'}), 400
+    return render_template('400.html'), 400
 Talisman(app,
     force_https=is_production,
     session_cookie_secure=is_production,
@@ -63,6 +70,9 @@ from pos import pos_bp
 app.register_blueprint(pos_bp)
 
 #ERROR HANDLER
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('400.html'), 400
 @app.errorhandler(403)
 def forbidden(e):
     return render_template('403.html'), 403
@@ -1245,13 +1255,23 @@ def finalize_order():
                 flash(f"{parts[1]} only has {parts[2]} available.", "danger")
             return redirect(url_for("customer_dashboard"))
 
-    # ── COD  save immediately ──
+    # COD  save immediately
     if payment_method == "Cash on Delivery":
         doc_ref  = orders.add(order_data)
         order_id = doc_ref[1].id
         users.document(user_id).update({"order_count": firestore.Increment(1)})
         invalidate_cache("order_counts", "all_cakes")  # cache reset
-
+        try:
+            send_new_order_fcm(
+                db_ref=db,
+                order_id=order_id,
+                customer_name=customer_name,
+                order_type=order_type,
+                rush=order_data.get('rush', False)
+            )
+        except Exception:
+            app.logger.warning('[FCM] New order notify failed (COD), non-critical')
+        
         # send confirmation email
         user_doc = users.document(user_id).get()
         fname    = user_doc.to_dict().get("fname", "Customer")
@@ -2949,6 +2969,16 @@ def paymongo_webhook():
         order_id = doc_ref[1].id
         users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
         invalidate_cache("order_counts")
+        try:
+            send_new_order_fcm(
+                db_ref=db,
+                order_id=order_id,
+                customer_name=order_data.get('customer', {}).get('name', 'Customer'),
+                order_type=order_data.get('order_type', 'custom'),
+                rush=order_data.get('rush', False)
+            )
+        except Exception:
+            app.logger.warning('[FCM] New order notify failed (webhook), non-critical')
          # Confirmation email 
         user_doc = users.document(order_data.get("user_id")).get()
         fname    = user_doc.to_dict().get("fname", "Customer")
@@ -3040,6 +3070,16 @@ def payment_success():
     order_id = doc_ref[1].id
     users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
     invalidate_cache("order_counts")
+    try:
+        send_new_order_fcm(
+            db_ref=db,
+            order_id=order_id,
+            customer_name=order_data.get('customer', {}).get('name', 'Customer'),
+            order_type=order_data.get('order_type', 'custom'),
+            rush=order_data.get('rush', False)
+        )
+    except Exception:
+        app.logger.warning('[FCM] New order notify failed (payment_success), non-critical')
     # send confirmation email
     user_doc = users.document(order_data.get("user_id")).get()
     fname    = user_doc.to_dict().get("fname", "Customer")

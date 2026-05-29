@@ -392,7 +392,7 @@
   <!-- PAGE HEADER -->
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Inventory Management</h1>
-    <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
+    <button class="btn-export" onclick="openExportModal()">Export</button>
   </div>
 
   <div class="card shadow-sm">
@@ -482,12 +482,13 @@
                   </li>
                   <li><hr class="dropdown-divider"></li>
                   <li>
-                    <form method="POST" action="/inventory/delete/{{ i.id }}"
-                      onsubmit="return confirm('Delete {{ i.item }}?')" style="display:inline;">
+                    <form method="POST" action="/inventory/delete/{{ i.id }}" style="display:inline;">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="submit" class="dropdown-item text-danger" style="border:none;background:none;width:100%;text-align:left;padding:0.5rem 1rem;cursor:pointer;">
+                     <button type="button" class="dropdown-item text-danger" 
+                        onclick="handleDeleteInventory(this, '{{ i.item }}')" 
+                        style="border:none;background:none;width:100%;text-align:left;padding:0.5rem 1rem;cursor:pointer;">
                         <i class="fas fa-trash"></i> Delete
-                      </button>
+                    </button>
                     </form>
                   </li>
                 </ul>
@@ -639,7 +640,7 @@
 <div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
   <div class="export-modal">
     <button class="export-modal-close" onclick="closeExportModal()">×</button>
-    <h5>⬇ Export Inventory</h5>
+    <h5>Export Inventory</h5>
 
     <div class="date-range-row">
       <div>
@@ -655,8 +656,8 @@
     <div style="margin-bottom:10px;">
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
-        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">📄 PDF</button>
-        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">📊 CSV</button>
+        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">PDF</button>
+        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">CSV</button>
       </div>
     </div>
 
@@ -672,7 +673,7 @@
     </div>
 
     <button class="btn-download" onclick="runExport()">
-      <span id="downloadBtnIcon">📄</span>
+      <span id="downloadBtnIcon"></span>
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
   </div>
@@ -683,6 +684,20 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+function handleDeleteInventory(btn, itemName) {
+    glassAlert({
+        icon: 'warning',
+        title: `Delete ${itemName}?`,
+        text: 'This cannot be undone.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+    }).then(result => {
+        if (result.isConfirmed) btn.closest('form').submit();
+    });
+}
+
+
 let currentInventoryPage = 1;
 const inventoryPerPage   = 10;
 let exportFormat         = 'pdf';

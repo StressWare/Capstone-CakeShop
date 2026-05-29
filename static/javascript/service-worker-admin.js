@@ -14,14 +14,20 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
     console.log('[FCM SW] Background message:', payload);
-    const { title, body } = payload.notification;
-    self.registration.showNotification(title, {
-        body: body,
-        icon: '/static/img/logo.png',
-        badge: '/static/img/logo.png',
-        tag: 'delivery-notify',
+    const { title, body } = payload.notification || {};
+    const data = payload.data || {};
+
+    const isRush = data.rush === 'true';
+    const tag = data.type === 'new_order' ? 'new-order' : 'delivery-notify';
+
+    self.registration.showNotification(title || ' New Order!', {
+        body:     body || '',
+        icon:     '/static/img/logo.png',
+        badge:    '/static/img/logo.png',
+        tag:      tag,
         renotify: true,
-        data: payload.data || {}
+        vibrate:  isRush ? [200, 100, 200, 100, 200] : [200, 100, 200],
+        data:     data
     });
 });
 

@@ -3,7 +3,8 @@ import cloudinary
 import cloudinary.uploader
 from datetime import datetime, timedelta, timezone
 from flask import session, request, current_app
-
+import logging
+logger = logging.getLogger(__name__)
 PH_TZ = timezone(timedelta(hours=8))
 
 # ================================================================
@@ -250,5 +251,63 @@ def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_r
         user_ref.update(update)
 
     except Exception:
-        import logging
-        logging.getLogger(__name__).exception("[LOYALTY] Failed to handle loyalty stamp")
+        logger.exception("[LOYALTY] Failed to handle loyalty stamp")
+        
+def send_new_order_fcm(db_ref, order_id, customer_name, order_type, rush=False):
+    """Send FCM push notification to all admin tokens for a new order."""
+
+    try:
+        from firebase_admin import messaging as fcm_messaging
+        admin_tokens_doc = db_ref.collection('fcm_tokens').document('admins').get()
+        if not admin_tokens_doc.exists:
+            logger.warning('[FCM NEW ORDER] No admin tokens doc found')
+            return
+
+        token_map = admin_tokens_doc.to_dict()  # {uid: token}
+        if not token_map:
+            return
+
+        rush_label = ' 🚨 RUSH' if rush else ''
+        type_label = 'Custom Cake' if order_type == 'custom' else 'Premade Cake'
+
+        failed_uids = []
+        for uid, token in token_map.items():
+            try:
+                msg = fcm_messaging.Message(
+                    token=token,
+                    notification=fcm_messaging.Notification(
+                        title=f'🎂 New Order!{rush_label}',
+                        body=f'{customer_name} placed a {type_label} order. Tap to review.'
+                    ),
+                    data={
+                        'order_id': order_id,
+                        'type': 'new_order',
+                        'customer_name': customer_name,
+                        'order_type': order_type,
+                        'rush': 'true' if rush else 'false'
+                    },
+                    webpush=fcm_messaging.WebpushConfig(
+                        notification=fcm_messaging.WebpushNotification(
+                            icon='/static/img/logo.png',
+                            badge='/static/img/logo.png',
+                            tag='new-order',      # groups them; renotify shows each
+                            renotify=True,
+                        )
+                    )
+                )
+                fcm_messaging.send(msg)
+                logger.info(f'[FCM NEW ORDER] Sent to uid: {uid}')
+            except Exception as e:
+                logger.warning(f'[FCM NEW ORDER] Failed for uid {uid}: {e}')
+                failed_uids.append(uid)
+
+        # Clean up dead tokens
+        if failed_uids:
+            admin_ref = db_ref.collection('fcm_tokens').document('admins')
+            updates = {uid: 'DELETE_FIELD_SENTINEL' for uid in failed_uids}
+            # Use firestore.DELETE_FIELD in the caller context
+            from firebase_admin import firestore as admin_fs
+            admin_ref.update({uid: admin_fs.firestore.DELETE_FIELD for uid in failed_uids})
+
+    except Exception as e:
+        logger.exception(f'[FCM NEW ORDER] Error: {e}')

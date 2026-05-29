@@ -346,7 +346,7 @@
     <h1 class="mb-0">Expenses Records</h1>
     <div class="d-flex gap-2">
       
-      <button class="btn-export" onclick="openExportModal()">⬇ Export</button>
+      <button class="btn-export" onclick="openExportModal()">Export</button>
     </div>
   </div>
 
@@ -426,11 +426,11 @@
                     data-bs-toggle="modal" data-bs-target="#editExpenseModal{{ e.id }}">
                     Edit
                   </button>
-                  <form method="POST" action="/expenses/delete/{{ e.id }}"
-                    onsubmit="return confirm('Delete this expense?')">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                  </form>
+                    <form method="POST" action="/expenses/delete/{{ e.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                            onclick="handleDeleteExpense(this)">Delete</button>
+                    </form>
                 </div>
               </td>
             </tr>
@@ -542,7 +542,7 @@
 <div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
   <div class="export-modal">
     <button class="export-modal-close" onclick="closeExportModal()">×</button>
-    <h5>⬇ Export Expenses</h5>
+    <h5>Export Expenses</h5>
 
     <div class="date-range-row">
       <div>
@@ -558,8 +558,8 @@
     <div style="margin-bottom:10px;">
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
-        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">📄 PDF</button>
-        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">📊 CSV</button>
+        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">PDF</button>
+        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">CSV</button>
       </div>
     </div>
 
@@ -575,7 +575,7 @@
     </div>
 
     <button class="btn-download" onclick="runExport()">
-      <span id="downloadBtnIcon">📄</span>
+      <span id="downloadBtnIcon"></span>
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
   </div>
@@ -586,6 +586,18 @@
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
+  function handleDeleteExpense(btn) {
+    glassAlert({
+        icon: 'warning',
+        title: 'Delete this expense?',
+        text: 'This cannot be undone.',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+    }).then(result => {
+        if (result.isConfirmed) btn.closest('form').submit();
+    });
+}
 let currentExpensesPage = 1;
 const expensesPerPage   = 10;
 let exportFormat        = 'pdf';

@@ -54,23 +54,6 @@
     100% { transform: rotate(360deg); }
   }
 
-  /* NEW ORDER BANNER */
-  #newOrderBanner {
-    display: none;
-    background: linear-gradient(135deg, #4ade80, #16a34a);
-    color: white;
-    padding: 10px 20px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 0.88rem;
-    cursor: pointer;
-    animation: slideDown 0.3s ease;
-  }
-  @keyframes slideDown {
-    from { transform: translateY(-100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-  }
-
   /* TABS */
   .order-tabs {
     display: flex; gap: 4px; background: #fce8f3;
@@ -435,11 +418,103 @@
   max-width: 100%;
   }
 
+
+  #newOrderBanner {
+    position: fixed;
+    top: 0; left: 250px; right: 0;
+    z-index: 9999;
+    background: linear-gradient(135deg, #d63384, #a0205e);
+    color: white;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    animation: bannerSlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: none;
+  }
+  @keyframes bannerSlideDown {
+      from { transform: translateY(-100%); opacity: 0; }
+      to   { transform: translateY(0);     opacity: 1; }
+  }
+  .banner-text { font-size: 0.92rem; font-weight: 600; line-height: 1.4; }
+  .banner-text small { font-weight: 400; opacity: 0.88; font-size: 0.8rem; }
+  .banner-rush {
+      background: #ef4444; color: white;
+      font-size: 0.7rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 6px;
+      letter-spacing: 0.05em; flex-shrink: 0;
+  }
+  .banner-count {
+      background: #ef4444; color: white; border-radius: 50%;
+      width: 22px; height: 22px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 800;
+      margin-left: 6px; flex-shrink: 0;
+  }
+  .banner-actions { display: flex; gap: 8px; align-items: center; }
+  .banner-btn-view {
+      background: white; color: #15803d; border: none;
+      border-radius: 8px; padding: 7px 16px;
+      font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+  }
+  .banner-btn-view:hover { opacity: 0.88; }
+  .banner-btn-dismiss {
+      background: rgba(255,255,255,0.2); color: white;
+      border: 1px solid rgba(255,255,255,0.4);
+      border-radius: 8px; padding: 7px 12px;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+  }
+  .banner-btn-dismiss:hover { background: rgba(255,255,255,0.3); }
+  .banner-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px; gap: 12px; flex-wrap: wrap;
+  }
+  .banner-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+  .banner-pulse {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; flex-shrink: 0;
+      box-shadow: 0 0 0 0 rgba(255,255,255,0.5);
+      animation: bannerPulse 1.2s infinite;
+  }
+  @keyframes bannerPulse {
+      0%   { box-shadow: 0 0 0 0   rgba(255,255,255,0.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(255,255,255,0);  }
+      100% { box-shadow: 0 0 0 0   rgba(255,255,255,0);   }
+  }
+  @media (max-width: 575px) {
+      .banner-inner { padding: 12px 14px; gap: 8px; }
+      .banner-text  { font-size: 0.84rem; }
+      .banner-btn-view, .banner-btn-dismiss { padding: 6px 10px; font-size: 0.78rem; }
+      #newOrderBanner { left: 0; }
+  }
+  @media (max-width: 992px) {
+    #newOrderBanner {
+        left: 0; /* full width on tablet/mobile since sidebar is hidden */
+    }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-
+<!-- NEW ORDER NOTIFICATION BANNER -->
+<div id="newOrderBanner">
+    <div class="banner-inner">
+        <div class="banner-left">
+            <div class="banner-pulse"></div>
+            <div class="banner-text">
+                <span id="bannerTitle">🎂 New Order!</span>
+                <span id="bannerRushBadge" class="banner-rush" style="display:none;">RUSH</span>
+                <span id="bannerCount" class="banner-count" style="display:none;">1</span>
+                <br>
+                <small id="bannerSubtitle">A new order has arrived</small>
+            </div>
+        </div>
+        <div class="banner-actions">
+            <button class="banner-btn-view" onclick="bannerViewOrders()">View Orders</button>
+            <button class="banner-btn-dismiss" onclick="bannerDismiss()">✕ Dismiss</button>
+        </div>
+    </div>
+</div>
 <div class="container-fluid mt-4 mb-0 px-4">
   <div class="card shadow-sm">
     <div class="card-header card-header-custom">
@@ -727,6 +802,15 @@ document.addEventListener('hidden.bs.modal', function() {
                       const row = document.querySelector(`tr[data-id="${id}"]`);
                       if (row) row.classList.add('row-new-flash');
                   }, 100);
+
+                  if (typeof window.handleNewOrderNotification === 'function') {
+                      window.handleNewOrderNotification({
+                          customerName: data.customer?.name || 'Customer',
+                          orderType:    data.order_type     || 'custom',
+                          rush:         data.rush           || false,
+                          orderId:      id
+                      });
+                  }
               }
           }
 
@@ -956,9 +1040,7 @@ document.addEventListener('hidden.bs.modal', function() {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
 
-    const confirm = await Swal.fire({
-      toast: true,
-      position: 'top-end',
+    const confirm = await glassToast({
       icon: 'warning',
       title: 'Confirm Status Change?',
       html: `<div style="text-align:left; font-size:0.85rem;">
@@ -969,8 +1051,6 @@ document.addEventListener('hidden.bs.modal', function() {
       showCancelButton: true,
       confirmButtonText: '✓ Confirm',
       cancelButtonText: '✕ Cancel',
-      confirmButtonColor: '#d63384',
-      cancelButtonColor: '#6c757d',
       timer: 0
     });
 
@@ -986,8 +1066,8 @@ document.addEventListener('hidden.bs.modal', function() {
       const response = await fetch(`/order/status/${orderId}`, { method: 'POST', body: formData });
       const result = await response.json();
 
-      Swal.fire({
-        toast: true, position: 'top-end', icon: result.success ? 'success' : 'error',
+      glassToast({
+        icon: result.success ? 'success' : 'error',
         title: result.message || (result.success ? 'Updated!' : 'Failed'),
         showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
       });
@@ -996,54 +1076,48 @@ document.addEventListener('hidden.bs.modal', function() {
         historicalOrders = [];
       }
     } catch (err) {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+      glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
     }
     window.markBalanceCollected = async function(orderId) {
-    const confirm = await Swal.fire({
-      icon: 'question',
-      title: 'Mark Balance as Collected?',
-      html: `<div style="font-size:0.88rem; color:#555;">
-               This will set the payment status to <strong>Fully Paid</strong>.<br>
-               Make sure you have collected the remaining balance from the customer.
-             </div>`,
-      showCancelButton: true,
-      confirmButtonText: 'Yes, Collected',
-      cancelButtonText:  'Cancel',
-      confirmButtonColor: '#198754',
-      cancelButtonColor:  '#6c757d',
-    });
-
-    if (!confirm.isConfirmed) return;
-
-    try {
-      const res    = await fetch(`/order/balance-collected/${orderId}`, { method: 'POST' });
-      const result = await res.json();
-
-      Swal.fire({
-        toast: true, position: 'top-end',
-        icon:  result.success ? 'success' : 'error',
-        title: result.message,
-        showConfirmButton: false,
-        timer: 2500, timerProgressBar: true
+      const confirm = await glassAlert({
+        icon: 'question',
+        title: 'Mark Balance as Collected?',
+        html: `<div style="font-size:0.88rem; color:#555;">
+                This will set the payment status to <strong>Fully Paid</strong>.<br>
+                Make sure you have collected the remaining balance from the customer.
+              </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Yes, Collected',
+        cancelButtonText: 'Cancel',
       });
 
-      if (result.success) {
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(
-          document.getElementById('orderDetailsModal')
-        );
-        if (modal) modal.hide();
-      }
-    } catch (err) {
-      Swal.fire({ toast: true, position: 'top-end', icon: 'error',
-                  title: 'Network error', showConfirmButton: false, timer: 3000 });
-    }
-  };
-  };
+      if (!confirm.isConfirmed) return;
 
+      try {
+        const res    = await fetch(`/order/balance-collected/${orderId}`, { method: 'POST' });
+        const result = await res.json();
+
+        glassToast({
+          icon: result.success ? 'success' : 'error',
+          title: result.message,
+          showConfirmButton: false,
+          timer: 2500, timerProgressBar: true
+        });
+
+        if (result.success) {
+          const modal = bootstrap.Modal.getInstance(
+            document.getElementById('orderDetailsModal')
+          );
+          if (modal) modal.hide();
+        }
+      } catch (err) {
+        glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+      }
+    };
+  };
   // ── Show Details Modal ──
   window.showDetails = function(orderId) {
     const o = allOrders.find(x => x.id === orderId) || historicalOrders.find(x => x.id === orderId)
@@ -1285,11 +1359,9 @@ body.innerHTML = `
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
 
-      try {
-        // 1. Calculate totals (runs your existing onclick logic)
+     try {
         updateEditOrderData();
 
-        // 2. Send via fetch
         const formData = new FormData(editForm);
         const response = await fetch(editForm.action, {
           method: 'POST',
@@ -1298,9 +1370,7 @@ body.innerHTML = `
 
         const result = await response.json();
 
-        // 3. Show toast
-        Swal.fire({
-          toast: true, position: 'top-end',
+        glassToast({
           icon: result.success ? 'success' : 'error',
           title: result.message,
           showConfirmButton: false,
@@ -1308,15 +1378,14 @@ body.innerHTML = `
           timerProgressBar: true
         });
 
-        // 4. Close modal on success
         if (result.success) {
           const modal = bootstrap.Modal.getInstance(document.getElementById('editOrderModal'));
           if (modal) modal.hide();
         }
 
       } catch (err) {
-        Swal.fire({
-          toast: true, position: 'top-end', icon: 'error',
+        glassToast({
+          icon: 'error',
           title: 'Network error. Please try again.',
           showConfirmButton: false, timer: 3000
         });
@@ -1431,42 +1500,37 @@ body.innerHTML = `
   document.addEventListener('DOMContentLoaded', init);
 })();
 
-  // ── SweetAlert2 Toast Confirmation ──
   window.confirmStatus = function(currentStatus) {
-      return new Promise((resolve) => {
-          Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'warning',
-              title: 'Update Order Status?',
-              html: `
-                  <div style="text-align:left; font-size:0.85rem;">
-                      <div style="margin-bottom:8px;">
-                          <span style="color:#6c757d;">Current:</span> 
-                          <strong>${currentStatus}</strong>
-                      </div>
-                      <div>
-                          <span style="color:#6c757d;">Change to:</span> 
-                          <strong style="color:#d63384;">${document.querySelector('select[name="status"]').value}</strong>
-                      </div>
-                  </div>
-              `,
-              showConfirmButton: true,
-              showCancelButton: true,
-              confirmButtonText: '✓ Confirm',
-              cancelButtonText: '✕ Cancel',
-              confirmButtonColor: '#d63384',
-              cancelButtonColor: '#6c757d',
-              timer: 0,  // ← NO auto-dismiss!
-              timerProgressBar: false,
-              didOpen: (toast) => {
-                  toast.addEventListener('mouseenter', Swal.stopTimer);
-                  toast.addEventListener('mouseleave', Swal.resumeTimer);
-              }
-          }).then((result) => {
-              resolve(result.isConfirmed);  // Returns true if confirmed
-          });
-      });
+    return new Promise((resolve) => {
+        glassToast({
+            icon: 'warning',
+            title: 'Update Order Status?',
+            html: `
+                <div style="text-align:left; font-size:0.85rem;">
+                    <div style="margin-bottom:8px;">
+                        <span style="color:#6c757d;">Current:</span> 
+                        <strong>${currentStatus}</strong>
+                    </div>
+                    <div>
+                        <span style="color:#6c757d;">Change to:</span> 
+                        <strong style="color:#d63384;">${document.querySelector('select[name="status"]').value}</strong>
+                    </div>
+                </div>
+            `,
+            showConfirmButton: true,
+            showCancelButton: true,
+            confirmButtonText: '✓ Confirm',
+            cancelButtonText: '✕ Cancel',
+            timer: 0,
+            timerProgressBar: false,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        }).then((result) => {
+            resolve(result.isConfirmed);
+        });
+    });
   };
   // ── Handle Status Update with Toast Confirm ──
   window.handleStatusUpdate = async function(event, currentStatus) {
@@ -1479,5 +1543,101 @@ body.innerHTML = `
       }
       return false;
   };
+</script>
+<script>
+// ══════════════════════════════════════════════
+//  NEW ORDER NOTIFICATION SYSTEM
+// ══════════════════════════════════════════════
+(function() {
+    'use strict';
+
+    let pendingCount  = 0;
+    let soundLoop     = null;
+    let isPlaying     = false;
+
+    // ── Chime notifI ──
+    function createChime() {
+      try {
+          const audio = new Audio('/static/notif-chime.mp3');
+          audio.volume = 0.7;
+          audio.play().catch(e => console.warn('[SOUND] Audio failed:', e));
+      } catch(e) {
+          console.warn('[SOUND] Chime failed:', e);
+      }
+  }
+
+    function startSoundLoop() {
+        if (isPlaying) return;
+        isPlaying = true;
+        createChime();
+        soundLoop = setInterval(createChime, 3000);
+    }
+
+    function stopSoundLoop() {
+        isPlaying = false;
+        if (soundLoop) { clearInterval(soundLoop); soundLoop = null; }
+    }
+
+    // ── Show / update banner ──
+    function showBanner(info) {
+        const banner    = document.getElementById('newOrderBanner');
+        const titleEl   = document.getElementById('bannerTitle');
+        const subtitleEl= document.getElementById('bannerSubtitle');
+        const rushBadge = document.getElementById('bannerRushBadge');
+        const countEl   = document.getElementById('bannerCount');
+
+        pendingCount++;
+        const typeLabel = info.orderType === 'premade' ? 'Premade' : 'Custom Cake';
+
+        if (pendingCount === 1) {
+            titleEl.textContent    = `New Order from ${info.customerName}`;
+            subtitleEl.textContent = `${typeLabel} order just arrived`;
+        } else {
+            titleEl.textContent    = `${pendingCount} New Orders`;
+            subtitleEl.textContent = `Latest: ${info.customerName} — ${typeLabel}`;
+        }
+
+        rushBadge.style.display = info.rush ? 'inline-flex' : 'none';
+        countEl.textContent     = pendingCount;
+        countEl.style.display   = pendingCount > 1 ? 'inline-flex' : 'none';
+
+        banner.style.background = info.rush
+            ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
+            : 'linear-gradient(135deg, #d63384, #a0205e)';
+
+        banner.style.display = 'block';
+        banner.style.animation = 'none';
+        banner.offsetHeight; // force reflow
+        banner.style.animation = 'bannerSlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+        startSoundLoop();
+    }
+
+    function hideBanner() {
+        document.getElementById('newOrderBanner').style.display = 'none';
+        pendingCount = 0;
+        stopSoundLoop();
+    }
+
+    // ── public function ──
+    window.handleNewOrderNotification = function(info) {
+        showBanner(info);
+    };
+
+    window.bannerViewOrders = function() {
+        hideBanner();
+        const tableEl = document.getElementById('ordersTable');
+        if (tableEl) tableEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const allTabBtn = document.querySelector('.order-tab-btn');
+        if (allTabBtn && typeof window.switchOrderTab === 'function') {
+            window.switchOrderTab('all', allTabBtn);
+        }
+    };
+
+    window.bannerDismiss = function() {
+        hideBanner();
+    };
+
+})();
 </script>
 {% endblock %}

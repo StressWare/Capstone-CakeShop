@@ -72,7 +72,7 @@ function updateUnreadBadge(count) {
 function renderNotifications(notifications) {
     const container = document.getElementById('notificationList');
     if (!container) return;
-    
+    document.getElementById('notifSkeleton')?.remove();
     if (!notifications || notifications.length === 0) {
         container.innerHTML = '<div style="text-align: center; padding: 25px 16px; color: #aaa;"><i class="fas fa-bell-slash"></i><br>No notifications yet</div>';
         return;
