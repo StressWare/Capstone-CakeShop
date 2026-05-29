@@ -412,3 +412,14 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     0%   { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+  @media (max-width: 600px) {
+    footer > div:first-child {
+      grid-template-columns: 1fr !important;
+    }
+    footer > div:last-child {
+      flex-direction: column;
+      gap: 6px;
+      text-align: center;
+    }
+  }

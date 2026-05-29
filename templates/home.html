@@ -127,7 +127,6 @@
       margin: 0 4px;
     }
   }
-
 .location-section {
   padding: 60px 0 0 0;
 }
@@ -139,6 +138,7 @@
   border-radius: 15px;
   overflow: hidden;
 }
+
 .location-map-img {
   width: 100%;
   height: auto;
@@ -148,6 +148,9 @@
   display: block;
   border-radius: 15px;
 }
+
+.map-desktop { display: block; }
+.map-mobile  { display: none;  }
 
 @media (max-width: 992px) {
   .location-map-container {
@@ -159,13 +162,20 @@
 }
 
 @media (max-width: 768px) {
+  .map-desktop { display: none; }
+  .map-mobile  { display: block; }
+  
   .location-map-container {
     width: calc(100% - 24px);
+    margin: 0 auto;
     border-radius: 12px;
   }
+
   .location-map-img {
-    height: auto;
-    aspect-ratio: 16 / 5;
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    object-position: center bottom;
     border-radius: 12px;
   }
 }
@@ -440,7 +450,8 @@
 <section class="location-section">
   <h2 class="text-center" style="font-weight:700; margin-bottom: 20px;">Find Us</h2>
   <div class="location-map-container">
-    <img src="../static/img/mrs_brave_s_cakes_neon_20260529_152146.png" alt="Mrs. Brave's Location Map" class="location-map-img">
+    <img src="../static/img/mrsbraves-map1.png" alt="Mrs. Brave's Location Map" class="location-map-img map-desktop">
+    <img src="../static/img/mrsbraves-map2.png" alt="Mrs. Brave's Location Map" class="location-map-img map-mobile">
   </div>
 </section>
 

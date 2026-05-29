@@ -932,15 +932,28 @@ label[for="notes"] {
    RESPONSIVE DESIGN
 ===================================================== */
 
-@media (max-width: 992px) {
+@media (max-width: 1023px) {
+    .available-cakes-btn {
+        padding: 12px 20px;
+        font-size: 17px;
+    }
+}
 
+@media (max-width: 992px) {
     .category-cards {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 900px) {
+        .top-cakes-section .top-cakes-scroll {
+        justify-content: flex-start !important;
+        align-items: flex-start !important;
+    }
 
+    .top-cakes-section .container {
+        padding: 0;
+    }
     .grid,
     .grid-row-2 {
         grid-template-columns: 1fr;
@@ -948,12 +961,13 @@ label[for="notes"] {
 }
 
 @media (max-width: 768px) {
-
     .intro-logo {
         margin-top: 15px;
         width: 200px;
     }
-
+    .top-cakes-section .container {
+    padding: 0;
+}
     .intro-content h2 {
         font-size: 1.7rem;
     }
@@ -978,16 +992,13 @@ label[for="notes"] {
     }
 
     .footer-container {
-        display: flex;
-        flex-direction: row; /* keep items in one line */
+        flex-direction: row;
         justify-content: center;
         align-items: center;
         text-align: center;
-
-        padding: 6px 6px; /* thinner */
-        gap: 4px; /* smaller spacing */
-
-        flex-wrap: nowrap; /* prevent line break */
+        padding: 6px 6px;
+        gap: 4px;
+        flex-wrap: nowrap;
     }
 
     .review-card-img {
@@ -1013,53 +1024,77 @@ label[for="notes"] {
         font-size: 0.75rem;
         line-height: 1.2;
     }
+    .top-cakes-section .top-cakes-scroll {
+        justify-content: flex-start !important;
+        align-items: flex-start !important;
+    }
+    .available-cakes-btn-container {
+        margin: 15px 16px;
+    }
+
+    .available-cakes-btn {
+        padding: 10px 20px;
+        font-size: 15px;
+        display: inline-block;
+        width: auto;
+        max-width: 320px;
+        margin-bottom: 15px;
+    }
 }
 
 @media (max-width: 600px) {
-
     .category-cards {
         grid-template-columns: repeat(2, 1fr);
     }
 
     .services-row {
         display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        gap: 10px;
-        padding: 10px 5px;
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 16px;
+    }
+
+    .services-section {
+        padding: 30px 15px 0;
     }
 
     .service-card {
-        flex: 0 0 auto;
-        width: 110px;
-        height: 150px;
-        padding: 12px 10px;
+        width: 100%;
+        height: auto !important;
+        padding: 16px 20px;
         display: flex;
         flex-direction: column;
-        justify-content: space-evenly;
         align-items: center;
         text-align: center;
+        gap: 6px;
+        flex: 1 1 auto !important;
     }
 
     .service-card h5 {
-        font-size: 0.75rem;
+        font-size: 0.95rem;
         margin: 0;
-        line-height: 1.1;
-        min-height: 2em;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+        min-height: unset;
     }
 
     .service-card p {
-        font-size: 0.62rem;
+        font-size: 0.82rem;
         margin: 0;
-        line-height: 1.2;
+        line-height: 1.4;
     }
 }
 
 @media (max-width: 480px) {
+    body {
+        overflow-x: unset;
+    }
+
+    .top-cakes-section {
+        overflow: hidden;
+    }
+
+    .top-cakes-section .container {
+        padding: 0;
+    }
 
     .menu-btn {
         font-size: 1.2rem;
@@ -1071,6 +1106,7 @@ label[for="notes"] {
         font-size: 1rem;
         padding: 20px 50px;
     }
+
     .categories-container {
         gap: 10px;
     }
@@ -1096,56 +1132,33 @@ label[for="notes"] {
     }
 
     .review-card {
-        flex: 0 0 120px;
-        height: 217px;
+        flex: 0 0 140px !important;
+        height: auto !important;
     }
 
     .review-card-img,
     .review-card-img-placeholder {
-        height: 100px;
+        height: 120px;
     }
 
     .review-card-body {
-        padding: 8px 6px;
+        padding: 10px 8px;
     }
 
     .review-cake-name {
         font-size: 0.8rem;
+        word-break: break-word;
+        white-space: normal;
     }
 
     .review-stars {
-        font-size: 5px;
+        font-size: 0.7rem !important;
     }
 
     .review-rating-text {
-        font-size: 0.3rem;
-    }
-}
-
-
-
-/* Tablet (768px - 1023px) */
-@media (max-width: 1023px) {
-    .available-cakes-btn {
-        padding: 12px 20px;
-        font-size: 17px;
-    }
-}
-
-/* Mobile (< 768px) */
-@media (max-width: 767px) {
-    .available-cakes-btn-container {
-        margin: 15px 16px;
-    }
-    
-    .available-cakes-btn {
-        padding: 10px 20px;
-        font-size: 15px;
-        /* Keeps it centered without stretching full-width */
-        display: inline-block;
-        width: auto;
-        max-width: 320px;
-        margin-bottom: 15px;
+        font-size: 0.65rem !important;
+        white-space: normal;
+        word-break: break-word;
     }
 }
 

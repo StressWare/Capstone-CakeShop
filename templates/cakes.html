@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cakes.css">
+
 <style>
   /* Quantity selector */
   .qty-selector {
@@ -95,17 +96,154 @@
     vertical-align: middle;
   }
   .modal-heart-btn:hover { transform: scale(1.2); }
+  .cakes-container {
+    min-height: 60vh;
+  }
+  /* ===== HEADER & SEARCH ===== */
+  .page-header {
+    padding: 20px 0;
+    margin-bottom: -40px;   
+  }
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    color: white;
+  }
+  .search-wrapper {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .search-icon-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+    padding: 8px;
+    display: none; /* Hidden on desktop */
+  }
+  .search-box {
+    position: relative;
+  }
+  .search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.7);
+    pointer-events: none;
+  }
+  .search-box input {
+    padding: 10px 16px 10px 36px;
+    border-radius: 30px;
+    border: 2px solid #d63384;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 0.9rem;
+    width: 320px;
+    outline: none;
+  }
+  .search-box input::placeholder {
+    color: rgba(255,255,255,0.5);
+  }
+
+  @media (max-width: 768px) {
+    .page-header .container {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .page-title {
+      font-size: 1.2rem;
+      margin: 0;
+      flex-shrink: 1;
+    }
+
+    .search-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-shrink: 1;          /* allow wrapper to shrink */
+      min-width: 120px;        /* prevent it from getting too small */
+    }
+
+    /* Hide the toggle button completely */
+    .search-icon-btn {
+      display: none !important;
+    }
+
+    /* Make search box always visible */
+    .search-box {
+      display: block !important;   /* override any hiding */
+      width: auto;
+      margin: 0;
+    }
+
+    /* Adjust input width to fit beside heading */
+    .search-box input {
+      width: 250px;
+      max-width: 50vw;
+    }
+  }
+
+  .suggestions-dropdown {
+      position: absolute;
+      background: #fff;
+      border: 2px solid #d63384;
+      scrollbar-width: thin;
+      border-radius: 30px;
+      padding-right: 8px;
+      box-sizing: border-box;
+      list-style: none;
+      padding: 0;
+      margin: 4px 0 0;
+      max-height: none;
+      overflow-y: visible;
+      width: 100%;
+      z-index: 1000;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      
+  }
+  .suggestions-dropdown li {
+      padding: 10px 16px 10px 36px;  /* matches input padding-left to align text */
+      cursor: pointer;
+      color: #333;
+      font-size: 0.9rem;
+  }
+  .suggestions-dropdown li:hover {
+      background-color: #fce8f3;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<header class="header">
-  <div class="container text-center">
-    <h1>🎂 Available Cakes</h1>
-    <p>Fresh and delicious cakes ready for your special occasions</p>
+<header class="page-header">
+  <div class="container d-flex justify-content-between align-items-center">
+    <h1 class="page-title">Today's Available Cakes</h1>
+    
+    <!-- Search wrapper -->
+    <div class="search-wrapper">
+      <!-- ID must be searchToggle -->
+      <button class="search-icon-btn" id="searchToggle" type="button">
+        <i class="fas fa-search"></i>
+      </button>
+      <!-- ID must be searchBox -->
+      <div class="search-box" id="searchBox">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" id="cakeSearch" placeholder="Search cakes by name or category...">
+        <ul id="suggestions" class="suggestions-dropdown" style="display: none;"></ul>
+      </div>
+    </div>
   </div>
 </header>
-
 <main class="cakes-container container">
   <div class="cakes-grid">
     {% if cakes %}
@@ -140,8 +278,6 @@
 
           <div class="cake-info">
             <h5 class="cake-title">{{ cake.name }}</h5>
-  <!-- BURAHIN MO NA YUNG BADGE DITO -->
-          
           <!-- Price + Stock -->
           <div class="price-stock">
             <span class="price">₱{{ "%.2f"|format(cake.price) }}</span>
@@ -228,6 +364,11 @@
       </div>
     {% endif %}
   </div>
+  <div id="noSearchResults" class="empty-state" style="display: none;">
+  <i class="fas fa-search fa-4x"></i>
+  <h3>No Matching Search</h3>
+  <p>Try a different name or category.</p>
+</div>
 </main>
 
 <!-- ================================================================ -->
@@ -451,5 +592,58 @@ async function toggleFavorite(cakeId, cakeName) {
     console.error('Favorite toggle error:', e);
   }
 }
+
+
+// Get all cake names from the page once
+const cakeNames = Array.from(document.querySelectorAll('.cake-title')).map(el => el.textContent.trim());
+
+const searchInput = document.getElementById('cakeSearch');
+const suggestionsBox = document.getElementById('suggestions');
+
+searchInput.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    
+    // Filter suggestions
+    const matches = cakeNames.filter(name => name.toLowerCase().includes(query));
+    
+    if (query !== '' && matches.length > 0) {
+        suggestionsBox.innerHTML = matches.map(name => `<li>${name}</li>`).join('');
+        suggestionsBox.style.display = 'block';
+    } else {
+        suggestionsBox.style.display = 'none';
+    }
+    
+    // Existing filter logic for cakes grid
+    const cards = document.querySelectorAll('.cake-card');
+    let anyVisible = false;
+    cards.forEach(card => {
+        const name = card.querySelector('.cake-title')?.textContent.toLowerCase() || '';
+        const category = card.querySelector('.badge.category')?.textContent.toLowerCase() || '';
+        const matchesCard = name.includes(query) || category.includes(query);
+        card.style.display = matchesCard ? '' : 'none';
+        if (matchesCard) anyVisible = true;
+    });
+    const noResultsDiv = document.getElementById('noSearchResults');
+    if (noResultsDiv) {
+        noResultsDiv.style.display = (!anyVisible && query !== '') ? 'block' : 'none';
+    }
+});
+
+// When clicking a suggestion, fill input and hide dropdown
+suggestionsBox.addEventListener('click', function(e) {
+    if (e.target.tagName === 'LI') {
+        searchInput.value = e.target.textContent;
+        suggestionsBox.style.display = 'none';
+        // Trigger the filter again to show only the selected cake
+        searchInput.dispatchEvent(new Event('input'));
+    }
+});
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+        suggestionsBox.style.display = 'none';
+    }
+});
 </script>
 {% endblock %}
