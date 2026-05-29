@@ -235,7 +235,7 @@
       {% if order.delivery_date %}
       <div class="info-row">
         <span class="info-label">
-          {% if order.delivery_type == 'Pickup' %}Pick Up Date{% else %}Delivery Date{% endif %}
+          {% if order.delivery_type == 'Pickup' %}Order Date{% else %}Order Date{% endif %}
         </span>
         <span class="info-value">
           {{ order.delivery_date.strftime('%b %d, %Y · %I:%M %p') }}

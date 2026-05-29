@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>400 – Session Expired | Mrs. Brave's</title>
+  <title>429 – Too Many Requests | Mrs. Brave's</title>
   <link rel="icon" type="image/png" href="/static/img/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
   <style>
@@ -62,14 +62,14 @@
       to   { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    .clock-icon {
+    .snail-icon {
       font-size: 3.5rem; margin-bottom: 8px; display: block;
-      animation: tickTock 1.5s ease-in-out infinite;
+      animation: slowWiggle 2.5s ease-in-out infinite;
     }
-    @keyframes tickTock {
-      0%,100% { transform: rotate(0deg); }
-      25%      { transform: rotate(-10deg); }
-      75%      { transform: rotate(10deg); }
+    @keyframes slowWiggle {
+      0%,100% { transform: translateX(0) rotate(0deg); }
+      25%      { transform: translateX(-6px) rotate(-5deg); }
+      75%      { transform: translateX(6px) rotate(5deg); }
     }
 
     .error-code {
@@ -84,7 +84,34 @@
     .divider { width: 60px; height: 3px; background: linear-gradient(90deg, var(--pink), var(--pink-dark)); border-radius: 2px; margin: 16px auto; }
 
     h2 { font-family: 'Playfair Display', serif; color: #fff; font-size: 1.6rem; margin-bottom: 12px; }
-    p  { color: rgba(255,255,255,0.55); font-size: 0.95rem; line-height: 1.6; margin-bottom: 32px; }
+    p  { color: rgba(255,255,255,0.55); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; }
+
+    /* Countdown ring */
+    .countdown-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      margin-bottom: 28px;
+    }
+    .ring-svg { transform: rotate(-90deg); }
+    .ring-bg { fill: none; stroke: rgba(214,51,132,0.15); stroke-width: 5; }
+    .ring-progress {
+      fill: none;
+      stroke: url(#ringGrad);
+      stroke-width: 5;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 1s linear;
+    }
+    .countdown-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 700;
+      color: #fff;
+      margin-top: -68px; /* overlap the SVG */
+      position: relative; z-index: 1;
+      line-height: 1;
+    }
+    .countdown-label {
+      font-size: 0.72rem; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.35); margin-top: 4px;
+    }
 
     .btn-group { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
@@ -99,6 +126,7 @@
       border: none; cursor: pointer;
     }
     .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(214,51,132,0.55); color: #fff; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     .btn-ghost {
       background: transparent;
       border: 1px solid rgba(214,51,132,0.4);
@@ -113,7 +141,7 @@
       .error-code { font-size: 4.5rem; letter-spacing: -2px; }
       h2 { font-size: 1.2rem; }
       p  { font-size: 0.85rem; }
-      .clock-icon { font-size: 2.5rem; }
+      .snail-icon { font-size: 2.5rem; }
       .btn { padding: 11px 18px; font-size: 0.85rem; }
       .btn-group { flex-direction: column; align-items: center; }
     }
@@ -132,16 +160,71 @@
   </div>
 
   <div class="card">
-    <span class="clock-icon">⏰</span>
-    <div class="error-code">400</div>
+    <span class="snail-icon">🐌</span>
+    <div class="error-code">429</div>
     <div class="divider"></div>
-    <h2>Session Expired</h2>
-    <p>Your session went a little stale — the request wasn't quite right. Give the page a fresh refresh to continue!</p>
+    <h2>Patience, the Cake is Still Baking!</h2>
+    <p>
+      You've been browsing a little too fast.
+      {% if description %}Limit reached: <strong style="color:var(--pink)">{{ description }}</strong>.{% endif %}
+      Take a breather — you can try again shortly.
+    </p>
+
+    <!-- Countdown -->
+    <div class="countdown-wrap">
+      <svg class="ring-svg" width="80" height="80" viewBox="0 0 80 80">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#d63384"/>
+            <stop offset="100%" stop-color="#ff8dc7"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-bg" cx="40" cy="40" r="34"/>
+        <circle class="ring-progress" id="ringProgress" cx="40" cy="40" r="34"/>
+      </svg>
+      <div class="countdown-number" id="countdownNum">--</div>
+      <div class="countdown-label">seconds</div>
+    </div>
+
     <div class="btn-group">
-      <button onclick="window.location.reload()" class="btn">efresh Page</button>
-      <a href="/" class="btn btn-ghost">Back to Home</a>
+      <button id="retryBtn" class="btn" disabled onclick="window.location.reload()">⏳ Please Wait…</button>
+      <a href="/" class="btn btn-ghost">← Back to Home</a>
     </div>
     <div class="brand">Mrs. Brave's Cake Shop</div>
   </div>
+
+  <script>
+    // Flask passes retry_after (seconds) into the template
+    const retryAfter = parseInt("{{ retry_after | default(60) }}", 10) || 60;
+
+    const numEl    = document.getElementById('countdownNum');
+    const ringEl   = document.getElementById('ringProgress');
+    const retryBtn = document.getElementById('retryBtn');
+
+    const radius = 34;
+    const circ   = 2 * Math.PI * radius;
+    ringEl.style.strokeDasharray  = circ;
+    ringEl.style.strokeDashoffset = 0;
+
+    let remaining = retryAfter;
+
+    function tick() {
+      numEl.textContent = remaining;
+      // progress from full ring → empty as time runs out
+      const progress = remaining / retryAfter;
+      ringEl.style.strokeDashoffset = circ * (1 - progress);
+
+      if (remaining <= 0) {
+        numEl.textContent = '0';
+        retryBtn.disabled = false;
+        retryBtn.textContent = '✓ Try Again';
+        return;
+      }
+      remaining--;
+      setTimeout(tick, 1000);
+    }
+
+    tick();
+  </script>
 </body>
 </html>

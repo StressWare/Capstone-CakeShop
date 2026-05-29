@@ -54,8 +54,8 @@ limiter.init_app(app)
 def handle_rate_limit(e):
     if request.is_json or request.path.startswith('/verify') or request.path.startswith('/save'):
         return jsonify({"error": "Too many requests. Please slow down."}), 429
-    flash("Too many attempts. Please wait a moment.", "danger")
-    return redirect(url_for("customer_dashboard")), 429
+    retry_after = getattr(e, 'retry_after', 60)
+    return render_template('429.html', description=e.description, retry_after=retry_after), 429
 
 @app.after_request
 def add_common_headers(response):
