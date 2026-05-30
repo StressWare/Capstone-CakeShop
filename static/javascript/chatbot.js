@@ -193,6 +193,7 @@ class ChatbotWidget {
         if (!this.chatWindow) return;
         if (this.chatWindow.style.display === 'none' || !this.chatWindow.style.display) {
             this.chatWindow.style.display = 'flex';
+            this.toggleBtn.style.display = 'none'; // hide toggle when open
             this.hideBadge();
             setTimeout(() => {
                 this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
@@ -200,6 +201,7 @@ class ChatbotWidget {
             if (this.input) this.input.focus();
         } else {
             this.chatWindow.style.display = 'none';
+            this.toggleBtn.style.display = 'flex'; // show toggle when closed
         }
     }
     
@@ -704,6 +706,7 @@ class GuestChatbotWidget {
         if (!this.chatWindow) return;
         const isHidden = this.chatWindow.style.display === 'none' || !this.chatWindow.style.display;
         this.chatWindow.style.display = isHidden ? 'flex' : 'none';
+        this.toggleBtn.style.display = isHidden ? 'none' : 'flex'; // toggle visibility
         if (isHidden && this.input) this.input.focus();
         if (isHidden) {
             setTimeout(() => {

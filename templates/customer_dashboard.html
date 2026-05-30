@@ -22,39 +22,41 @@
     <h2 class="mb-3" style="font-size:22px; font-weight:700; color:#f0f0f0;">Profile</h2>
 
     <div class="profile-card-enhanced">
-      <div class="profile-avatar">
-        {{ customer.fname[0] | upper if customer.fname else '?' }}
-      </div>
-      <div class="profile-info-block">
+  <div class="profile-avatar">
+    {{ customer.fname[0] | upper if customer.fname else '?' }}
+  </div>
+  <div class="profile-info-block">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+      <div>
         <div class="profile-name text-muted">{{ customer.fname }}</div>
-        <div class="profile-username">@{{ customer.username }}</div>
-        <div class="profile-fields">
-          <div class="profile-field">
-            <div class="profile-field-label">Contact</div>
-            <div class="profile-field-val">{{ customer.number or '—' }}</div>
-          </div>
-          <div class="profile-field">
-            <div class="profile-field-label">Email</div>
-            <div class="profile-field-val">{{ customer.email or '—' }}</div>
-          </div>
-          <div class="profile-field">
-            <div class="profile-field-label">Address</div>
-            <div class="profile-field-val">{{ customer.address or '—' }}</div>
-          </div>
-          <div class="profile-field">
-            <div class="profile-field-label">Username</div>
-            <div class="profile-field-val">{{ customer.username or '—' }}</div>
-          </div>
-        </div>
+        <div class="profile-username" style="margin-bottom:0;">@{{ customer.username }}</div>
       </div>
-      <div class="profile-action">
-        <button class="btn-edit-profile"
-                data-bs-toggle="modal"
-                data-bs-target="#editProfileModal">
-          <i class="bi bi-pencil me-1"></i> Edit Profile
-        </button>
+      <button class="btn-edit-profile"
+              data-bs-toggle="modal"
+              data-bs-target="#editProfileModal">
+        <i class="bi bi-pencil me-1"></i> Edit Profile
+      </button>
+    </div>
+    <div class="profile-fields">
+      <div class="profile-field">
+        <div class="profile-field-label">Contact</div>
+        <div class="profile-field-val">{{ customer.number or '—' }}</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-label">Email</div>
+        <div class="profile-field-val">{{ customer.email or '—' }}</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-label">Address</div>
+        <div class="profile-field-val">{{ customer.address or '—' }}</div>
+      </div>
+      <div class="profile-field">
+        <div class="profile-field-label">Username</div>
+        <div class="profile-field-val">{{ customer.username or '—' }}</div>
       </div>
     </div>
+  </div>
+</div>
 
     <!-- Stats row -->
     <div class="stats-row mb-3">

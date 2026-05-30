@@ -71,6 +71,8 @@ body::after {
   padding: 28px 18px 80px;
   position: relative;
   z-index: 1;
+    width: 100%;
+  overflow-x: hidden;
 }
 
 /* ===========================
@@ -111,6 +113,7 @@ body::after {
   overflow: hidden;
   background: rgba(255,255,255,0.90) !important;
   transition: box-shadow 0.25s, border-color 0.25s;
+  width: 100%;
 }
 .profile-card-enhanced:hover {
   border-color: rgba(232,24,110,0.35);
@@ -164,7 +167,7 @@ body::after {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.profile-info-block { flex: 1; min-width: 200px; }
+.profile-info-block { flex: 1; min-width: 200px; padding-right: clamp(0px, 2vw, 25px); }
 .profile-name {
   font-size: 18px; font-weight: 700;
   color: #1a0a10; margin-bottom: 2px;
@@ -205,7 +208,7 @@ body::after {
   overflow: hidden;
 }
 
-.profile-action { display: flex; align-items: flex-start; }
+.profile-action { display: flex; align-items: flex-start;   flex-shrink: 0;}
 .btn-edit-profile {
   background: rgba(232,24,110,0.06);
   border: 1px solid rgba(232,24,110,0.35);
@@ -508,12 +511,13 @@ body::after {
   margin-bottom: 22px;
   background: rgba(255,255,255,0.80) !important;
   box-shadow: 0 2px 16px rgba(30,0,15,0.06), inset 0 1px 0 rgba(255,255,255,0.95);
+  width: 100%;
 }
 .nav-icon {
   flex: 1; display: flex; align-items: center;
   justify-content: center; gap: 8px;
   padding: 11px 16px; border-radius: var(--radius-sm);
-  border: none; background: transparent;
+  border:  1px solid transparent;; background: transparent;
   color: var(--text-muted); font-size: 13px; font-weight: 600;
   cursor: pointer; transition: all 0.20s;
 }
@@ -769,12 +773,19 @@ body::after {
   border-color: rgba(232,24,110,0.30);
 }
 .pagination .page-item.disabled .page-link { opacity: 0.40; }
-
+#ordersTab,
+#favoritesTab,
+#loyaltyTab {
+  width: 100%;
+  box-sizing: border-box;
+}
 /* ===== FAVORITES ===== */
 .favorites-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  width: 100%;
+  overflow: hidden;
 }
 .fav-card {
   background: rgba(255,255,255,0.88) !important;
@@ -1079,6 +1090,7 @@ body {
 
   .favorites-grid {
     grid-template-columns: repeat(3, 1fr);
+    width: 100%
   }
 }
 
@@ -1134,6 +1146,7 @@ body {
   .favorites-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+    width: 100%
   }
 
   /* Nav icons — allow text wrap */
@@ -1378,6 +1391,7 @@ body {
   .favorites-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
+    width: 100%
   }
 
   .fav-card-img,
@@ -1466,7 +1480,15 @@ body {
   .dash-container {
     padding: 12px 10px 88px;
   }
+  #ordersTab,
+  #favoritesTab,
+  #loyaltyTab {
+    width: 100%;
+  }
 
+  .favorites-grid {
+    width: 100%;
+  }
   /* Profile: tighter */
   .profile-card-enhanced {
     padding: 12px 11px;
@@ -1586,6 +1608,7 @@ body {
   .favorites-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+    width: 100%
   }
 
   .fav-card-img,
@@ -1678,6 +1701,12 @@ body {
    (iPhone SE, Galaxy A03, etc.)
 =========================== */
 @media (max-width: 399px) {
+  .profile-info-block > div:first-child {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
   .dash-container {
     padding: 10px 8px 84px;
   }
@@ -1816,9 +1845,14 @@ body {
     font-size: 6px;
     line-height: 1.1;
   }
-
+    #ordersTab,
+  #favoritesTab,
+  #loyaltyTab {
+    width: 100%;
+  }
   /* Favorites: 2 cols but slimmer */
   .favorites-grid {
+    width: 100%;
     grid-template-columns: repeat(2, 1fr);
     gap: 6px;
   }
@@ -1979,12 +2013,15 @@ body {
 @media (min-width: 992px) and (max-width: 1199px) {
   .favorites-grid {
     grid-template-columns: repeat(3, 1fr);
+    width: 100%
   }
 
   .stats-row {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
 
 /* ===========================
    SAFE AREA INSETS
@@ -2086,7 +2123,7 @@ body {
   }
 }
 
-#ordersTab, #favoritesTab, #loyaltyTab {
+.tab-animate {
     animation: fadeInTab 0.3s ease;
 }
 

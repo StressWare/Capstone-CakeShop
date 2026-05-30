@@ -442,7 +442,16 @@
 @media (max-width: 480px) {
   .chatbot-window {
     width: calc(100vw - 20px);
-    height: 70vh;
+    height: 80dvh;
+    min-height: 400px;
+    max-height: 80dvh;
     bottom: 80px;
+  }
+}
+@media (max-width: 360px) {
+  .chatbot-window {
+    height: 85dvh;
+    min-height: 350px;
+    max-height: 85dvh;
   }
 }
