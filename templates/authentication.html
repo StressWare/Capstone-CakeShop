@@ -90,7 +90,12 @@
                             <i class="fa-regular fa-eye-slash toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
                         </div>
                     </div>
-
+                    <div style="margin: 15px 0; display: flex; align-items: flex-start; gap: 8px;">
+                        <input type="checkbox" id="agreeTerms" style="margin-top: 3px;">
+                        <label for="agreeTerms" style="font-size: 13px; color: #555;">
+                           I have read and agree to the <a href="/privacy-policy" target="_blank" style="color: #d63384;">Privacy Policy</a> and <a href="/terms-of-service" target="_blank" style="color: #d63384;">Terms of Service</a>.
+                        </label>
+                    </div>
                     <button type="submit">Sign Up</button>
                     <p class="toggle-msg">
                         Already have an account? 
@@ -126,12 +131,16 @@
 
     <!-- Quick Links -->
     <div>
-      <h4 style="font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px;">Quick Links</h4>
-      <a href="/" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Home</a>
-      <a href="/cakes" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Available Cakes</a>
-      <a href="/customize_cake" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Customize Your Cake</a>
-      <a href="/authentication" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Login</a>
+        <h4 style="font-size: 12px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 16px;">Quick Links</h4>
+        <a href="/" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Home</a>
+        <a href="/cakes" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Available Cakes</a>
+        <a href="/customize_cake" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Customize Your Cake</a>
+        <a href="/authentication" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Login</a>
+        <br>
+        <a href="/privacy-policy" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Privacy Policy</a>    
+        <a href="/terms-of-service" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Terms of Service</a>    
     </div>
+
 
     <!-- Contact -->
     <div>
@@ -155,7 +164,8 @@
   <!-- Bottom bar -->
   <div style="display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,0.3);">
     <span>© 2025 Mrs. Brave's Cake Shop. All rights reserved.</span>
-    <span>Made with love in Iloilo City 🎂</span>
+    <span>Made with love in Iloilo City</span>
+      <span>Developed by STRESSWARE</span>
   </div>
 </footer>
 
@@ -439,7 +449,15 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
     const address = document.getElementById('signupAddress').value;
     const password = document.getElementById('signupPassword').value;
     const confirm = document.getElementById('signupConfirmPassword').value;
- 
+    if (!document.getElementById('agreeTerms').checked) {
+        glassAlert({
+            icon: 'warning',
+            title: 'Consent Required',
+            text: 'You must agree to the Privacy Policy to continue.',
+            confirmButtonText: 'OK'
+        });
+        return;
+    }
     if (password !== confirm) {
         glassAlert({
             icon: 'error',

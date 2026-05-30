@@ -149,6 +149,12 @@ def home_page():
 @app.route("/privacy-policy")
 def privacy_policy():
     return render_template("privacy_policy.html")
+@app.route("/terms-of-service")
+def terms_of_service():
+    return render_template("terms_of_service.html")
+@app.route('/about')
+def about():
+    return render_template('about_us.html')
 # ---------------- AUTHENTICATION ----------------
 @app.route('/authentication')
 def auth_page():
@@ -303,7 +309,9 @@ def save_user_details():
             'fname':    fname,
             'email':    decoded_token.get('email', ''),
             'role':     'customer',
-            'created_at': firestore.SERVER_TIMESTAMP
+            'created_at': firestore.SERVER_TIMESTAMP,
+            'consent_given': True,
+            'consent_date': datetime.now(PH_TZ)
         }, merge=True)
         return jsonify({'success': True}), 200
 
@@ -348,20 +356,89 @@ def complete_profile():
         if not address or len(address) > 255:
             flash('Invalid address.', 'danger')
             return redirect(url_for('complete_profile'))
-
+        agree = request.form.get('agreeTerms')
+        if not agree:
+            flash('You must agree to the Privacy Policy.', 'danger')
+            return redirect(url_for('complete_profile'))
         users.document(user_id).update({
             "fname":    fname,
             "username": username,
             "number":   number,
-            "address":  address
+            "address":  address,
+            "consent_given": True,
+            "consent_date": datetime.now(PH_TZ)
         })
         return redirect(url_for('customer_dashboard'))
 
     doc = users.document(user_id).get()
     customer = doc.to_dict()
     return render_template('complete_profile.html', customer=customer)
+# ---------------- DELETE ACCOUNT ----------------
+@app.route('/delete-account', methods=['POST'])
+@login_required
+@limiter.limit("3 per hour")
+def delete_account():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Unauthorized'}), 401
 
+    data = request.get_json()
+    id_token = data.get('idToken')
+    if not id_token:
+        return jsonify({'error': 'Missing token'}), 400
 
+    try:
+        # Verify token
+        decoded = auth.verify_id_token(id_token, clock_skew_seconds=10)
+        if decoded['uid'] != user_id:
+            return jsonify({'error': 'UID mismatch'}), 403
+
+        # Check active orders
+        active_statuses = ['New', 'Accepted', 'Pending', 'Ready', 'Out for Delivery']
+        active_orders = orders.where('user_id', '==', user_id)\
+                               .where('status', 'in', active_statuses)\
+                               .get()
+
+        if len(active_orders) > 0:
+            return jsonify({
+                'error': 'You have active orders. Please wait until all orders are completed or cancelled before deleting your account.'
+            }), 400
+
+        # Anonymize order history
+        all_orders = orders.where('user_id', '==', user_id).get()
+        for order_doc in all_orders:
+            order_doc.reference.update({
+                'user_id': 'deleted',
+                'customer': {
+                    'name': 'Deleted User',
+                    'contact': '',
+                    'address': '',
+                    'age': '',
+                    'celebrant': '',
+                    'occasion': '',
+                    'lat': None,
+                    'lng': None
+                }
+            })
+
+        # Delete Firestore user document
+        users.document(user_id).delete()
+
+        # Delete Firebase Auth account
+        auth.delete_user(user_id)
+
+        # Clear session
+        session.clear()
+
+        return jsonify({'success': True}), 200
+
+    except auth.InvalidIdTokenError:
+        return jsonify({'error': 'Invalid token'}), 401
+    except auth.ExpiredIdTokenError:
+        return jsonify({'error': 'Token expired'}), 401
+    except Exception:
+        app.logger.exception("Unexpected error in delete_account")
+        return jsonify({'error': 'Internal server error'}), 500
 # ================================================================
 # CUSTOMER ROUTES
 # ================================================================

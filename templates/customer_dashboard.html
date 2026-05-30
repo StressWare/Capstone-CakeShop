@@ -31,11 +31,34 @@
         <div class="profile-name text-muted">{{ customer.fname }}</div>
         <div class="profile-username" style="margin-bottom:0;">@{{ customer.username }}</div>
       </div>
-      <button class="btn-edit-profile"
-              data-bs-toggle="modal"
-              data-bs-target="#editProfileModal">
-        <i class="bi bi-pencil me-1"></i> Edit Profile
+      <div style="display:flex; align-items:center; gap:8px;">
+  <button class="btn-edit-profile"
+          data-bs-toggle="modal"
+          data-bs-target="#editProfileModal">
+    <i class="bi bi-pencil me-1"></i> Edit Profile
+  </button>
+
+  <div style="position:relative;">
+    <button id="profileDotsBtn" onclick="toggleProfileMenu()"
+            style="background:rgba(232,24,110,0.06); border:1px solid rgba(232,24,110,0.35);
+                   color:var(--pink); border-radius:var(--radius-sm); padding:8px 10px;
+                   cursor:pointer; font-size:14px;">
+      ⋯
+    </button>
+    <div id="profileDropdown"
+         style="display:none; position:absolute; right:0; top:38px;
+                background:rgba(255,255,255,0.96); border:1px solid rgba(220,40,40,0.20);
+                border-radius:var(--radius-sm); min-width:160px; z-index:100;
+                box-shadow:0 4px 20px rgba(30,0,15,0.12);">
+      <button onclick="startDeleteAccount()"
+              style="width:100%; background:transparent; border:none; padding:12px 16px;
+                     font-size:13px; color:#b02020; cursor:pointer; display:flex;
+                     align-items:center; gap:8px; text-align:left;">
+        <i class="bi bi-trash"></i> Delete Account
       </button>
+    </div>
+  </div>
+</div>
     </div>
     <div class="profile-fields">
       <div class="profile-field">
@@ -992,5 +1015,122 @@ function initOrderStatusListener() {
 document.addEventListener('DOMContentLoaded', function() {
     initOrderStatusListener();
 });
+</script>
+<script>
+  /* ── 3-dots profile menu ── */
+function toggleProfileMenu() {
+  const menu = document.getElementById('profileDropdown');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', function(e) {
+  const btn = document.getElementById('profileDotsBtn');
+  const menu = document.getElementById('profileDropdown');
+  if (btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+/* ── Delete Account Flow ── */
+async function startDeleteAccount() {
+  document.getElementById('profileDropdown').style.display = 'none';
+
+  // Step 1: Warning
+  const step1 = await glassAlert({
+      icon: 'warning',
+      title: 'Delete Account',
+      text: 'This is permanent and cannot be undone. All your personal data will be deleted.',
+      confirmButtonText: 'Cancel',
+      showCancelButton: true,
+      cancelButtonText: 'Yes, Delete my account',
+      focusConfirm: true,
+      reverseButtons: false
+  });
+  if (!step1.isDismissed) return; 
+  if (step1.dismiss !== Swal.DismissReason.cancel) return;
+
+  // Step 2: Type CONFIRM
+  const step2 = await glassAlert({
+    title: 'Type CONFIRM to proceed',
+    input: 'text',
+    inputPlaceholder: 'Type CONFIRM here',
+    confirmButtonText: 'Next',
+    showCancelButton: true,
+    cancelButtonText: 'Cancel',
+    inputValidator: (value) => {
+      if (value !== 'CONFIRM') return 'Please type CONFIRM exactly.';
+    }
+  });
+  if (!step2.isConfirmed) return;
+
+  // Step 3: Re-authenticate
+  const user = firebase.auth().currentUser;
+  if (!user) return;
+
+  const isGoogle = user.providerData.some(p => p.providerId === 'google.com');
+
+  try {
+    if (isGoogle) {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await user.reauthenticateWithPopup(provider);
+    } else {
+      const step3 = await glassAlert({
+        title: 'Confirm your password',
+        input: 'password',
+        inputPlaceholder: 'Enter your password',
+        confirmButtonText: 'Confirm',
+        showCancelButton: true,
+        cancelButtonText: 'Cancel',
+      });
+      if (!step3.isConfirmed) return;
+
+      const credential = firebase.auth.EmailAuthProvider.credential(
+        user.email, step3.value
+      );
+      await user.reauthenticateWithCredential(credential);
+    }
+
+    // Step 4: Call backend
+    const idToken = await user.getIdToken(true);
+    const res = await fetch('/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      await firebase.auth().signOut();
+      await glassAlert({
+        icon: 'success',
+        title: 'Account Deleted',
+        text: 'Your account has been successfully deleted.',
+        confirmButtonText: 'OK',
+        showCancelButton: false
+      });
+      window.location.href = '/';
+    } else {
+      glassAlert({
+        icon: 'error',
+        title: 'Error',
+        text: data.error || 'Failed to delete account.',
+        confirmButtonText: 'OK'
+      });
+    }
+
+  } catch (error) {
+    const messages = {
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/popup-closed-by-user': 'Re-authentication cancelled.',
+      'auth/too-many-requests': 'Too many attempts. Please try again later.'
+    };
+    glassAlert({
+      icon: 'error',
+      title: 'Authentication Failed',
+      text: messages[error.code] || 'Re-authentication failed. Please try again.',
+      confirmButtonText: 'OK'
+    });
+  }
+}
 </script>
 {% endblock %}

@@ -1,0 +1,574 @@
+{% extends 'base_customer.html' %}
+{% block title %}About Us - Mrs. Brave's Cake Shop{% endblock %}
+
+{% block extra_css %}
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===== ABOUT PAGE ===== */
+.about-hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 80px;
+}
+
+.about-hero-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.35);
+}
+
+.about-hero-placeholder {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #1a0a12, #3a0a22, #1a0a12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 6rem;
+  opacity: 0.15;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 700px;
+}
+
+.about-hero-tag {
+  display: inline-block;
+  background: rgba(232,24,110,0.15);
+  border: 1px solid rgba(232,24,110,0.40);
+  color: #e8186e;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 6px 18px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+.about-hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  margin-bottom: 20px;
+}
+
+.about-hero-title span {
+  background: linear-gradient(135deg, #e8186e, #ff6bb5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-hero-sub {
+  color: rgba(255,255,255,0.60);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ===== SECTION STYLES ===== */
+.about-section {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #e8186e;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 20px;
+}
+
+.section-title em {
+  font-style: italic;
+  color: #e8186e;
+}
+
+/* ===== STORY SECTION ===== */
+.story-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.story-img-wrap {
+  position: relative;
+}
+
+.story-img {
+  width: 100%;
+  aspect-ratio: 4/5;
+  object-fit: cover;
+  border-radius: 24px;
+  display: block;
+}
+
+.story-img-placeholder {
+  width: 100%;
+  aspect-ratio: 4/5;
+  background: rgba(232,24,110,0.08);
+  border: 2px dashed rgba(232,24,110,0.25);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(232,24,110,0.40);
+  font-size: 13px;
+}
+
+.story-img-placeholder span { font-size: 3rem; }
+
+.story-img-accent {
+  position: absolute;
+  bottom: -16px;
+  right: -16px;
+  width: 120px;
+  height: 120px;
+  background: rgba(232,24,110,0.12);
+  border: 1px solid rgba(232,24,110,0.25);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.story-text p {
+  color: rgba(255,255,255,0.60);
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 16px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.story-divider {
+  width: 48px;
+  height: 3px;
+  background: linear-gradient(90deg, #e8186e, transparent);
+  border-radius: 2px;
+  margin-bottom: 20px;
+}
+
+/* ===== MEET THE BAKER ===== */
+.baker-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(232,24,110,0.20);
+  border-radius: 28px;
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.baker-card::before {
+  content: '';
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 300px; height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232,24,110,0.10) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.baker-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 20px;
+  display: block;
+}
+
+.baker-img-placeholder {
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(232,24,110,0.08);
+  border: 2px dashed rgba(232,24,110,0.25);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(232,24,110,0.40);
+  font-size: 13px;
+}
+
+.baker-img-placeholder span { font-size: 3.5rem; }
+
+.baker-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.baker-role {
+  color: #e8186e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.baker-bio {
+  color: rgba(255,255,255,0.60);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 24px;
+}
+
+.baker-socials {
+  display: flex;
+  gap: 10px;
+}
+
+.baker-social-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(232,24,110,0.10);
+  border: 1px solid rgba(232,24,110,0.30);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #e8186e;
+  text-decoration: none;
+  font-size: 15px;
+  transition: all 0.2s;
+}
+
+.baker-social-btn:hover {
+  background: rgba(232,24,110,0.20);
+  color: #e8186e;
+  transform: translateY(-2px);
+}
+
+/* ===== WHY CHOOSE US ===== */
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 32px;
+}
+
+.why-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(232,24,110,0.15);
+  border-radius: 20px;
+  padding: 28px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.why-card:hover {
+  border-color: rgba(232,24,110,0.35);
+  transform: translateY(-4px);
+}
+
+.why-icon {
+  font-size: 2rem;
+  margin-bottom: 14px;
+  display: block;
+}
+
+.why-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.why-desc {
+  color: rgba(255,255,255,0.50);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ===== LOCATION ===== */
+.location-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.location-img-placeholder {
+  width: 100%;
+  aspect-ratio: 16/10;
+  background: rgba(232,24,110,0.06);
+  border: 2px dashed rgba(232,24,110,0.20);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: rgba(232,24,110,0.35);
+  font-size: 13px;
+}
+
+.location-img-placeholder span { font-size: 3rem; }
+
+.location-img {
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.location-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.location-info-icon {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  background: rgba(232,24,110,0.10);
+  border: 1px solid rgba(232,24,110,0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e8186e;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.location-info-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #e8186e;
+  margin-bottom: 4px;
+}
+
+.location-info-val {
+  color: rgba(255,255,255,0.70);
+  font-size: 0.92rem;
+  font-family: 'DM Sans', sans-serif;
+  line-height: 1.5;
+}
+
+/* ===== SECTION DIVIDER ===== */
+.about-divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232,24,110,0.25), transparent);
+  margin-bottom: 80px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .story-grid,
+  .location-grid { grid-template-columns: 1fr; }
+  .baker-card { grid-template-columns: 1fr; padding: 28px; }
+  .baker-img, .baker-img-placeholder { max-width: 240px; margin: 0 auto; }
+  .why-grid { grid-template-columns: 1fr; }
+  .about-hero { min-height: 380px; }
+  .story-img-accent { display: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ===== HERO ===== -->
+<div class="about-hero">
+  <div class="about-hero-placeholder">🎂</div>
+  <!-- Replace div above with: <img src="/static/img/shop_hero.jpg" class="about-hero-img"> -->
+  <div class="about-hero-content">
+    <div class="about-hero-tag">Our Story</div>
+    <h1 class="about-hero-title">
+      Baked with <span>Love</span>,<br>Served with Heart
+    </h1>
+    <p class="about-hero-sub">
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+      Handcrafted cakes for every special moment in Iloilo City.
+    </p>
+  </div>
+</div>
+
+<!-- ===== OUR STORY ===== -->
+<div class="about-section">
+  <div class="story-grid">
+    <div class="story-img-wrap">
+      <div class="story-img-placeholder">
+        <img src="/static/img/bg.jpg" class="story-img">
+      </div>
+      <div class="story-img-accent">🎂</div>
+    </div>
+    <div class="story-text">
+      <div class="section-label">Our Story</div>
+      <h2 class="section-title">How It All <em>Began</em></h2>
+      <div class="story-divider"></div>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
+      <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.</p>
+      <p>Sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.</p>
+    </div>
+  </div>
+</div>
+
+<div class="about-divider" style="max-width:900px; margin: 0 auto 80px;"></div>
+
+<!-- ===== MEET THE BAKER ===== -->
+<div class="about-section">
+  <div style="text-align:center; margin-bottom: 40px;">
+    <div class="section-label">The Person Behind It All</div>
+    <h2 class="section-title">Meet <em>The Baker</em></h2>
+  </div>
+
+  <div class="baker-card">
+    <div>
+<img src="/static/img/tapang.jpg" class="baker-img">
+    </div>
+    <div>
+      <div class="baker-name">Mrs. Brave</div>
+      <div class="baker-role">Founder & Head Baker</div>
+      <p class="baker-bio">
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.
+      </p>
+      <p class="baker-bio">
+        Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident sunt in culpa.
+      </p>
+      <div class="baker-socials">
+        <a href="https://www.facebook.com/mrsbraveonline" target="_blank" class="baker-social-btn">
+          <i class="fab fa-facebook"></i>
+        </a>
+        <a href="https://www.instagram.com/mrsbravecakes" target="_blank" class="baker-social-btn">
+          <i class="fab fa-instagram"></i>
+        </a>
+        <a href="https://www.tiktok.com/@mrsbravessweettreatsoff" target="_blank" class="baker-social-btn">
+          <i class="fab fa-tiktok"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="about-divider" style="max-width:900px; margin: 0 auto 80px;"></div>
+
+<!-- ===== WHY CHOOSE US ===== -->
+<div class="about-section">
+  <div style="text-align:center; margin-bottom: 8px;">
+    <div class="section-label">Why Choose Us</div>
+    <h2 class="section-title">What Makes Us <em>Special</em></h2>
+  </div>
+
+  <div class="why-grid">
+    <div class="why-card">
+      <span class="why-icon">🎂</span>
+      <div class="why-title">Made from Scratch</div>
+      <p class="why-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">✨</span>
+      <div class="why-title">Custom Designs</div>
+      <p class="why-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">❤️</span>
+      <div class="why-title">Made with Love</div>
+      <p class="why-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore.</p>
+    </div>
+    <div class="why-card">
+      <span class="why-icon">📍</span>
+      <div class="why-title">Proudly Local</div>
+      <p class="why-desc">Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore.</p>
+    </div>
+  </div>
+</div>
+
+<div class="about-divider" style="max-width:900px; margin: 0 auto 80px;"></div>
+
+<!-- ===== LOCATION ===== -->
+<div class="about-section">
+  <div style="text-align:center; margin-bottom: 32px;">
+    <div class="section-label">Find Us</div>
+    <h2 class="section-title">Visit Our <em>Shop</em></h2>
+  </div>
+
+  <div class="location-grid">
+    <div class="location-img-placeholder">
+      <span>🏪</span>
+      Shop photo here
+    </div>
+    <!-- Replace with: <img src="/static/img/shop.jpg" class="location-img"> -->
+
+    <div>
+      <div class="location-info-item">
+        <div class="location-info-icon"><i class="fas fa-location-dot"></i></div>
+        <div>
+          <div class="location-info-label">Address</div>
+          <div class="location-info-val">R. Mapa Street, Mandurriao, Iloilo City</div>
+        </div>
+      </div>
+      <div class="location-info-item">
+        <div class="location-info-icon"><i class="fas fa-clock"></i></div>
+        <div>
+          <div class="location-info-label">Hours</div>
+          <div class="location-info-val">Monday – Saturday<br>11:00 AM – 10:00 PM</div>
+        </div>
+      </div>
+      <div class="location-info-item">
+        <div class="location-info-icon"><i class="fas fa-phone"></i></div>
+        <div>
+          <div class="location-info-label">Phone</div>
+          <div class="location-info-val">0956 350 4486</div>
+        </div>
+      </div>
+      <div class="location-info-item">
+        <div class="location-info-icon"><i class="fas fa-envelope"></i></div>
+        <div>
+          <div class="location-info-label">Follow Us</div>
+          <div style="display:flex; gap:10px; margin-top:6px;">
+            <a href="https://www.facebook.com/mrsbraveonline" target="_blank" class="baker-social-btn"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.instagram.com/mrsbravecakes" target="_blank" class="baker-social-btn"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.tiktok.com/@mrsbravessweettreatsoff" target="_blank" class="baker-social-btn"><i class="fab fa-tiktok"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
