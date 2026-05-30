@@ -179,6 +179,60 @@
     border-radius: 12px;
   }
 }
+@media (max-width: 768px) {
+  .about-snippet-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .about-snippet-text {
+    padding-left: 0 !important;
+    text-align: center;
+  }
+  .about-snippet-text p {
+    padding-left: 0 !important;
+  }
+  .about-snippet-text a {
+    margin-left: 0 !important;
+    padding: 10px 24px !important;
+  }
+}
+
+.service-card {
+  position: relative;
+  padding-top: 50px !important;
+  margin-top: 40px !important;
+}
+
+.service-icon-wrap {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  background: rgba(232,24,110,0.15) !important;
+  border: 1px solid rgba(232,24,110,0.40) !important;
+}
+.service-icon-wrap i {
+  font-size: 1.8rem;
+  color: #e0e0e0 !important;
+}
+.review-card {
+  flex: 0 0 200px;
+  height: 320px;
+}
+.review-card-img,
+.review-card-img-placeholder {
+  height: 200px;
+}
+.top-cakes-scroll {
+  justify-content: space-between;
+  padding: 12px 40px;
+}
 </style>
 {% endblock %}
 
@@ -397,8 +451,8 @@
 
   <!-- Top Rated Cakes -->
 {% if top_cakes %}
-<section class="top-cakes-section">
-  <div class="container">
+<section class="top-cakes-section" style="padding: 0 40px;">
+  <div class="container-fluid">
     <h2 class="text-center mb-3" style="font-weight:700;margin-top:120px;">Our Best Cakes Rated By Customers</h2>
     <div class="top-cakes-scroll">
       {% for cake in top_cakes %}
@@ -430,19 +484,44 @@
   <h2>Our Services</h2>
   <div class="services-row">
     <div class="service-card">
-      <i class="bi bi-cake" style="font-size: 2rem; color: #ffffff;"></i>
+      <div class="service-icon-wrap">
+        <i class="bi bi-cake"></i>
+      </div>
       <h5>Cake Customization</h5>
-      <p>Create cakes based on flavor, design, and toppings.</p>
+      <p>From flavor to design, every detail is yours to choose. We craft custom cakes tailored to your vision — whether it's a themed birthday, wedding tier, or a simple sweet treat.</p>
     </div>
     <div class="service-card">
-      <i class="bi bi-calendar-event" style="font-size: 2rem; color: #ffffff;"></i>
+      <div class="service-icon-wrap">
+        <i class="bi bi-calendar-event"></i>
+      </div>
       <h5>Event Orders</h5>
-      <p>Birthday, wedding, anniversary & more.</p>
+      <p>Celebrating a birthday, wedding, christening, or anniversary? We accept reservations and online bookings to make sure your special moment is perfectly sweet.</p>
     </div>
     <div class="service-card">
-      <i class="bi bi-truck" style="font-size: 2rem; color: #ffffff;"></i>
+      <div class="service-icon-wrap">
+        <i class="bi bi-truck"></i>
+      </div>
       <h5>Delivery</h5>
-      <p>Fast and reliable delivery to your doorstep.</p>
+      <p>Can't come to us? No problem. We offer convenient in-store pickup and delivery straight to your door anywhere in Iloilo City — fresh, on time, every time.</p>
+    </div>
+  </div>
+</section>
+<!-- ── ABOUT US SNIPPET ── -->
+<section style="margin: 0 auto 60px; padding: 0 40px;">
+  <h2 class="text-center" style="font-weight:700; margin-bottom: 20px;">About Us</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;" class="about-snippet-grid">
+    <div style="padding-left: 70px;"  class="about-snippet-text">
+      <h3 style="font-weight:700; margin-bottom: 20px; color:#fff;">Baked with Love, <em style="color: #e8186e; font-style:italic;">Served with Heart</em></h3>
+      <p style=" padding-left: 40px; color: rgba(255,255,255,0.60); font-size: 0.95rem; line-height: 1.8; margin-bottom: 24px;">
+        From birthdays to weddings, we bake happiness into every cake. Custom made, freshly baked, and handcrafted with love for every special moment in Iloilo City.
+      </p>
+      <a href="/about" style="display: inline-flex; align-items: center; gap: 8px; background: rgba(232,24,110,0.10); border: 1px solid rgba(232,24,110,0.40); color: #e8186e; padding: 10px 24px;
+      margin-left: 40px; border-radius: 999px; font-size: 13px; font-weight: 700; text-decoration: none; transition: all 0.2s;">
+        Learn More About Us →
+      </a>
+    </div>
+    <div>
+      <img src="/static/img/bg.jpg" style="width: 100%; border-radius: 20px; object-fit: cover; height: 300px;">
     </div>
   </div>
 </section>

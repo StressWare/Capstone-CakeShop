@@ -163,7 +163,9 @@ def auth_page():
     )
 @app.route('/forgot-password')
 def forgot_password_page():
-    return render_template('forgot_password.html')
+    return render_template('forgot_password.html',
+        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
+    )
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -373,6 +375,39 @@ def complete_profile():
     doc = users.document(user_id).get()
     customer = doc.to_dict()
     return render_template('complete_profile.html', customer=customer)
+
+# ---------------- FORGOT PASS RECAPTCHA----------------
+@app.route('/verify-recaptcha', methods=['POST'])
+@limiter.limit("5 per minute")
+def verify_recaptcha():
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
+
+    recaptcha_token = data.get('recaptchaToken')
+    if not recaptcha_token:
+        return jsonify({'error': 'reCAPTCHA token missing'}), 403
+
+    try:
+        r = http_requests.post(
+            'https://www.google.com/recaptcha/api/siteverify',
+            data={
+                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
+                'response': recaptcha_token
+            },
+            timeout=5
+        )
+        result = r.json()
+        score = result.get('score', 0)
+        app.logger.info(f"reCAPTCHA forgot_password: success={result.get('success')}, score={score}")
+        if not result.get('success') or score < 0.5:
+            app.logger.warning(f"reCAPTCHA failed: score={score}")
+            return jsonify({'error': 'Suspicious activity detected.'}), 403
+    except Exception as e:
+        app.logger.warning(f"reCAPTCHA check failed: {e}")
+        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
+
+    return jsonify({'success': True}), 200
 # ---------------- DELETE ACCOUNT ----------------
 @app.route('/delete-account', methods=['POST'])
 @login_required
