@@ -5,18 +5,13 @@ let isFirstLoad = true;  // ← ADD THIS
 function initNotifications() {
     const userIdElement = document.querySelector('[data-user-id]');
     if (!userIdElement) {
-        console.log('No data-user-id found on body element');
         return;
     }
     
     const userId = userIdElement.dataset.userId;
     if (!userId) {
-        console.log('User ID is empty');
         return;
     }
-    
-    console.log('Initializing notifications for user:', userId);
-    
     const db = firebase.firestore();
     firebase.auth().onAuthStateChanged(user => {
         if (!user) return;
@@ -247,13 +242,9 @@ document.head.appendChild(style);
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, checking for notification bell...');
     
     if (document.getElementById('notificationBellWrapper')) {
-        console.log('Notification bell found, initializing...');
         initNotifications();
-    } else {
-        console.log('No notification bell found on this page');
     }
     
     // Bell click to toggle dropdown

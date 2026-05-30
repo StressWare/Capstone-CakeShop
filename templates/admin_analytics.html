@@ -169,7 +169,18 @@
       gap: 10px;
     }
   }
-
+  @media (max-width: 850px) {
+  .row.g-3.mb-4 {
+    grid-template-columns: 1fr;
+  }
+  .stat-value {
+    font-size: 1.1rem !important;
+  }
+    .col-lg-4.col-md-6 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
   @keyframes modalIn {
     from { transform: translateY(24px); opacity: 0; }
     to   { transform: translateY(0);   opacity: 1; }

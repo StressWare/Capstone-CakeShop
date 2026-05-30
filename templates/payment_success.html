@@ -219,11 +219,20 @@
       <i class="fas fa-check"></i>
     </div>
 
-    <div class="success-title">Payment Confirmed!</div>
-    <div class="success-subtitle">
-      Thank you, your order is in! We'll start preparing your cake soon.<br>
-      A confirmation email has been sent to you.
-    </div>
+  {% if order.payment_status == 'Downpayment Paid' %}
+  <div class="success-title">Downpayment Confirmed!</div>
+  <div class="success-subtitle">
+    Your downpayment is received! Remaining balance of <strong>₱{{ "%.2f"|format(order.remaining_balance | float) }}</strong> 
+    is due upon {{ 'pick up' if order.delivery_type == 'Pickup' else 'delivery' }}.<br>
+    A confirmation email has been sent to you.
+  </div>
+  {% else %}
+  <div class="success-title">Payment Confirmed!</div>
+  <div class="success-subtitle">
+    Thank you, your order is in! We'll start preparing your cake soon.<br>
+    A confirmation email has been sent to you.
+  </div>
+  {% endif %}
 
     <div class="payment-badge">
       Paid via {{ order.payment_method }}

@@ -129,7 +129,7 @@ def get_completed_cancelled_orders():
             return cached
         print("🔥 FIRESTORE READ — completed/cancelled orders")
         result = []
-        for doc in orders.where("status", "in", ["Completed", "Cancelled"]).stream():
+        for doc in orders.where("status", "in", ["Completed", "Cancelled"]).order_by("created_at", direction="DESCENDING").stream():
             d = doc.to_dict()
             d["id"] = doc.id
             result.append(d)

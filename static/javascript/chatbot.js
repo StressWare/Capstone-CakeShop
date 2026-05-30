@@ -1,7 +1,5 @@
 class ChatbotWidget {
-    constructor() {
-        console.log('🏗️ Constructing ChatbotWidget...');
-        
+    constructor() {        
         this.userId = document.querySelector('[data-user-id]')?.dataset.userId || 'unknown';
         this.conversationId = null;
         this.isEscalated = false;
@@ -24,8 +22,6 @@ class ChatbotWidget {
             console.error('❌ User ID not found!');
             return;
         }
-        
-        console.log('✅ User ID:', this.userId);
         this.init();
     }
     
@@ -54,15 +50,12 @@ class ChatbotWidget {
         if (!snapshot.empty) {
             const convId = snapshot.docs[0].id;
             localStorage.setItem(`chatbot_conversation_${this.userId}`, convId); // keep local in sync
-            console.log('✅ Found existing conversation:', convId);
             this.conversationId = convId;
             return;
         }
 
         // 2. Nothing in Firestore → create new
         const convId = 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        console.log('Created new conversation ID:', convId);
-
         try {
             await db.collection('users')
                 .doc(this.userId)
@@ -75,7 +68,6 @@ class ChatbotWidget {
                 });
 
             localStorage.setItem(`chatbot_conversation_${this.userId}`, convId);
-            console.log('✅ New conversation saved to Firestore');
         } catch (error) {
             console.error('❌ Error creating conversation:', error);
         }
@@ -90,7 +82,6 @@ class ChatbotWidget {
             
             if (data.success) {
                 this.isEscalated = data.escalated;
-                console.log('Escalation status:', this.isEscalated);
             }
         } catch (error) {
             console.error('Error checking escalation status:', error);
@@ -98,27 +89,20 @@ class ChatbotWidget {
     }
     
     setupEventListeners() {
-        console.log('Setting up event listeners...');
-        
         if (this.toggleBtn) {
-            console.log('✅ Toggle button found, adding click listener');
             this.toggleBtn.addEventListener('click', () => this.toggleWindow());
         }
-        
         if (this.closeBtn) {
             this.closeBtn.addEventListener('click', () => this.toggleWindow());
         }
-        
         if (this.sendBtn) {
             this.sendBtn.addEventListener('click', () => this.sendMessage());
         }
-        
         if (this.input) {
             this.input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') this.sendMessage();
             });
         }
-        
         this.faqBtns.forEach(btn => {
             btn.addEventListener('click', () => this.handleFaqClick(btn));
         });
@@ -220,8 +204,6 @@ class ChatbotWidget {
     }
     
     handleFaqClick(btn) {
-        console.log('❓ FAQ clicked:', btn.dataset.question);
-        
         if (this.isEscalated) {
             this.addMessage("You're now chatting with the owner. Please wait for their response.", 'bot');
             return;
@@ -233,9 +215,7 @@ class ChatbotWidget {
         }
     }
     
-    async escalateToOwner() {
-        console.log('👤 Escalate button clicked');
-        
+    async escalateToOwner() {        
         if (this.isEscalated) {
             this.addMessage("You're already connected with the owner.", 'bot');
             return;
@@ -455,8 +435,6 @@ class ChatbotWidget {
     async sendMessage() {
         const message = this.input?.value.trim();
         if (!message) return;
-        console.log('🔍 Current state - isEscalated:', this.isEscalated);
-        
         if (this.input) this.input.value = '';
         this.addMessage(message, 'customer', new Date());
         if (!this.isEscalated) this.showTyping();
@@ -766,7 +744,6 @@ class GuestChatbotWidget {
                 })
             });
             const data = await response.json();
-            console.log('Response:', data);
             this.hideTyping();
             if (data.reply) {
                 this.addMessage(data.reply, 'bot', new Date());
@@ -819,15 +796,8 @@ class GuestChatbotWidget {
 }
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('📄 DOM loaded');
-
     const userContainer = document.querySelector('[data-user-id]');
     const userId = userContainer?.dataset.userId;
-
-    console.log('User ID:', userId);
-    console.log('Chatbot toggle button:', document.getElementById('chatbotToggle'));
-    console.log('Chatbot window:', document.getElementById('chatbotWindow'));
-
     if (userId && userId !== 'None' && userId !== '') {
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {

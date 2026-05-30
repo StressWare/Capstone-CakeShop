@@ -436,8 +436,8 @@
       from { transform: translateY(-100%); opacity: 0; }
       to   { transform: translateY(0);     opacity: 1; }
   }
-.banner-text { font-size: 0.92rem; font-weight: 600; line-height: 1.4; color: #fff; }
-.banner-text small { font-weight: 400; font-size: 0.8rem; color: #fff; }
+  .banner-text { font-size: 0.92rem; font-weight: 600; line-height: 1.4; color: #1a1a1a; }
+  .banner-text small { font-weight: 400; font-size: 0.8rem; color: #888; }
   .banner-rush {
       background: #ef4444; color: white;
       font-size: 0.7rem; font-weight: 800;
@@ -736,7 +736,7 @@ document.addEventListener('hidden.bs.modal', function() {
 
 (function() {
   'use strict';
-
+   const pageLoadTime = new Date(); 
   // ── State ──
   let db = null;
   let allOrders = [];
@@ -799,8 +799,12 @@ document.addEventListener('hidden.bs.modal', function() {
           const order = { ...data, id };
 
           if (change.type === 'added') {
+              const alreadyExists = allOrders.some(o => o.id === id);
               allOrders.unshift(order);
-              if (!isFirstLoad) {
+              if (!isFirstLoad && !alreadyExists) {
+                  const orderCreatedAt = toDate(data.created_at);
+                  if (!orderCreatedAt || orderCreatedAt <= pageLoadTime) return; // 👈 add this
+                  
                   setTimeout(() => {
                       const row = document.querySelector(`tr[data-id="${id}"]`);
                       if (row) row.classList.add('row-new-flash');
@@ -1553,7 +1557,7 @@ body.innerHTML = `
 // ══════════════════════════════════════════════
 (function() {
     'use strict';
-
+    
     let pendingCount  = 0;
     let soundLoop     = null;
     let isPlaying     = false;
@@ -1604,9 +1608,10 @@ body.innerHTML = `
         countEl.textContent     = pendingCount;
         countEl.style.display   = pendingCount > 1 ? 'inline-flex' : 'none';
 
-        banner.style.background = info.rush
-            ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-            : 'linear-gradient(135deg, #d63384, #a0205e)';
+        banner.style.background = 'rgba(255,255,255,0.97)';
+        banner.style.borderBottom = info.rush
+            ? '2px solid rgba(220,38,38,0.5)'
+            : '1px solid rgba(255,192,203,0.45)';
 
         banner.style.display = 'block';
         banner.style.animation = 'none';

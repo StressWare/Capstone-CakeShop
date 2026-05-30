@@ -654,15 +654,31 @@
 </div>
   </div>
         </div><!-- /modal-body -->
-        <div class="modal-footer">
-          {% if order.status == 'New' %}
-          <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Cancel this order?')">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-danger btn-sm">Cancel Order</button>
-          </form>
-          {% endif %}
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        </div>
+          <div class="modal-footer">
+            {% if order.status == 'New' %}
+            <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Cancel this order?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-danger btn-sm">Cancel Order</button>
+            </form>
+            {% endif %}
+            {% if order.payment_status in ['Paid', 'Fully Paid', 'Downpayment Paid'] %}
+            <a href="/order/receipt/{{ order.id }}" class="btn btn-sm" style="background:var(--pink);color:#fff;" target="_blank">🧾 View Receipt</a>
+            {% endif %}
+            {% if order.status == 'Completed' and not order.reviewed %}
+              {% if order.order_type == 'premade' and order.selected_items %}
+                {% for item in order.selected_items %}
+                <button class="btn btn-sm" style="background:var(--pink);color:#fff;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#reviewModal{{ order.id }}_{{ item.cake_id }}">⭐ Review</button>
+                {% endfor %}
+              {% elif order.order_type == 'custom' %}
+                <button class="btn btn-sm" style="background:var(--pink);color:#fff;"
+                        data-bs-toggle="modal"
+                        data-bs-target="#reviewModal{{ order.id }}">⭐ Review</button>
+              {% endif %}
+            {% endif %}
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
       </div><!-- /modal-content -->
     </div><!-- /modal-dialog -->
   </div><!-- /orderModal -->

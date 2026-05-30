@@ -279,7 +279,7 @@
 
 {# ── Derive useful flags once ── #}
 {% set is_downpayment = order.payment_status == 'Downpayment Paid' %}
-{% set is_paid        = order.payment_status == 'Paid' %}
+{% set is_paid        = order.payment_status in ['Paid', 'Fully Paid'] %}
 {% set dp_type        = order.downpayment_type %}
 {% set dp_amount      = order.downpayment_amount | float if order.downpayment_amount else 0 %}
 {% set remaining      = order.remaining_balance  | float if order.remaining_balance  else 0 %}
@@ -428,7 +428,7 @@
 
       {% if rush_fee > 0 %}
       <div class="receipt-subtotal-row" style="color: #e65c00;">
-        <span></i>Rush Fee</span>
+        <span>Rush Fee</span>
         <span>+₱{{ "%.2f"|format(rush_fee) }}</span>
       </div>
       {% endif %}
