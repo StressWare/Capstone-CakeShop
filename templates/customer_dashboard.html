@@ -1,5 +1,5 @@
 {% extends 'base_customer.html' %}
-{% block title %}My Dashboard - Ms. Brave Cake Shop{% endblock %}
+{% block title %}Profile - Mrs. Brave's Cakes{% endblock %}
 
 {% block extra_css %}
 <link href="../static/css/customer_dashboard.css" rel="stylesheet">
@@ -349,51 +349,90 @@
     {% endif %}
   </div><!-- /favoritesTab -->
 
-  <!-- ===== LOYALTY TAB ===== -->
-  <div id="loyaltyTab" style="display:none;">
-    <h2 class="mb-3" style="font-size:18px;font-weight:700;color:#f0f0f0;">Loyalty Card</h2>
+<!-- ===== LOYALTY TAB ===== -->
+<div id="loyaltyTab" style="display:none;">
+  <h2 class="mb-3" style="font-size:18px;font-weight:700;color:#f0f0f0;">Loyalty Card</h2>
 
-    <!-- Stamp card -->
-    <div class="loyalty-card mb-3">
+  <!-- Stamp card -->
+  <div class="loyalty-card mb-3">
 
-      <!-- Card header -->
-      <div class="loyalty-card-glow"></div>
-      <div class="loyalty-top mb-2">
-          <div class="lc-chip"></div>
-      <div>
-      <div class="loyalty-shop-name" style="color:#ff2e88;margin-left:40px;">
-        Mrs. Brave's Cakes
+    <!-- Card header -->
+    <div class="loyalty-card-glow"></div>
+    <div class="loyalty-card-header-row">
+      <div class="lc-chip"></div>
+      <div style="flex:1; min-width:0;">
+        <div class="loyalty-shop-name">Mrs. Brave's Cakes</div>
+         <div class="customer-name" style="font-size:15px;color:#ff2e88;margin-bottom:2px;font-weight:bold;">{{ customer.fname }}</div>        <div class="loyalty-shop-sub">Loyalty Card</div>
       </div>
-        <div style="font-size:15px;color:#ff2e88;margin-bottom:2px;margin-left:40px;font-weight:bold;">          {{ customer.fname }}
+      <div class="loyalty-badge">{{ loyalty_stamps }} / 10</div>
+    </div>
+
+    <div class="loyalty-divider mb-3"></div>
+    <div class="loyalty-stamps-label mb-2">Your Stamps</div>
+
+    <!-- Cake + Stamps side by side -->
+    <div class="loyalty-stamps-wrapper">
+
+      <!-- Floating cake illustration -->
+      <div class="loyalty-cake-col">
+        <svg viewBox="0 0 96 110" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
+          <!-- Candle -->
+          <rect x="44" y="2" width="8" height="18" rx="4" fill="#fff176"/>
+          <ellipse cx="48" cy="3.5" rx="3.5" ry="4.5" fill="#ffb300"/>
+          <ellipse cx="48" cy="2.5" rx="2.5" ry="3.2" fill="#ff6f00" opacity="0.85"/>
+          <!-- Top tier -->
+          <rect x="22" y="22" width="52" height="20" rx="7" fill="#f8bbd0"/>
+          <rect x="22" y="34" width="52" height="10" rx="0" fill="#f48fb1"/>
+          <!-- Middle tier -->
+          <rect x="13" y="42" width="70" height="24" rx="7" fill="#f48fb1"/>
+          <rect x="13" y="58" width="70" height="10" rx="0" fill="#e91e8c"/>
+          <!-- Bottom tier -->
+          <rect x="4" y="66" width="88" height="26" rx="8" fill="#fce4ec"/>
+          <rect x="4" y="82" width="88" height="12" rx="0" fill="#f8bbd0"/>
+          <!-- Frosting drips top -->
+          <ellipse cx="33" cy="22" rx="5.5" ry="3.5" fill="white" opacity="0.85"/>
+          <ellipse cx="48" cy="21" rx="7" ry="4" fill="white" opacity="0.85"/>
+          <ellipse cx="63" cy="22" rx="5.5" ry="3.5" fill="white" opacity="0.85"/>
+          <!-- Frosting drips middle -->
+          <ellipse cx="23" cy="42" rx="6" ry="3.5" fill="white" opacity="0.8"/>
+          <ellipse cx="48" cy="41" rx="8" ry="4.5" fill="white" opacity="0.8"/>
+          <ellipse cx="73" cy="42" rx="6" ry="3.5" fill="white" opacity="0.8"/>
+          <!-- Sprinkles -->
+          <rect x="14" y="72" width="10" height="3.5" rx="1.7" fill="#e91e8c" transform="rotate(-30 14 72)"/>
+          <rect x="36" y="76" width="9" height="3" rx="1.5" fill="#ff8f00" transform="rotate(20 36 76)"/>
+          <rect x="62" y="70" width="10" height="3.5" rx="1.7" fill="#ab47bc" transform="rotate(-15 62 70)"/>
+          <rect x="26" y="84" width="9" height="3" rx="1.5" fill="#26c6da" transform="rotate(35 26 84)"/>
+          <rect x="56" y="82" width="10" height="3.5" rx="1.7" fill="#ef5350" transform="rotate(-25 56 82)"/>
+          <rect x="44" y="78" width="8" height="3" rx="1.5" fill="#fff176" transform="rotate(10 44 78)"/>
+          <!-- Hearts -->
+          <text x="18" y="62" font-size="10" fill="white" opacity="0.9">♥</text>
+          <text x="68" y="64" font-size="10" fill="white" opacity="0.9">♥</text>
+        </svg>
+      </div>
+
+      <!-- Stamps grid -->
+      <div class="loyalty-stamps-col">
+        <div class="loyalty-stamps-grid">
+          {% for i in range(1, 11) %}
+          <div class="loyalty-stamp-cell
+                      {% if i <= loyalty_stamps %}stamp-filled
+                      {% elif i == 5 or i == 10 %}stamp-milestone
+                      {% else %}stamp-empty{% endif %}">
+            {% if i <= loyalty_stamps %}
+              <span style="font-size:clamp(16px,2.5vw,30px);">🧁</span>
+            {% elif i == 5 %}
+              <span class="stamp-milestone-label">10%<br>OFF</span>
+            {% elif i == 10 %}
+              <span class="stamp-milestone-label">15%<br>OFF</span>
+            {% else %}
+              <span style="font-size:clamp(14px,2.5vw,28px);opacity:0.18;filter:grayscale(1);">🧁</span>
+            {% endif %}
+          </div>
+          {% endfor %}
         </div>
-        <div class="loyalty-shop-sub" style="margin-left:75px;">Loyalty Card</div>
-      </div>
-        <div class="loyalty-badge">{{ loyalty_stamps }} / 10</div>
       </div>
 
-      <div class="loyalty-divider mb-3"></div>
-
-      <div class="loyalty-stamps-label mb-2">Your Stamps</div>
-
-      <!-- Stamp grid -->
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:23px;margin-bottom:1rem;margin-left:20px;">
-        {% for i in range(1, 11) %}
-        <div class="loyalty-stamp-cell 
-                    {% if i <= loyalty_stamps %}stamp-filled
-                    {% elif i == 5 or i == 10 %}stamp-milestone
-                    {% else %}stamp-empty{% endif %}">
-          {% if i <= loyalty_stamps %}
-            <span style="font-size:30px;">🧁</span>
-          {% elif i == 5 %}
-            <span class="stamp-milestone-label">10%<br>OFF</span>
-          {% elif i == 10 %}
-            <span class="stamp-milestone-label">15%<br>OFF</span>
-          {% else %}
-            <span style="font-size:30px;opacity:0.18;filter:grayscale(1);">🧁</span>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
+    </div><!-- end .loyalty-stamps-wrapper -->
 
       <!-- Progress bar -->
       <div class="loyalty-track mb-2">

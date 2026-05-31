@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Ms. Brave Cake Shop{% endblock %}</title>
+  <title>{% block title %} Profile - Mrs. Brave's Cakes{% endblock %}</title>
 
   <!-- Firebase JS SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -127,14 +127,14 @@
   <div class="offcanvas-body">
     <a href="/">Home</a>
     <a href="/cakes">Available Cakes</a>
-    <a href="/customize_cake">Customize Your Cake</a>
+    <a href="/customize_cake">Customize Cake</a>
     <a href="/about">About Us</a>
 
     <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 10px 0;">
 
     {% if session.get('user_id') %}
-      <a href="/customer_dashboard">My Profile</a>
-      <a href="/cart">My Cart</a>
+      <a href="/customer_dashboard">Profile</a>
+      <a href="/cart">Cart</a>
       <a href="#" onclick="handleLogout()">Logout</a>
     {% else %}
       <a href="/authentication">Login</a>
@@ -245,14 +245,14 @@
   <div class="chatbot-window" id="chatbotWindow" style="display:none;">
     <div class="chatbot-header">
       <div class="header-content">
-        <h5>Mrs. Brave Support</h5>
+        <h5>Mrs. Brave's Support</h5>
         <p class="status-text" id="chatStatusText">Online - Instant replies</p>
       </div>
       <button class="close-btn" id="chatbotClose">✕</button>
     </div>
     <div class="chatbot-messages" id="chatbotMessages">
       <div class="message bot-message">
-        <p>Hey there! Welcome to Mrs. Brave Cake Shop support. How can we help you today?</p>
+        <p>Hey there! Welcome to Mrs. Brave's Cake Shop support. How can we help you today?</p>
       </div>
     </div>
     <button class="faq-toggle-btn" id="faqToggleBtn">
