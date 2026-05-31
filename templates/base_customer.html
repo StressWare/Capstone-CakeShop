@@ -524,6 +524,9 @@ window.fetch = function(url, options = {}) {
   }
   
   return originalFetch(url, options).then(response => {
+    if (response.status === 429) {         
+        window.location.href = '/429';     
+    }  
     if (response.status === 400) {
       response.clone().json().then(data => {
         if (data?.error === 'csrf_expired') {

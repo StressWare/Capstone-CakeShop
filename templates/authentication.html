@@ -636,7 +636,12 @@ window.fetch = function(url, options = {}) {
         options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
     }
  
-    return originalFetch(url, options);
+    return originalFetch(url, options).then(response => {
+        if (response.status === 429) {
+            window.location.href = '/429';
+        }
+        return response;
+    });
 };
 </script>
 </body>
