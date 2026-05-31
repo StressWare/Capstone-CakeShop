@@ -363,13 +363,13 @@
 
 {% block content %}
 <section class="customize-section">
-  <p class="page-title">Design Your Cake</p>
-  <p class="page-sub">Every selection updates your 3D preview in real time. Drag the cake to rotate it.</p>
   <div class="layout">
-
     <!-- ===== FORM ===== -->
     <div class="form-panel">
-      <!-- FIX: added id="orderForm" so the submit button can reference it -->
+        <p class="page-title">Design Your Cake</p>
+        <p class="page-sub">Every selection updates your 3D preview in real time. Drag the cake to rotate it.</p>
+      <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.10); margin: 28px 0;">
+        <!-- FIX: added id="orderForm" so the submit button can reference it -->
       <form method="POST" action="/order" enctype="multipart/form-data" id="orderForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -543,20 +543,16 @@
           <span class="total-label">Total</span>
           <span class="total-amount">₱<span id="totalPrice">0.00</span></span>
         </div>
-
         <!-- ── Downpayment Notice ── -->
-        {% if customer %}
         <div class="downpayment-notice">
           <div class="notice-title">
             <i class="bi bi-info-circle-fill"></i> Downpayment Required
           </div>
-          <p style="margin:0 0 4px; color:rgba(75, 71, 71, 0.75); font-size:12px;">
-            All custom cake orders require an online downpayment before processing.
-            You will select 50% or 75% on the next step.
+          <p style="margin:0 0 8px; color:rgba(75, 71, 71, 0.75); font-size:12px;">
+            Customize cake orders require at least <strong>1 day advance booking</strong> and an online downpayment. Choose your option on the next step:
           </p>
           <ul>
-            <li>50% downpayment — balance paid on delivery/pickup</li>
-            <li>75% downpayment — balance paid on delivery/pickup</li>
+            <li>50% or 75% — balance paid on delivery/pickup</li>
             <li>Full payment — no balance remaining</li>
           </ul>
           <div class="agree-row">
@@ -566,7 +562,7 @@
             </label>
           </div>
         </div>
-
+        {% if customer %}
         <button type="submit" form="orderForm" class="btn-checkout locked"
                 id="proceedBtn" onclick="updateOrderData()">
           Proceed to Checkout &rarr;
