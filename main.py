@@ -52,7 +52,7 @@ Talisman(app,
 limiter.init_app(app)
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
-    if request.is_json or request.path.startswith('/verify') or request.path.startswith('/save'):
+    if request.is_json:  #  covers all routes
         return jsonify({"error": "Too many requests. Please slow down."}), 429
     retry_after = getattr(e, 'retry_after', 60)
     return render_template('429.html', description=e.description, retry_after=retry_after), 429
@@ -88,6 +88,9 @@ def server_error(e):
 @app.errorhandler(405)
 def method_not_allowed(e):
     return render_template('405.html'), 405
+@app.route('/429')
+def too_many_requests():
+    return render_template('429.html'), 429
 
 # ================================================================
 # PUBLIC ROUTES
@@ -408,6 +411,23 @@ def verify_recaptcha():
         return jsonify({'error': 'reCAPTCHA verification failed'}), 403
 
     return jsonify({'success': True}), 200
+
+@app.route('/check-email-exists', methods=['POST'])
+@limiter.limit("5 per minute")  
+def check_email_exists():
+    data = request.get_json()
+    email = data.get('email', '').strip().lower()
+    
+    if not email:
+        return jsonify({'error': 'Email required'}), 400
+
+    try:
+        auth.get_user_by_email(email)
+        return jsonify({'exists': True}), 200
+    except auth.UserNotFoundError:
+        return jsonify({'exists': False}), 200
+    except Exception:
+        return jsonify({'error': 'Server error'}), 500
 # ---------------- DELETE ACCOUNT ----------------
 @app.route('/delete-account', methods=['POST'])
 @login_required
