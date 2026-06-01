@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Receipt - Ms. Brave Cake Shop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="manifest" href="/manifest-pos.json">
   <script>
     if ('serviceWorker' in navigator) {
@@ -31,93 +32,41 @@
       box-shadow: 0 2px 16px rgba(0,0,0,0.1);
     }
 
-    .shop-name {
-      font-size: 1.1rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: 2px;
-    }
-    .shop-info {
-      font-size: 0.72rem;
-      text-align: center;
-      color: #666;
-      margin-bottom: 2px;
-    }
+    .shop-name  { font-size:1.1rem; font-weight:700; text-align:center; margin-bottom:2px; }
+    .shop-info  { font-size:0.72rem; text-align:center; color:#666; margin-bottom:2px; }
+    .divider    { border:none; border-top:1px dashed #ccc; margin:12px 0; }
+    .receipt-label { font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:0.05em; }
+    .receipt-value { font-size:0.82rem; color:#333; }
 
-    .divider {
-      border: none;
-      border-top: 1px dashed #ccc;
-      margin: 12px 0;
-    }
-
-    .receipt-label {
-      font-size: 0.72rem;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .receipt-value {
-      font-size: 0.82rem;
-      color: #333;
-    }
-
-    .item-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.82rem;
-      padding: 3px 0;
-    }
-
-    .total-row {
-      display: flex;
-      justify-content: space-between;
-      font-weight: 700;
-      font-size: 0.95rem;
-      padding: 4px 0;
-    }
-
-    .change-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.82rem;
-      padding: 3px 0;
-    }
-
-    .thank-you {
-      text-align: center;
-      font-size: 0.78rem;
-      color: #888;
-      margin-top: 4px;
-    }
+    .item-row   { display:flex; justify-content:space-between; font-size:0.82rem; padding:3px 0; }
+    .total-row  { display:flex; justify-content:space-between; font-weight:700; font-size:0.95rem; padding:4px 0; }
+    .change-row { display:flex; justify-content:space-between; font-size:0.82rem; padding:3px 0; }
+    .thank-you  { text-align:center; font-size:0.78rem; color:#888; margin-top:4px; }
 
     .order-source-badge {
-      display: inline-block;
-      background: #d63384;
-      color: #fff;
-      font-size: 0.68rem;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-bottom: 4px;
+      display:inline-block; background:#d63384; color:#fff;
+      font-size:0.68rem; padding:2px 8px; border-radius:10px; margin-bottom:4px;
     }
 
-    /* ── ACTION BUTTONS (hidden when printing) ── */
-    .action-buttons {
-      margin-top: 20px;
-      display: flex;
-      gap: 10px;
-    }
+    /* ── ACTION BUTTONS ── */
+    .action-buttons { margin-top:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
 
-    /* ── PRINT STYLES ── */
+    /* ── PRINTER STATUS ── */
+    .printer-status {
+      margin-top: 12px;
+      font-size: 0.78rem;
+      color: #888;
+      text-align: center;
+      min-height: 20px;
+    }
+    .printer-status.ok     { color: #198754; }
+    .printer-status.err    { color: #dc3545; }
+    .printer-status.busy   { color: #ffc107; }
+
     @media print {
-      body { background: #fff; padding: 0; }
-      .receipt {
-        box-shadow: none;
-        border-radius: 0;
-        width: 80mm;
-        padding: 10px;
-      }
-      .action-buttons { display: none !important; }
+      body { background:#fff; padding:0; }
+      .receipt { box-shadow:none; border-radius:0; width:80mm; padding:10px; }
+      .action-buttons, .printer-status { display:none !important; }
     }
   </style>
 </head>
@@ -165,7 +114,6 @@
     <span>₱{{ "%.2f"|format(order.amount) }}</span>
   </div>
 
-  <!-- Payment Details -->
   {% if order.payment_method == 'Cash' %}
   <div class="change-row">
     <span>Cash Received</span>
@@ -179,13 +127,11 @@
 
   <hr class="divider">
 
-  <!-- Payment Method -->
   <div class="receipt-label">Payment Method</div>
   <div class="receipt-value mb-2">{{ order.payment_method }}</div>
 
   <hr class="divider">
 
-  <!-- Thank You -->
   <div class="thank-you">
     Thank you for your order!<br>
     Come again 🎂<br>
@@ -194,9 +140,12 @@
 
 </div>
 
+<!-- Printer status message -->
+<div class="printer-status" id="printerStatus"></div>
+
 <!-- Action Buttons -->
 <div class="action-buttons">
-  <button onclick="window.print()" class="btn btn-dark">
+  <button onclick="bluetoothPrint()" class="btn btn-dark" id="btnPrint">
     <i class="fas fa-print me-2"></i>Print Receipt
   </button>
   <a href="/pos" class="btn btn-outline-secondary">
@@ -208,5 +157,185 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+  // ══════════════════════════════════════════
+  //  RECEIPT DATA FROM FLASK (Jinja → JS)
+  // ══════════════════════════════════════════
+  var RECEIPT = {
+    orderId:     "{{ order.id[:12] }}...",
+    datetime:    "{% if order.created_at %}{{ order.created_at.strftime('%b %d, %Y %I:%M %p') }}{% else %}N/A{% endif %}",
+    items:       [
+      {% for item in order.order_items %}
+      { name: {{ item.cake_name | tojson }}, price: {{ item.price | float }}, qty: {{ item.quantity if item.quantity is defined else 1 }} },
+      {% endfor %}
+    ],
+    total:       {{ order.amount }},
+    payment:     {{ order.payment_method | tojson }},
+    cashReceived:{{ order.cash_received if order.cash_received else 0 }},
+    change:      {{ order.change if order.change else 0 }},
+  };
+
+  // ══════════════════════════════════════════
+  //  BLUETOOTH PRINTER
+  // ══════════════════════════════════════════
+  var PRINT_SERVICE_UUIDS = [
+    '000018f0-0000-1000-8000-00805f9b34fb',
+    '0000ff00-0000-1000-8000-00805f9b34fb',
+    'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
+  ];
+  var PRINT_CHAR_UUIDS = [
+    '00002af1-0000-1000-8000-00805f9b34fb',
+    '0000ff02-0000-1000-8000-00805f9b34fb',
+    'bef8d6c9-9c21-4c9e-b632-bd58c1009f9f',
+  ];
+
+  function setStatus(msg, cls) {
+    var el = document.getElementById('printerStatus');
+    el.textContent  = msg;
+    el.className    = 'printer-status ' + (cls || '');
+  }
+
+  function setBtnLoading(loading) {
+    var btn = document.getElementById('btnPrint');
+    btn.disabled  = loading;
+    btn.innerHTML = loading
+      ? '<i class="fas fa-spinner fa-spin me-2"></i>Printing…'
+      : '<i class="fas fa-print me-2"></i>Print Receipt';
+  }
+
+  // ── ESC/POS helpers ──
+  var ESC = 0x1B, GS = 0x1D;
+  var LINE = 32; // 58mm = 32 chars at normal size
+
+  function pad(left, right) {
+    var sp = LINE - left.length - right.length;
+    return left + ' '.repeat(Math.max(1, sp)) + right;
+  }
+  function enc(text) {
+    return Array.from(new TextEncoder().encode(text + '\n'));
+  }
+ function divider() { return '-'.repeat(LINE); }
+
+  function buildReceipt(r) {
+    var bytes = [];
+    var p = function(arr) { bytes = bytes.concat(arr); };
+    var l = function(t)   { p(enc(t)); };
+
+    // Init
+    p([ESC, 0x40]);
+
+    // Header — centered bold
+    p([ESC, 0x61, 1]);
+    p([ESC, 0x45, 1]);
+    l('Ms. Brave Cake Shop');
+    p([ESC, 0x45, 0]);
+    l('R Mapa St, Mandurriao');
+    l('Iloilo City  0956 350 4486');
+    p([ESC, 0x61, 0]);
+    l(divider());
+
+    // Order info
+    l('Order: ' + r.orderId);
+    l(r.datetime);
+    l(divider());
+
+    // Items
+    r.items.forEach(function(item) {
+      var name = item.name.substring(0, 20);
+      var qty  = item.qty || 1;
+      var sub  = (item.price * qty).toFixed(2);
+      l(name);
+      l(pad('  x' + qty + ' @ P' + item.price.toFixed(2), 'P' + sub));
+    });
+
+    l(divider());
+
+    // Totals
+    p([ESC, 0x45, 1]);
+    l(pad('TOTAL', 'P'+ r.total.toFixed(2)));
+    p([ESC, 0x45, 0]);
+    l(pad('Payment', r.payment));
+
+    if (r.payment === 'Cash') {
+      l(pad('Cash', 'P' + parseFloat(r.cashReceived).toFixed(2)));
+      l(pad('Change', 'P'+ Math.max(0, r.change).toFixed(2)));
+    }
+
+    l(divider());
+
+    // Footer — centered
+    p([ESC, 0x61, 1]);
+    l('Thank you for your order!');
+    l('Come again :)');
+    l('-- Ms. Brave Cake Shop --');
+    p([ESC, 0x61, 0]);
+    l('');
+
+    // Feed + cut
+    p([ESC, 0x64, 4, GS, 0x56, 0x41, 0x00]);
+
+    return new Uint8Array(bytes);
+  }
+
+  async function bluetoothPrint() {
+    if (!navigator.bluetooth) {
+      // Fallback to window.print() for non-BLE browsers
+      setStatus('Web Bluetooth not supported — using system print.', 'err');
+      window.print();
+      return;
+    }
+
+    setBtnLoading(true);
+    setStatus('Scanning for printer…', 'busy');
+
+    try {
+      var device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: PRINT_SERVICE_UUIDS
+      });
+
+      setStatus('Connecting to ' + device.name + '…', 'busy');
+      var server = await device.gatt.connect();
+
+      // Find service
+      var service = null;
+      for (var sUUID of PRINT_SERVICE_UUIDS) {
+        try { service = await server.getPrimaryService(sUUID); if (service) break; } catch(e) {}
+      }
+      if (!service) throw new Error('No print service found on this printer.');
+
+      // Find characteristic
+      var chr = null;
+      for (var cUUID of PRINT_CHAR_UUIDS) {
+        try { chr = await service.getCharacteristic(cUUID); if (chr) break; } catch(e) {}
+      }
+      if (!chr) throw new Error('No print characteristic found.');
+
+      setStatus('Printing…', 'busy');
+
+      var receipt = buildReceipt(RECEIPT);
+      var CHUNK   = 100;
+      for (var i = 0; i < receipt.length; i += CHUNK) {
+        await chr.writeValue(receipt.slice(i, i + CHUNK));
+        await new Promise(r => setTimeout(r, 50));
+      }
+
+      device.gatt.disconnect();
+      setStatus('✅ Printed successfully!', 'ok');
+
+    } catch (err) {
+      if (err.name === 'NotFoundError') {
+        setStatus('No printer selected.', 'err');
+      } else {
+        setStatus('❌ ' + err.message, 'err');
+      }
+      console.error('BT print error:', err);
+    }
+
+    setBtnLoading(false);
+  }
+</script>
+
 </body>
 </html>
