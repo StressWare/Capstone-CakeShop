@@ -284,6 +284,8 @@
           <th>Time</th>
           <th>Items Ordered</th>
           <th>Payment</th>
+          <th>Type</th>
+          <th>Discount</th>
           <th>Amount</th>
           <th>Cash Received</th>
           <th>Change</th>
@@ -307,6 +309,18 @@
                 {{ o.payment_method }}
               </span>
             </td>
+            <td>
+              <small>{{ o.order_type or 'Dine In' }}</small>
+            </td>
+            <td>
+              {% if o.discount_type and o.discount_type != 'none' %}
+                <span style="color:#198754; font-size:0.78rem; font-weight:600;">
+                  {{ 'Senior' if o.discount_type == 'senior' else 'PWD' }} −₱{{ "%.2f"|format(o.discount_amount|float) }}
+                </span>
+              {% else %}
+                <small style="color:#ccc;">—</small>
+              {% endif %}
+            </td>
             <td><strong style="color:#d63384;">₱{{ "%.2f"|format(o.amount) }}</strong></td>
             <td>₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
             <td>₱{{ "%.2f"|format(o.change or 0) }}</td>
@@ -314,7 +328,7 @@
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="6">
+            <td colspan="8">
               <div class="empty-state">
                 <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
                 No transactions found for this period
@@ -361,6 +375,8 @@
         <th>Time</th>
         <th>Items</th>
         <th>Payment</th>
+        <th>Type</th>
+        <th>Discount</th>
         <th>Amount</th>
         <th>Cash Received</th>
         <th>Change</th>
@@ -373,13 +389,15 @@
           <td>{{ o.created_at.strftime('%I:%M %p') }}</td>
           <td>{% for item in o.order_items %}{{ item.cake_name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
           <td>{{ o.payment_method }}</td>
+          <td>{{ o.order_type or 'Dine In' }}</td>
+<td>{% if o.discount_type and o.discount_type != 'none' %}{{ 'Senior' if o.discount_type == 'senior' else 'PWD' }} -P{{ "%.2f"|format(o.discount_amount|float) }}{% else %}—{% endif %}</td>
           <td>₱{{ "%.2f"|format(o.amount) }}</td>
           <td>₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
           <td>₱{{ "%.2f"|format(o.change or 0) }}</td>
         </tr>
         {% endfor %}
       {% else %}
-        <tr><td colspan="6" style="text-align:center;color:#aaa;">No transactions</td></tr>
+        <tr><td colspan="8" style="text-align:center;color:#aaa;">No transactions</td></tr>
       {% endif %}
     </tbody>
   </table>

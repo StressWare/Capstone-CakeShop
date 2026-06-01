@@ -1177,6 +1177,17 @@ body.innerHTML = `
           <i class="fas fa-cake-candles me-1"></i> Order Items
         </div>
         ${itemsHtml}
+        ${o.claimed_vouchers?.length ? `
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid #f5c2dc;">
+          <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:8px;">
+            Gift Vouchers Claimed
+          </div>
+          ${o.claimed_vouchers.map(cv => `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:0.88rem;">
+              <span style="color:#d63384; font-weight:600;">Free ${esc(cv.gift_name)}</span>
+              <span  style="font-size:0.7rem;">Included in order</span>
+            </div>`).join('')}
+        </div>` : ''}
       </div>
 
       

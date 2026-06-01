@@ -9,7 +9,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
                      handle_loyalty_stamp,safe_float, send_new_order_fcm)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache
 from firebase_admin import messaging
 import requests as http_requests
 import re
@@ -504,7 +504,7 @@ def delete_account():
 @login_required
 def customer_dashboard():
     user_id = session.get("user_id")
- 
+    gifts = get_loyalty_gifts()
     doc = users.document(user_id).get()
     if not doc.exists:
         return "User not found", 404
@@ -560,6 +560,8 @@ def customer_dashboard():
     # ── Loyalty data ──
     loyalty_stamps    = int(customer.get('loyalty_stamps', 0))
     loyalty_unclaimed = customer.get('loyalty_unclaimed', None)
+    loyalty_unclaimed_tier = customer.get('loyalty_unclaimed_tier', None)
+    loyalty_stamps_for_tier = loyalty_stamps
 
     active_vouchers = []
     now_dt = datetime.now(PH_TZ)
@@ -585,6 +587,9 @@ def customer_dashboard():
         loyalty_stamps    = loyalty_stamps,
         loyalty_unclaimed = loyalty_unclaimed,
         active_vouchers   = active_vouchers,
+        loyalty_unclaimed_tier  = customer.get('loyalty_unclaimed_tier', None),
+        loyalty_gifts_small = gifts["small"],
+        loyalty_gifts_big   = gifts["big"]
     )
 
 # ---------------- FAVORITES TOGGLE ----------------
@@ -660,43 +665,101 @@ def edit_customer_profile():
     flash("Profile updated successfully!", "success")
     return redirect(url_for("customer_dashboard"))
 
-# ---------------- LOYALTY CLAIM ----------------
+# ── Hardcoded gift lists (change to dynamic later) ──
+LOYALTY_GIFTS_SMALL = ["Cupcake", "Coffee", "Pastry"]          # 5 stamps
+LOYALTY_GIFTS_BIG   = ["Bento Cake", "Slice Cake", "Drinks Bundle"]  # 10 stamps
+
+# ---------------- LOYALTY CLAIM GIFT ----------------
 @app.route("/loyalty/claim", methods=["POST"])
 @profile_required
 @login_required
 @limiter.limit("3 per minute")
 def loyalty_claim():
-    user_id = session.get("user_id")
-    now     = datetime.now(PH_TZ)
+    user_id   = session.get("user_id")
+    now       = datetime.now(PH_TZ)
+    gift_name = request.form.get("gift_name", "").strip()
+    tier_raw  = request.form.get("tier", "0")
+    tier      = int(tier_raw) if tier_raw and tier_raw.isdigit() else 0
+
+    if tier not in (5, 10):
+        flash("Invalid reward tier.", "warning")
+        return redirect(url_for("customer_dashboard") + "#loyalty")
+
+    gifts      = get_loyalty_gifts()
+    valid_gifts = gifts["small"] if tier == 5 else gifts["big"]
+
+    if gift_name not in valid_gifts:
+        flash("Invalid gift selection.", "warning")
+        return redirect(url_for("customer_dashboard") + "#loyalty")
 
     try:
         user_ref  = users.document(user_id)
         user_data = user_ref.get().to_dict() or {}
+        stamps    = int(user_data.get("loyalty_stamps", 0))
 
-        unclaimed = user_data.get('loyalty_unclaimed', None)
-        if not unclaimed:
-            flash("No reward available to claim.", "warning")
+        if stamps < tier:
+            flash("Not enough stamps to claim this reward.", "warning")
             return redirect(url_for("customer_dashboard") + "#loyalty")
-
-        expires_at = now + timedelta(days=180)  # 6 months
+        expires_at = now + timedelta(days=180)
 
         user_ref.collection("vouchers").add({
-            "discount":   unclaimed,
+            "gift_name":  gift_name,
+            "tier":       tier,
+            "type":       "gift",
             "claimed_at": now,
             "expires_at": expires_at,
             "used":       False,
             "used_at":    None,
         })
 
-        user_ref.update({"loyalty_unclaimed": None})
+        update_data = {"loyalty_unclaimed": None, "loyalty_unclaimed_tier": None}
+        if tier == 10:
+            update_data["loyalty_stamps"] = 0
 
-        flash(f"🎉 Your {unclaimed}% discount voucher has been claimed! Valid for 6 months.", "success")
+        user_ref.update(update_data)
+        flash(f"🎁 Your free {gift_name} has been claimed! Show this at the shop.", "success")
 
     except Exception:
-        app.logger.exception("[LOYALTY CLAIM] Failed")
+        app.logger.exception("[LOYALTY CLAIM GIFT] Failed")
         flash("Something went wrong. Please try again.", "danger")
 
     return redirect(url_for("customer_dashboard") + "#loyalty")
+@app.route("/admin/update-loyalty-gifts", methods=["POST"])
+@admin_required
+def update_loyalty_gifts():
+    try:
+        data = request.get_json()
+        tier = data.get("tier")
+        gifts_raw = data.get("gifts")
+
+        if tier not in ("small", "big"):
+            return jsonify({"success": False, "message": "Invalid tier."})
+
+        # Accept either list or comma string
+        if isinstance(gifts_raw, list):
+            gift_list = [str(g).strip() for g in gifts_raw if str(g).strip()]
+        else:
+            gift_list = [g.strip() for g in gifts_raw.split(",") if g.strip()]
+
+        if not gift_list or len(gift_list) > 10:
+            return jsonify({"success": False, "message": "Please enter 1–10 gifts."})
+
+        from db import loyalty_gifts
+        docs = list(loyalty_gifts.limit(1).stream())
+        if not docs:
+            # Create first document with defaults
+            default_data = {"small": ["Cupcake", "Coffee", "Pastry"], "big": ["Bento Cake", "Slice Cake", "Drinks Bundle"]}
+            default_data[tier] = gift_list
+            loyalty_gifts.add(default_data)
+        else:
+            doc_ref = docs[0].reference
+            doc_ref.update({tier: gift_list})
+
+        invalidate_cache("loyalty_gifts")
+        return jsonify({"success": True, "message": "Gift list updated!"})
+    except Exception:
+        app.logger.exception("[LOYALTY GIFTS] Update failed")
+        return jsonify({"success": False, "message": "Something went wrong."})
 
 @app.route("/customize_cake")
 def customize():
@@ -1119,8 +1182,24 @@ def finalize_order():
     if next(existing, None):
         flash("Order already placed.", "warning")
         return redirect(url_for("customer_dashboard"))
-        
-    downpayment_type   = None
+    claim_voucher_ids = request.form.getlist("claim_voucher_ids")
+    claimed_vouchers = []
+    if claim_voucher_ids:
+        now_dt = datetime.now(PH_TZ)
+        for v_id in claim_voucher_ids:
+            v_doc = users.document(user_id).collection("vouchers").document(v_id).get()
+            if not v_doc.exists:
+                continue
+            v = v_doc.to_dict()
+            expires = v.get('expires_at')
+            if expires.tzinfo is None:
+                expires = expires.replace(tzinfo=PH_TZ)
+            if not v.get('used', False) and expires > now_dt and v.get('type') == 'gift':
+                claimed_vouchers.append({
+                    "voucher_id": v_id,
+                    "gift_name":  v.get("gift_name", "")
+                })
+    downpayment_type   = None   
     downpayment_amount = None
     remaining_balance  = None
     if order_type == "custom":
@@ -1128,20 +1207,6 @@ def finalize_order():
         if raw_dp_type not in ("50", "75", "full"):
             raw_dp_type = "full"
         downpayment_type = raw_dp_type
-    #  Voucher validation 
-    voucher_id           = request.form.get('voucher_id', '').strip()
-    voucher_discount_pct = 0
-    if voucher_id:
-        now_dt = datetime.now(PH_TZ)
-        v_ref  = users.document(user_id).collection("vouchers").document(voucher_id)
-        v_doc  = v_ref.get()
-        if v_doc.exists:
-            v_data  = v_doc.to_dict()
-            expires = v_data.get('expires_at')
-            if expires and hasattr(expires, 'tzinfo') and expires.tzinfo is None:
-                expires = expires.replace(tzinfo=PH_TZ)
-            if not v_data.get('used', False) and expires and expires > now_dt:
-                voucher_discount_pct = int(v_data.get('discount', 0))
     #  Customer info validation 
     customer_name = request.form.get("customer_name", "").strip()
     contact       = request.form.get("contact", "").strip()
@@ -1274,21 +1339,6 @@ def finalize_order():
     DELIVERY_FEE = 50.0
     if delivery_type == "Delivery":
         amount = round(amount + DELIVERY_FEE, 2)
-    # Apply voucher discount 
-    if voucher_discount_pct > 0:
-        if order_type == 'premade':
-            cake_subtotal = 0.0
-            for item in selected_items:
-                if item.get('category') == 'Cake':
-                    cake_subtotal += float(item.get('subtotal', 0.0))
-            discount_amount = round(cake_subtotal * voucher_discount_pct / 100, 2)
-        else:
-            # discount on cake amount only, not delivery fee
-            cake_amount = amount - (DELIVERY_FEE if delivery_type == "Delivery" else 0.0) - (RUSH_FEE if rush else 0.0)
-            discount_amount = round(cake_amount * voucher_discount_pct / 100, 2)
-        amount = round(amount - discount_amount, 2)
-    else:
-        discount_amount = 0
 
     # ── Base order data ──
     order_data = {
@@ -1312,10 +1362,8 @@ def finalize_order():
         "custom_components": custom_components,
         "delivery_token": secrets.token_urlsafe(32),
         "idempotency_key": idempotency_key,
-        "voucher_id":       voucher_id if voucher_discount_pct > 0 else None,
-        "voucher_discount": voucher_discount_pct if voucher_discount_pct > 0 else None,
-        "discount_amount":  discount_amount if voucher_discount_pct > 0 else None,
         "downpayment_type":   downpayment_type,
+        "claimed_vouchers": claimed_vouchers,
         "downpayment_amount": None,  # filled below after amount is final
         "remaining_balance":  None,
         "customer": {
@@ -1416,18 +1464,17 @@ def finalize_order():
             payment_method=payment_method,
             rush_fee=order_data.get("rush_fee", 0),
             delivery_fee=order_data.get("delivery_fee", 0),
-            discount_amount=order_data.get("discount_amount", 0),
+            discount_amount=0,
             downpayment_type=order_data.get("downpayment_type"),
             downpayment_amount=order_data.get("downpayment_amount"),
             remaining_balance=order_data.get("remaining_balance"),
         )
-
-        handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
-        if voucher_id and discount_amount > 0:
-            users.document(user_id).collection("vouchers").document(voucher_id).update({
-                "used":    True,
-                "used_at": datetime.now(PH_TZ)
+        for cv in claimed_vouchers:
+            users.document(user_id).collection("vouchers").document(cv["voucher_id"]).update({
+                "used": True,
+                "used_at": now
             })
+        handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
         return redirect(url_for("cod_success", order_id=order_id))
 
     # ── Online Payment → PayMongo ──
@@ -1438,7 +1485,7 @@ def finalize_order():
         downpayment_type   = downpayment_type,
         downpayment_amount = order_data.get("downpayment_amount"),
         remaining_balance  = order_data.get("remaining_balance"),
-        discount_amount    = discount_amount,
+        discount_amount    = 0,
         delivery_fee       = order_data.get("delivery_fee", 0),
         rush_fee           = order_data.get("rush_fee", 0),
     )
@@ -2341,9 +2388,14 @@ def admin_analytics():
 @app.route("/admin/cakes")
 @admin_required
 def admin_cakes():
-    cakes_list = get_all_cakes()
+    cakes_list    = get_all_cakes()
     custom_prices = get_custom_prices()
-    return render_template("admin_cakes.html", cakes=cakes_list, custom_prices=custom_prices)
+    loyalty_gifts = get_loyalty_gifts()
+    return render_template("admin_cakes.html",
+        cakes=cakes_list,
+        custom_prices=custom_prices,
+        loyalty_gifts=loyalty_gifts
+    )
 
 # ---------------- ADMIN USERS ----------------
 @app.route("/admin/users")
@@ -3123,15 +3175,14 @@ def paymongo_webhook():
             payment_method=payment_method,
             rush_fee=order_data.get("rush_fee", 0),
             delivery_fee=order_data.get("delivery_fee", 0),
-            discount_amount=order_data.get("discount_amount", 0),
+            discount_amount=0,
             downpayment_type=order_data.get("downpayment_type"),
             downpayment_amount=order_data.get("downpayment_amount"),
             remaining_balance=order_data.get("remaining_balance"),
         )
         # Mark voucher as used
-        v_id = order_data.get('voucher_id', '')
-        if v_id:
-            users.document(order_data['user_id']).collection("vouchers").document(v_id).update({
+        for cv in order_data.get("claimed_vouchers", []):
+            users.document(order_data["user_id"]).collection("vouchers").document(cv["voucher_id"]).update({
                 "used":    True,
                 "used_at": datetime.now(PH_TZ)
             })
@@ -3224,7 +3275,7 @@ def payment_success():
     payment_method=order_data.get("payment_method"),
     rush_fee=order_data.get("rush_fee", 0),
     delivery_fee=order_data.get("delivery_fee", 0),
-    discount_amount=order_data.get("discount_amount", 0),
+    discount_amount=0,
     downpayment_type=order_data.get("downpayment_type"),
     downpayment_amount=order_data.get("downpayment_amount"),
     remaining_balance=order_data.get("remaining_balance"),
@@ -3236,10 +3287,9 @@ def payment_success():
         order_data.get('selected_items', []),
         cakes
     )
-        # ── Mark voucher as used ── ← ADD
-    v_id = order_data.get('voucher_id', '')
-    if v_id:
-        users.document(order_data['user_id']).collection("vouchers").document(v_id).update({
+        # ── Mark voucher as used ──
+    for cv in order_data.get("claimed_vouchers", []):
+        users.document(order_data["user_id"]).collection("vouchers").document(cv["voucher_id"]).update({
             "used":    True,
             "used_at": datetime.now(PH_TZ)
         })
@@ -3611,6 +3661,140 @@ def admin_conversations():
         app.logger.exception("Error in admin_conversations")
         flash("Error loading conversations", "danger")
         return render_template("admin_conversations.html", conversations=[])
+    
+@app.route('/consultation', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def consultation():
+    user_id = session.get('user_id')
+    now = datetime.now(PH_TZ)
+
+    # Recompute price server-side
+    try:
+        icing_key   = request.form.get('design', '').split('|')[0]
+        size_key    = request.form.get('cakeSize', '').split('|')[0]
+        layers_key  = request.form.get('layers', '').split('|')[0]
+        toppers_key = request.form.get('toppers', '').split('|')[0]
+
+        prices = get_custom_prices()
+        amount = 0.0
+        amount += float(prices['icing'].get(icing_key, 0))
+        amount += float(prices['size'].get(size_key, 0))
+        amount += float(prices['layers'].get(layers_key, 0))
+        amount += float(prices['toppers'].get(toppers_key, 0))
+        for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
+            if request.form.get(addon_key):
+                amount += float(prices['addons'].get(addon_key, 0))
+    except Exception:
+        app.logger.exception('Error computing consultation price')
+        flash('Unable to process. Please try again.', 'danger')
+        return redirect(url_for('customize'))
+
+    order_item = request.form.get('order_item', '')
+
+    # Get or create conversation ID
+    conv_snapshot = users.document(user_id).collection('conversations') \
+        .order_by('created_at', direction=firestore.Query.DESCENDING).limit(1).get()
+
+    if conv_snapshot:
+        conv_id = conv_snapshot[0].id
+        conv_data = conv_snapshot[0].to_dict()
+        # If already escalated/active, create new one
+        if conv_data.get('closed') or conv_data.get('is_consultation'):
+            conv_id = f'conv_{int(now.timestamp() * 1000)}_{secrets.token_hex(4)}'
+    else:
+        conv_id = f'conv_{int(now.timestamp() * 1000)}_{secrets.token_hex(4)}'
+
+    consultation_data = {
+        'order_item': order_item,
+        'amount':     round(amount, 2),
+        'cakeType':   request.form.get('cakeType', ''),
+        'cakeShape':  request.form.get('cakeShape', ''),
+        'cakeSize':   request.form.get('cakeSize', ''),
+        'design':     request.form.get('design', ''),
+        'layers':     request.form.get('layers', ''),
+        'toppers':    request.form.get('toppers', ''),
+        'candles':    request.form.get('candles', ''),
+        'notes':      request.form.get('notes', '')[:500],
+    }
+
+    conv_ref = users.document(user_id).collection('conversations').document(conv_id)
+    conv_ref.set({
+        'created_at':        now,
+        'last_updated':      now,
+        'escalated':         True,
+        'escalated_at':      now,
+        'escalated_by':      'customer',
+        'is_consultation':   True,
+        'consultation_data': consultation_data,
+        'closed':            False,
+    }, merge=True)
+
+    # Bot message
+    conv_ref.collection('messages').add({
+        'text':       f'📋 Consultation request sent! Design: {order_item}. Estimated price: ₱{amount:,.2f}. The owner will reply shortly.',
+        'sender':     'bot',
+        'timestamp':  now,
+        'created_at': now,
+    })
+
+    # Top-level conversations mirror (for admin dashboard)
+    user_doc = users.document(user_id).get().to_dict() or {}
+    conversations.document(conv_id).set({
+        'user_id':           user_id,
+        'conversation_id':   conv_id,
+        'customer_name':     user_doc.get('fname') or user_doc.get('username') or 'Customer',
+        'email':             user_doc.get('email', ''),
+        'last_message':      f'[Consultation] {order_item[:50]}',
+        'last_updated':      now,
+        'escalated':         True,
+        'is_consultation':   True,
+        'consultation_data': consultation_data,
+        'unread':            True,
+    }, merge=True)
+
+    return redirect(url_for('consultation_sent'))
+
+@app.route('/admin/consultation-to-order', methods=['POST'])
+@admin_required
+def consultation_to_order():
+    user_id = request.form.get('user_id')
+    conv_id = request.form.get('conversation_id')
+
+    # Get consultation data
+    conv_ref = users.document(user_id).collection('conversations').document(conv_id)
+    conv_doc = conv_ref.get()
+    if not conv_doc.exists:
+        flash('Consultation not found.', 'danger')
+        return redirect(url_for('admin_conversations'))
+
+    data = conv_doc.to_dict()
+    cd   = data.get('consultation_data', {})
+
+    # Mark as converted
+    now = datetime.now(PH_TZ)
+    conv_ref.update({'status': 'converted', 'converted_at': now})
+    conversations.document(conv_id).update({'status': 'converted', 'converted_at': now})
+
+    # Redirect to customize with query params pre-filled
+    from urllib.parse import urlencode
+    params = urlencode({
+        'prefill': '1',
+        'cakeType':  cd.get('cakeType', ''),
+        'cakeShape': cd.get('cakeShape', ''),
+        'cakeSize':  cd.get('cakeSize', ''),
+        'design':    cd.get('design', ''),
+        'layers':    cd.get('layers', ''),
+        'toppers':   cd.get('toppers', ''),
+        'candles':   cd.get('candles', ''),
+        'notes':     cd.get('notes', ''),
+        'for_user':  user_id,
+    })
+    return redirect(f"/customize?{params}")
+@app.route('/consultation/sent')
+@login_required
+def consultation_sent():
+    return render_template('consultation_sent.html')
     
 #----------------- PWA(PROGRESSIVE WEB APP) ----------------
 @app.route('/service-worker.js')

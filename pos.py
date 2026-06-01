@@ -37,6 +37,11 @@ def pos_order():
     amount         = float(request.form.get('amount', 0))
     change         = cash_received - amount if payment_method == 'Cash' else 0
 
+    # ── NEW FIELDS ──
+    order_type      = request.form.get('order_type', 'Dine In')
+    discount_type   = request.form.get('discount_type', 'none')
+    discount_amount = float(request.form.get('discount_amount', 0))
+
     if not items:
         flash('No items selected!', 'warning')
         return redirect(url_for('pos.pos_page'))
@@ -47,16 +52,20 @@ def pos_order():
     ])
 
     order_data = {
-        "order_items":    items,
-        "item":           item_names,
-        "amount":         amount,
-        "payment_method": payment_method,
-        "cash_received":  cash_received,
-        "change":         change,
-        "order_source":   "walk-in",
-        "cashier_id":     session.get('user_id'),
-        "status":         "Completed",
-        "created_at":     now
+        "order_items":     items,
+        "item":            item_names,
+        "amount":          amount,
+        "payment_method":  payment_method,
+        "cash_received":   cash_received,
+        "change":          change,
+        "order_source":    "walk-in",
+        "cashier_id":      session.get('user_id'),
+        "status":          "Completed",
+        "created_at":      now,
+        # ── NEW ──
+        "order_type":      order_type,
+        "discount_type":   discount_type,
+        "discount_amount": discount_amount,
     }
 
     doc_ref  = walkin_orders.add(order_data)

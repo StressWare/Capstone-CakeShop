@@ -36,9 +36,7 @@
     <input type="hidden" name="payment_method" id="paymentInput"      value="Cash on Delivery">
     <input type="hidden" name="lat"            id="latInput"          value="">
     <input type="hidden" name="lng"            id="lngInput"          value="">
-    <input type="hidden" name="voucher_id" id="voucherIdInput" value="">
     <input type="hidden" name="idempotency_key" id="idempotencyKey" value="">
-    <input type="hidden" name="discount_amount" id="discountAmountInput" value="0">
     <input type="hidden" name="downpayment_type" id="downpaymentTypeInput" value="full">
     <input type="hidden" name="downpayment_amount" id="downpaymentAmountInput" value="0">
     {% if order_type == 'custom' %}
@@ -112,9 +110,8 @@
                    maxlength="300">
           </div>
           <div class="pickup-info" id="pickupInfo">
-            <i class="fas fa-store"></i>
             <strong>Pick Up Location:</strong><br>
-            Ms. Brave Cake Shop<br>
+            Mrs. Brave Cake Shop<br>
             R Mapa Street, Mandurriao, Iloilo City
           </div>
 
@@ -278,52 +275,30 @@
               You'll be redirected to PayMongo's secure checkout page.
             </div>
           {% endif %}
-        </div>
-
-        <!-- Voucher selector -->
-        <div class="checkout-form-section" style="margin-top:12px;">
-          <div class="section-title">Your Vouchers</div>
-
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            
-            <div class="voucher-option" id="voucher-none"
-                style="padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);
-                        cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
-                onclick="selectVoucher(null, 0)">
-              <span style="font-size:13px;color:rgba(255,255,255,0.7);">No voucher</span>
-            </div>
-
-            {% if active_vouchers %}
-              {% for v in active_vouchers %}
-              <div class="voucher-option" id="voucher-{{ v.id }}"
-                  style="padding:10px 14px;border-radius:8px;border:1px solid rgba(214,51,132,0.4);
-                          cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
-                  onclick="selectVoucher('{{ v.id }}', {{ v.discount }})">
-                <div>
-                  <div style="font-size:14px;font-weight:600;color:#fff;">{{ v.discount }}% OFF</div>
-                  <div style="font-size:11px;color:rgba(255,255,255,0.5);">Expires {{ v.expires_at_fmt }}</div>
+          </div>
+        
+          <!-- Gift Voucher Claim -->
+          {% if active_vouchers %}
+          <div class="checkout-form-section" style="margin-top:12px;">
+            <div class="section-title">Your Gift Vouchers</div>
+            {% for v in active_vouchers %}
+            <label style="display:flex;align-items:center;gap:10px;padding:12px 14px;
+                          border-radius:8px;border:1px solid rgba(214,51,132,0.4);
+                          background:rgba(214,51,132,0.06);margin-bottom:8px;cursor:pointer;">
+              <input type="checkbox" name="claim_voucher_ids" value="{{ v.id }}"
+                    style="accent-color:#d63384;width:16px;height:16px;flex-shrink:0;">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:#f9a8d4;">🎁 Free {{ v.gift_name }}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:2px;">
+                  Expires {{ v.expires_at_fmt }} — Check to claim with this order
                 </div>
-                <div style="font-size:12px;color:#d63384;font-weight:600;">Apply</div>
               </div>
-              {% endfor %}
-            {% else %}
-              <div style="font-size:12px;color:rgba(255,255,255,0.5);padding-left:4px;">
-                No vouchers available
-              </div>
-            {% endif %}
-
+            </label>
+            {% endfor %}
           </div>
-
-          <!-- Stamp info note -->
-          <div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.05);
-                      border-radius:8px;border-left:3px solid #d63384;font-size:11px;
-                      color:rgba(255,255,255,0.55);">
-            <i class="fas fa-info-circle me-1" style="color:#d63384;"></i>
-            Stamps are earned on <strong style="color:rgba(255,255,255,0.8);">Cake</strong> category
-            and <strong style="color:rgba(255,255,255,0.8);">Custom Cake</strong> orders only.
-          </div>
-        </div>
+          {% endif %}
       </div>
+
       <!-- RIGHT COLUMN -->
       <div>
         <div class="order-summary">
@@ -437,7 +412,7 @@
     if (pickupMap) return;
     pickupMap = L.map('pickupMap', { center: [SHOP.lat, SHOP.lng], zoom: 16, zoomControl: true, dragging: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors' }).addTo(pickupMap);
-    L.marker([SHOP.lat, SHOP.lng]).addTo(pickupMap).bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao').openPopup();
+    L.marker([SHOP.lat, SHOP.lng]).addTo(pickupMap).bindPopup('<strong>Mrs. Brave Cake Shop</strong><br>R Mapa St, Mandurriao').openPopup();
   }
 
   function reverseGeocode(lat, lng) {
@@ -682,61 +657,18 @@ function selectDelivery(type) {
     document.getElementById('selectedItemsInput').value = JSON.stringify(orderItems);
           recalcTotal();
   }
-
-  // ── Voucher selection ──
   var baseAmount = {{ amount }};
-  var activeDiscount = 0;
-
-  function selectVoucher(voucherId, discountPct) {
-    document.querySelectorAll('.voucher-option').forEach(function(el) {
-      el.style.borderColor = 'rgba(255,255,255,0.15)';
-      el.style.background  = 'transparent';
-    });
-
-    activeDiscount = 0;
-
-    if (voucherId) {
-      var el = document.getElementById('voucher-' + voucherId);
-      if (el) {
-        el.style.borderColor = '#d63384';
-        el.style.background  = 'rgba(214,51,132,0.1)';
-      }
-      activeDiscount = discountPct;
-    } else {
-      var el = document.getElementById('voucher-none');
-      if (el) {
-        el.style.borderColor = '#d63384';
-        el.style.background  = 'rgba(214,51,132,0.1)';
-      }
-    }
-
-    document.getElementById('voucherIdInput').value      = voucherId || '';
-    document.getElementById('discountAmountInput').value = activeDiscount;
-
-    recalcTotal();
-  }
+  
 
 function recalcTotal() {
     var subtotal = orderItems.length > 0
       ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
       : baseAmount;
     var deliveryFee = currentDeliveryType === 'Delivery' ? 50 : 0;
-
-    // ── Voucher discount (only on Cake category for premade, full amount for custom) ──
-    var discountBase = 0;
-    if (orderItems.length > 0) {
-      orderItems.forEach(function(i) {
-        if (i.category === 'Cake') discountBase += i.subtotal;
-      });
-    } else {
-      discountBase = baseAmount; // custom cake
-    }
-    var discountAmt = discountBase * activeDiscount / 100;
-    var discountedSubtotal = subtotal - discountAmt;
-
     var rushFee = IS_RUSH ? 300 : 0;
-    var grandTotal = discountedSubtotal + deliveryFee + rushFee;
-        // ── Show rush fee row ──
+    var grandTotal = subtotal + deliveryFee + rushFee;
+
+    // ── Show rush fee row ──
     if (IS_RUSH && !document.getElementById('displayRushRow')) {
         var deliveryRow = document.getElementById('displayDeliveryFee').closest('.order-summary-price');
         var row = document.createElement('div');
@@ -746,15 +678,15 @@ function recalcTotal() {
         row.innerHTML = '<span>Rush Fee</span><span>₱300.00</span>';
         deliveryRow.insertAdjacentElement('afterend', row);
     }
+
     // ── Downpayment logic (custom orders only) ──
-    var payNow = grandTotal; // default: full payment
+    var payNow = grandTotal;
     var balance = 0;
 
     if (ORDER_TYPE === 'custom') {
       var dp50  = Math.round(grandTotal * 0.50 * 100) / 100;
       var dp75  = Math.round(grandTotal * 0.75 * 100) / 100;
 
-      // Update the amount labels on each option card
       var el50 = document.getElementById('dp-50-amount');
       var el75 = document.getElementById('dp-75-amount');
       var elFull = document.getElementById('dp-full-amount');
@@ -773,10 +705,8 @@ function recalcTotal() {
         balance = 0;
       }
 
-      // Store downpayment amount for backend
       document.getElementById('downpaymentAmountInput').value = payNow.toFixed(2);
 
-      // Show/hide downpayment rows in summary
       var dpRow  = document.getElementById('downpaymentRow');
       var balRow = document.getElementById('balanceRow');
       var balBox = document.getElementById('balanceInfoBox');
@@ -789,15 +719,12 @@ function recalcTotal() {
         document.getElementById('displayBalance').textContent      = '₱' + balance.toFixed(2);
         if (dpRow)  dpRow.style.display  = 'flex';
         if (balRow) balRow.style.display = 'flex';
-
-        // Balance info box
         if (balBox) {
           balBox.style.display = 'block';
           document.getElementById('balanceInfoText').textContent =
             'You will pay ₱' + payNow.toFixed(2) + ' now. The remaining ₱' +
             balance.toFixed(2) + ' is due on delivery or pickup.';
         }
-
         totalLabel.textContent = 'Pay Now';
       } else {
         if (dpRow)  dpRow.style.display  = 'none';
@@ -807,29 +734,10 @@ function recalcTotal() {
       }
     }
 
-    // ── Update display ──
-    document.getElementById('displaySubtotal').textContent  = '₱' + subtotal.toFixed(2);
-    // totalAmountInput holds what actually gets charged (downpayment or full)
-    document.getElementById('totalAmountInput').value       = payNow.toFixed(2);
-    document.getElementById('displayTotal').textContent     = '₱' + payNow.toFixed(2);
-
-    // ── Discount row ──
-    var discountRow = document.getElementById('displayDiscountRow');
-    if (discountAmt > 0) {
-      if (!discountRow) {
-        var totalRow = document.querySelector('.order-summary-price.total');
-        var row = document.createElement('div');
-        row.id        = 'displayDiscountRow';
-        row.className = 'order-summary-price';
-        row.style.cssText = 'font-size:0.9rem;color:#d63384;';
-        totalRow.parentNode.insertBefore(row, totalRow);
-      }
-      document.getElementById('displayDiscountRow').innerHTML =
-        '<span>Discount (' + activeDiscount + '% on Cakes)</span><span>-₱' + discountAmt.toFixed(2) + '</span>';
-    } else if (discountRow) {
-      discountRow.remove();
-    }
-  }
+    document.getElementById('displaySubtotal').textContent = '₱' + subtotal.toFixed(2);
+    document.getElementById('totalAmountInput').value      = payNow.toFixed(2);
+    document.getElementById('displayTotal').textContent    = '₱' + payNow.toFixed(2);
+}
 
   // ── Disable locked dates on the date picker ──
   (async function() {

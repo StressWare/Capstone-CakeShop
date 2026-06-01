@@ -245,6 +245,9 @@
         <button class="btn tab-btn" id="tabCustomPricing" onclick="switchTab('custom')">
            Customize Pricing
         </button>
+        <button class="btn tab-btn" id="tabLoyaltyGifts" onclick="switchTab('loyalty')">
+          Loyalty Gifts
+        </button>
       </div>
       <button class="btn btn-dark" id="addCakeBtn" data-bs-toggle="modal" data-bs-target="#cakeModal">
         <i class="fas fa-plus me-2"></i>Add New Cake
@@ -536,7 +539,46 @@
         </div>
       </div>
       <!-- END panelCustom -->
-
+      <!-- TAB 3: LOYALTY GIFTS -->
+      <div id="panelLoyalty" style="display:none;">
+  <div class="pricing-note">
+    <i class="fas fa-info-circle me-1"></i>
+    Edit each gift separately. Use + to add more, – to remove.
+  </div>
+  <div class="row g-3">
+    <!-- Small gifts -->
+    <div class="col-md-6">
+      <div class="pricing-card">
+        <h6>5-Stamp Gifts (Small Reward)</h6>
+        <div id="smallGiftsList" class="mb-2">
+          <!-- dynamic inputs will appear here -->
+        </div>
+        <button class="btn btn-sm btn-outline-primary mb-3" onclick="addGiftInput('small')">
+          <i class="fas fa-plus"></i> Add gift
+        </button>
+        <button class="btn btn-save-pricing" onclick="saveLoyaltyGifts('small')">
+          <i class="fas fa-save me-1"></i> Save Small Gifts
+        </button>
+      </div>
+    </div>
+    <!-- Big gifts -->
+    <div class="col-md-6">
+      <div class="pricing-card">
+        <h6>10-Stamp Gifts (Big Reward)</h6>
+        <div id="bigGiftsList" class="mb-2">
+          <!-- dynamic inputs will appear here -->
+        </div>
+        <button class="btn btn-sm btn-outline-primary mb-3" onclick="addGiftInput('big')">
+          <i class="fas fa-plus"></i> Add gift
+        </button>
+        <button class="btn btn-save-pricing" onclick="saveLoyaltyGifts('big')">
+          <i class="fas fa-save me-1"></i> Save Big Gifts
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+      <!-- END panelLoyalty -->
     </div>
   </div>
 </div>
@@ -585,14 +627,15 @@
 {% block extra_js %}
 <script>
   /* ── TAB SWITCHER ── */
-  function switchTab(tab) {
-    document.getElementById('panelProducts').style.display       = tab === 'products' ? '' : 'none';
-    document.getElementById('panelCustom').style.display         = tab === 'custom'   ? '' : 'none';
-    document.getElementById('tabProducts').classList.toggle('active',      tab === 'products');
-    document.getElementById('tabCustomPricing').classList.toggle('active', tab === 'custom');
-    document.getElementById('addCakeBtn').style.display          = tab === 'products' ? '' : 'none';
-  }
-
+function switchTab(tab) {
+  document.getElementById('panelProducts').style.display    = tab === 'products' ? '' : 'none';
+  document.getElementById('panelCustom').style.display      = tab === 'custom'   ? '' : 'none';
+  document.getElementById('panelLoyalty').style.display     = tab === 'loyalty'  ? '' : 'none';
+  document.getElementById('tabProducts').classList.toggle('active',      tab === 'products');
+  document.getElementById('tabCustomPricing').classList.toggle('active', tab === 'custom');
+  document.getElementById('tabLoyaltyGifts').classList.toggle('active',  tab === 'loyalty');
+  document.getElementById('addCakeBtn').style.display       = tab === 'products' ? '' : 'none';
+}
   /* ── SAVE CUSTOM PRICING ── */
   async function saveCustomPricing(category, fieldMap) {
     const fields = {};
@@ -732,5 +775,123 @@ async function handleCakeFormSubmit(form, type) {
       if (preview) preview.src = URL.createObjectURL(input.files[0]);
     }
   }
+
+  function renderGiftInputs(tier, giftsArray) {
+  const container = document.getElementById(`${tier}GiftsList`);
+  if (!container) return;
+  container.innerHTML = '';
+  giftsArray.forEach((gift, idx) => {
+    const inputGroup = document.createElement('div');
+    inputGroup.className = 'input-group mb-2';
+    inputGroup.innerHTML = `
+      <input type="text" class="form-control" value="${escapeHtml(gift)}" data-index="${idx}">
+      <button class="btn btn-outline-danger" type="button" onclick="removeGiftInput('${tier}', this)">
+        <i class="fas fa-trash-alt"></i>
+      </button>
+    `;
+    container.appendChild(inputGroup);
+  });
+  // If empty, show a placeholder message
+  if (giftsArray.length === 0) {
+    container.innerHTML = '<p class="text-muted small">No gifts yet. Click "+ Add gift" to create one.</p>';
+  }
+}
+
+// Remove a gift input row
+function removeGiftInput(tier, btn) {
+  const inputGroup = btn.closest('.input-group');
+  inputGroup.remove();
+  // after removal, reindex the remaining inputs (optional, but not strictly needed)
+}
+
+// Add a new empty gift input
+function addGiftInput(tier) {
+  const container = document.getElementById(`${tier}GiftsList`);
+  if (!container) return;
+  // Remove the "no gifts" placeholder if present
+  if (container.children.length === 1 && container.children[0].tagName === 'P') {
+    container.innerHTML = '';
+  }
+  const inputGroup = document.createElement('div');
+  inputGroup.className = 'input-group mb-2';
+  inputGroup.innerHTML = `
+    <input type="text" class="form-control" value="" placeholder="New gift">
+    <button class="btn btn-outline-danger" type="button" onclick="removeGiftInput('${tier}', this)">
+      <i class="fas fa-trash-alt"></i>
+    </button>
+  `;
+  container.appendChild(inputGroup);
+}
+
+// Helper to escape HTML (prevent injection)
+function escapeHtml(str) {
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+// Save loyalty gifts – collects all inputs and sends array to backend
+async function saveLoyaltyGifts(tier) {
+  const container = document.getElementById(`${tier}GiftsList`);
+  if (!container) return;
+  
+  // Collect values from text inputs
+  const inputs = container.querySelectorAll('input[type="text"]');
+  const giftList = Array.from(inputs).map(inp => inp.value.trim()).filter(v => v !== '');
+  
+  if (giftList.length === 0) {
+    glassToast({ icon: 'warning', title: `Please add at least one gift for ${tier} tier.`, showConfirmButton: false, timer: 2500 });
+    return;
+  }
+  if (giftList.length > 10) {
+    glassToast({ icon: 'warning', title: 'Maximum 10 gifts allowed.', showConfirmButton: false, timer: 2500 });
+    return;
+  }
+  
+  const btn = event.currentTarget;
+  const originalHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+  
+  try {
+    const res = await fetch('/admin/update-loyalty-gifts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier, gifts: giftList })   // send array directly
+    });
+    const result = await res.json();
+    glassToast({
+      icon: result.success ? 'success' : 'error',
+      title: result.message,
+      showConfirmButton: false, timer: 2500, timerProgressBar: true
+    });
+    if (result.success) {
+      // Optionally re‑render to match saved data (if backend returns it, but not required)
+    }
+  } catch (err) {
+    glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 2500 });
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  }
+}
+
+// Load initial data from server (populate inputs on page load)
+function loadLoyaltyGiftsUI() {
+  // Assuming loyalty_gifts object is available from Jinja: {{ loyalty_gifts | tojson }}
+  const smallGifts = {{ loyalty_gifts.small | tojson }};
+  const bigGifts = {{ loyalty_gifts.big | tojson }};
+  renderGiftInputs('small', smallGifts);
+  renderGiftInputs('big', bigGifts);
+}
+
+// Call this when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // ... your existing DOMContentLoaded code ...
+  loadLoyaltyGiftsUI();   // add this line
+});
 </script>
 {% endblock %}

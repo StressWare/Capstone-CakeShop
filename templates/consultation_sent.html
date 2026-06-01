@@ -1,0 +1,36 @@
+{% extends 'base_customer.html' %}
+{% block title %}Consultation Sent - Mrs. Brave's Cakes{% endblock %}
+
+{% block content %}
+<section style="min-height:70vh; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88); padding: 40px 16px;">
+  <div style="background:rgba(236,9,107,0.15); backdrop-filter:blur(12px);
+    border:1px solid rgba(255,167,205,0.3); border-radius:20px;
+    padding:40px 32px; max-width:480px; width:100%; text-align:center; color:white;">
+
+    <div style="font-size:52px; margin-bottom:16px;">🎂</div>
+    <h1 style="font-size:24px; font-weight:700; margin:0 0 10px;">Consultation Sent!</h1>
+    <p style="font-size:14px; color:rgba(255,255,255,0.75); margin:0 0 24px;">
+      Your cake design has been sent to the owner. Open the chat below to continue the conversation.
+    </p>
+
+    <div style="background:rgba(255,255,255,0.08); border-radius:12px;
+      padding:16px; margin-bottom:28px; font-size:13px; color:rgba(255,255,255,0.6); text-align:left;">
+      <div style="margin-bottom:6px;">✅ Design saved</div>
+      <div style="margin-bottom:6px;">✅ Owner notified</div>
+      <div>💬 Chat is ready — owner will reply shortly</div>
+    </div>
+
+    <a href="{{ url_for('customer_dashboard') }}"
+      style="display:block; padding:13px; background:#db2777; color:white;
+      border-radius:10px; text-decoration:none; font-weight:500; font-size:14px; margin-bottom:10px;">
+      Go to Dashboard
+    </a>
+    <a href="{{ url_for('customize') }}"
+      style="display:block; padding:13px; background:rgba(255,255,255,0.1); color:white;
+      border-radius:10px; text-decoration:none; font-size:13px;">
+      Design Another Cake
+    </a>
+  </div>
+</section>
+{% endblock %}

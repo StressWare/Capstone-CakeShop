@@ -543,18 +543,26 @@ def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_r
         user_ref  = users_ref.document(user_id)
         user_data = user_ref.get().to_dict() or {}
 
-        old_stamps        = int(user_data.get('loyalty_stamps', 0))
-        loyalty_unclaimed = user_data.get('loyalty_unclaimed', None)
-        new_stamps        = old_stamps + earns_stamps
+        old_stamps         = int(user_data.get('loyalty_stamps', 0))
+        loyalty_unclaimed  = user_data.get('loyalty_unclaimed', None)
+        unclaimed_tier     = user_data.get('loyalty_unclaimed_tier', None)
+        new_stamps         = old_stamps + earns_stamps
 
         update = {}
 
         if new_stamps >= 10:
-            update['loyalty_stamps']    = new_stamps - 10  # carry overshoot
-            update['loyalty_unclaimed'] = '15'
-        elif old_stamps < 5 <= new_stamps and not loyalty_unclaimed:
-            update['loyalty_stamps']    = new_stamps
-            update['loyalty_unclaimed'] = '10'
+            # Only set 10-stamp reward if not already unclaimed at tier 10
+            update['loyalty_stamps'] = new_stamps  # don't reset here, reset on claim
+            if not (loyalty_unclaimed and unclaimed_tier == 10):
+                update['loyalty_unclaimed']      = True
+                update['loyalty_unclaimed_tier'] = 10
+
+        elif old_stamps < 5 <= new_stamps:
+            # Crossed 5-stamp threshold
+            update['loyalty_stamps'] = new_stamps
+            if not loyalty_unclaimed:
+                update['loyalty_unclaimed']      = True
+                update['loyalty_unclaimed_tier'] = 5
         else:
             update['loyalty_stamps'] = new_stamps
 

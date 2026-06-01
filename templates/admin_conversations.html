@@ -356,11 +356,11 @@
     background-size: 200% 100%;
     animation: sk-shimmer 1.4s infinite;
     border-radius: 4px;
-}
-@keyframes sk-shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+    }
+    @keyframes sk-shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
 </style>
 {% endblock %}
 
@@ -537,6 +537,16 @@
                     const escalatedBadge = convo.escalated
                         ? `<span class="escalated-badge mt-1">⚠️ Escalated</span>`
                         : '';
+                    const consultationBadge = convo.is_consultation && convo.status !== 'converted'
+                        ? `<span class="escalated-badge mt-1" style="background:#7c3f1e;">📋 Consultation</span>`
+                        : '';
+                    const convertBtn = convo.is_consultation && convo.status !== 'converted'
+                        ? `<button class="convert-btn" data-userid="${convo.user_id}" data-convoid="${convoId}"
+                            style="margin-top:6px; background:#db2777; color:white; border:none; border-radius:6px;
+                            padding:4px 10px; font-size:11px; cursor:pointer; width:100%;">
+                            ✅ Convert to Order
+                        </button>`
+                        : '';
                     const lastMsg = convo.last_message || '';
 
                     item.innerHTML = `
@@ -548,6 +558,8 @@
                             <small class="text-muted d-block text-truncate">${convo.email}</small>
                             <small class="text-muted d-block text-truncate last-msg">${lastMsg}</small>
                             ${escalatedBadge}
+                            ${consultationBadge}
+                            ${convertBtn}
                         </div>
                     `;
 
@@ -570,7 +582,19 @@
                             }
                         });
                     };
-
+                    const cb = item.querySelector('.convert-btn');
+                    if (cb) {
+                        cb.onclick = async (e) => {
+                            e.stopPropagation();
+                            const fd = new FormData();
+                            fd.append('csrf_token', '{{ csrf_token() }}');
+                            fd.append('user_id', cb.dataset.userid);
+                            fd.append('conversation_id', cb.dataset.convoid);
+                            const res = await fetch('/admin/consultation-to-order', { method: 'POST', body: fd });
+                            if (res.redirected) window.location.href = res.url;
+                        };
+                    }
+                    
                     if (activeConvoId === convoId) item.classList.add('active');
 
                     if (currentSearch) {

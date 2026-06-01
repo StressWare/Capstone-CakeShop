@@ -419,8 +419,23 @@
         <div style="font-size:0.78rem; color:#aaa; padding: 4px 0 8px;">{{ order.item }}</div>
         {% endif %}
       {% endif %}
-
-      <!-- Subtotal + Fees + Voucher Discount + Total -->
+        {% if order.claimed_vouchers %}
+      <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #f5c2dc;">
+        <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em;
+                    color:#aaa; font-weight:600; margin-bottom:8px;">
+          Gift Vouchers
+        </div>
+        {% for cv in order.claimed_vouchers %}
+        <div class="receipt-item-row">
+          <span class="receipt-item-name"> Free {{ cv.gift_name }}</span>
+          <span class="badge bg-success" style="font-size:0.75rem; align-self:center;">
+            Include in order
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <!-- Subtotal + Fees + Total -->
       <div class="receipt-subtotal-row" style="margin-top: 12px; color: #888;">
         <span>Subtotal</span>
         <span>₱{{ "%.2f"|format(subtotal_before) }}</span>
@@ -439,17 +454,6 @@
         <span>+₱{{ "%.2f"|format(delivery_fee) }}</span>
       </div>
       {% endif %}
-
-      {% if discount > 0 %}
-      <div class="receipt-discount-row">
-        <span>
-          <i class="fas fa-tag me-1"></i>
-          Voucher Discount ({{ voucher_pct }}%)
-        </span>
-        <span>−₱{{ "%.2f"|format(discount) }}</span>
-      </div>
-      {% endif %}
-
       <div class="receipt-total-row">
         <span>Total</span>
         <span class="receipt-total-amount">₱{{ "%.2f"|format(order.amount) }}</span>

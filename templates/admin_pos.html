@@ -6,19 +6,21 @@
   <title>POS - Ms. Brave Cake Shop</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="icon" type="image/png" href="../static/img/logo.png">    
+  <link rel="icon" type="image/png" href="../static/img/logo.png">
   <link rel="manifest" href="/manifest-pos.json">
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker-pos.js',  { scope: '/pos' })
+      navigator.serviceWorker.register('/service-worker-pos.js', { scope: '/pos' })
         .then(reg => console.log('POS SW registered', reg))
         .catch(err => console.error('POS SW error', err));
     }
   </script>
+
   <style>
     body { background: #f5f5f5; }
 
+    /* ── LAYOUT ── */
     .pos-wrapper {
       display: grid;
       grid-template-columns: 1fr 380px;
@@ -42,6 +44,30 @@
       border-bottom: 2px solid #f0e8f0;
     }
 
+    /* ── CATEGORY FILTER ── */
+    .category-filter {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .cat-pill {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1.5px solid #e8d8f0;
+      background: #fff;
+      color: #888;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+    }
+    .cat-pill:hover  { border-color: #d63384; color: #d63384; background: #fdf0f5; }
+    .cat-pill.active { border-color: #d63384; background: #d63384; color: #fff; }
+
+    /* ── CAKE GRID ── */
     .cake-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -56,8 +82,8 @@
     }
     .cake-btn:hover { border-color: #d63384; background: #fdf0f5; transform: translateY(-2px); }
     .cake-btn.sold-out { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+    .cake-btn.hidden   { display: none; }
 
-    /* quantity badge */
     .cake-qty-badge {
       position: absolute; top: -8px; right: -8px;
       background: #d63384; color: #fff;
@@ -66,188 +92,148 @@
       display: none; align-items: center; justify-content: center;
     }
 
-    .cake-img   { width:80px; height:80px; border-radius:8px; object-fit:cover; margin-bottom:8px; }
-    .cake-emoji { font-size:2.5rem; margin-bottom:8px; }
-    .cake-name  { font-size:0.82rem; font-weight:600; color:#333; margin-bottom:4px; }
-    .cake-price { font-size:0.88rem; font-weight:700; color:#d63384; }
-    .cake-stock { font-size:0.72rem; color:#aaa; }
+    .cake-img   { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; margin-bottom: 8px; }
+    .cake-emoji { font-size: 2.5rem; margin-bottom: 8px; }
+    .cake-name  { font-size: 0.82rem; font-weight: 600; color: #333; margin-bottom: 4px; }
+    .cake-price { font-size: 0.88rem; font-weight: 700; color: #d63384; }
+    .cake-stock { font-size: 0.72rem; color: #aaa; }
 
+    /* ── ORDER PANEL ── */
     .order-panel {
       background: #fff; border-radius: 12px; padding: 16px;
-      display: flex; flex-direction: column; gap: 12px;
+      display: flex; flex-direction: column; gap: 7px;
+      overflow-y: auto;
     }
 
-    .order-items { flex: 1; overflow-y: auto; min-height: 200px; }
+    .order-items { flex: 1; overflow-y: auto; min-height: 120px; }
 
     .order-item-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       padding: 8px 0; border-bottom: 1px solid #f5f5f5;
       font-size: 0.88rem;
     }
-    .order-item-name  { font-weight:500; color:#333; font-size:0.85rem; }
-    .order-item-each  { font-size:0.72rem; color:#aaa; }
-    .order-item-price { color:#d63384; font-weight:700; }
-    .order-item-qty   { font-size:0.8rem; color:#888; }
+    .order-item-name  { font-weight: 500; color: #333; font-size: 0.85rem; }
+    .order-item-each  { font-size: 0.72rem; color: #aaa; }
+    .order-item-price { color: #d63384; font-weight: 700; }
+    .order-item-qty   { font-size: 0.8rem; color: #888; }
 
     .btn-remove-item {
-      background:none; border:none; color:#ccc; cursor:pointer;
-      font-size:0.85rem; padding:2px 6px; border-radius:4px;
+      background: none; border: none; color: #ccc; cursor: pointer;
+      font-size: 0.85rem; padding: 2px 6px; border-radius: 4px;
     }
-    .btn-remove-item:hover { color:#e53935; background:#fdecea; }
+    .btn-remove-item:hover { color: #e53935; background: #fdecea; }
 
-    .empty-order {
-      text-align:center; color:#ccc; padding:40px 0; font-size:0.88rem;
+    .empty-order { text-align: center; color: #ccc; padding: 30px 0; font-size: 0.88rem; }
+
+    /* ── TOTALS ── */
+    .subtotal-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; color: #888;
+      padding: 2px 0;
     }
-
+    .discount-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; color: #198754; font-weight: 600;
+      padding: 2px 0;
+    }
     .total-row {
-      display:flex; justify-content:space-between; align-items:center;
-      padding:10px 0; border-top:2px solid #f0e8f0;
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding: 5px 0; border-top: 2px solid #f0e8f0; margin-top: 2px;
     }
-    .total-label  { font-weight:700; font-size:1rem; }
-    .total-amount { font-weight:700; font-size:1.3rem; color:#d63384; }
+    .total-label  { font-weight: 700; font-size: 1rem; }
+    .total-amount { font-weight: 700; font-size: 1.3rem; color: #d63384; }
+    .total-original { font-size: 0.75rem; color: #bbb; text-decoration: line-through; text-align: right; }
 
-    .payment-toggle { display:flex; gap:8px; }
-    .pay-btn {
-      flex:1; padding:10px; border:2px solid #eee; border-radius:8px;
-      background:#fff; cursor:pointer; font-size:0.85rem; font-weight:600;
-      color:#888; transition:all 0.2s; text-align:center;
+    /* ── SECTION LABELS ── */
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; color: #aaa;
+      margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em;
     }
-    .pay-btn.active { border-color:#d63384; background:#fdf0f5; color:#d63384; }
 
-    .cash-section  { display:block; }
-    .gcash-section { display:none; }
+    /* ── TOGGLE GROUPS (payment / order-type / discount) ── */
+    .toggle-group { display: flex; gap: 6px; }
+
+    .tog-btn {
+      flex: 1; padding: 6px 4px; border: 1.5px solid #eee;
+      border-radius: 7px; background: #fff; cursor: pointer;
+      font-size: 0.75rem; font-weight: 600; color: #bbb;
+      transition: all 0.18s; text-align: center;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      white-space: nowrap;
+    }
+    .tog-btn i { font-size: 0.78rem; }
+    .tog-btn:hover { border-color: #d63384; color: #d63384; background: #fdf0f5; }
+
+    /* pink active (payment, order type default) */
+    .tog-btn.active {
+      border-color: #d63384; background: #fdf0f5; color: #d63384;
+    }
+    /* green active (discount none / confirmed) */
+    .tog-btn.active-green {
+      border-color: #198754; background: #f0f9f0; color: #198754;
+    }
+
+    /* ── CASH SECTION ── */
+    .cash-section  { display: block; }
+    .gcash-section { display: none; }
 
     .change-display {
-      background:#f0f9f0; border:1px solid #c3e6cb;
-      border-radius:8px; padding:10px 14px; font-size:0.88rem;
+      background: #f0f9f0; border: 1px solid #c3e6cb;
+      border-radius: 8px; padding: 6px 12px; font-size: 0.82rem;
     }
-    .change-amount { font-size:1.1rem; font-weight:700; color:#198754; }
+    .change-amount { font-size: 1rem; font-weight: 700; color: #198754; }
 
+    /* ── BUTTONS ── */
     .btn-place {
-      background:#d63384; color:#fff; border:none; border-radius:10px;
-      padding:14px; font-size:0.95rem; font-weight:700;
-      cursor:pointer; width:100%; transition:opacity 0.2s;
+      background: #d63384; color: #fff; border: none; border-radius: 10px;
+      padding: 14px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; width: 100%; transition: opacity 0.2s;
     }
-    .btn-place:hover { opacity:0.88; }
-    .btn-place:disabled { opacity:0.35; cursor:not-allowed; }
+    .btn-place:hover    { opacity: 0.88; }
+    .btn-place:disabled { opacity: 0.35; cursor: not-allowed; }
 
     .btn-clear {
-      background:#fff; color:#888; border:1px solid #eee;
-      border-radius:10px; padding:10px; font-size:0.85rem;
-      cursor:pointer; width:100%; transition:all 0.2s;
+      background: #fff; color: #888; border: 1px solid #eee;
+      border-radius: 10px; padding: 10px; font-size: 0.85rem;
+      cursor: pointer; width: 100%; transition: all 0.2s;
     }
-    .btn-clear:hover { background:#fdecea; color:#e53935; border-color:#fdecea; }
+    .btn-clear:hover { background: #fdecea; color: #e53935; border-color: #fdecea; }
 
+    /* ── OFFLINE BANNER ── */
+    #offline-banner {
+      display: none; background: #fff3cd; color: #856404;
+      padding: 10px; text-align: center; font-weight: 600;
+    }
 
-    /* =========================
-   RESPONSIVE DESIGN
-   ========================= */
-
-    /* TABLET (iPad / medium screens) */
+    /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
-      .pos-wrapper {
-        grid-template-columns: 1fr;
-        height: auto;
-      }
-
-      .cakes-panel,
-      .order-panel {
-        height: auto;
-        max-height: none;
-      }
-
-      .cake-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
+      .pos-wrapper { grid-template-columns: 1fr; height: auto; }
+      .cake-grid   { grid-template-columns: repeat(3, 1fr); }
     }
 
-    /* MOBILE */
     @media (max-width: 768px) {
-
-      body {
-        overflow-x: hidden;
-      }
-
-      .pos-wrapper {
-        grid-template-columns: 1fr;
-        padding: 10px;
-        height: auto;
-      }
-
-      /* Panels stacked cleanly */
-      .cakes-panel,
-      .order-panel {
-        width: 100%;
-        height: auto;
-        border-radius: 10px;
-      }
-
-      /* Reduce cake card density */
-      .cake-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-      }
-
-      .cake-btn {
-        padding: 10px;
-      }
-
-      .cake-img {
-        width: 65px;
-        height: 65px;
-      }
-
-      .cake-emoji {
-        font-size: 2rem;
-      }
-
-      .cake-name {
-        font-size: 0.75rem;
-      }
-
-      .cake-price {
-        font-size: 0.8rem;
-      }
-
-      /* Order panel spacing */
-      .order-panel {
-        margin-top: 12px;
-      }
-
-      .order-items {
-        max-height: 300px;
-      }
-
-      /* Make buttons easier to tap */
-      .btn-place,
-      .btn-clear {
-        padding: 12px;
-        font-size: 0.9rem;
-      }
-
-      .pay-btn {
-        font-size: 0.8rem;
-        padding: 8px;
-      }
+      body { overflow-x: hidden; }
+      .pos-wrapper { grid-template-columns: 1fr; padding: 10px; height: auto; }
+      .cakes-panel, .order-panel { width: 100%; height: auto; border-radius: 10px; }
+      .cake-grid   { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .cake-btn    { padding: 10px; }
+      .cake-img    { width: 65px; height: 65px; }
+      .cake-emoji  { font-size: 2rem; }
+      .cake-name   { font-size: 0.75rem; }
+      .cake-price  { font-size: 0.8rem; }
+      .order-panel { margin-top: 12px; }
+      .order-items { max-height: 260px; }
+      .btn-place, .btn-clear { padding: 12px; font-size: 0.9rem; }
+      .tog-btn { font-size: 0.72rem; padding: 7px 4px; }
     }
 
-    /* SMALL MOBILE */
     @media (max-width: 480px) {
-
-      .cake-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .panel-title {
-        font-size: 0.9rem;
-      }
-
-      .total-amount {
-        font-size: 1.1rem;
-      }
+      .cake-grid    { grid-template-columns: repeat(2, 1fr); }
+      .panel-title  { font-size: 0.9rem; }
+      .total-amount { font-size: 1.1rem; }
+      .category-filter { gap: 6px; }
+      .cat-pill { font-size: 0.72rem; padding: 4px 10px; }
     }
-
   </style>
 </head>
 <body>
@@ -265,15 +251,16 @@
   {% endif %}
 {% endwith %}
 
-<div class="pos-wrapper">
-<div id="offline-banner" style="display:none; background:#fff3cd; 
-color:#856404; padding:10px; text-align:center; font-weight:600;">
-    ⚠️ You're offline — transactions will not go through until reconnected.
+<div id="offline-banner">
+  ⚠️ You're offline — transactions will not go through until reconnected.
 </div>
+
+<div class="pos-wrapper">
+
   <!-- ===== LEFT: CAKES ===== -->
   <div class="cakes-panel">
     <div class="panel-title">
-      <i class="fas fa-birthday-cake me-2" style="color:#d63384;"></i>
+      
       Available Cakes
       <div class="float-end d-flex gap-2">
         <a href="/pos/history" class="btn btn-sm btn-outline-secondary">
@@ -285,10 +272,25 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
       </div>
     </div>
 
+    <!-- CATEGORY FILTER PILLS -->
+    <div class="category-filter" id="categoryFilter">
+      <div class="cat-pill active" onclick="filterCategory('all')" data-cat="all">All</div>
+      {% set categories = cakes | map(attribute='category') | select | unique | list %}
+      {% for cat in categories %}
+        {% if cat %}
+          <div class="cat-pill" onclick="filterCategory('{{ cat | lower }}')" data-cat="{{ cat | lower }}">
+            {{ cat }}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- CAKE GRID -->
     <div class="cake-grid">
       {% for cake in cakes %}
       <div class="cake-btn {% if cake.quantity <= 0 %}sold-out{% endif %}"
            id="cakeBtn_{{ cake.id }}"
+           data-category="{{ cake.category | lower if cake.category else 'uncategorized' }}"
            onclick="addItem('{{ cake.id }}', '{{ cake.name }}', {{ cake.price }}, {{ cake.quantity }})">
         <span class="cake-qty-badge" id="badge_{{ cake.id }}">0</span>
         {% if cake.image %}
@@ -309,34 +311,83 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
   <!-- ===== RIGHT: ORDER ===== -->
   <div class="order-panel">
     <div class="panel-title">
-      <i class="fas fa-receipt me-2" style="color:#d63384;"></i>
       Current Order
     </div>
 
+    <!-- ORDER ITEMS -->
     <div class="order-items" id="orderItems">
       <div class="empty-order">
         <i class="fas fa-shopping-basket fa-2x mb-2"></i><br>
-        No items yet<br>Click a cake to add
+        No items yet<br>Click a product to add
+      </div>
+    </div>
+
+    <!-- TOTALS BLOCK -->
+    <div id="totalsBlock" style="display:none;">
+      <div class="subtotal-row">
+        <span>Subtotal</span>
+        <span>₱<span id="subtotalAmount">0.00</span></span>
+      </div>
+      <div class="discount-row" id="discountRow" style="display:none;">
+        <span><i class="fas fa-tag me-1"></i><span id="discountLabel">Discount (20%)</span></span>
+        <span>− ₱<span id="discountAmount">0.00</span></span>
       </div>
     </div>
 
     <div class="total-row">
       <div class="total-label">Total</div>
-      <div class="total-amount">₱<span id="totalAmount">0.00</span></div>
+      <div style="text-align:right;">
+        <div class="total-original" id="totalOriginal" style="display:none;">₱<span id="totalOriginalAmt">0.00</span></div>
+        <div class="total-amount">₱<span id="totalAmount">0.00</span></div>
+      </div>
     </div>
 
+    <!-- ORDER TYPE: DINE IN / TAKE OUT -->
     <div>
-      <div class="panel-title" style="font-size:0.85rem; margin-bottom:8px;">Payment Method</div>
-      <div class="payment-toggle">
-        <div class="pay-btn active" id="btnCash" onclick="selectPayment('Cash')">
-          <i class="fas fa-money-bill me-1"></i>Cash
+      <div class="section-label">Order Type</div>
+      <div class="toggle-group">
+        <div class="tog-btn active" id="btnDineIn" onclick="selectOrderType('Dine In')">
+          <i class="fas fa-utensils"></i>Dine In
         </div>
-        <div class="pay-btn" id="btnGcash" onclick="selectPayment('GCash')">
-          <i class="fas fa-mobile-alt me-1"></i>GCash
+        <div class="tog-btn" id="btnTakeOut" onclick="selectOrderType('Take Out')">
+          <i class="fas fa-shopping-bag"></i>Take Out
         </div>
       </div>
     </div>
 
+    <!-- PAYMENT METHOD -->
+    <div>
+      <div class="section-label">Payment Method</div>
+      <div class="toggle-group">
+        <div class="tog-btn active" id="btnCash" onclick="selectPayment('Cash')">
+          <i class="fas fa-money-bill"></i>Cash
+        </div>
+        <div class="tog-btn" id="btnGcash" onclick="selectPayment('GCash')">
+          <i class="fas fa-mobile-alt"></i>GCash
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCOUNT: NONE / SENIOR / PWD -->
+    <div>
+      <div class="section-label">Discount</div>
+      <div class="toggle-group">
+        <div class="tog-btn active-green" id="btnDiscNone" onclick="selectDiscount('none')">
+          <i class="fas fa-times-circle"></i>None
+        </div>
+        <div class="tog-btn" id="btnDiscSenior" onclick="selectDiscount('senior')">
+          <i class="fas fa-user-clock"></i>Senior
+        </div>
+        <div class="tog-btn" id="btnDiscPwd" onclick="selectDiscount('pwd')">
+          <i class="fas fa-wheelchair"></i>PWD
+        </div>
+      </div>
+      <div style="font-size:0.68rem; color:#a9a9a9; margin-top:3px;">
+        Senior &amp; PWD both apply 20% off the total
+      </div>
+    </div>
+
+    <!-- CASH INPUT -->
     <div class="cash-section" id="cashSection">
       <label style="font-size:0.82rem; font-weight:600; color:#555;">Cash Received</label>
       <input type="number" id="cashReceived" class="form-control form-control-sm mt-1"
@@ -347,6 +398,7 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
       </div>
     </div>
 
+    <!-- GCASH SECTION -->
     <div class="gcash-section" id="gcashSection">
       <div class="alert alert-info py-2 text-center" style="font-size:0.85rem;">
         <i class="fas fa-mobile-alt me-2"></i>
@@ -357,12 +409,16 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
       </button>
     </div>
 
+    <!-- HIDDEN FORM -->
     <form method="POST" action="/pos/order" id="posForm">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <input type="hidden" name="items"          id="itemsInput"   value="[]">
-      <input type="hidden" name="amount"         id="amountInput"  value="0">
-      <input type="hidden" name="payment_method" id="paymentInput" value="Cash">
-      <input type="hidden" name="cash_received"  id="cashInput"    value="0">
+      <input type="hidden" name="csrf_token"     value="{{ csrf_token() }}">
+      <input type="hidden" name="items"           id="itemsInput"      value="[]">
+      <input type="hidden" name="amount"          id="amountInput"     value="0">
+      <input type="hidden" name="payment_method"  id="paymentInput"    value="Cash">
+      <input type="hidden" name="cash_received"   id="cashInput"       value="0">
+      <input type="hidden" name="order_type"      id="orderTypeInput"  value="Dine In">
+      <input type="hidden" name="discount_type"   id="discountInput"   value="none">
+      <input type="hidden" name="discount_amount" id="discountAmtInput" value="0">
     </form>
 
     <button type="button" class="btn-place" id="placeBtn" disabled onclick="placeOrder()">
@@ -376,15 +432,30 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // orderItems: [{cake_id, cake_name, price, quantity, subtotal, max_qty}]
   var orderItems     = [];
   var currentPayment = 'Cash';
+  var currentOrderType = 'Dine In';
+  var currentDiscount = 'none';   // 'none' | 'senior' | 'pwd'
   var gcashConfirmed = false;
+  var DISCOUNT_RATE  = 0.20;
 
-  // ── ADD ITEM (click cake → increase qty) ──
+  // ── CATEGORY FILTER ──
+  function filterCategory(cat) {
+    document.querySelectorAll('.cat-pill').forEach(function(p) {
+      p.classList.toggle('active', p.dataset.cat === cat);
+    });
+    document.querySelectorAll('.cake-btn').forEach(function(btn) {
+      if (cat === 'all') {
+        btn.classList.remove('hidden');
+      } else {
+        btn.classList.toggle('hidden', btn.dataset.category !== cat);
+      }
+    });
+  }
+
+  // ── ADD ITEM ──
   function addItem(cakeId, cakeName, price, maxQty) {
-    var existing = orderItems.find(i => i.cake_id === cakeId);
-
+    var existing = orderItems.find(function(i) { return i.cake_id === cakeId; });
     if (existing) {
       if (existing.quantity >= existing.max_qty) {
         alert('No more stock available for ' + cakeName + '!');
@@ -402,79 +473,106 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
         max_qty:   maxQty
       });
     }
-
     updateBadge(cakeId);
     renderOrder();
   }
 
-  // ── REMOVE ONE (click × on order row) ──
+  // ── REMOVE ONE ──
   function removeOne(cakeId) {
-    var item = orderItems.find(i => i.cake_id === cakeId);
+    var item = orderItems.find(function(i) { return i.cake_id === cakeId; });
     if (!item) return;
-
     item.quantity -= 1;
-
     if (item.quantity <= 0) {
-      orderItems = orderItems.filter(i => i.cake_id !== cakeId);
+      orderItems = orderItems.filter(function(i) { return i.cake_id !== cakeId; });
     } else {
       item.subtotal = item.quantity * item.price;
     }
-
     updateBadge(cakeId);
     renderOrder();
   }
 
-  // ── UPDATE BADGE ON CAKE BUTTON ──
+  // ── BADGE ──
   function updateBadge(cakeId) {
     var badge = document.getElementById('badge_' + cakeId);
     if (!badge) return;
-    var item = orderItems.find(i => i.cake_id === cakeId);
+    var item = orderItems.find(function(i) { return i.cake_id === cakeId; });
     if (item && item.quantity > 0) {
-      badge.textContent    = item.quantity;
-      badge.style.display  = 'flex';
+      badge.textContent   = item.quantity;
+      badge.style.display = 'flex';
     } else {
-      badge.style.display  = 'none';
+      badge.style.display = 'none';
     }
   }
 
-  // ── RENDER ORDER LIST ──
+  // ── RENDER ORDER ──
   function renderOrder() {
     var container = document.getElementById('orderItems');
 
     if (orderItems.length === 0) {
       container.innerHTML = '<div class="empty-order"><i class="fas fa-shopping-basket fa-2x mb-2"></i><br>No items yet<br>Click a cake to add</div>';
-      document.getElementById('totalAmount').textContent = '0.00';
-      document.getElementById('placeBtn').disabled       = true;
+      document.getElementById('totalAmount').textContent     = '0.00';
+      document.getElementById('placeBtn').disabled           = true;
       document.getElementById('changeDisplay').style.display = 'none';
+      document.getElementById('totalsBlock').style.display   = 'none';
+      document.getElementById('discountRow').style.display   = 'none';
+      document.getElementById('totalOriginal').style.display = 'none';
+      document.getElementById('amountInput').value           = '0';
+      document.getElementById('discountAmtInput').value      = '0';
       return;
     }
 
-    var total = 0;
-    var html  = '';
+    var subtotal = 0;
+    var html = '';
 
     orderItems.forEach(function(item) {
-      total += item.subtotal;
-      html += `
-        <div class="order-item-row">
-          <div>
-            <div class="order-item-name">${item.cake_name}</div>
-            <div class="order-item-each">₱${parseFloat(item.price).toFixed(2)} each</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span class="order-item-qty">x${item.quantity}</span>
-            <div class="order-item-price">₱${item.subtotal.toFixed(2)}</div>
-            <button class="btn-remove-item" onclick="removeOne('${item.cake_id}')" title="Remove one">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
-      `;
+      subtotal += item.subtotal;
+      html += '<div class="order-item-row">'
+        + '<div>'
+        +   '<div class="order-item-name">' + item.cake_name + '</div>'
+        +   '<div class="order-item-each">₱' + parseFloat(item.price).toFixed(2) + ' each</div>'
+        + '</div>'
+        + '<div style="display:flex;align-items:center;gap:10px;">'
+        +   '<span class="order-item-qty">x' + item.quantity + '</span>'
+        +   '<div class="order-item-price">₱' + item.subtotal.toFixed(2) + '</div>'
+        +   '<button class="btn-remove-item" onclick="removeOne(\'' + item.cake_id + '\')" title="Remove one">'
+        +     '<i class="fas fa-times"></i>'
+        +   '</button>'
+        + '</div>'
+        + '</div>';
     });
 
     container.innerHTML = html;
-    document.getElementById('totalAmount').textContent = total.toFixed(2);
-    document.getElementById('amountInput').value       = total.toFixed(2);
-    document.getElementById('itemsInput').value        = JSON.stringify(orderItems);
+
+    // discount math
+    var discountAmt = 0;
+    var finalTotal  = subtotal;
+
+    if (currentDiscount !== 'none') {
+      discountAmt = subtotal * DISCOUNT_RATE;
+      finalTotal  = subtotal - discountAmt;
+    }
+
+    // update subtotal / discount rows
+    document.getElementById('totalsBlock').style.display       = 'flex';
+    document.getElementById('totalsBlock').style.flexDirection = 'column';
+    document.getElementById('subtotalAmount').textContent      = subtotal.toFixed(2);
+
+    if (currentDiscount !== 'none') {
+      var label = currentDiscount === 'senior' ? 'Senior discount (20%)' : 'PWD discount (20%)';
+      document.getElementById('discountLabel').textContent      = label;
+      document.getElementById('discountAmount').textContent     = discountAmt.toFixed(2);
+      document.getElementById('discountRow').style.display      = 'flex';
+      document.getElementById('totalOriginal').style.display    = 'block';
+      document.getElementById('totalOriginalAmt').textContent   = subtotal.toFixed(2);
+    } else {
+      document.getElementById('discountRow').style.display      = 'none';
+      document.getElementById('totalOriginal').style.display    = 'none';
+    }
+
+    document.getElementById('totalAmount').textContent    = finalTotal.toFixed(2);
+    document.getElementById('amountInput').value          = finalTotal.toFixed(2);
+    document.getElementById('itemsInput').value           = JSON.stringify(orderItems);
+    document.getElementById('discountAmtInput').value     = discountAmt.toFixed(2);
 
     updatePlaceBtn();
     calculateChange();
@@ -490,17 +588,25 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
     var changeAmount  = document.getElementById('changeAmount');
 
     if (received > 0) {
-      changeDisplay.style.display    = 'block';
-      changeAmount.textContent       = change >= 0 ? change.toFixed(2) : '0.00';
-      changeDisplay.style.background = change >= 0 ? '#f0f9f0' : '#fdecea';
-      changeDisplay.style.borderColor= change >= 0 ? '#c3e6cb' : '#f5c6cb';
-      changeAmount.style.color       = change >= 0 ? '#198754' : '#dc3545';
+      changeDisplay.style.display     = 'block';
+      changeAmount.textContent        = change >= 0 ? change.toFixed(2) : '0.00';
+      changeDisplay.style.background  = change >= 0 ? '#f0f9f0' : '#fdecea';
+      changeDisplay.style.borderColor = change >= 0 ? '#c3e6cb' : '#f5c6cb';
+      changeAmount.style.color        = change >= 0 ? '#198754' : '#dc3545';
     } else {
       changeDisplay.style.display = 'none';
     }
 
     document.getElementById('cashInput').value = received;
     updatePlaceBtn();
+  }
+
+  // ── SELECT ORDER TYPE ──
+  function selectOrderType(type) {
+    currentOrderType = type;
+    document.getElementById('btnDineIn').classList.toggle('active', type === 'Dine In');
+    document.getElementById('btnTakeOut').classList.toggle('active', type === 'Take Out');
+    document.getElementById('orderTypeInput').value = type;
   }
 
   // ── SELECT PAYMENT ──
@@ -513,6 +619,27 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
     document.getElementById('gcashSection').style.display = method === 'GCash' ? 'block' : 'none';
     document.getElementById('paymentInput').value = method;
     updatePlaceBtn();
+  }
+
+  // ── SELECT DISCOUNT ──
+  function selectDiscount(type) {
+    currentDiscount = type;
+
+    // reset all three
+    document.getElementById('btnDiscNone').className   = 'tog-btn';
+    document.getElementById('btnDiscSenior').className = 'tog-btn';
+    document.getElementById('btnDiscPwd').className    = 'tog-btn';
+
+    if (type === 'none') {
+      document.getElementById('btnDiscNone').classList.add('active-green');
+    } else if (type === 'senior') {
+      document.getElementById('btnDiscSenior').classList.add('active');
+    } else {
+      document.getElementById('btnDiscPwd').classList.add('active');
+    }
+
+    document.getElementById('discountInput').value = type;
+    renderOrder();
   }
 
   // ── CONFIRM GCASH ──
@@ -543,7 +670,7 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
   function clearOrder() {
     if (orderItems.length === 0) return;
     if (confirm('Clear all items?')) {
-      orderItems.forEach(i => {
+      orderItems.forEach(function(i) {
         var badge = document.getElementById('badge_' + i.cake_id);
         if (badge) badge.style.display = 'none';
       });
@@ -554,12 +681,12 @@ color:#856404; padding:10px; text-align:center; font-weight:600;">
     }
   }
 
-
-  window.addEventListener('offline', () => {
+  // ── OFFLINE DETECTION ──
+  window.addEventListener('offline', function() {
     document.getElementById('offline-banner').style.display = 'block';
   });
-  window.addEventListener('online', () => {
-      document.getElementById('offline-banner').style.display = 'none';
+  window.addEventListener('online', function() {
+    document.getElementById('offline-banner').style.display = 'none';
   });
 </script>
 

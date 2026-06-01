@@ -2,7 +2,7 @@
 import threading
 import time
 import firebase
-from db import cakes, reviews, orders, custom_cake_price
+from db import cakes, reviews, orders, custom_cake_price, loyalty_gifts
 
 _cache = {}
 _lock = threading.Lock()
@@ -59,6 +59,29 @@ def get_custom_prices():
             "addons":  custom_cake_price.document("addons").get().to_dict()   or {},
         }
         set_cache("custom_prices", result)
+        return result
+
+
+def get_loyalty_gifts():
+    cached = get_cache("loyalty_gifts")
+    if cached:
+        return cached
+    with _lock:
+        cached = get_cache("loyalty_gifts")
+        if cached:
+            return cached
+        print("🔥 FIRESTORE READ — loyalty gifts")
+        
+        # Get the first document in the collection (there will be only one)
+        docs = list(loyalty_gifts.limit(1).stream())
+        if docs:
+            result = docs[0].to_dict()
+        else:
+            # Create the document with default data
+            result = {"small": ["Cupcake", "Coffee", "Pastry"], "big": ["Bento Cake", "Slice Cake", "Drinks Bundle"]}
+            loyalty_gifts.add(result)   # creates collection + document
+        
+        set_cache("loyalty_gifts", result)
         return result
 
 def get_all_reviews():

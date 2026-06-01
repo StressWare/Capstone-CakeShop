@@ -417,11 +417,11 @@
           <!-- COL 2 -->
           <div class="grid-col">
             <div class="field">
-              <label for="design">Icing Type</label>
+              <label for="design">Cake Type</label>
               <select id="design" name="design">
                 <option value="0|0">None</option>
                 <option value="fondant|{{ custom_prices.icing.fondant }}">Fondant (₱{{ custom_prices.icing.fondant | int }})</option>
-                <option value="buttercream|{{ custom_prices.icing.buttercream }}">Buttercream (₱{{ custom_prices.icing.buttercream | int }})</option>
+                <option value="buttercream|{{ custom_prices.icing.buttercream }}">Soft Icing (₱{{ custom_prices.icing.buttercream | int }})</option>
               </select>
             </div>
             <div class="field">
@@ -527,6 +527,26 @@
         <input type="hidden" name="order_item" id="orderItem">
         <input type="hidden" name="amount" id="orderAmount">
       </form>
+      <form method="POST" action="/consultation" enctype="multipart/form-data" id="consultForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="cakeType" id="c_cakeType">
+  <input type="hidden" name="cakeShape" id="c_cakeShape">
+  <input type="hidden" name="cakeSize" id="c_cakeSize">
+  <input type="hidden" name="design" id="c_design">
+  <input type="hidden" name="layers" id="c_layers">
+  <input type="hidden" name="toppers" id="c_toppers">
+  <input type="hidden" name="candles" id="c_candles">
+  <input type="hidden" name="filling" id="c_filling">
+  <input type="hidden" name="cupcake" id="c_cupcake">
+  <input type="hidden" name="ediblepaper" id="c_ediblepaper">
+  <input type="hidden" name="fondanttoppers" id="c_fondanttoppers">
+  <input type="hidden" name="sprinkles" id="c_sprinkles">
+  <input type="hidden" name="drip" id="c_drip">
+  <input type="hidden" name="flowers" id="c_flowers">
+  <input type="hidden" name="notes" id="c_notes">
+  <input type="hidden" name="order_item" id="c_orderItem">
+  <input type="hidden" name="amount" id="c_amount">
+</form>
     </div>
 
     <!-- ===== 3D PREVIEW + TOTAL ===== -->
@@ -564,10 +584,18 @@
           </div>
         </div>
         {% if customer %}
+        <div style="display:flex; gap:10px; margin-top:14px;">
         <button type="submit" form="orderForm" class="btn-checkout locked"
-                id="proceedBtn" onclick="updateOrderData()">
-          Proceed to Checkout &rarr;
+                id="proceedBtn" onclick="updateOrderData()"
+                style="flex:1; margin-top:0;">
+          Proceed to Checkout →
         </button>
+        <button type="button" class="btn-checkout locked"
+                id="consultBtn" onclick="submitConsultation()"
+                style="flex:1; margin-top:0; background:#7c3f1e;">
+          💬 Consult First
+        </button>
+      </div>
         {% else %}
           <a href="/authentication" class="btn-checkout">Login to Order</a>
         {% endif %}
@@ -668,12 +696,13 @@ function clearImage() {
     if (!agreeBox || !proceedBtn) return;
 
     agreeBox.addEventListener('change', function() {
-      if (this.checked) {
-        proceedBtn.classList.remove('locked');
-      } else {
-        proceedBtn.classList.add('locked');
-      }
+    const locked = !this.checked;
+    proceedBtn.classList.toggle('locked', locked);
+      // consultBtn does NOT need the checkbox
     });
+
+    // Unlock consultBtn immediately on DOM load — no checkbox needed
+    document.getElementById('consultBtn')?.classList.remove('locked');
 
     // Safety: block form submit if checkbox not ticked
     document.getElementById('orderForm').addEventListener('submit', function(e) {
@@ -1137,5 +1166,29 @@ function clearImage() {
     });
 
   }); // end load
+</script>
+<script>
+  function submitConsultation() {
+  updateOrderData();
+  // copy all values to consult form
+  document.getElementById('c_cakeType').value = document.getElementById('cakeType').value;
+  document.getElementById('c_cakeShape').value = document.getElementById('cakeShape').value;
+  document.getElementById('c_cakeSize').value = document.getElementById('cakeSize').value;
+  document.getElementById('c_design').value = document.getElementById('design').value;
+  document.getElementById('c_layers').value = document.getElementById('layers').value;
+  document.getElementById('c_toppers').value = document.getElementById('toppers').value;
+  document.getElementById('c_candles').value = document.getElementById('candles').value;
+  document.getElementById('c_filling').value = document.getElementById('filling').checked ? document.getElementById('filling').value : '';
+  document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
+  document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
+  document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
+  document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
+  document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
+  document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
+  document.getElementById('c_notes').value = document.getElementById('notes').value;
+  document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
+  document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
+  document.getElementById('consultForm').submit();
+}
 </script>
 {% endblock %}

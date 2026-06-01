@@ -108,8 +108,8 @@
       <div class="loyalty-track">
         <div class="loyalty-fill" style="width: {{ (loyalty_stamps / 10 * 100)|int }}%;"></div>
       </div>
-      {% if loyalty_unclaimed %}
-        <div class="loyalty-sub">🎉 You have an unclaimed <span>{{ loyalty_unclaimed }}% reward</span>!</div>
+     {% if loyalty_unclaimed %}
+  <div class="loyalty-sub">🎉 You have an unclaimed <span>reward</span>!</div>
         <div style="margin-top:8px;">
           <button onclick="showTab('loyalty')"
                   style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
@@ -117,11 +117,11 @@
             <i class="bi bi-gift me-1"></i>Claim your reward →
           </button>
         </div>
-      {% elif loyalty_stamps >= 5 %}
-        <div class="loyalty-sub"><span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock 15% off!</div>
-      {% else %}
-        <div class="loyalty-sub"><span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock 10% off!</div>
-      {% endif %}
+{% elif loyalty_stamps >= 5 %}
+  <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock a bigger free gift!
+{% else %}
+  <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock a free gift!
+{% endif %}
     </div>
 
     <!-- Tab nav -->
@@ -421,9 +421,9 @@
             {% if i <= loyalty_stamps %}
               <span style="font-size:clamp(16px,2.5vw,30px);">🧁</span>
             {% elif i == 5 %}
-              <span class="stamp-milestone-label">10%<br>OFF</span>
+              <span class="stamp-milestone-label">FREE<br>GIFT</span>
             {% elif i == 10 %}
-              <span class="stamp-milestone-label">15%<br>OFF</span>
+              <span class="stamp-milestone-label">BIG<br>GIFT</span>
             {% else %}
               <span style="font-size:clamp(14px,2.5vw,28px);opacity:0.18;filter:grayscale(1);">🧁</span>
             {% endif %}
@@ -443,21 +443,46 @@
         {% if loyalty_unclaimed %}
           <span style="color:var(--pink);">🎉 You have an unclaimed reward!</span>
         {% elif loyalty_stamps >= 5 %}
-          <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock 15% off!
+          <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock a bigger free gift!
         {% else %}
-          <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock 10% off!
+          <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock a free gift!
         {% endif %}
       </div>
 
       <!-- Claim button -->
-      {% if loyalty_unclaimed %}
-      <form method="POST" action="/loyalty/claim">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="loyalty-claim-btn">
-          <i class="bi bi-gift me-2"></i>Claim {{ loyalty_unclaimed }}% Discount Voucher
-        </button>
-      </form>
-      {% endif %}
+{% if loyalty_unclaimed %}
+  {% set claim_tier = loyalty_unclaimed_tier %}
+  {% set gift_list  = loyalty_gifts_small if claim_tier == 5 else loyalty_gifts_big %}
+
+  <div style="background:rgba(232,24,110,0.06); border:1px solid rgba(232,24,110,0.2);
+              border-radius:10px; padding:14px; margin-bottom:10px;">
+    <div style="font-size:13px; font-weight:700; color:var(--pink); margin-bottom:10px;">
+      Pick your free gift ({{ claim_tier }}-stamp reward)!
+    </div>
+
+    <form method="POST" action="/loyalty/claim">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="tier"       value="{{ claim_tier }}">
+
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+        {% for gift in gift_list %}
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;
+                      padding:10px 12px; border-radius:8px; border:1.5px solid #f0d0e8;
+                      background:#fff; font-size:13px; font-weight:500;"
+               onclick="this.style.borderColor='#e8186e'; this.style.background='#fff0f7';">
+          <input type="radio" name="gift_name" value="{{ gift }}" required
+                 style="accent-color:var(--pink);">
+           {{ gift }}
+        </label>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="loyalty-claim-btn">
+        <i class="bi bi-gift me-2"></i>Claim Free Gift
+      </button>
+    </form>
+  </div>
+{% endif %}
 
       <!-- Earn info note -->
       <div class="loyalty-info-note">
@@ -478,10 +503,14 @@
         {% for v in active_vouchers %}
         <div class="loyalty-voucher-item">
           <div>
-            <div style="font-size:20px;font-weight:700;color:var(--pink);">{{ v.discount }}% OFF</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
-              Expires: {{ v.expires_at_fmt }}
-            </div>
+            {% if v.type == 'gift' %}
+  <div style="font-size:18px;font-weight:700;color:var(--pink);"> Free {{ v.gift_name }}</div>
+{% else %}
+  <div style="font-size:20px;font-weight:700;color:var(--pink);">{{ v.discount }}% OFF</div>
+{% endif %}
+<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">
+  Expires: {{ v.expires_at_fmt }}
+</div>
           </div>
           <div class="loyalty-ready-badge">Ready to use</div>
         </div>
@@ -630,7 +659,20 @@
         {% else %}
           <p>{{ order.item }}</p>
         {% endif %}
-
+          {% if order.claimed_vouchers %}
+          <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #f5c2dc;">
+            <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em;
+                        color:#aaa; font-weight:600; margin-bottom:8px;">
+              Gift Vouchers
+            </div>
+            {% for cv in order.claimed_vouchers %}
+            <div style="display:flex; align-items:center; gap:8px; padding:5px 0; font-size:0.88rem;">
+              <span style="color:#d63384; font-weight:600;">Free {{ cv.gift_name }}</span>
+              <span class="badge bg-success" style="font-size:0.7rem;">Include in order</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
         <!-- Breakdown -->
         <div style="margin-top:10px; padding-top:10px; border-top:1px solid #f5c2dc;">
           <div class="d-flex justify-content-between text-muted" style="font-size:0.88rem;">
@@ -644,11 +686,6 @@
           {% if modal_delivery > 0 %}
           <div class="d-flex justify-content-between text-muted" style="font-size:0.88rem;">
             <span>Delivery Fee</span><span>+₱{{ "%.2f"|format(modal_delivery) }}</span>
-          </div>
-          {% endif %}
-          {% if modal_discount > 0 %}
-          <div class="d-flex justify-content-between" style="font-size:0.88rem; color:#28a745;">
-            <span>Voucher Discount</span><span>-₱{{ "%.2f"|format(modal_discount) }}</span>
           </div>
           {% endif %}
           <div class="d-flex justify-content-between fw-bold mt-1 pt-1" style="border-top:2px solid #f0e8f0; color:#d63384; font-size:0.95rem;">
