@@ -586,17 +586,18 @@
           </div>
         </div>
         {% if customer %}
-        <div style="display:flex; gap:10px; margin-top:14px;">
-        <button type="submit" form="orderForm" class="btn-checkout locked"
-                id="proceedBtn" onclick="updateOrderData()"
-                style="flex:1; margin-top:0;">
-          Proceed to Checkout →
-        </button>
-        <button type="button" class="btn-checkout locked"
-                id="consultBtn" onclick="submitConsultation()"
-                style="flex:1; margin-top:0; background:#7c3f1e;">
-          Consult First
-        </button>
+    <div style="display:flex; gap:10px; margin-top:14px; justify-content: space-between;">
+      <button type="button" class="btn-checkout locked"
+              id="consultBtn" onclick="submitConsultation()"
+              style="flex:1; background: #f472b6; margin-top:0; padding: 8px 13px;">
+        Consult First
+      </button>
+      <button type="submit" form="orderForm" class="btn-checkout locked"
+              id="proceedBtn" onclick="updateOrderData()"
+              style="flex:1; margin-top:0; padding: 8px 13px;">
+        Proceed to Checkout →
+      </button>
+    </div>
       </div>
         {% else %}
           <a href="/authentication" class="btn-checkout">Login to Order</a>

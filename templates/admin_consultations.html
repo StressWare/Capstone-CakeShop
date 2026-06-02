@@ -1,5 +1,13 @@
 {% extends 'admin_base.html' %}
-{% block title %}Consultations – Mrs. Brave Cake Shop{% endblock %}
+{% block title %}Consultations – Mrs. Brave's Cakes Iloilo{% endblock %}
+{% block extra_css %}
+<style>
+  /* ── PAGINATION (copied from inventory) ── */
+  .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
+  .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
+  .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container-fluid px-4 py-4" style="display:flex; flex-direction:column; min-height:calc(100vh - 60px);">
   <div class="d-flex justify-content-between align-items-center mb-4">
@@ -11,7 +19,7 @@
 
   <div style="flex:1;">
     {% if consultations %}
-    <div style="display:flex; flex-direction:column; gap:12px;">
+    <div style="display:flex; flex-direction:column; gap:12px;" id="consultationList">
       {% for c in consultations %}
       {% set cd = c.get('consultation_data') %}
       <div class="consultation-card" style="background:white; border-radius:14px; padding:20px 24px; color:#1a1a1a; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
@@ -32,21 +40,21 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="user_id" value="{{ c.user_id }}">
                 <input type="hidden" name="conversation_id" value="{{ c.conversation_id }}">
-                <button type="button"
-                  onclick="confirmConvert('convertForm-{{ loop.index }}', '{{ c.customer_name }}')"
-                  style="background:#db2777; color:white; border:none; border-radius:8px;
-                  padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
-                  Convert to Order
-                </button>
-              </form>
-              {% endif %}
-            {% endif %}
-            {% if cd %}
             <button data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}"
               style="background:#f3f4f6; color:#374151; border:none; border-radius:8px;
               padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
               View Details
             </button>
+              </form>
+              {% endif %}
+            {% endif %}
+            {% if cd %}
+            <button type="button"
+                  onclick="confirmConvert('convertForm-{{ loop.index }}', '{{ c.customer_name }}')"
+                  style="background:#db2777; color:white; border:none; border-radius:8px;
+                  padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
+                  Convert to Order
+                </button>
             {% endif %}
           </div>
         </div>
@@ -170,16 +178,10 @@
     {% endif %}
   </div>
 
-  <!-- Pagination always at bottom -->
-  <div id="paginationControls" style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:20px; padding-bottom:20px;">
-    <button onclick="changePage(-1)" id="prevBtn"
-      style="padding:8px 18px; border:none; border-radius:8px; background:white; color:#db2777;
-      font-weight:600; cursor:pointer; font-size:13px;">← Prev</button>
-    <span id="pageIndicator" style="color:white; font-size:13px; font-weight:500;"></span>
-    <button onclick="changePage(1)" id="nextBtn"
-      style="padding:8px 18px; border:none; border-radius:8px; background:white; color:#db2777;
-      font-weight:600; cursor:pointer; font-size:13px;">Next →</button>
-  </div>
+  <!-- Pagination (inventory style) -->
+  <nav class="mt-3">
+    <ul class="pagination justify-content-end mb-0" id="consultationPagination"></ul>
+  </nav>
 </div>
 
 {% block extra_js %}
@@ -199,28 +201,29 @@ function confirmConvert(formId, customerName) {
   });
 }
 
-const PER_PAGE = 4;
-let currentPage = 1;
-const items = Array.from(document.querySelectorAll('.consultation-card'));
-const total = items.length;
+let currentConsultationPage = 1;
+const consultationPerPage   = 4;
 
-function renderPage() {
-  const totalPages = Math.ceil(total / PER_PAGE) || 1;
-  items.forEach((el, i) => {
-    el.style.display = (i >= (currentPage - 1) * PER_PAGE && i < currentPage * PER_PAGE) ? '' : 'none';
+function updateConsultationDisplay() {
+  const allCards = document.querySelectorAll('.consultation-card');
+  const visibleCards = Array.from(allCards);
+
+  const totalPages = Math.ceil(visibleCards.length / consultationPerPage);
+  const start      = (currentConsultationPage - 1) * consultationPerPage;
+
+  visibleCards.forEach((card, i) => {
+    card.style.display = (i >= start && i < start + consultationPerPage) ? '' : 'none';
   });
-  document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
-  document.getElementById('prevBtn').disabled = currentPage === 1;
-  document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+
+  updatePaginationButtons('consultationPagination', currentConsultationPage, totalPages, (page) => {
+    currentConsultationPage = page;
+    updateConsultationDisplay();
+  });
 }
 
-function changePage(dir) {
-  const totalPages = Math.ceil(total / PER_PAGE) || 1;
-  currentPage = Math.min(Math.max(1, currentPage + dir), totalPages);
-  renderPage();
-}
-
-renderPage();
+document.addEventListener('DOMContentLoaded', function () {
+  updateConsultationDisplay();
+});
 </script>
 {% endblock %}
 {% endblock %}

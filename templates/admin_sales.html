@@ -123,11 +123,10 @@
     border-color: #c71585;
     box-shadow: 0 0 0 0.2rem rgba(199,21,133,0.25);
   }
-  .pagination .page-link { color: #c71585; }
-  .pagination .page-link.active {
-    background-color: #c71585;
-    color: #fff;
-  }
+  /* PAGINATION */
+  .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
+  .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
+  .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
 
   /* ── Export buttons ── */
   .btn-export {

@@ -82,15 +82,90 @@
     background-color: #ff8ec7;
   }
 
-  h3 {
-    color: white;
-    text-align: center;
-    margin-left: 0;
+/* =========================================
+   GLASSMORPHISM HEADINGS DESIGN
+   ========================================= */
 
-  }
+/* Base styling for all main headings */
+h1, h2, h3, h4, h5, h6 {
+  font-size: 15px;
+  color: #ffffff;
+  /* Soft white glow + Pink neon glow for black glass background */
+  text-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.6),
+    0 0 15px rgba(255, 255, 255, 0.2),
+    0 0 25px rgba(214, 51, 132, 0.3);
+    justify-content: center;
+    align-items: center;
+}
 
-  h1, h2, h3, h4, h5, h6 {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* Section Headings (h2) - EXCLUDING cake card titles */
+h2:not(.card-title) {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+  text-transform: uppercase;
+  font-size: 2rem;
+}
+
+/* Glowing Glass Underline for Section Headings */
+h2:not(.card-title)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #ff66b2, #d63384, #ff66b2, transparent);
+  border-radius: 2px;
+  box-shadow: 0 0 15px rgba(214, 51, 132, 0.8);
+}
+
+/* Hero Title Special Gradient */
+.intro-text h2 {
+  background: linear-gradient(135deg, #ffffff 0%, #ff99cc 50%, #d63384 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none; 
+  filter: drop-shadow(0 4px 15px rgba(214, 51, 132, 0.5));
+  text-transform: none;
+  padding-bottom: 0;
+  display: block;
+}
+.intro-text h2::after {
+  display: none; /* Remove the underline for the hero title */
+}
+
+/* Subheadings (h3) - Pure White with Pink Italic */
+h3 {
+  font-size: 2rem !important;
+  color: #ffffff !important; /* Makes "Baked with Love" pure white */
+  font-style: italic;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  padding-bottom: 0;
+}
+
+h3::after {
+  display: none; /* No underline for h3 */
+}
+
+h3 em {
+  color: #ff1a75 !important; /* Keeps "Served with Heart" bright pink */
+  font-weight: 700;
+  font-style: italic;
+  text-shadow: 0 0 15px rgba(255, 26, 117, 0.6);
+}
+
+/* Service Card Headings */
+.service-card h5 {
+  font-size: 1.4rem;
+  text-align: center;
+  margin-top: 15px;
+  margin-bottom: 10px;
+  color: #ffffff; /* Soft pink for service titles */
+  text-shadow: 0 0 10px rgba(255, 153, 204, 0.4);
 }
 
 .service-description {
@@ -401,8 +476,9 @@
     <div class="logo-wrapper">
       <img src="/static/img/logo.png" alt="Mrs. Brave's Logo" class="intro-logo">
     </div>
-
-    <h2>Freshly baked happiness made with love!</h2>
+    <div class="intro-text">
+        <h2>Freshly baked happiness made with love!</h2>
+    </div>
     
     <p>
       Discover cakes made with love, perfect for birthdays, weddings, and every sweet moment in between.
@@ -413,7 +489,7 @@
 
 <!-- Categories -->
 <section class="categories-section">
-  <h2>Our Categories</h2>
+<h2 class="headings" style="margin-top: -25px; margin-bottom: 50px; text-align: center; font-weight: 500;">OUR CATEGORIES</h2>
  
   <div class="cat-carousel-outer">
     <div class="cat-carousel-viewport" id="catViewport">
@@ -574,8 +650,8 @@
 </section>
 
 <br>
-    <h2 class="text-center mb-3" style="font-weight:700; margin-bottom: 30px;">Most Ordered</h2>
-  <div class="container">
+<h2 class="headings" style=" margin-top: 30px; margin-bottom: 30px; text-align: center; font-weight: 500;">MOST ORDERED</h2>
+    <div class="container">
       <!-- First Row - 2 large cards -->
       <div class="grid">
           {% for cake in most_ordered[:2] %}
@@ -681,7 +757,7 @@
 {% if top_cakes %}
 <section class="top-cakes-section" style="padding: 0 40px;">
   <div class="container-fluid">
-    <h2 class="text-center mb-3" style="font-weight:700;margin-top:120px;">Our Best Cakes Rated By Customers</h2>
+    <h2 class="text-center mb-3" style= "margin-top: 120px;margin-bottom: 90px; text-align: center; font-weight: 500; margin-left: 410px;">Our Best Cakes Rated By Customers</h2>
     <div class="top-cakes-scroll">
       {% for cake in top_cakes %}
       <div class="review-card" style="margin-top:20px;">
@@ -710,7 +786,7 @@
 
 <!-- Services -->
 <section id="services" class="services-section">
-  <h2>Our Services</h2>
+<h2 class="headings" style="margin-bottom: 90px; text-align: center; font-weight: 500;">SERVICES</h2>
   <div class="services-row">
     <div class="service-card">
       <div class="service-icon-wrap">
@@ -739,10 +815,10 @@
 
 <!-- ── ABOUT US SNIPPET ── -->
 <section style="margin: 0 auto 60px; padding: 0 40px;  margin-top: 90px;">
-  <h2 class="text-center" style="font-weight:700; margin-bottom: 90px;">About Us</h2>
+<h2 class="headings" style="margin-bottom: 90px; text-align: center; font-weight: 500; margin-left: 650px;">About Us</h2>
   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;" class="about-snippet-grid">
     <div style="padding-left: 70px;"  class="about-snippet-text">
-      <h3 style="font-weight:700; margin-bottom: 20px; color:#fff;">Baked with Love, <em style="color: #e8186e; font-style:italic;">Served with Heart</em></h3>
+    <h3 style="margin-bottom: 20px;">Baked with Love, <em>Served with Heart</em></h3>
       <p style=" padding-left: 40px; color: rgba(255,255,255,0.60); font-size: 0.95rem; line-height: 1.8; margin-bottom: 24px;">
         From birthdays to weddings, we bake happiness into every cake. Custom made, freshly baked, and handcrafted with love for every special moment in Iloilo City.
       </p>
@@ -758,7 +834,7 @@
 </section>
 <!-- ── LOCATION MAP ── -->
 <section class="location-section">
-  <h2 class="text-center" style="font-weight:700; margin-bottom: 80px; margin-top: 70px;">Find Us</h2>
+<h2 class="headings" style="margin-bottom: 90px; text-align: center; font-weight: 500; margin-left: 700px;">FIND US</h2>
   <div class="location-map-container">
     <img src="../static/img/mrsbraves-map1.png" alt="Mrs. Brave's Location Map" class="location-map-img map-desktop">
     <img src="../static/img/mrsbraves-map2.png" alt="Mrs. Brave's Location Map" class="location-map-img map-mobile">

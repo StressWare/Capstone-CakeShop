@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% block title %}Analytics – Mrs. Brave Cake Shop{% endblock %}
+{% block title %}Analytics – Mrs. Brave's Cakes Iloilo{% endblock %}
 
 {% block extra_css %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -65,23 +65,16 @@
     .chart-wrapper { position: relative; overflow: hidden; }
     #mainChartDiv { transition: opacity 0.3s ease, transform 0.3s ease; }
 
-    /* Export button */
+    /* ── Export buttons ── */
     .btn-export {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
-      border: 1.5px solid #c71585;
-      border-radius: 8px;
-      background: transparent;
-      color: #c71585;
-      font-size: 0.82rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 16px;
+      border: 1.5px solid #c71585; border-radius: 8px;
+      background: #c71585; color: white;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s;
     }
-    .btn-export:hover { background: #ffe6f0; color: #c71585; }
+    .btn-export:hover { background: #a01070; border-color: #a01070; }
 
     /* Tooltip for truncated names */
     [data-tooltip] { position: relative; cursor: help; }
