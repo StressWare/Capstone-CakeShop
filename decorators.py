@@ -5,12 +5,25 @@ from flask import session, redirect, url_for, render_template, flash, request
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if not session.get('user_id'):
+        from firebase_admin import auth
+
+        user_id = session.get('user_id')
+        if not user_id:
             flash("Please log in to continue.", "warning")
             return redirect(url_for('auth_page'))
+
+        try:
+            firebase_user = auth.get_user(user_id)
+            if firebase_user.disabled:
+                session.clear()
+                flash("Your account has been disabled. Contact support.", "danger")
+                return redirect(url_for('auth_page'))
+        except Exception:
+            session.clear()
+            return redirect(url_for('auth_page'))
+
         return f(*args, **kwargs)
     return decorated_function
-
 # ---------------- ADMIN REQUIRED ----------------
 def admin_required(f):
     @wraps(f)
