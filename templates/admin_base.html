@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Admin – Ms. Brave Cake Shop{% endblock %}</title>
+    <title>{% block title %}Admin – Mrs. Brave Cake Shop{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link href="../static/css/resposive_admin.css" rel="stylesheet">
@@ -270,6 +270,7 @@ function glassAlert(options = {}) {
             <li><a href="/admin/reviews" class="{{ 'active' if request.path == '/admin/reviews' }}">Reviews</a></li>
             <li><a href="/admin/logs" class="{{ 'active' if request.path == '/admin/logs' }}">Activity Logs</a></li>
             <li><a href="/admin/conversations" class="{{ 'active' if request.path == '/admin/conversations' }}">Messages</a></li>
+            <li><a href="/admin/consultations" class="{{ 'active' if request.path == '/admin/consultations' }}">Consultations</a></li>
             <li><a href="/pos">POS</a></li>
         </ul>
 

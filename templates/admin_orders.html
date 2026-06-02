@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% block title %}Orders – Ms. Brave Cake Shop{% endblock %}
+{% block title %}Orders – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -319,182 +319,182 @@
   }
 
 
-}
-
-  /* ════════════════════════════════════════════════
-     MODAL — PROPERLY SIZED & CENTERED ON MOBILE
-     From screenshot: modal-lg stretches nearly full
-     screen on mobile with no visible side margins.
-     Fix: override modal-lg width on small screens,
-     use position:fixed centering via top/left/transform
-     which works regardless of Bootstrap padding-right
-     injection or wrapper overflow settings.
-  ════════════════════════════════════════════════ */
-
-  /* On mobile: ditch modal-lg sizing, use fixed centering */
-  @media (max-width: 575px) {
-    #orderDetailsModal .modal-dialog,
-    #editOrderModal .modal-dialog {
-      /* Override Bootstrap's modal-lg (800px) entirely */
-      width: calc(100vw - 32px) !important;
-      max-width: calc(100vw - 32px) !important;
-      /* Fixed centering: works even when Bootstrap adds padding-right */
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      transform: translate(-50%, -50%) !important;
-      margin: 0 !important;
-    }
-
-    /* Cap modal height so it doesn't fill the full screen */
-    #orderDetailsModal .modal-content,
-    #editOrderModal .modal-content {
-      max-height: 82vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Modal body scrolls internally */
-    #orderDetailsModal .modal-body,
-    #editOrderModal .modal-body {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      flex: 1;
-    }
-
-    /* Details two-column → single column */
-    #detailsModalBody .row > .col-md-6 { width: 100% !important; }
-
-    .modal-header  { padding: 12px 14px; }
-    .modal-body    { padding: 14px 12px; }
-    .modal-footer  { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
-    .modal-footer .btn { flex: 1 1 auto; min-width: 100px; }
-    .modal-title   { font-size: 0.95rem !important; }
   }
 
-  /* Tablet */
-  @media (min-width: 576px) and (max-width: 991px) {
-    #orderDetailsModal .modal-dialog,
-    #editOrderModal .modal-dialog {
-      max-width: 88% !important;
-      margin-left: auto !important;
-      margin-right: auto !important;
+    /* ════════════════════════════════════════════════
+      MODAL — PROPERLY SIZED & CENTERED ON MOBILE
+      From screenshot: modal-lg stretches nearly full
+      screen on mobile with no visible side margins.
+      Fix: override modal-lg width on small screens,
+      use position:fixed centering via top/left/transform
+      which works regardless of Bootstrap padding-right
+      injection or wrapper overflow settings.
+    ════════════════════════════════════════════════ */
+
+    /* On mobile: ditch modal-lg sizing, use fixed centering */
+    @media (max-width: 575px) {
+      #orderDetailsModal .modal-dialog,
+      #editOrderModal .modal-dialog {
+        /* Override Bootstrap's modal-lg (800px) entirely */
+        width: calc(100vw - 32px) !important;
+        max-width: calc(100vw - 32px) !important;
+        /* Fixed centering: works even when Bootstrap adds padding-right */
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+      }
+
+      /* Cap modal height so it doesn't fill the full screen */
+      #orderDetailsModal .modal-content,
+      #editOrderModal .modal-content {
+        max-height: 82vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Modal body scrolls internally */
+      #orderDetailsModal .modal-body,
+      #editOrderModal .modal-body {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        flex: 1;
+      }
+
+      /* Details two-column → single column */
+      #detailsModalBody .row > .col-md-6 { width: 100% !important; }
+
+      .modal-header  { padding: 12px 14px; }
+      .modal-body    { padding: 14px 12px; }
+      .modal-footer  { padding: 10px 12px; flex-wrap: wrap; gap: 8px; }
+      .modal-footer .btn { flex: 1 1 auto; min-width: 100px; }
+      .modal-title   { font-size: 0.95rem !important; }
     }
-    #orderDetailsModal .modal-body,
-    #editOrderModal .modal-body {
-      max-height: 68vh;
-      overflow-y: auto;
+
+    /* Tablet */
+    @media (min-width: 576px) and (max-width: 991px) {
+      #orderDetailsModal .modal-dialog,
+      #editOrderModal .modal-dialog {
+        max-width: 88% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+      #orderDetailsModal .modal-body,
+      #editOrderModal .modal-body {
+        max-height: 68vh;
+        overflow-y: auto;
+      }
     }
-  }
 
-  /* ════════════════════════════════════════════════
-     NO EMPTY SCROLL SPACE BELOW THE PAGE
-     From screenshot: large grey area below Close button.
-     Cause: admin_base wrapper has min-height or
-     padding-bottom. Kill it at every selector level.
-  ════════════════════════════════════════════════ */
+    /* ════════════════════════════════════════════════
+      NO EMPTY SCROLL SPACE BELOW THE PAGE
+      From screenshot: large grey area below Close button.
+      Cause: admin_base wrapper has min-height or
+      padding-bottom. Kill it at every selector level.
+    ════════════════════════════════════════════════ */
 
-  .container-fluid.mt-4.mb-0.px-4 {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
-  }
+    .container-fluid.mt-4.mb-0.px-4 {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
 
-  /* All common admin template wrapper selectors */
-  #layoutSidenav_content,
-  #content-wrapper,
-  .content-wrapper,
-  .main-content,
-  .main-panel,
-  .page-wrapper,
-  #page-wrapper,
-  #wrapper {
-    padding-bottom: 0 !important;
+    /* All common admin template wrapper selectors */
+    #layoutSidenav_content,
+    #content-wrapper,
+    .content-wrapper,
+    .main-content,
+    .main-panel,
+    .page-wrapper,
+    #page-wrapper,
+    #wrapper {
+      padding-bottom: 0 !important;
+      min-height: 0 !important;
+    }
+
+  .table-responsive {
     min-height: 0 !important;
-  }
-
- .table-responsive {
-  min-height: 0 !important;
-  overflow-x: auto;
-  max-width: 100%;
-  }
-
-
-  #newOrderBanner {
-    position: fixed;
-    top: 0; left: 250px; right: 0;
-    z-index: 9999;
-    background: rgba(255,255,255,0.97);
-    border-bottom: 1px solid rgba(255,192,203,0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 8px 32px rgba(199,21,133,0.15);
-    color: #1a1a1a;
-    animation: bannerSlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    display: none;
-  }
-  @keyframes bannerSlideDown {
-      from { transform: translateY(-100%); opacity: 0; }
-      to   { transform: translateY(0);     opacity: 1; }
-  }
-  .banner-text { font-size: 0.92rem; font-weight: 600; line-height: 1.4; color: #1a1a1a; }
-  .banner-text small { font-weight: 400; font-size: 0.8rem; color: #888; }
-  .banner-rush {
-      background: #ef4444; color: white;
-      font-size: 0.7rem; font-weight: 800;
-      padding: 2px 8px; border-radius: 6px;
-      letter-spacing: 0.05em; flex-shrink: 0;
-  }
-  .banner-count {
-      background: #ef4444; color: white; border-radius: 50%;
-      width: 22px; height: 22px;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 800;
-      margin-left: 6px; flex-shrink: 0;
-  }
-  .banner-actions { display: flex; gap: 8px; align-items: center; }
-  .banner-btn-view {
-    background: linear-gradient(135deg, #e75480, #C71585); color: #fff; border: none;
-    border-radius: 12px; padding: 7px 16px;
-    font-size: 0.82rem; font-weight: 700;
-    cursor: pointer; transition: opacity 0.15s;
-  }
-  .banner-btn-view:hover { opacity: 0.88; }
-  .banner-btn-dismiss {
-    background: transparent; color: #1a1a1a;
-    border: 1px solid rgba(26,26,26,0.3);
-    border-radius: 12px; padding: 7px 12px;
-    font-size: 0.82rem; font-weight: 600;
-    cursor: pointer; transition: background 0.15s;
-  }
-  .banner-btn-dismiss:hover { background: rgba(214,51,132,0.08); }
-  .banner-inner {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px; gap: 12px; flex-wrap: wrap;
-  }
-  .banner-left { display: flex; align-items: center; gap: 12px; flex: 1; }
-  .banner-pulse {
-    width: 12px; height: 12px; border-radius: 50%;
-    background: #d63384; flex-shrink: 0;
-    box-shadow: 0 0 0 0 rgba(214,51,132,0.5);
-    animation: bannerPulse 1.2s infinite;
-  }
-  @keyframes bannerPulse {
-    0%   { box-shadow: 0 0 0 0   rgba(214,51,132,0.5); }
-    70%  { box-shadow: 0 0 0 10px rgba(214,51,132,0);  }
-    100% { box-shadow: 0 0 0 0   rgba(214,51,132,0);   }
-  }
-  @media (max-width: 575px) {
-      .banner-inner { padding: 12px 14px; gap: 8px; }
-      .banner-text  { font-size: 0.84rem; }
-      .banner-btn-view, .banner-btn-dismiss { padding: 6px 10px; font-size: 0.78rem; }
-      #newOrderBanner { left: 0; }
-  }
-  @media (max-width: 992px) {
-    #newOrderBanner {
-        left: 0; /* full width on tablet/mobile since sidebar is hidden */
+    overflow-x: auto;
+    max-width: 100%;
     }
-}
+
+
+    #newOrderBanner {
+      position: fixed;
+      top: 0; left: 250px; right: 0;
+      z-index: 9999;
+      background: rgba(255,255,255,0.97);
+      border-bottom: 1px solid rgba(255,192,203,0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(199,21,133,0.15);
+      color: #1a1a1a;
+      animation: bannerSlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: none;
+    }
+    @keyframes bannerSlideDown {
+        from { transform: translateY(-100%); opacity: 0; }
+        to   { transform: translateY(0);     opacity: 1; }
+    }
+    .banner-text { font-size: 0.92rem; font-weight: 600; line-height: 1.4; color: #1a1a1a; }
+    .banner-text small { font-weight: 400; font-size: 0.8rem; color: #888; }
+    .banner-rush {
+        background: #ef4444; color: white;
+        font-size: 0.7rem; font-weight: 800;
+        padding: 2px 8px; border-radius: 6px;
+        letter-spacing: 0.05em; flex-shrink: 0;
+    }
+    .banner-count {
+        background: #ef4444; color: white; border-radius: 50%;
+        width: 22px; height: 22px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.72rem; font-weight: 800;
+        margin-left: 6px; flex-shrink: 0;
+    }
+    .banner-actions { display: flex; gap: 8px; align-items: center; }
+    .banner-btn-view {
+      background: linear-gradient(135deg, #e75480, #C71585); color: #fff; border: none;
+      border-radius: 12px; padding: 7px 16px;
+      font-size: 0.82rem; font-weight: 700;
+      cursor: pointer; transition: opacity 0.15s;
+    }
+    .banner-btn-view:hover { opacity: 0.88; }
+    .banner-btn-dismiss {
+      background: transparent; color: #1a1a1a;
+      border: 1px solid rgba(26,26,26,0.3);
+      border-radius: 12px; padding: 7px 12px;
+      font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .banner-btn-dismiss:hover { background: rgba(214,51,132,0.08); }
+    .banner-inner {
+        display: flex; align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px; gap: 12px; flex-wrap: wrap;
+    }
+    .banner-left { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .banner-pulse {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #d63384; flex-shrink: 0;
+      box-shadow: 0 0 0 0 rgba(214,51,132,0.5);
+      animation: bannerPulse 1.2s infinite;
+    }
+    @keyframes bannerPulse {
+      0%   { box-shadow: 0 0 0 0   rgba(214,51,132,0.5); }
+      70%  { box-shadow: 0 0 0 10px rgba(214,51,132,0);  }
+      100% { box-shadow: 0 0 0 0   rgba(214,51,132,0);   }
+    }
+    @media (max-width: 575px) {
+        .banner-inner { padding: 12px 14px; gap: 8px; }
+        .banner-text  { font-size: 0.84rem; }
+        .banner-btn-view, .banner-btn-dismiss { padding: 6px 10px; font-size: 0.78rem; }
+        #newOrderBanner { left: 0; }
+    }
+    @media (max-width: 992px) {
+      #newOrderBanner {
+          left: 0; /* full width on tablet/mobile since sidebar is hidden */
+      }
+  }
 </style>
 {% endblock %}
 

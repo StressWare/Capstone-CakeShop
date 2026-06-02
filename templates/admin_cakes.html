@@ -1,5 +1,5 @@
 {% extends 'admin_base.html' %}
-{% block title %}Cakes – Ms. Brave Cake Shop{% endblock %}
+{% block title %}Cakes – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -240,7 +240,7 @@
     <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div class="d-flex gap-2">
         <button class="btn tab-btn active" id="tabProducts" onclick="switchTab('products')">
-           Products
+           Premade Pricing
         </button>
         <button class="btn tab-btn" id="tabCustomPricing" onclick="switchTab('custom')">
            Customize Pricing
@@ -402,13 +402,13 @@
           <!-- ICING -->
           <div class="col-lg-4 col-md-6">
             <div class="pricing-card">
-              <h6> Icing Type</h6>
+              <h6> Cake Type</h6>
               <div class="mb-2">
                 <label class="form-label">Fondant (₱)</label>
                 <input type="number" class="form-control" id="price_icing_fondant" value="{{ custom_prices.icing.fondant }}" min="0">
               </div>
               <div class="mb-2">
-                <label class="form-label">Buttercream (₱)</label>
+                <label class="form-label">Soft Icing (₱)</label>
                 <input type="number" class="form-control" id="price_icing_buttercream" value="{{ custom_prices.icing.buttercream }}" min="0">
               </div>
               <button class="btn btn-save-pricing" onclick="saveCustomPricing('icing', {fondant:'price_icing_fondant', buttercream:'price_icing_buttercream'})">

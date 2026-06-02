@@ -901,15 +901,25 @@ def place_order():
     if info and info.get('lock_custom'):
         flash("Custom cake orders are unavailable today.", "danger")
         return redirect(url_for("customize"))
-    
-    file = request.files.get('image')
-    if file and file.filename:
-        inspo_image = save_uploaded_image(file, 'order')
-        if inspo_image is None:
-            flash('Image too large or invalid! Max 2MB.', 'danger')
-            return redirect(url_for('customize'))
+    # ── Consult token + image handling ──
+    consult_token = request.form.get('consult_token', '').strip()
+    if consult_token:
+        token_ref = db.collection('pending_consultations').document(consult_token)
+        token_doc = token_ref.get()
+        if token_doc.exists and not token_doc.to_dict().get('used'):
+            token_ref.update({'used': True, 'used_at': datetime.now(PH_TZ)})
+        # ✅ carry image from consultation, no re-upload needed
+        inspo_image = token_doc.to_dict().get('consultation_data', {}).get('inspo_image') if token_doc.exists else None
     else:
-        inspo_image = None
+        # ✅ normal flow
+        file = request.files.get('image')
+        if file and file.filename:
+            inspo_image = save_uploaded_image(file, 'order')
+            if inspo_image is None:
+                flash('Image too large or invalid! Max 2MB.', 'danger')
+                return redirect(url_for('customize'))
+        else:
+            inspo_image = None
 
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
@@ -2471,6 +2481,20 @@ def admin_logs_page():
     
     return render_template("admin_logs.html", logs=logs)
 
+
+@app.route('/admin/consultations')
+@admin_required
+def admin_consultations():
+    docs = conversations.where('is_consultation', '==', True).order_by('last_updated', direction=firestore.Query.DESCENDING).stream()
+    consultations = []
+    for doc in docs:
+        d = doc.to_dict()
+        d['token'] = doc.id
+        user_doc = users.document(d.get('user_id', '')).get()
+        ud = user_doc.to_dict() if user_doc.exists else {}
+        d['customer_name'] = ud.get('fname') or ud.get('username', 'Customer')
+        consultations.append(d)
+    return render_template('admin_consultations.html', consultations=consultations)
 # ================================================================
 # ADMIN ACTION ROUTES
 # ================================================================
@@ -3613,7 +3637,7 @@ def admin_conversations():
             for convo_doc in conversations_ref:
                 try:
                     # Get conversation data FIRST
-                    convo_data = convo_doc.to_dict()  # This is the fix - define conv_data here
+                    convo_data = convo_doc.to_dict()  # define conv_data here
                     
                     # Get messages
                     msgs = list(
@@ -3645,7 +3669,7 @@ def admin_conversations():
                         "email": user_data.get("email", "No email"),
                         "last_message": last_msg,
                         "last_time": ts.strftime("%b %d %I:%M %p") if ts else "No messages",
-                        "last_time_dt": ts or None,  # 👈 add this
+                        "last_time_dt": ts or None, 
                         "escalated": convo_data.get('escalated', False)  # Now convo_data exists
                     })
                     
@@ -3669,7 +3693,16 @@ def consultation():
     user_id = session.get('user_id')
     now = datetime.now(PH_TZ)
 
-    # Recompute price server-side
+    # Recompute price server-side   
+    # Handle inspo image upload
+    file = request.files.get('image')
+    if file and file.filename:
+        inspo_image = save_uploaded_image(file, 'consultation')
+        if inspo_image is None:
+            flash('Image too large or invalid! Max 2MB.', 'danger')
+            return redirect(url_for('customize'))
+    else:
+        inspo_image = None
     try:
         icing_key   = request.form.get('design', '').split('|')[0]
         size_key    = request.form.get('cakeSize', '').split('|')[0]
@@ -3685,6 +3718,8 @@ def consultation():
         for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
             if request.form.get(addon_key):
                 amount += float(prices['addons'].get(addon_key, 0))
+        if request.form.get('rush') == 'yes':
+            amount += 300
     except Exception:
         app.logger.exception('Error computing consultation price')
         flash('Unable to process. Please try again.', 'danger')
@@ -3716,6 +3751,15 @@ def consultation():
         'toppers':    request.form.get('toppers', ''),
         'candles':    request.form.get('candles', ''),
         'notes':      request.form.get('notes', '')[:500],
+        'inspo_image': inspo_image,
+        'filling':        request.form.get('filling', ''),
+        'cupcake':        request.form.get('cupcake', ''),
+        'ediblepaper':    request.form.get('ediblepaper', ''),
+        'fondanttoppers': request.form.get('fondanttoppers', ''),
+        'sprinkles':      request.form.get('sprinkles', ''),
+        'drip':           request.form.get('drip', ''),
+        'flowers':        request.form.get('flowers', ''),
+        'rush': request.form.get('rush', ''),
     }
 
     conv_ref = users.document(user_id).collection('conversations').document(conv_id)
@@ -3761,7 +3805,6 @@ def consultation_to_order():
     user_id = request.form.get('user_id')
     conv_id = request.form.get('conversation_id')
 
-    # Get consultation data
     conv_ref = users.document(user_id).collection('conversations').document(conv_id)
     conv_doc = conv_ref.get()
     if not conv_doc.exists:
@@ -3771,26 +3814,156 @@ def consultation_to_order():
     data = conv_doc.to_dict()
     cd   = data.get('consultation_data', {})
 
-    # Mark as converted
-    now = datetime.now(PH_TZ)
-    conv_ref.update({'status': 'converted', 'converted_at': now})
-    conversations.document(conv_id).update({'status': 'converted', 'converted_at': now})
+    return render_template('admin_consultation_review.html',
+        user_id     = user_id,
+        conv_id     = conv_id,
+        cd          = cd,
+        customer_name = data.get('customer_name', '') or '',
+    )
+    
+@app.route('/admin/consultation-confirm', methods=['POST'])
+@admin_required
+def consultation_confirm():
+    user_id = request.form.get('user_id')
+    conv_id = request.form.get('conv_id')
+    now     = datetime.now(PH_TZ)
 
-    # Redirect to customize with query params pre-filled
-    from urllib.parse import urlencode
-    params = urlencode({
-        'prefill': '1',
-        'cakeType':  cd.get('cakeType', ''),
-        'cakeShape': cd.get('cakeShape', ''),
-        'cakeSize':  cd.get('cakeSize', ''),
-        'design':    cd.get('design', ''),
-        'layers':    cd.get('layers', ''),
-        'toppers':   cd.get('toppers', ''),
-        'candles':   cd.get('candles', ''),
-        'notes':     cd.get('notes', ''),
-        'for_user':  user_id,
+    conv_ref = users.document(user_id).collection('conversations').document(conv_id)
+    conv_doc = conv_ref.get()
+    if not conv_doc.exists:
+        flash('Consultation not found.', 'danger')
+        return redirect(url_for('admin_conversations'))
+
+    old_cd = conv_doc.to_dict().get('consultation_data', {})
+
+    prices = get_custom_prices()
+    icing_key   = request.form.get('design', '').split('|')[0]
+    size_key    = request.form.get('cakeSize', '').split('|')[0]
+    layers_key  = request.form.get('layers', '').split('|')[0]
+    toppers_key = request.form.get('toppers', '').split('|')[0]
+
+    amount = 0.0
+    amount += float(prices['icing'].get(icing_key, 0))
+    amount += float(prices['size'].get(size_key, 0))
+    amount += float(prices['layers'].get(layers_key, 0))
+    amount += float(prices['toppers'].get(toppers_key, 0))
+    for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
+        if request.form.get(addon_key):
+            amount += float(prices['addons'].get(addon_key, 0))
+    if old_cd.get('rush') == 'yes':
+        amount += 300
+    cd = {
+        'cakeType':       request.form.get('cakeType', old_cd.get('cakeType', '')),
+        'cakeShape':      request.form.get('cakeShape', old_cd.get('cakeShape', '')),
+        'cakeSize':       request.form.get('cakeSize', old_cd.get('cakeSize', '')),
+        'design':         request.form.get('design', old_cd.get('design', '')),
+        'layers':         request.form.get('layers', old_cd.get('layers', '')),
+        'toppers':        request.form.get('toppers', old_cd.get('toppers', '')),
+        'candles':        request.form.get('candles', old_cd.get('candles', '')),
+        'notes':          request.form.get('notes', old_cd.get('notes', ''))[:500],
+        'inspo_image':    old_cd.get('inspo_image'),  # image never changes here
+        'filling':        request.form.get('filling', ''),
+        'cupcake':        request.form.get('cupcake', ''),
+        'ediblepaper':    request.form.get('ediblepaper', ''),
+        'fondanttoppers': request.form.get('fondanttoppers', ''),
+        'sprinkles':      request.form.get('sprinkles', ''),
+        'drip':           request.form.get('drip', ''),
+        'flowers':        request.form.get('flowers', ''),
+        'amount':         round(amount, 2),
+        'rush': old_cd.get('rush', ''),
+        'order_item': (
+            f"{request.form.get('cakeType','').split('|')[0].title()}, "
+            f"{size_key} inches, "
+            f"{layers_key} layer(s), "
+            f"{request.form.get('design','').split('|')[0].title()} icing, "
+            f"Toppers: {toppers_key}" + (
+                ', Add-ons: ' + ', '.join([
+                    k for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']
+                    if request.form.get(k)
+                ]) if any(request.form.get(k) for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']) else ''
+            )
+        ),
+    }
+
+    # Generate unique token
+    token = secrets.token_urlsafe(32)
+
+    # Save pending consultation
+    db.collection('pending_consultations').document(token).set({
+        'user_id':           user_id,
+        'conv_id':           conv_id,
+        'consultation_data': cd,
+        'created_at':        now,
+        'expires_at':        now + timedelta(days=7),
+        'used':              False,
     })
-    return redirect(f"/customize?{params}")
+
+    # Mark conversation as converted
+    conv_ref.update({'status': 'converted', 'converted_at': now})
+    conversations.document(conv_id).update({
+        'status': 'converted',
+        'converted_at': now,
+        'is_consultation': True,
+    })
+
+    # Build link
+    base_url      = request.host_url.rstrip('/')
+    complete_link = f"{base_url}/complete-order/{token}"
+
+    # Send chat message to customer
+    conv_ref.collection('messages').add({
+        'text':       f"✅ Your consultation has been approved! Please complete your order here: {complete_link}",
+        'sender':     'admin',
+        'timestamp':  now,
+        'created_at': now,
+    })
+    conv_ref.update({'last_updated': now})
+    conversations.document(conv_id).update({
+        'last_message': '✅ Consultation approved — order link sent',
+        'last_updated': now,
+        'unread':       True,
+    })
+
+    flash('Customer notified with order link!', 'success')
+    return redirect(url_for('admin_conversations'))
+
+@app.route('/complete-order/<token>')
+@login_required
+def complete_order(token):
+    now      = datetime.now(PH_TZ)
+    doc_ref  = db.collection('pending_consultations').document(token)
+    doc      = doc_ref.get()
+
+    if not doc.exists:
+        flash('Invalid or expired link.', 'danger')
+        return redirect(url_for('customize'))
+
+    data = doc.to_dict()
+
+    # Must belong to logged-in user
+    if data.get('user_id') != session.get('user_id'):
+        flash('Unauthorized.', 'danger')
+        return redirect(url_for('customize'))
+
+    if data.get('used'):
+        flash('This link has already been used.', 'warning')
+        return redirect(url_for('customer_dashboard'))
+
+    expires = data.get('expires_at')
+    if expires and datetime.now(PH_TZ) > expires:
+        flash('This link has expired.', 'danger')
+        return redirect(url_for('customize'))
+
+    cd            = data.get('consultation_data', {})
+    custom_prices = get_custom_prices()
+
+    return render_template('customization.html',
+        custom_prices  = custom_prices,
+        customer       = users.document(data['user_id']).get().to_dict(),
+        prefill        = cd,
+        consult_token  = token,
+    )
+
 @app.route('/consultation/sent')
 @login_required
 def consultation_sent():

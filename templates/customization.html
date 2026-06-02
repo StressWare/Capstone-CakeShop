@@ -546,6 +546,8 @@
   <input type="hidden" name="notes" id="c_notes">
   <input type="hidden" name="order_item" id="c_orderItem">
   <input type="hidden" name="amount" id="c_amount">
+  <input type="file" name="image" id="c_image" accept="image/*" hidden>
+  <input type="hidden" name="rush" id="c_rush">
 </form>
     </div>
 
@@ -593,7 +595,7 @@
         <button type="button" class="btn-checkout locked"
                 id="consultBtn" onclick="submitConsultation()"
                 style="flex:1; margin-top:0; background:#7c3f1e;">
-          💬 Consult First
+          Consult First
         </button>
       </div>
         {% else %}
@@ -1164,31 +1166,100 @@ function clearImage() {
       camera.aspect = w / 340;
       camera.updateProjectionMatrix();
     });
-
+    window.buildCake    = buildCake;
+    window.updateBadges = updateBadges;
   }); // end load
 </script>
 <script>
-  function submitConsultation() {
+ function submitConsultation() {
   updateOrderData();
-  // copy all values to consult form
-  document.getElementById('c_cakeType').value = document.getElementById('cakeType').value;
-  document.getElementById('c_cakeShape').value = document.getElementById('cakeShape').value;
-  document.getElementById('c_cakeSize').value = document.getElementById('cakeSize').value;
-  document.getElementById('c_design').value = document.getElementById('design').value;
-  document.getElementById('c_layers').value = document.getElementById('layers').value;
-  document.getElementById('c_toppers').value = document.getElementById('toppers').value;
-  document.getElementById('c_candles').value = document.getElementById('candles').value;
-  document.getElementById('c_filling').value = document.getElementById('filling').checked ? document.getElementById('filling').value : '';
-  document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
-  document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
-  document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
-  document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
-  document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
-  document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
-  document.getElementById('c_notes').value = document.getElementById('notes').value;
-  document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
-  document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
-  document.getElementById('consultForm').submit();
+  glassAlert({
+    icon: 'question',
+    title: 'Send for Consultation?',
+    html: `Your cake design will be sent to the owner.<br>They'll reach out via chat to discuss details.`,
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Consult First',
+    cancelButtonText: 'Go Back',
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+    // copy fields
+    document.getElementById('c_cakeType').value = document.getElementById('cakeType').value;
+    document.getElementById('c_cakeShape').value = document.getElementById('cakeShape').value;
+    document.getElementById('c_cakeSize').value = document.getElementById('cakeSize').value;
+    document.getElementById('c_design').value = document.getElementById('design').value;
+    document.getElementById('c_layers').value = document.getElementById('layers').value;
+    document.getElementById('c_toppers').value = document.getElementById('toppers').value;
+    document.getElementById('c_candles').value = document.getElementById('candles').value;
+    document.getElementById('c_filling').value = document.getElementById('filling').checked ? document.getElementById('filling').value : '';
+    document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
+    document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
+    document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
+    document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
+    document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
+    document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
+    document.getElementById('c_notes').value = document.getElementById('notes').value;
+    document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
+    document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
+    document.getElementById('c_rush').value = document.getElementById('rush').checked ? 'yes' : '';
+    const imageFile = document.getElementById('image').files[0];
+    if (imageFile) {
+      const dt = new DataTransfer();
+      dt.items.add(imageFile);
+      document.getElementById('c_image').files = dt.files;
+    }
+    document.getElementById('consultForm').submit();
+  });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+  const prefill = {{ prefill | tojson if prefill else 'null' }};
+  if (!prefill) return;
+
+  // Dropdowns
+  if (prefill.cakeType)  document.getElementById('cakeType').value  = prefill.cakeType;
+  if (prefill.cakeShape) document.getElementById('cakeShape').value = prefill.cakeShape;
+  if (prefill.cakeSize)  document.getElementById('cakeSize').value  = prefill.cakeSize;
+  if (prefill.design)    document.getElementById('design').value    = prefill.design;
+  if (prefill.layers)    document.getElementById('layers').value    = prefill.layers;
+  if (prefill.toppers)   document.getElementById('toppers').value   = prefill.toppers;
+  if (prefill.candles)   document.getElementById('candles').value   = prefill.candles;
+  if (prefill.notes)     document.getElementById('notes').value     = prefill.notes;
+  if (prefill.rush) document.getElementById('rush').checked = true;
+
+  // ✅ Add-on checkboxes
+  ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers'].forEach(id => {
+    if (prefill[id]) {
+      const el = document.getElementById(id);
+      if (el) el.checked = true;
+    }
+  });
+
+  // ✅ Inspo image — show as reference banner (can't re-attach file)
+  if (prefill.inspo_image) {
+    const uploadArea = document.querySelector('.below-grid');
+    if (uploadArea) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,167,205,0.3);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.7);';
+      banner.innerHTML = `
+        <img src="${prefill.inspo_image}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e75480;">
+        <span>📎 Reference image from consultation (re-upload below if you want to update it)</span>
+      `;
+      uploadArea.prepend(banner);
+    }
+  }
+
+  // ✅ Trigger recalculation so price + 3D preview reflect prefilled values
+  calculateTotal();
+  if (typeof buildCake === 'function') buildCake();
+  if (typeof updateBadges === 'function') updateBadges();
+
+  // Hide consult button, inject token
+  document.getElementById('consultBtn')?.style.setProperty('display', 'none');
+  const tokenInput = document.createElement('input');
+  tokenInput.type  = 'hidden';
+  tokenInput.name  = 'consult_token';
+  tokenInput.value = '{{ consult_token or "" }}';
+  document.getElementById('orderForm').appendChild(tokenInput);
+});
 </script>
 {% endblock %}

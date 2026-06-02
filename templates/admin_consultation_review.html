@@ -1,0 +1,156 @@
+{% extends 'admin_base.html' %}
+{% block title %}Review Consultation – Mrs. Brave Cake Shop{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:600px;">
+  <h4 class="text-white fw-bold mb-1">Review Consultation</h4>
+  <p class="text-white-50 mb-4">Edit the cake design if needed, then approve.</p>
+
+  <form method="POST" action="/admin/consultation-confirm" id="approveForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="user_id" value="{{ user_id }}">
+    <input type="hidden" name="conv_id" value="{{ conv_id }}">
+
+    <div style="background:white; border-radius:16px; padding:24px; color:#1a1a1a; margin-bottom:24px; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+      <h6 style="color:#db2777; margin-bottom:16px;">Cake Design</h6>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+
+        <div>
+          <label style="font-size:12px; color:#888;">Flavor</label>
+          <select name="cakeType" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            {% for f in ['chocolate','vanilla','redvelvet','ube','strawberry','mocha'] %}
+            <option value="{{ f }}|0" {{ 'selected' if cd.cakeType.split('|')[0] == f }}>{{ f | title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Shape</label>
+          <select name="cakeShape" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            <option value="circle" {{ 'selected' if cd.cakeShape == 'circle' }}>Circle (Round)</option>
+            <option value="rectangle" {{ 'selected' if cd.cakeShape == 'rectangle' }}>Rectangle (Sheet)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Size</label>
+          <select name="cakeSize" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            <option value="6|1600"  {{ 'selected' if cd.cakeSize.split('|')[0] == '6'  }}>6 inches (₱1,600)</option>
+            <option value="8|2300"  {{ 'selected' if cd.cakeSize.split('|')[0] == '8'  }}>8 inches (₱2,300)</option>
+            <option value="10|3100" {{ 'selected' if cd.cakeSize.split('|')[0] == '10' }}>10 inches (₱3,100)</option>
+            <option value="12|3500" {{ 'selected' if cd.cakeSize.split('|')[0] == '12' }}>12 inches (₱3,500)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Icing / Type</label>
+          <select name="design" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            <option value="0|0"              {{ 'selected' if cd.design.split('|')[0] == '0'           }}>None</option>
+            <option value="fondant|3500"     {{ 'selected' if cd.design.split('|')[0] == 'fondant'     }}>Fondant (₱3,500)</option>
+            <option value="buttercream|2000" {{ 'selected' if cd.design.split('|')[0] == 'buttercream' }}>Soft Icing (₱2,000)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Layers</label>
+          <select name="layers" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            <option value="1|0"    {{ 'selected' if cd.layers.split('|')[0] == '1' }}>Single Layer (₱0)</option>
+            <option value="2|2300" {{ 'selected' if cd.layers.split('|')[0] == '2' }}>Double Layer (₱2,300)</option>
+            <option value="3|3600" {{ 'selected' if cd.layers.split('|')[0] == '3' }}>Triple Layer (₱3,600)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Toppers</label>
+          <select name="toppers" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            <option value="0|0"   {{ 'selected' if cd.toppers.split('|')[0] == '0' }}>None</option>
+            <option value="1|150" {{ 'selected' if cd.toppers.split('|')[0] == '1' }}>1 set (₱150)</option>
+            <option value="3|250" {{ 'selected' if cd.toppers.split('|')[0] == '3' }}>Set of 3 (₱250)</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#888;">Candles</label>
+          <select name="candles" style="width:100%; padding:8px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; margin-top:4px;">
+            {% for c in [0,1,3,5,7] %}
+            <option value="{{ c }}" {{ 'selected' if (cd.candles | string) == (c | string) }}>{{ c if c > 0 else 'None' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Add-ons -->
+      <div style="margin-top:18px;">
+        <label style="font-size:12px; color:#888; display:block; margin-bottom:8px;">Add-ons</label>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          {% set addons = [
+            ('filling',        'Cake Filling',     100),
+            ('cupcake',        'Cupcake Dozen',    700),
+            ('ediblepaper',    'Edible Paper',     250),
+            ('fondanttoppers', 'Fondant Toppers',  450),
+            ('sprinkles',      'Sprinkles',        100),
+            ('drip',           'Choco Drip',       200),
+            ('flowers',        'Sugar Flowers',    300),
+          ] %}
+          {% for key, label, price in addons %}
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; padding:7px 10px; border:1px solid #e5d5c5; border-radius:8px;">
+            <input type="checkbox" name="{{ key }}" value="{{ price }}"
+              {{ 'checked' if cd.get(key) }}
+              style="accent-color:#db2777;">
+            {{ label }} (₱{{ price }})
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div style="margin-top:18px;">
+        <label style="font-size:12px; color:#888;">Special Instructions</label>
+        <textarea name="notes" rows="2" maxlength="500"
+          style="width:100%; margin-top:4px; padding:8px 12px; border:1px solid #e5d5c5; border-radius:8px; font-size:13px; resize:vertical; box-sizing:border-box;">{{ cd.notes or '' }}</textarea>
+      </div>
+
+      <!-- Reference image -->
+      {% if cd.inspo_image %}
+      <div style="margin-top:18px;">
+        <label style="font-size:12px; color:#888; display:block; margin-bottom:6px;">Reference Image</label>
+        <img src="{{ cd.inspo_image }}" style="width:80px; height:80px; object-fit:cover; border-radius:8px; border:2px solid #db2777;">
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- type="button" so it doesn't submit directly -->
+    <button type="button" onclick="confirmApprove()"
+      style="width:100%; padding:13px; background:#db2777; color:white; border:none;
+      border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
+      Approve &amp; Notify Customer
+    </button>
+  </form>
+
+  <a href="{{ url_for('admin_consultations') }}"
+    style="display:block; text-align:center; margin-top:12px; color:rgba(255,255,255,0.5); font-size:13px;">
+    &larr; Back to Consultations
+  </a>
+</div>
+
+{% block extra_js %}
+<script>
+function confirmApprove() {
+  glassAlert({
+    icon: 'question',
+    title: 'Approve & Notify?',
+    html: 'This will send the customer a link to complete their order with the design you edited. This cannot be undone.',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Approve',
+    cancelButtonText: 'Go Back',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      document.getElementById('approveForm').submit();
+    }
+  });
+}
+</script>
+{% endblock %}
+{% endblock %}

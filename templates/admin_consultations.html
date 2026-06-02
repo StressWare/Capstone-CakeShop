@@ -1,0 +1,226 @@
+{% extends 'admin_base.html' %}
+{% block title %}Consultations – Mrs. Brave Cake Shop{% endblock %}
+{% block content %}
+<div class="container-fluid px-4 py-4" style="display:flex; flex-direction:column; min-height:calc(100vh - 60px);">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="fw-bold mb-0 text-white">Customized Cake Consultations</h4>
+      <small class="text-white-50">All customer cake consultation requests</small>
+    </div>
+  </div>
+
+  <div style="flex:1;">
+    {% if consultations %}
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      {% for c in consultations %}
+      {% set cd = c.get('consultation_data') %}
+      <div class="consultation-card" style="background:white; border-radius:14px; padding:20px 24px; color:#1a1a1a; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="font-weight:600; font-size:15px;">{{ c.customer_name }}</div>
+            <div style="font-size:12px; color:#888; margin-top:2px;">
+              {{ c.last_updated.strftime('%b %d, %Y %I:%M %p') if c.last_updated else '—' }}
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            {% if c.status == 'converted' %}
+              <span style="background:#dcfce7; color:#166534; font-size:11px; padding:3px 10px; border-radius:20px;">Converted</span>
+            {% else %}
+              <span style="background:#fef3c7; color:#92400e; font-size:11px; padding:3px 10px; border-radius:20px;">Pending</span>
+              {% if cd %}
+              <form method="POST" action="/admin/consultation-to-order" style="display:inline;" id="convertForm-{{ loop.index }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="user_id" value="{{ c.user_id }}">
+                <input type="hidden" name="conversation_id" value="{{ c.conversation_id }}">
+                <button type="button"
+                  onclick="confirmConvert('convertForm-{{ loop.index }}', '{{ c.customer_name }}')"
+                  style="background:#db2777; color:white; border:none; border-radius:8px;
+                  padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
+                  Convert to Order
+                </button>
+              </form>
+              {% endif %}
+            {% endif %}
+            {% if cd %}
+            <button data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}"
+              style="background:#f3f4f6; color:#374151; border:none; border-radius:8px;
+              padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
+              View Details
+            </button>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if cd %}
+        <hr style="border-color:#f0f0f0; margin:14px 0;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:10px; font-size:13px;">
+          <div><span style="color:#888;">Flavor</span><br>{{ cd.get('cakeType','').split('|')[0] | title }}</div>
+          <div><span style="color:#888;">Shape</span><br>{{ cd.get('cakeShape','') | title }}</div>
+          <div><span style="color:#888;">Size</span><br>{{ cd.get('cakeSize','').split('|')[0] }} inches</div>
+          <div><span style="color:#888;">Icing</span><br>{{ cd.get('design','').split('|')[0] | title }}</div>
+          <div><span style="color:#888;">Layers</span><br>{{ cd.get('layers','').split('|')[0] }}</div>
+          <div><span style="color:#888;">Est. Price</span><br>
+            <span style="color:#db2777; font-weight:700;">₱{{ '{:,.2f}'.format(cd.get('amount', 0)) }}</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      {% if cd %}
+      <div class="modal fade" id="modal-{{ loop.index }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+          <div class="modal-content" style="border-radius:16px; overflow:hidden; border:none;">
+            <div class="modal-header" style="background:linear-gradient(135deg,#db2777,#9d174d); border:none; padding:18px 24px;">
+              <h5 class="modal-title text-white fw-bold mb-0">Consultation Details</h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0;">
+                <div style="padding:24px; border-right:1px solid #f0f0f0;">
+                  <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:14px;">Cake Design</div>
+                  {% set rows = [
+                    ('Flavor',  cd.get('cakeType','').split('|')[0] | title),
+                    ('Shape',   cd.get('cakeShape','') | title),
+                    ('Size',    cd.get('cakeSize','').split('|')[0] ~ ' inches'),
+                    ('Icing',   cd.get('design','').split('|')[0] | title),
+                    ('Layers',  cd.get('layers','').split('|')[0]),
+                    ('Toppers', cd.get('toppers','').split('|')[0]),
+                    ('Candles', cd.get('candles','') or 'None'),
+                    ('Rush Order', 'Yes' if cd.get('rush') else 'No'),
+                  ] %}
+                  {% for label, value in rows %}
+                  <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
+                    <span style="color:#888;">{{ label }}</span>
+                    <span style="font-weight:500; color:#1a1a1a;">{{ value }}</span>
+                  </div>
+                  {% endfor %}
+                  <div style="margin-top:16px;">
+                    <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:10px;">Add-ons</div>
+                    {% set addon_labels = {
+                      'filling': 'Cake Filling',
+                      'cupcake': 'Cupcake Dozen',
+                      'ediblepaper': 'Edible Paper',
+                      'fondanttoppers': 'Fondant Toppers',
+                      'sprinkles': 'Sprinkles',
+                      'drip': 'Choco Drip',
+                      'flowers': 'Sugar Flowers'
+                    } %}
+                    {% set chosen = namespace(items=[]) %}
+                    {% for key, label in addon_labels.items() %}
+                      {% if cd.get(key) %}{% set chosen.items = chosen.items + [label] %}{% endif %}
+                    {% endfor %}
+                    {% if chosen.items %}
+                      {% for item in chosen.items %}
+                      <span style="display:inline-block; background:#fff0f5; color:#db2777; border:1px solid #fcc; font-size:11px; padding:3px 10px; border-radius:20px; margin:2px;">{{ item }}</span>
+                      {% endfor %}
+                    {% else %}
+                      <span style="color:#888; font-size:13px;">None</span>
+                    {% endif %}
+                  </div>
+                  {% if cd.get('notes') %}
+                  <div style="margin-top:16px;">
+                    <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:6px;">Notes</div>
+                    <div style="font-size:13px; color:#444; background:#fafafa; border-radius:8px; padding:10px 12px;">{{ cd.get('notes') }}</div>
+                  </div>
+                  {% endif %}
+                </div>
+                <div style="padding:24px;">
+                  <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:14px;">Customer</div>
+                  {% for label, value in [('Name', c.customer_name), ('Email', c.email)] %}
+                  <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
+                    <span style="color:#888;">{{ label }}</span>
+                    <span style="font-weight:500; color:#1a1a1a;">{{ value or '—' }}</span>
+                  </div>
+                  {% endfor %}
+                  <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
+                    <span style="color:#888;">Submitted</span>
+                    <span style="font-weight:500;">{{ c.last_updated.strftime('%b %d, %Y %I:%M %p') if c.last_updated else '—' }}</span>
+                  </div>
+                  <div style="margin-top:20px;">
+                    <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:14px;">Pricing</div>
+                    <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
+                      <span style="color:#888;">Est. Total</span>
+                      <span style="font-weight:700; color:#db2777; font-size:16px;">₱{{ '{:,.2f}'.format(cd.get('amount', 0)) }}</span>
+                    </div>
+                  </div>
+                  {% if cd.get('inspo_image') %}
+                  <div style="margin-top:20px;">
+                    <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:10px;">Reference Image</div>
+                    <img src="{{ cd.get('inspo_image') }}" style="width:100%; max-height:200px; object-fit:contain; border-radius:10px; border:2px solid #db2777;">
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #f0f0f0; padding:14px 24px;">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">✕ Close</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div style="text-align:center; color:rgba(255,255,255,0.4); padding:60px 0;">
+      <div style="font-size:40px;">📋</div>
+      <p style="margin-top:12px;">No consultations yet.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Pagination always at bottom -->
+  <div id="paginationControls" style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:20px; padding-bottom:20px;">
+    <button onclick="changePage(-1)" id="prevBtn"
+      style="padding:8px 18px; border:none; border-radius:8px; background:white; color:#db2777;
+      font-weight:600; cursor:pointer; font-size:13px;">← Prev</button>
+    <span id="pageIndicator" style="color:white; font-size:13px; font-weight:500;"></span>
+    <button onclick="changePage(1)" id="nextBtn"
+      style="padding:8px 18px; border:none; border-radius:8px; background:white; color:#db2777;
+      font-weight:600; cursor:pointer; font-size:13px;">Next →</button>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+function confirmConvert(formId, customerName) {
+  glassAlert({
+    icon: 'question',
+    title: 'Convert to Order?',
+    html: `This will send <strong>${customerName}</strong> to the review page so you can edit and approve the cake design. Are you sure?`,
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Proceed',
+    cancelButtonText: 'Cancel',
+  }).then((result) => {
+    if (result.isConfirmed) {
+      document.getElementById(formId).submit();
+    }
+  });
+}
+
+const PER_PAGE = 4;
+let currentPage = 1;
+const items = Array.from(document.querySelectorAll('.consultation-card'));
+const total = items.length;
+
+function renderPage() {
+  const totalPages = Math.ceil(total / PER_PAGE) || 1;
+  items.forEach((el, i) => {
+    el.style.display = (i >= (currentPage - 1) * PER_PAGE && i < currentPage * PER_PAGE) ? '' : 'none';
+  });
+  document.getElementById('pageIndicator').textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('prevBtn').disabled = currentPage === 1;
+  document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+}
+
+function changePage(dir) {
+  const totalPages = Math.ceil(total / PER_PAGE) || 1;
+  currentPage = Math.min(Math.max(1, currentPage + dir), totalPages);
+  renderPage();
+}
+
+renderPage();
+</script>
+{% endblock %}
+{% endblock %}
