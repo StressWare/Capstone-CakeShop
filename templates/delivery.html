@@ -5,7 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Delivery — Mrs. Brave's Cakes</title>
   <link rel="icon" href="/static/img/logo.png" type="image/png">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script>
+    try {
+      firebase.initializeApp({
+        apiKey:            "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
+        authDomain:        "cakeshop-2faf4.firebaseapp.com",
+        projectId:         "cakeshop-2faf4",
+        storageBucket:     "cakeshop-2faf4.firebasestorage.app",
+        messagingSenderId: "470246706853",
+        appId:             "1:470246706853:web:339c4084715b0286b6474c",
+        measurementId:     "G-8PLLYZRD9Y"
+      });
+    } catch (e) {
+      console.error('Firebase init error:', e);
+    }
+  </script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
   <link rel="manifest" href="/manifest-delivery.json">
   <meta name="theme-color" content="#d63384">
   <script>
@@ -212,7 +230,37 @@
   </style>
 </head>
 <body>
+<script>
+  if (/FBAN|FBAV|FB_IAB|Instagram/.test(navigator.userAgent)) {
+    const url = window.location.href;
+    const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
 
+    let appUrl;
+    if (isAndroid) {
+      appUrl = 'intent://' + url.replace(/^https?:\/\//, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+    } else if (isIOS) {
+      appUrl = url; // Safari will open when scheme isn't handled
+    }
+
+    // Show modal
+    const modal = document.createElement('div');
+    modal.innerHTML = `
+      <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;">
+        <div style="background:white;border-radius:16px;padding:24px;text-align:center;max-width:320px;">
+          <div style="font-size:2rem;margin-bottom:12px;">📍</div>
+          <h3 style="color:#a0205e;margin-bottom:8px;">Open in Browser</h3>
+          <p style="color:#666;font-size:13px;margin-bottom:20px;">Live rider tracking requires GPS. Please open this page in your browser.</p>
+          <a href="${appUrl}" style="display:block;background:linear-gradient(135deg,#d63384,#a0205e);color:white;padding:12px;border-radius:10px;font-weight:700;text-decoration:none;margin-bottom:10px;">
+            ${isIOS ? '🧭 Open in Safari' : 'Open in Chrome'}
+          </a>
+          <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;">Continue without tracking</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+</script>
 {% if expired %}
   <div class="header">
     <div class="header-icon">🎂</div>
@@ -229,9 +277,8 @@
 
 {% else %}
   <div class="header">
-    <div class="header-icon">🎂</div>
     <div class="header-text">
-      <h1>Ms. Brave Cake Shop</h1>
+      <h1>Mrs. Brave Cake Shop</h1>
       <p>Delivery Details</p>
     </div>
   </div>
@@ -248,6 +295,8 @@
   <div class="map-legend">
     <div class="legend-item"><div class="legend-dot dot-shop"></div> Shop</div>
     <div class="legend-item"><div class="legend-dot dot-customer"></div> Customer</div>
+    <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
+    <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
   </div>
 
 {% if order.order_type == 'custom' and order.delivery_date %}
@@ -412,89 +461,160 @@
 {% endif %}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
 {% if not expired %}
 <script>
-  const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
-  const CUSTOMER = {
-    lat: {{ order.customer.lat or 10.7202 }},
-    lng: {{ order.customer.lng or 122.5621 }}
-  };
+const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
+const CUSTOMER = {
+  lat: {{ order.customer.lat or 10.7202 }},
+  lng: {{ order.customer.lng or 122.5621 }}
+};
 
-  var map = L.map('deliveryMap', { maxZoom: 15 }).setView([CUSTOMER.lat, CUSTOMER.lng], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map);
+var map = L.map('deliveryMap', { maxZoom: 15 }).setView([CUSTOMER.lat, CUSTOMER.lng], 14);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-  var shopIcon = L.divIcon({
-    html: '<div style="background:#d63384; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-    iconSize: [14, 14], iconAnchor: [7, 7], className: ''
-  });
-  var customerIcon = L.divIcon({
-    html: '<div style="background:#0d6efd; width:18px; height:18px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-    iconSize: [18, 18], iconAnchor: [9, 9], className: ''
-  });
+var shopIcon = L.divIcon({
+  html: '<div style="background:#d63384; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+  iconSize: [14, 14], iconAnchor: [7, 7], className: ''
+});
+var customerIcon = L.divIcon({
+  html: '<div style="background:#0d6efd; width:18px; height:18px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
+  iconSize: [18, 18], iconAnchor: [9, 9], className: ''
+});
 
-  L.marker([SHOP.lat, SHOP.lng], { icon: shopIcon })
-    .addTo(map)
-    .bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao');
+L.marker([SHOP.lat, SHOP.lng], { icon: shopIcon })
+  .addTo(map)
+  .bindPopup('<strong>Ms. Brave Cake Shop</strong><br>R Mapa St, Mandurriao');
 
-  L.marker([CUSTOMER.lat, CUSTOMER.lng], { icon: customerIcon })
-    .addTo(map)
-    .bindPopup('<strong>{{ order.customer.name }}</strong><br>{{ order.customer.address }}')
-    .openPopup();
+L.marker([CUSTOMER.lat, CUSTOMER.lng], { icon: customerIcon })
+  .addTo(map)
+  .bindPopup('<strong>{{ order.customer.name }}</strong><br>{{ order.customer.address }}')
+  .openPopup();
 
-  map.fitBounds([
-    [SHOP.lat, SHOP.lng],
-    [CUSTOMER.lat, CUSTOMER.lng]
-  ], { padding: [40, 40], maxZoom: 15 });
+L.Routing.control({
+  waypoints: [
+    L.latLng(SHOP.lat, SHOP.lng),
+    L.latLng(CUSTOMER.lat, CUSTOMER.lng)
+  ],
+  routeWhileDragging: false,
+  addWaypoints: false,
+  draggableWaypoints: false,
+  fitSelectedRoutes: true,
+  show: false,
+  lineOptions: {
+    styles: [{ color: '#d63384', weight: 4, opacity: 0.8 }]
+  },
+  createMarker: function() { return null; }
+}).on('routesfound', function(e) {
+  var km = (e.routes[0].summary.totalDistance / 1000).toFixed(1);
+  document.getElementById('distanceInfo').textContent = '📍 ' + km + ' km away';
+}).addTo(map);
+
+// Rider live marker
+var riderIcon = L.divIcon({
+  html: '<div style="background:#198754; width:16px; height:16px; border-radius:50%; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+  iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+});
+var riderMarker = null;
+const ORDER_ID = "{{ order.id }}";
+console.log(ORDER_ID);
+const db = firebase.firestore();
+
+// Throttle config
+let lastSaved = 0;
+let lastPos = null;
+
+function metersBetween(a, b) {
+  const R = 6371000;
+  const dLat = (b.lat - a.lat) * Math.PI / 180;
+  const dLng = (b.lng - a.lng) * Math.PI / 180;
+  const x = Math.sin(dLat/2)**2 + Math.cos(a.lat * Math.PI/180) * Math.cos(b.lat * Math.PI/180) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+}
+
+if (navigator.geolocation) {
+  navigator.geolocation.watchPosition(function(pos) {
+    const now = Date.now();
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const moved = lastPos ? metersBetween(lastPos, {lat, lng}) : 999;
+
+    // Update marker regardless of save throttle
+    if (!riderMarker) {
+      riderMarker = L.marker([lat, lng], { icon: riderIcon })
+        .addTo(map)
+        .bindPopup('🛵 Rider');
+    } else {
+      riderMarker.setLatLng([lat, lng]);
+    }
+
+    // Throttle Firestore writes: 10s AND 30m
+    if (now - lastSaved < 10000 && moved < 30) return;
+    lastSaved = now;
+    lastPos = { lat, lng };
+
+    db.collection('orders').doc(ORDER_ID).update({
+      rider_lat: lat,
+      rider_lng: lng,
+      rider_updated: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+  }, null, { enableHighAccuracy: true });
+}
 </script>
 <script>
-  async function notifyDelivered() {
-    const btn = document.getElementById('deliveredBtn');
-    const err = document.getElementById('deliveredErr');
-    const btnWrapper = document.getElementById('btnWrapper');
-    const deliveredState = document.getElementById('deliveredState');
-    const statusBadge = document.getElementById('statusBadge');
+async function notifyDelivered() {
+  const btn = document.getElementById('deliveredBtn');
+  const err = document.getElementById('deliveredErr');
+  const btnWrapper = document.getElementById('btnWrapper');
+  const deliveredState = document.getElementById('deliveredState');
+  const statusBadge = document.getElementById('statusBadge');
 
-    btn.disabled = true;
-    btn.textContent = 'Notifying...';
-    err.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Notifying...';
+  err.style.display = 'none';
 
-    try {
-      const token = "{{ order.delivery_token }}";
-      const res = await fetch(`/delivery/${token}/notify`, { method: 'POST' });
+  try {
+    const token = "{{ order.delivery_token }}";
+    const res = await fetch(`/delivery/${token}/notify`, { method: 'POST' });
 
-      if (res.ok) {
-        // ✅ Update status badge
+    if (res.ok) {
+      statusBadge.textContent = 'Delivered';
+      statusBadge.classList.remove('status-out');
+      statusBadge.classList.add('status-delivered');
+      btnWrapper.style.display = 'none';
+      deliveredState.style.display = 'block';
+
+      // ✅ Cleanup GPS on successful delivery
+      db.collection('orders').doc(ORDER_ID).update({
+        rider_lat: firebase.firestore.FieldValue.delete(),
+        rider_lng: firebase.firestore.FieldValue.delete(),
+        rider_updated: firebase.firestore.FieldValue.delete()
+      });
+
+    } else {
+      const data = await res.json();
+      if (res.status === 400 && data.error === 'Already notified') {
+        btnWrapper.style.display = 'none';
+        deliveredState.style.display = 'block';
         statusBadge.textContent = 'Delivered';
         statusBadge.classList.remove('status-out');
         statusBadge.classList.add('status-delivered');
-
-        // ✅ Swap button for delivered state
-        btnWrapper.style.display = 'none';
-        deliveredState.style.display = 'block';
-
       } else {
-        const data = await res.json();
-        // ✅ If already notified, just show delivered state silently
-        if (res.status === 400 && data.error === 'Already notified') {
-          btnWrapper.style.display = 'none';
-          deliveredState.style.display = 'block';
-          statusBadge.textContent = 'Delivered';
-          statusBadge.classList.remove('status-out');
-          statusBadge.classList.add('status-delivered');
-        } else {
-          btn.disabled = false;
-          btn.textContent = "✅ I've Delivered This Order";
-          err.style.display = 'block';
-        }
+        btn.disabled = false;
+        btn.textContent = "✅ I've Delivered This Order";
+        err.style.display = 'block';
       }
-    } catch (e) {
-      btn.disabled = false;
-      btn.textContent = "✅ I've Delivered This Order";
-      err.style.display = 'block';
     }
+
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = "✅ I've Delivered This Order";
+    err.style.display = 'block';
   }
+}
 </script>
 {% endif %}
 </body>

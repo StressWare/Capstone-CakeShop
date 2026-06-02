@@ -100,6 +100,7 @@
                 <div id="searchSuggestions"></div>
               </div>
               <p class="map-hint text-white">📍 Click on map or drag the pin to set your delivery location</p>
+              <p id="distanceInfo" style="display:none; font-size:12px; color:#f9a8d4; margin:4px 10px;"></p>
               <div id="map"></div>
             </div>
           </div>
@@ -354,7 +355,7 @@
           </div>
           <div class="order-summary-price" style="font-size:0.9rem; opacity:0.8;">
               <span>Delivery Fee</span>
-              <span id="displayDeliveryFee">₱50.00</span>
+              <span id="displayDeliveryFee">Calculating...</span>
           </div>
           <!-- Downpayment row — only shown for custom orders -->
           <div class="order-summary-price" id="downpaymentRow"
@@ -370,7 +371,7 @@
           </div>
           <div class="order-summary-price total">
               <span id="totalLabel">Total</span>
-              <span id="displayTotal">₱{{ "%.2f"|format((amount|float) + 50) }}</span>
+              <span id="displayTotal">₱{{ "%.2f"|format(amount|float) }}</span>
           </div>
           <div style="margin-top: 20px;">
             <button type="submit" class="btn w-100" id="submitBtn"
@@ -420,8 +421,12 @@
     document.getElementById('lngInput').value = lng;
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
       .then(r => r.json())
-      .then(data => { if (data && data.display_name) document.getElementById('addressInput').value = data.display_name; })
-      .catch(() => {});
+      .then(data => {
+        if (data && data.display_name)
+          document.getElementById('addressInput').value = data.display_name;
+        recalcTotal(); // ← ADD THIS
+      })
+      .catch(() => { recalcTotal(); }); // ← AND THIS
   }
 
   var searchTimeout;
@@ -449,6 +454,7 @@
               document.getElementById('lngInput').value = lon;
               document.getElementById('mapSearch').value = '';
               box.style.display = 'none';
+              recalcTotal(); // ← ADD THIS
             });
             box.appendChild(div);
           });
@@ -464,9 +470,7 @@
 
 function selectDelivery(type) {
      currentDeliveryType = type;  // ← ADD THIS LINE
-      var deliveryFee = type === 'Delivery' ? 50 : 0;
     var subtotal = orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0);
-    document.getElementById('displayDeliveryFee').textContent = type === 'Delivery' ? '₱50.00' : 'Free';
         recalcTotal();
 
     document.getElementById('deliveryTypeInput').value = type;
@@ -651,20 +655,41 @@ function selectDelivery(type) {
           'Subtotal: ₱' + item.subtotal.toFixed(2);
 
       var subtotal = orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0);
-      var deliveryFee = currentDeliveryType === 'Delivery' ? 50 : 0;
-      var total = subtotal + deliveryFee;
 
     document.getElementById('selectedItemsInput').value = JSON.stringify(orderItems);
           recalcTotal();
   }
   var baseAmount = {{ amount }};
-  
 
-function recalcTotal() {
+async function calcDeliveryFee() {
+  var lat = parseFloat(document.getElementById('latInput').value);
+  var lng = parseFloat(document.getElementById('lngInput').value);
+  if (!lat || !lng) return 50;
+
+  try {
+    var res  = await fetch(`https://router.project-osrm.org/route/v1/driving/${SHOP.lng},${SHOP.lat};${lng},${lat}?overview=false`);
+    var data = await res.json();
+    var km   = data.routes[0].distance / 1000;
+
+    var distEl = document.getElementById('distanceInfo');
+    distEl.textContent = '📍 ' + km.toFixed(1) + ' km from shop';
+    distEl.style.display = 'block'
+
+    if (km <= 3)      return 50;
+    else if (km <= 7) return Math.round(50 + (km - 3) * 12);
+    else              return Math.round(50 + (4 * 12) + (km - 7) * 15);
+  } catch(e) {
+    return 50;
+  }
+}
+
+async function recalcTotal() {
     var subtotal = orderItems.length > 0
       ? orderItems.reduce(function(sum, i) { return sum + i.subtotal; }, 0)
       : baseAmount;
-    var deliveryFee = currentDeliveryType === 'Delivery' ? 50 : 0;
+    var deliveryFee = currentDeliveryType === 'Delivery' ? await calcDeliveryFee() : 0;
+    document.getElementById('displayDeliveryFee').textContent =
+      currentDeliveryType === 'Delivery' ? '₱' + deliveryFee.toFixed(2) : 'Free';
     var rushFee = IS_RUSH ? 300 : 0;
     var grandTotal = subtotal + deliveryFee + rushFee;
 

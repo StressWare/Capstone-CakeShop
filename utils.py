@@ -158,3 +158,22 @@ def get_completed_cancelled_orders():
             result.append(d)
         set_cache("completed_cancelled_orders", result)
         return result
+    
+def get_converted_consultations():
+    cached = get_cache("converted_consultations")
+    if cached:
+        print("✅ CACHE HIT — converted consultations")
+        return cached
+    with _lock:
+        cached = get_cache("converted_consultations")
+        if cached:
+            return cached
+        print("🔥 FIRESTORE READ — converted consultations")
+        from db import conversations
+        result = []
+        for doc in conversations.where("is_consultation", "==", True).where("status", "==", "converted").stream():
+            d = doc.to_dict()
+            d["conversation_id"] = doc.id
+            result.append(d)
+        set_cache("converted_consultations", result)
+        return result

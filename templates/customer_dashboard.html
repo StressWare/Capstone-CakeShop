@@ -185,6 +185,14 @@
               {% endif %}
               {% if order.rush %}<span class="status-pill pill-rush">Rush</span>{% endif %}
             </div>
+            {% if s == 'Out for Delivery' %}
+            <a href="/track/{{ order.id }}" target="_blank"
+               style="display:inline-block; margin-top:8px; background:#198754; color:white;
+                      padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600;
+                      text-decoration:none;">
+              🛵 Track my order
+            </a>
+            {% endif %}
           </div>
 
           <!-- Status timeline -->
@@ -282,6 +290,11 @@
                   <button class="btn-view-order"
                           data-bs-toggle="modal"
                           data-bs-target="#orderModal{{ order.id }}">View</button>
+                  {% if order.status == 'Out for Delivery' %}
+                  <a href="/track/{{ order.id }}" class="btn-reorder"
+                    style="background:#198754; color:white; border-color:#198754;"
+                    target="_blank">🛵 Track</a>
+                  {% endif %}
                   {% if order.status == 'Completed' %}
                   <a href="/cakes" class="btn-reorder">Reorder</a>
                   {% endif %}

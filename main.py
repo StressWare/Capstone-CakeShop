@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
@@ -9,7 +9,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
                      handle_loyalty_stamp,safe_float, send_new_order_fcm)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations
 from firebase_admin import messaging
 import requests as http_requests
 import re
@@ -591,7 +591,21 @@ def customer_dashboard():
         loyalty_gifts_small = gifts["small"],
         loyalty_gifts_big   = gifts["big"]
     )
-
+# ---------------- CUSTOMER TRACKING ----------------
+@app.route("/track/<order_id>")
+@login_required
+def track_order(order_id):
+    order_doc = orders.document(order_id).get()
+    if not order_doc.exists:
+        abort(404)
+    order = order_doc.to_dict()
+    order['id'] = order_doc.id
+    if order.get('status') not in ('Out for Delivery', 'Delivered'):
+        abort(404)
+    # Make sure it belongs to logged-in customer
+    if order.get('user_id') != session.get('user_id'):
+        abort(403)
+    return render_template('customer_track.html', order=order)
 # ---------------- FAVORITES TOGGLE ----------------
 @app.route("/favorites/toggle", methods=["POST"])
 @profile_required
@@ -1346,7 +1360,25 @@ def finalize_order():
     if rush:
         amount = round(amount + RUSH_FEE, 2)
     #  Add delivery fee 
-    DELIVERY_FEE = 50.0
+    def get_delivery_fee(lat, lng):
+        if lat is None or lng is None:
+            return 50.0
+        import math
+        SHOP_LAT, SHOP_LNG = 10.711925117255893, 122.53996450415457
+        # Haversine straight-line (server has no OSRM access easily)
+        R = 6371
+        d_lat = math.radians(lat - SHOP_LAT)
+        d_lng = math.radians(lng - SHOP_LNG)
+        a = math.sin(d_lat/2)**2 + math.cos(math.radians(SHOP_LAT)) * math.cos(math.radians(lat)) * math.sin(d_lng/2)**2
+        km = R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+        if km <= 3:   return 50.0
+        elif km <= 7: return round(50 + (km - 3) * 12, 2)
+        else:         return round(50 + (4 * 12) + (km - 7) * 15, 2)
+
+    cust_lat = safe_float(request.form.get("lat"), -90, 90)
+    cust_lng = safe_float(request.form.get("lng"), -180, 180)
+    DELIVERY_FEE = get_delivery_fee(cust_lat, cust_lng) if delivery_type == "Delivery" else 0.0
     if delivery_type == "Delivery":
         amount = round(amount + DELIVERY_FEE, 2)
 
@@ -2485,15 +2517,23 @@ def admin_logs_page():
 @app.route('/admin/consultations')
 @admin_required
 def admin_consultations():
-    docs = conversations.where('is_consultation', '==', True).order_by('last_updated', direction=firestore.Query.DESCENDING).stream()
+    # Pending — always fresh
+    pending_docs = conversations.where('is_consultation', '==', True).order_by('last_updated', direction=firestore.Query.DESCENDING).stream()
+    
     consultations = []
-    for doc in docs:
+    for doc in pending_docs:
         d = doc.to_dict()
-        d['token'] = doc.id
-        user_doc = users.document(d.get('user_id', '')).get()
-        ud = user_doc.to_dict() if user_doc.exists else {}
-        d['customer_name'] = ud.get('fname') or ud.get('username', 'Customer')
+        if d.get('status') == 'converted':
+            continue  # skip converted here, handled by cache
+        d['conversation_id'] = doc.id
         consultations.append(d)
+
+    # Converted — from cache
+    consultations += get_converted_consultations()
+
+    # Sort combined list
+    consultations.sort(key=lambda x: x.get('last_updated') or 0, reverse=True)
+
     return render_template('admin_consultations.html', consultations=consultations)
 # ================================================================
 # ADMIN ACTION ROUTES
@@ -3923,7 +3963,7 @@ def consultation_confirm():
         'last_updated': now,
         'unread':       True,
     })
-
+    invalidate_cache("converted_consultations")
     flash('Customer notified with order link!', 'success')
     return redirect(url_for('admin_conversations'))
 
