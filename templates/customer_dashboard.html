@@ -190,7 +190,7 @@
                style="display:inline-block; margin-top:8px; background:#198754; color:white;
                       padding:6px 14px; border-radius:8px; font-size:12px; font-weight:600;
                       text-decoration:none;">
-              🛵 Track my order
+              Track my order
             </a>
             {% endif %}
           </div>
@@ -293,7 +293,7 @@
                   {% if order.status == 'Out for Delivery' %}
                   <a href="/track/{{ order.id }}" class="btn-reorder"
                     style="background:#198754; color:white; border-color:#198754;"
-                    target="_blank">🛵 Track</a>
+                    target="_blank">Track</a>
                   {% endif %}
                   {% if order.status == 'Completed' %}
                   <a href="/cakes" class="btn-reorder">Reorder</a>

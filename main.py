@@ -215,6 +215,10 @@ def verify_token():
     try:
         decoded_token = auth.verify_id_token(id_token,  clock_skew_seconds=10)
         uid = decoded_token['uid']
+        firebase_user = auth.get_user(uid)
+        if firebase_user.disabled:
+            return jsonify({'error': 'Your account has been disabled. Contact support.', 'account_disabled': True}), 403
+
         email = decoded_token.get('email', '')
         is_google = decoded_token.get('firebase', {}).get('sign_in_provider') == 'google.com'
 
@@ -289,7 +293,7 @@ def save_user_details():
         decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=10)
         token_uid = decoded_token['uid']
         uid = data.get('uid')
-
+    
         if uid != token_uid:
             return jsonify({'error': 'UID mismatch'}), 403
         
@@ -3065,6 +3069,7 @@ def update_custom_pricing():
 @admin_required
 def disable_user(uid):
     auth.update_user(uid, disabled=True)
+    auth.revoke_refresh_tokens(uid) 
     log_admin_action(
         action="Disabled user account",
         target=uid,

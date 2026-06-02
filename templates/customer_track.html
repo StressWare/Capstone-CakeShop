@@ -149,117 +149,143 @@
     margin-top: 12px;
     font-weight: 700;
   }
+  @media (min-width: 768px) {
+  .track-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 24px 0;
+    overflow: hidden;
+  }
+  #trackMap {
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0 16px;
+    height: 400px;
+    width: auto;
+  }
+  .map-legend {
+    margin: 0 16px;
+    border-radius: 0 0 12px 12px;
+    border: 1px solid #fce8f3;
+    border-top: none;
+  }
+    .status-bar {
+    border-radius: 12px;
+    margin: 0 16px 8px;
+    border: 1px solid #fce8f3;
+  }
+}
 </style>
 {% endblock %}
 
 {% block content %}
-
-<div class="status-bar">
-  <span style="color:#666;">Order Status</span>
-  <span id="statusBadge" class="status-badge {{ 'status-delivered' if order.status == 'Delivered' else 'status-out' }}">
-    {{ order.status }}
-  </span>
-</div>
-
-<div id="trackMap"></div>
-<div class="map-legend">
-  <div class="legend-item"><div class="legend-dot" style="background:#d63384;"></div> Shop</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#0d6efd;"></div> You</div>
-  <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
-  <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
-  <div class="legend-item" id="liveIndicator" style="display:none;">
-    <span class="live-indicator"><span class="live-dot"></span> LIVE</span>
+<div class="track-wrapper">
+  <div class="status-bar">
+    <span style="color:#666;">Order Status</span>
+    <span id="statusBadge" class="status-badge {{ 'status-delivered' if order.status == 'Delivered' else 'status-out' }}">
+      {{ order.status }}
+    </span>
   </div>
-</div>
 
-<!-- Rider status card -->
-<div class="track-card">
-  <div class="track-card-header">🛵 Rider Status</div>
-  <div class="track-card-body">
-    <div id="noRiderBox" class="no-rider-box">
-      ⏳ Waiting for rider location update...
-    </div>
-    <div id="riderInfo" style="display:none;">
-      <div class="info-row">
-        <span class="info-label">Last Updated</span>
-        <span class="info-value" id="riderLastUpdated">—</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Distance to You</span>
-        <span class="info-value" id="riderDistance">Calculating...</span>
-      </div>
+  <div id="trackMap"></div>
+  <div class="map-legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#d63384;"></div> Shop</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#0d6efd;"></div> You</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
+    <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
+    <div class="legend-item" id="liveIndicator" style="display:none;">
+      <span class="live-indicator"><span class="live-dot"></span> LIVE</span>
     </div>
   </div>
-</div>
 
-<!-- Delivered banner -->
-<div id="deliveredBanner" class="delivered-banner" style="display:{{ 'block' if order.status == 'Delivered' else 'none' }};">
-  <div class="check">✅</div>
-  <h3>Your order has been delivered!</h3>
-  <p>Enjoy your cake from Mrs. Brave's! 🎂</p>
-</div>
-
-<!-- Order summary -->
-<div class="track-card">
-  <div class="track-card-header">🎂 Your Order</div>
-  <div class="track-card-body">
-    {% if order.order_type == 'premade' and order.selected_items %}
-      {% for item in order.selected_items %}
-      <div class="order-item">
-        <div>
-          <div class="item-name">{{ item.cake_name }}</div>
-          {% if item.get('quantity', 1) > 1 %}
-            <div style="font-size:0.78rem; color:#888;">× {{ item.get('quantity', 1) }}</div>
-          {% endif %}
+  <!-- Rider status card -->
+  <div class="track-card">
+    <div class="track-card-header">Rider Status</div>
+    <div class="track-card-body">
+      <div id="noRiderBox" class="no-rider-box">
+        ⏳ Waiting for rider location update...
+      </div>
+      <div id="riderInfo" style="display:none;">
+        <div class="info-row">
+          <span class="info-label">Last Updated</span>
+          <span class="info-value" id="riderLastUpdated">—</span>
         </div>
-        <div class="item-price">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
+        <div class="info-row">
+          <span class="info-label">Distance to You</span>
+          <span class="info-value" id="riderDistance">Calculating...</span>
+        </div>
       </div>
-      {% endfor %}
-    {% elif order.order_type == 'custom' and order.custom_components %}
-      {% for component in order.custom_components %}
-      <div class="order-item">
-        <div class="item-name">{{ component.name }}</div>
-        <div class="item-price">₱{{ "%.2f"|format(component.price|float) }}</div>
+    </div>
+  </div>
+
+  <!-- Delivered banner -->
+  <div id="deliveredBanner" class="delivered-banner" style="display:{{ 'block' if order.status == 'Delivered' else 'none' }};">
+    <div class="check">✅</div>
+    <h3>Your order has been delivered!</h3>
+    <p>Enjoy your cake from Mrs. Brave's! 🎂</p>
+  </div>
+
+  <!-- Order summary -->
+  <div class="track-card">
+    <div class="track-card-header">🎂 Your Order</div>
+    <div class="track-card-body">
+      {% if order.order_type == 'premade' and order.selected_items %}
+        {% for item in order.selected_items %}
+        <div class="order-item">
+          <div>
+            <div class="item-name">{{ item.cake_name }}</div>
+            {% if item.get('quantity', 1) > 1 %}
+              <div style="font-size:0.78rem; color:#888;">× {{ item.get('quantity', 1) }}</div>
+            {% endif %}
+          </div>
+          <div class="item-price">₱{{ "%.2f"|format(item.get('subtotal', item.price)|float) }}</div>
+        </div>
+        {% endfor %}
+      {% elif order.order_type == 'custom' and order.custom_components %}
+        {% for component in order.custom_components %}
+        <div class="order-item">
+          <div class="item-name">{{ component.name }}</div>
+          <div class="item-price">₱{{ "%.2f"|format(component.price|float) }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="order-item">
+          <div class="item-name">{{ order.item }}</div>
+          <div class="item-price">₱{{ "%.2f"|format(order.amount|float) }}</div>
+        </div>
+      {% endif %}
+
+      {% set d_delivery = order.delivery_fee | float if order.delivery_fee else 0 %}
+      {% set d_rush     = order.rush_fee     | float if order.rush_fee     else 0 %}
+
+      {% if d_rush > 0 %}
+      <div class="order-item"><span style="color:#e65c00;">Rush Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_rush) }}</span></div>
+      {% endif %}
+      {% if d_delivery > 0 %}
+      <div class="order-item"><span style="color:#888;">Delivery Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_delivery) }}</span></div>
+      {% endif %}
+
+      <div class="total-row" style="background:#fde8f1;">
+        <span style="color:#a0205e; font-weight:700;">Total</span>
+        <span style="color:#a0205e; font-size:1.1rem; font-weight:800;">₱{{ "%.2f"|format(order.amount|float) }}</span>
       </div>
-      {% endfor %}
-    {% else %}
-      <div class="order-item">
-        <div class="item-name">{{ order.item }}</div>
-        <div class="item-price">₱{{ "%.2f"|format(order.amount|float) }}</div>
+    </div>
+  </div>
+
+  <!-- Delivery address -->
+  <div class="track-card">
+    <div class="track-card-header">📍 Delivery Address</div>
+    <div class="track-card-body">
+      <div class="address-box">{{ order.customer.address }}</div>
+      {% if order.delivery_instructions %}
+      <div class="info-row" style="margin-top:8px;">
+        <span class="info-label">Instructions</span>
+        <span class="info-value">{{ order.delivery_instructions }}</span>
       </div>
-    {% endif %}
-
-    {% set d_delivery = order.delivery_fee | float if order.delivery_fee else 0 %}
-    {% set d_rush     = order.rush_fee     | float if order.rush_fee     else 0 %}
-
-    {% if d_rush > 0 %}
-    <div class="order-item"><span style="color:#e65c00;">Rush Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_rush) }}</span></div>
-    {% endif %}
-    {% if d_delivery > 0 %}
-    <div class="order-item"><span style="color:#888;">Delivery Fee</span><span class="item-price">+₱{{ "%.2f"|format(d_delivery) }}</span></div>
-    {% endif %}
-
-    <div class="total-row" style="background:#fde8f1;">
-      <span style="color:#a0205e; font-weight:700;">Total</span>
-      <span style="color:#a0205e; font-size:1.1rem; font-weight:800;">₱{{ "%.2f"|format(order.amount|float) }}</span>
+      {% endif %}
     </div>
   </div>
 </div>
-
-<!-- Delivery address -->
-<div class="track-card">
-  <div class="track-card-header">📍 Delivery Address</div>
-  <div class="track-card-body">
-    <div class="address-box">{{ order.customer.address }}</div>
-    {% if order.delivery_instructions %}
-    <div class="info-row" style="margin-top:8px;">
-      <span class="info-label">Instructions</span>
-      <span class="info-value">{{ order.delivery_instructions }}</span>
-    </div>
-    {% endif %}
-  </div>
-</div>
-
 {% endblock %}
 
 {% block extra_js %}
@@ -287,7 +313,7 @@
     iconSize: [18,18], iconAnchor: [9,9], className: ''
   });
   var riderIcon = L.divIcon({
-    html: '<div style="background:#198754;width:18px;height:18px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;">🛵</div>',
+    html: '<div style="background:#198754;width:18px;height:18px;border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-size:10px;"></div>',
     iconSize: [18,18], iconAnchor: [9,9], className: ''
   });
 
@@ -336,7 +362,7 @@
       if (!riderMarker) {
         riderMarker = L.marker([rLat, rLng], { icon: riderIcon })
           .addTo(map)
-          .bindPopup('🛵 Your Rider');
+          .bindPopup('Your Rider');
       } else {
         riderMarker.setLatLng([rLat, rLng]);
       }

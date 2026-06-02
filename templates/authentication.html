@@ -377,7 +377,6 @@ async function sendTokenToBackend(user, action = 'login') {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken: idToken, recaptchaToken: recaptchaToken })
     });
- 
     if (response.ok) {
         const data = await response.json();
         if (data.needs_verification) {
@@ -399,6 +398,16 @@ async function sendTokenToBackend(user, action = 'login') {
         }
     } else {
         const error = await response.json();
+        if (error.account_disabled) {
+            await auth.signOut();
+            glassAlert({
+                icon: 'error',
+                title: 'Account Disabled',
+                text: 'Your account has been disabled. Please contact support.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
         glassAlert({
             icon: 'error',
             title: 'Authentication Failed',
@@ -426,7 +435,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             'auth/wrong-password': 'Incorrect password. Please try again.',
             'auth/too-many-requests': 'Too many attempts. Please wait before trying again.',
             'auth/invalid-email': 'Please enter a valid email address.',
-            'auth/user-disabled': 'This account has been disabled.'
+            'auth/user-disabled': 'Your account has been disabled. Please contact support.'
         };
         glassAlert({
             icon: 'error',
@@ -584,10 +593,12 @@ document.querySelectorAll('.google-signin-btn').forEach(btn => {
             const result = await auth.signInWithPopup(provider);
             await sendTokenToBackend(result.user);
         } catch (error) {
+            if (!error.code) return; //  let sendTokenToBackend handle backend errors
             const messages = {
                 'auth/popup-closed-by-user': 'Sign-in cancelled.',
                 'auth/popup-blocked': 'Popup blocked. Please allow popups for this site.',
                 'auth/cancelled-popup-request': 'Sign-in cancelled.',
+                'auth/user-disabled': 'Your account has been disabled. Please contact support.',
                 'auth/account-exists-with-different-credential': 'This email is already registered with password login. Please sign in with your email and password instead.'
             };
             glassAlert({
