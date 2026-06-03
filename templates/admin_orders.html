@@ -689,7 +689,40 @@
     </div>
   </div>
 </div>
-
+<!-- MESSAGE CUSTOMER MODAL -->
+<div class="modal fade" id="messageCustomerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header" style="background: var(--pink-gradient);">
+        <h5 class="modal-title text-white">
+          <i class="fas fa-comment-dots me-2"></i>
+          Message <span id="msgCustomerName"></span>
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="msgOrderCard" style="display:none;"></div>
+        <p style="font-size:0.85rem; color:#888; margin-bottom:12px;">
+          This message will appear in the customer's chat widget and trigger a notification.
+        </p>
+        <textarea id="adminMessageInput" class="form-control" rows="4" 
+                  placeholder="Type your message to the customer..."
+                  maxlength="500" style="resize:none;"></textarea>
+        <div style="text-align:right; font-size:0.75rem; color:#aaa; margin-top:4px;">
+          <span id="msgCharCount">0</span>/500
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="sendMessageBtn"
+                style="background: var(--pink-gradient); border:none;"
+                onclick="sendMessageToCustomer()">
+          <i class="fas fa-paper-plane me-2"></i>Send Message
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -740,8 +773,6 @@ document.addEventListener('hidden.bs.modal', function() {
   // ── State ──
   let db = null;
   let allOrders = [];
-  let historicalOrders = [];    
-  let historicalLoaded = false;
   let currentTab = 'all';
   let currentPage = 1;
   const ordersPerPage = 6;
@@ -787,10 +818,12 @@ document.addEventListener('hidden.bs.modal', function() {
       'Fully Paid',
       'Ready',
       'Out for Delivery',
-      'Delivered'
+      'Delivered',
+      'Completed',
+      'Cancelled'
       ])
       .orderBy('created_at', 'desc')
-      .limit(50)
+      .limit(200)
       .onSnapshot(snapshot => {
 
         snapshot.docChanges().forEach(change => {
@@ -855,36 +888,8 @@ document.addEventListener('hidden.bs.modal', function() {
     const statusFilter = document.getElementById('statusFilter').value;
     const rushFilter = document.getElementById('rushFilter').value;
 
-    // ✅ If Completed or Cancelled selected, use historicalOrders
-    const isHistoryView = statusFilter === 'Completed' || statusFilter === 'Cancelled';
-
-    if (isHistoryView && !historicalLoaded) {
-      // Show spinner while loading
-      document.getElementById('ordersTableBody').innerHTML = `
-        <tr><td colspan="9" class="text-center py-4">
-          <div class="spinner-border" style="color: var(--pink-primary);"></div>
-          <div class="mt-2 text-muted" style="font-size:0.85rem;">Loading history...</div>
-        </td></tr>`;
-
-      fetch('/admin/orders/history')
-        .then(res => res.json())
-        .then(data => {
-          historicalOrders = data.orders || [];
-          historicalLoaded = true;
-          renderTable(); // re-render with data
-        })
-        .catch(() => {
-          document.getElementById('ordersTableBody').innerHTML = `
-            <tr><td colspan="9" class="text-center text-danger py-4">
-              <i class="fas fa-exclamation-triangle me-2"></i>Failed to load history. Please try again.
-            </td></tr>`;
-        });
-      return;
-    }
-
     // ✅ Pick the right source
-    let source = isHistoryView ? historicalOrders : allOrders;
-
+    let source = allOrders;
     let filtered = source.filter(o => {
       const matchTab = currentTab === 'all' ||
         (currentTab === 'custom' && o.order_type === 'custom') ||
@@ -1036,6 +1041,43 @@ document.addEventListener('hidden.bs.modal', function() {
         </button>
       </div>`;
   }
+  function getAdminCancelReason() {
+    return new Promise(resolve => {
+      const reasons = ['Customer request','Out of stock','Unable to fulfill','Payment issue','Other'];
+      const optionsHtml = reasons.map(r => `
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;
+                      padding:9px 12px;border-radius:8px;border:1.5px solid #e0e0e0;
+                      background:#fff;font-size:13px;font-weight:500;margin-bottom:6px;"
+              onclick="this.style.borderColor='#dc3545';this.style.background='#fff5f5';
+                        document.querySelectorAll('#adminCancelReasonBox label').forEach(l=>{
+                          if(l!==this){l.style.borderColor='#e0e0e0';l.style.background='#fff';}
+                        });
+                        document.getElementById('adminCancelOtherBox').style.display='${r === 'Other' ? 'block' : 'none'}';">
+          <input type="radio" name="adminCancelRadio" value="${r}" style="accent-color:#dc3545;"> ${r}
+        </label>`).join('');
+      glassAlert({
+        title: 'Reason for Cancellation',
+        html: `<div id="adminCancelReasonBox" style="text-align:left;">${optionsHtml}
+                <div id="adminCancelOtherBox" style="display:none;margin-top:8px;">
+                  <textarea id="adminCancelOtherText" class="swal2-textarea" placeholder="Describe reason..."></textarea>
+                </div>
+              </div>`,
+        showCancelButton: true,
+        confirmButtonText: 'Confirm Cancel',
+        cancelButtonText: 'Back',
+        preConfirm: () => {
+          const sel = document.querySelector('[name="adminCancelRadio"]:checked');
+          if (!sel) { Swal.showValidationMessage('Please select a reason'); return false; }
+          if (sel.value === 'Other') {
+            const other = document.getElementById('adminCancelOtherText').value.trim();
+            if (!other) { Swal.showValidationMessage('Please describe the reason'); return false; }
+            return { reason: sel.value, other };
+          }
+          return { reason: sel.value, other: '' };
+        }
+      }).then(result => resolve(result.isConfirmed ? result.value : null));
+    });
+  }
   window.updateOrderStatus = async function(orderId) {
     const wrapper = document.querySelector(`.status-update-wrapper[data-order-id="${orderId}"]`);
     if (!wrapper) return;
@@ -1070,6 +1112,16 @@ document.addEventListener('hidden.bs.modal', function() {
     try {
       const formData = new FormData();
       formData.append('status', newStatus);
+      if (newStatus === 'Cancelled') {
+        const reasonResult = await getAdminCancelReason();
+        if (!reasonResult) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
+          return;
+        }
+        formData.append('cancel_reason', reasonResult.reason);
+        formData.append('cancel_reason_other', reasonResult.other);
+      }
       const response = await fetch(`/order/status/${orderId}`, { method: 'POST', body: formData });
       const result = await response.json();
 
@@ -1078,56 +1130,64 @@ document.addEventListener('hidden.bs.modal', function() {
         title: result.message || (result.success ? 'Updated!' : 'Failed'),
         showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
       });
-      if (result.success && (newStatus === 'Completed' || newStatus === 'Cancelled')) {
-        historicalLoaded = false;
-        historicalOrders = [];
-      }
     } catch (err) {
       glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
     } finally {
       btn.disabled = false;
       btn.innerHTML = '<i class="fas fa-sync-alt"></i> Update';
     }
-    window.markBalanceCollected = async function(orderId) {
-      const confirm = await glassAlert({
-        icon: 'question',
-        title: 'Mark Balance as Collected?',
-        html: `<div style="font-size:0.88rem; color:#555;">
-                This will set the payment status to <strong>Fully Paid</strong>.<br>
-                Make sure you have collected the remaining balance from the customer.
-              </div>`,
-        showCancelButton: true,
-        confirmButtonText: 'Yes, Collected',
-        cancelButtonText: 'Cancel',
+  };
+
+  window.markBalanceCollected = async function(orderId) {
+    const confirm = await glassAlert({
+      icon: 'question',
+      title: 'Mark Balance as Collected?',
+      html: `<div style="font-size:0.88rem; color:#555;">
+              This will set the payment status to <strong>Fully Paid</strong>.<br>
+              Make sure you have collected the remaining balance from the customer.
+            </div>`,
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Collected',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      const res = await fetch(`/order/balance-collected/${orderId}`, { method: 'POST' });
+      const result = await res.json();
+
+      glassToast({
+        icon: result.success ? 'success' : 'error',
+        title: result.message,
+        showConfirmButton: false,
+        timer: 2500, timerProgressBar: true
       });
-
-      if (!confirm.isConfirmed) return;
-
-      try {
-        const res    = await fetch(`/order/balance-collected/${orderId}`, { method: 'POST' });
-        const result = await res.json();
-
-        glassToast({
-          icon: result.success ? 'success' : 'error',
-          title: result.message,
-          showConfirmButton: false,
-          timer: 2500, timerProgressBar: true
-        });
-
-        if (result.success) {
-          const modal = bootstrap.Modal.getInstance(
-            document.getElementById('orderDetailsModal')
-          );
-          if (modal) modal.hide();
+      if (result.success) {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
+        if (modal) {
+          const modalEl = document.getElementById('orderDetailsModal');
+          modalEl.addEventListener('hidden.bs.modal', function onHidden() {
+            modalEl.removeEventListener('hidden.bs.modal', onHidden);
+            const poll = setInterval(() => {
+              const updated = allOrders.find(o => o.id === orderId);
+              if (updated && updated.payment_status === 'Fully Paid') {
+                clearInterval(poll);
+                showDetails(orderId);
+              }
+            }, 100);
+            setTimeout(() => clearInterval(poll), 5000);
+          });
+          modal.hide();
         }
-      } catch (err) {
-        glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
       }
-    };
+    } catch (err) {
+      glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+    }
   };
   // ── Show Details Modal ──
   window.showDetails = function(orderId) {
-    const o = allOrders.find(x => x.id === orderId) || historicalOrders.find(x => x.id === orderId)
+    const o = allOrders.find(x => x.id === orderId);
     if (!o) return;
 
     const header = document.getElementById('detailsModalHeader');
@@ -1200,13 +1260,21 @@ body.innerHTML = `
         <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
           <span class="text-muted">Method</span><span>${esc(o.payment_method || 'N/A')}</span>
         </div>
-        <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
+        <div class="d-flex justify-content-between align-items-start py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
           <span class="text-muted">Status</span>
-          <span>${o.payment_status === 'Paid'
-            ? `<span class="badge bg-success">✅ Paid</span>${o.payment_id ? `<small class="text-muted ms-1" style="font-size:0.72rem;">Ref: ${o.payment_id.substring(0,16)}...</small>` : ''}`
-            : o.payment_status === 'Downpayment Paid'
-              ? '<span class="badge bg-info text-dark">Downpayment Paid</span>'
-              : '<span class="badge bg-warning text-dark">Pending</span>'}</span>
+          <div style="text-align:right;">
+            ${o.payment_status === 'Paid' || o.payment_status === 'Fully Paid'
+              ? `<span class="badge bg-success">✅ Fully Paid</span>
+                ${o.payment_id && o.payment_method !== 'Cash on Delivery'
+                  ? `<small style="display:block; font-size:0.72rem; color:#888; margin-top:3px; font-family:monospace; word-break:break-all;">Ref: ${o.payment_id}</small>`
+                  : ''}`
+              : o.payment_status === 'Downpayment Paid'
+                ? `<span class="badge bg-info text-dark">Downpayment Paid</span>
+                  ${o.payment_id && o.payment_method !== 'Cash on Delivery'
+                    ? `<small style="display:block; font-size:0.72rem; color:#888; margin-top:3px; font-family:monospace; word-break:break-all;">Ref: ${o.payment_id}</small>`
+                    : ''}`
+                : '<span class="badge bg-warning text-dark">Pending</span>'}
+          </div>
         </div>
         ${o.order_type === 'custom' && o.downpayment_type ? `
         <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
@@ -1326,16 +1394,26 @@ body.innerHTML = `
     </div>
   </div>
 `;
-    footer.innerHTML = `
-      ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
-        ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
-        : ''}
-      ${o.order_type === 'custom' && o.payment_status === 'Downpayment Paid'
-        ? `<button type="button" class="btn btn-success" onclick="markBalanceCollected('${o.id}')">
-             <i class="fas fa-check-circle me-2"></i>Mark Balance Collected
-           </button>`
-        : ''}
-      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
+footer.innerHTML = `
+  ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
+    ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
+    : ''}
+  ${o.order_type === 'custom' && o.payment_status === 'Downpayment Paid'
+    ? `<button type="button" class="btn btn-success" onclick="markBalanceCollected('${o.id}')">
+         <i class="fas fa-check-circle me-2"></i>Mark Balance Collected
+       </button>`
+    : ''}
+  ${o.payment_id && o.payment_method !== 'Cash on Delivery'
+    ? `<a href="https://dashboard.paymongo.com/payments/${o.payment_id}" target="_blank" rel="noopener"
+          class="btn btn-info" style="font-weight:600; color:#000;">
+         <i class="fas fa-external-link-alt me-1"></i> View on PayMongo
+       </a>`
+    : ''}
+  <button type="button" class="btn btn-outline-secondary" 
+          onclick="openMessageModal('${o.user_id || ''}', '${(o.customer?.name || '').replace(/'/g, "\\'")}', '${o.id}')">
+    <i class="fas fa-comment-dots me-2"></i>Message Customer
+  </button>
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
     new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
   };
 
@@ -1514,7 +1592,7 @@ body.innerHTML = `
   function esc(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
+  window.getAdminAllOrders = function() { return allOrders; };
   document.addEventListener('DOMContentLoaded', init);
 })();
 
@@ -1561,6 +1639,157 @@ body.innerHTML = `
       }
       return false;
   };
+  // ── Message Customer ──
+  var _msgUserId = '';
+  var _msgOrder = null;
+
+  window.openMessageModal = function(userId, customerName, orderId) {
+    if (!userId) {
+      glassToast({ icon: 'error', title: 'No customer ID found for this order.', showConfirmButton: false, timer: 3000 });
+      return;
+    }
+    _msgUserId = userId;
+    _msgOrder = window.getAdminAllOrders().find(o => o.id === orderId) || null;
+
+    document.getElementById('msgCustomerName').textContent = customerName;
+    document.getElementById('adminMessageInput').value = '';
+    document.getElementById('msgCharCount').textContent = '0';
+
+    // Render order card
+    const cardEl = document.getElementById('msgOrderCard');
+    if (_msgOrder && cardEl) {
+      let itemLabel = '';
+      let itemDetails = '';
+
+      if (_msgOrder.order_type === 'premade' && _msgOrder.selected_items?.length) {
+        const first = _msgOrder.selected_items[0].cake_name;
+        const extra = _msgOrder.selected_items.length > 1 ? ` + ${_msgOrder.selected_items.length - 1} more` : '';
+        itemLabel = first + extra;
+      } else if (_msgOrder.order_type === 'custom') {
+        itemLabel = 'Custom Cake';
+        if (_msgOrder.custom_components?.length) {
+          itemDetails = _msgOrder.custom_components.map(c => c.name).join(' · ');
+        }
+      } else {
+        itemLabel = _msgOrder.item || 'Order';
+      }
+
+      const typeLabel = _msgOrder.order_type === 'custom' ? 'Custom' : 'Premade';
+      const amount = parseFloat(_msgOrder.amount || 0).toFixed(2);
+      const status = _msgOrder.status || '';
+
+      cardEl.innerHTML = `
+        <div style="background:#fff0f6; border:1.5px solid #f5c2dc; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+          <div style="font-size:13px; font-weight:700; color:#d63384; margin-bottom:4px;">
+            ${itemLabel}
+          </div>
+          ${itemDetails ? `<div style="font-size:11px; color:#888; margin-bottom:4px;">${itemDetails}</div>` : ''}
+          <div style="font-size:11px; color:#aaa;">
+            ${typeLabel} · ₱${amount} · ${status}
+          </div>
+        </div>`;
+      cardEl.style.display = 'block';
+    } else if (cardEl) {
+      cardEl.style.display = 'none';
+    }
+
+    const detailsModal = bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal'));
+    if (detailsModal) detailsModal.hide();
+
+    setTimeout(() => {
+      new bootstrap.Modal(document.getElementById('messageCustomerModal')).show();
+      document.getElementById('adminMessageInput').focus();
+    }, 300);
+  };
+
+document.addEventListener('DOMContentLoaded', function() {
+  const msgInput = document.getElementById('adminMessageInput');
+  if (msgInput) {
+    msgInput.addEventListener('input', function() {
+      document.getElementById('msgCharCount').textContent = this.value.length;
+    });
+    msgInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessageToCustomer();
+      }
+    });
+  }
+});
+
+window.sendMessageToCustomer = async function() {
+  const message = document.getElementById('adminMessageInput').value.trim();
+  const btn = document.getElementById('sendMessageBtn');
+
+  if (!message) {
+    glassToast({ icon: 'warning', title: 'Please type a message first.', showConfirmButton: false, timer: 2000 });
+    return;
+  }
+  if (!_msgUserId) {
+    glassToast({ icon: 'error', title: 'Missing customer ID.', showConfirmButton: false, timer: 2000 });
+    return;
+  }
+
+  // Build order context
+  let orderContext = null;
+  if (_msgOrder) {
+    let itemLabel = '';
+    let itemDetails = '';
+
+    if (_msgOrder.order_type === 'premade' && _msgOrder.selected_items?.length) {
+      const first = _msgOrder.selected_items[0].cake_name;
+      const extra = _msgOrder.selected_items.length > 1 ? ` + ${_msgOrder.selected_items.length - 1} more` : '';
+      itemLabel = first + extra;
+    } else if (_msgOrder.order_type === 'custom') {
+      itemLabel = 'Custom Cake';
+      if (_msgOrder.custom_components?.length) {
+        itemDetails = _msgOrder.custom_components.map(c => c.name).join(' · ');
+      }
+    } else {
+      itemLabel = _msgOrder.item || 'Order';
+    }
+
+    orderContext = {
+      order_id:    _msgOrder.id,
+      item_label:  itemLabel,
+      item_details: itemDetails,
+      item_image:  _msgOrder.order_type === 'premade' && _msgOrder.selected_items?.length
+                ? (_msgOrder.selected_items[0].image_url || null)
+                : null,
+      order_type:  _msgOrder.order_type,
+      amount:      _msgOrder.amount,
+      status:      _msgOrder.status
+    };
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
+
+  try {
+    const res = await fetch('/admin/initiate-conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: _msgUserId,
+        message: message,
+        order_context: orderContext  // ← send order context to route
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      bootstrap.Modal.getInstance(document.getElementById('messageCustomerModal')).hide();
+      glassToast({ icon: 'success', title: 'Message sent!', showConfirmButton: false, timer: 2500, timerProgressBar: true });
+    } else {
+      glassToast({ icon: 'error', title: data.error || 'Failed to send.', showConfirmButton: false, timer: 3000 });
+    }
+  } catch(e) {
+    glassToast({ icon: 'error', title: 'Network error.', showConfirmButton: false, timer: 3000 });
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send Message';
+  }
+};
 </script>
 <script>
 // ══════════════════════════════════════════════

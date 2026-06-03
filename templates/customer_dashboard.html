@@ -590,7 +590,46 @@
       </div>
     </div>
   </div>
-
+  <!-- CANCEL REASON MODAL -->
+  <div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-modal="true" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form method="POST" id="cancelReasonForm" action="">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="cancel_reason" id="cancelReasonValue">
+          <input type="hidden" name="cancel_reason_other" id="cancelReasonOtherValue">
+          <div class="modal-header" style="background:#dc3545;">
+            <h5 class="modal-title" style="color:#fff;">Cancel Order</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <p style="font-size:0.9rem; color:#555;">Why are you cancelling this order?</p>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              {% set reasons = ['Changed my mind', 'Ordered by mistake', 'Taking too long', 'Found cheaper elsewhere', 'Other'] %}
+              {% for reason in reasons %}
+              <label style="display:flex; align-items:center; gap:10px; cursor:pointer;
+                            padding:10px 12px; border-radius:8px; border:1.5px solid #e0e0e0;
+                            background:#fff; font-size:13px; font-weight:500;"
+                    onclick="selectCancelReason(this, '{{ reason }}')">
+                <input type="radio" name="_cancel_reason_radio" value="{{ reason }}" required
+                      style="accent-color:#dc3545;">
+                {{ reason }}
+              </label>
+              {% endfor %}
+            </div>
+            <div id="cancelOtherBox" style="display:none; margin-top:10px;">
+              <textarea id="cancelOtherText" class="form-control" rows="2"
+                        placeholder="Please describe your reason..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
+            <button type="submit" class="btn btn-danger" onclick="return submitCancelReason()">Confirm Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
   <!-- ===== ORDER DETAILS MODALS + REVIEW MODALS ===== -->
   {% for order in orders %}
 
@@ -770,10 +809,10 @@
         </div><!-- /modal-body -->
           <div class="modal-footer">
             {% if order.status == 'New' %}
-            <form method="POST" action="/order/cancel/{{ order.id }}" onsubmit="return confirm('Cancel this order?')">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-danger btn-sm">Cancel Order</button>
-            </form>
+            <button type="button" class="btn btn-danger btn-sm"
+                    onclick="openCancelModal('{{ order.id }}')">
+              Cancel Order
+            </button>
             {% endif %}
             {% if order.payment_status in ['Paid', 'Fully Paid', 'Downpayment Paid'] %}
             <a href="/order/receipt/{{ order.id }}" class="btn btn-sm" style="background:var(--pink);color:#fff;" target="_blank">🧾 View Receipt</a>
@@ -791,6 +830,11 @@
                         data-bs-target="#reviewModal{{ order.id }}">⭐ Review</button>
               {% endif %}
             {% endif %}
+            <button type="button" class="btn btn-sm"
+                    style="background:var(--pink);color:#fff;border:none;"
+                    onclick="messageShopAboutOrder('{{ order.id }}', '{{ order.order_type }}', '{{ order.item[:40] }}', '{{ order.amount }}', '{{ order.status }}', {% if order.order_type == 'premade' and order.selected_items %}'{{ order.selected_items[0].image_url }}'{% else %}null{% endif %}, {% if order.order_type == 'custom' and order.custom_components %}'{{ order.custom_components | map(attribute='name') | join(' · ') }}'{% else %}null{% endif %})">
+              <i class="fas fa-comment-dots me-1"></i> Message Shop
+            </button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           </div>
       </div><!-- /modal-content -->
@@ -875,6 +919,136 @@
 
 
 {% block extra_js %}
+<script>
+  function openCancelModal(orderId) {
+  document.getElementById('cancelReasonForm').action = '/order/cancel/' + orderId;
+  // Reset
+  document.querySelectorAll('[name="_cancel_reason_radio"]').forEach(r => r.checked = false);
+  document.querySelectorAll('#cancelReasonModal label').forEach(l => {
+    l.style.borderColor = '#e0e0e0'; l.style.background = '#fff';
+  });
+  document.getElementById('cancelOtherBox').style.display = 'none';
+  document.getElementById('cancelOtherText').value = '';
+  document.getElementById('cancelReasonValue').value = '';
+  document.getElementById('cancelReasonOtherValue').value = '';
+  // Close current order modal first, then open cancel modal
+  const openModal = document.querySelector('.modal.show');
+  if (openModal) {
+    bootstrap.Modal.getInstance(openModal).hide();
+    openModal.addEventListener('hidden.bs.modal', function once() {
+      openModal.removeEventListener('hidden.bs.modal', once);
+      new bootstrap.Modal(document.getElementById('cancelReasonModal')).show();
+    });
+  } else {
+    new bootstrap.Modal(document.getElementById('cancelReasonModal')).show();
+  }
+}
+
+function selectCancelReason(label, reason) {
+  document.querySelectorAll('#cancelReasonModal label').forEach(l => {
+    l.style.borderColor = '#e0e0e0'; l.style.background = '#fff';
+  });
+  label.style.borderColor = '#dc3545';
+  label.style.background  = '#fff5f5';
+  document.getElementById('cancelOtherBox').style.display = reason === 'Other' ? 'block' : 'none';
+}
+
+function submitCancelReason() {
+  const selected = document.querySelector('[name="_cancel_reason_radio"]:checked');
+  if (!selected) { alert('Please select a reason.'); return false; }
+  document.getElementById('cancelReasonValue').value = selected.value;
+  if (selected.value === 'Other') {
+    const other = document.getElementById('cancelOtherText').value.trim();
+    if (!other) { alert('Please describe your reason.'); return false; }
+    document.getElementById('cancelReasonOtherValue').value = other;
+  }
+  return true;
+}
+
+function messageShopAboutOrder(orderId, orderType, itemLabel, amount, status, imageUrl, itemDetails) {
+  // Close the current modal first
+  const openModal = document.querySelector('.modal.show');
+  if (openModal) {
+    bootstrap.Modal.getInstance(openModal).hide();
+    openModal.addEventListener('hidden.bs.modal', function once() {
+      openModal.removeEventListener('hidden.bs.modal', once);
+      openChatWithOrder(orderId, orderType, itemLabel, amount, status, imageUrl, itemDetails);
+    });
+  } else {
+    openChatWithOrder(orderId, orderType, itemLabel, amount, status, imageUrl, itemDetails);
+  }
+}
+
+function openChatWithOrder(orderId, orderType, itemLabel, amount, status, imageUrl, itemDetails) {
+  // Open chatbot widget
+  const chatWindow = document.getElementById('chatbotWindow');
+  const toggleBtn  = document.getElementById('chatbotToggle');
+  if (chatWindow) {
+    chatWindow.style.display = 'flex';
+    if (toggleBtn) toggleBtn.style.display = 'none';
+  }
+    console.log('window.chatbot:', window.chatbot);
+  // Store order context for the next message sent
+  if (window.chatbot) {
+    window.chatbot.pendingOrderContext = {
+      order_id:     orderId,
+      item_label:   itemLabel,
+      item_details: itemDetails || '',
+      item_image:   imageUrl || null,
+      order_type:   orderType,
+      amount:       parseFloat(amount),
+      status:       status
+    };
+    console.log('pendingOrderContext:', window.chatbot.pendingOrderContext); 
+    // Show a pre-filled hint in the input
+    const input = document.getElementById('chatbotInput');
+    if (input) {
+      input.placeholder = 'Type your question about this order...';
+      input.focus();
+    }
+
+    // Show order context card in chatbot
+    showOrderContextInChat(window.chatbot.pendingOrderContext);
+  }
+}
+
+function showOrderContextInChat(ctx) {
+  const messages = document.getElementById('chatbotMessages');
+  if (!messages) return;
+
+  // Remove existing context card if any
+  const existing = document.getElementById('pendingOrderContextCard');
+  if (existing) existing.remove();
+
+  const typeLabel = ctx.order_type === 'custom' ? 'Custom' : 'Premade';
+  const amount    = parseFloat(ctx.amount || 0).toFixed(2);
+  const imgHtml   = ctx.item_image
+    ? `<img src="${ctx.item_image}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+    : `<div style="width:48px;height:48px;border-radius:6px;background:#f5c2dc;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎂</div>`;
+
+  const card = document.createElement('div');
+  card.id = 'pendingOrderContextCard';
+  card.style.cssText = 'padding:8px 10px;';
+  card.innerHTML = `
+    <div style="background:#fff0f6;border:1.5px solid #f5c2dc;border-radius:10px;
+                padding:10px 12px;display:flex;gap:10px;align-items:center;">
+      ${imgHtml}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;color:#bbb;font-family:monospace;">Order #${ctx.order_id}</div>
+        <div style="font-size:12px;font-weight:700;color:#d63384;margin-bottom:2px;">
+          ${ctx.item_label}
+        </div>
+        ${ctx.item_details ? `<div style="font-size:11px;color:#aaa;margin-bottom:2px;">${ctx.item_details}</div>` : ''}
+        <div style="font-size:11px;color:#aaa;">${typeLabel} · ₱${amount} · ${ctx.status}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:#aaa;text-align:center;margin-top:6px;">
+      ⬆️ Your next message will include this order context
+    </div>`;
+  messages.appendChild(card);
+  messages.scrollTop = messages.scrollHeight;
+}
+</script>
 <script>
 /* ── Tab switcher ── */
 function showTab(tab) {

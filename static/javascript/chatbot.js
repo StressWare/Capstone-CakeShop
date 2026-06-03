@@ -421,7 +421,7 @@ class ChatbotWidget {
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     if (msg.text && msg.sender) {
-                        this.addMessage(msg.text, msg.sender, msg.timestamp);
+                        this.addMessage(msg.text, msg.sender, msg.timestamp, msg.order_context || null);
                     }
                 });
                 
@@ -438,6 +438,13 @@ class ChatbotWidget {
         const message = this.input?.value.trim();
         if (!message) return;
         if (this.input) this.input.value = '';
+        if (this.input) this.input.placeholder = 'Ask a question...'; // reset placeholder
+
+        // ← grab pending order context if any
+        const orderContext = this.pendingOrderContext || null;
+        this.pendingOrderContext = null;
+        document.getElementById('pendingOrderContextCard')?.remove();
+
         this.addMessage(message, 'customer', new Date());
         if (!this.isEscalated) this.showTyping();
         try {
@@ -448,7 +455,8 @@ class ChatbotWidget {
                     message: message,
                     user_id: this.userId,
                     conversation_id: this.conversationId,
-                    is_escalation: false
+                    is_escalation: false,
+                    order_context: orderContext  // ← attach it
                 })
             });
             
@@ -457,9 +465,16 @@ class ChatbotWidget {
             if (!data.success) {
                 console.error('Failed to send:', data.error);
                 this.addMessage('Sorry, there was an error. Please try again.', 'bot');
+            } else if (data.escalated && !this.isEscalated) {
+                // ← auto-escalated via order context — switch to owner chat mode
+                this.isEscalated = true;
+                this.messagesContainer.innerHTML = '';
+                this.lastDateLabel = null;
+                this.listenMessages();
+                this.listenAdminTyping();
+                this.updateUIForEscalation();
             } else if (!this.isEscalated && data.reply) {
-                this.addMessage(data.reply, 'bot', new Date());  // ← add timestamp
-                // Not escalated — show bot reply directly instead of waiting for Firestore
+                this.addMessage(data.reply, 'bot', new Date());
             }
         } catch (error) {
             this.hideTyping();
@@ -540,7 +555,7 @@ showBadge() {
     }
 
 
-    addMessage(text, sender, timestamp) {
+    addMessage(text, sender, timestamp, orderContext) {
         if (!this.messagesContainer) return;
         if (timestamp) {
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -557,15 +572,46 @@ showBadge() {
             const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
             timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
-
         const timeHtml = timeStr ? `<span class="msg-timestamp-inline">${timeStr}</span>` : '';
+
+        // Build order context card if present
+        let orderCardHtml = '';
+        if (orderContext) {
+            const itemDetails = orderContext.item_details
+                ? `<div style="font-size:11px;color:#888;margin-bottom:3px;">${this.escapeHtml(orderContext.item_details)}</div>`
+                : '';
+            const typeLabel = orderContext.order_type === 'custom' ? 'Custom' : 'Premade';
+            const amount = parseFloat(orderContext.amount || 0).toFixed(2);
+            orderCardHtml = `
+            
+                <div style="background:#fff0f6;border:1.5px solid #f5c2dc;border-radius:8px;
+                            padding:9px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:center;">
+                    ${orderContext.item_image
+                        ? `<img src="${orderContext.item_image}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+                        : `<div style="width:48px;height:48px;border-radius:6px;background:#f5c2dc;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎂</div>`}
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:#d63384;margin-bottom:3px;">
+                            ${orderContext.item_label || 'Order'}
+                        </div>
+                        ${itemDetails ? `<div style="font-size:11px;color:#aaa;margin-bottom:3px;">${orderContext.item_details}</div>` : ''}
+                        <div style="font-size:11px;color:#aaa;">
+                            ${typeLabel} · ₱${amount} · ${orderContext.status || ''}
+                        </div>
+                        <div style="font-size:10px;color:#bbb;margin-top:3px;font-family:monospace;">
+                            Order ID #${orderContext.order_id}
+                        </div>
+                    </div>
+                </div>`;
+        }
 
         if (sender === 'customer') {
             msgDiv.className = 'message customer-message';
-            msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
+            msgDiv.innerHTML = `${orderCardHtml}<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
         } else if (sender === 'admin') {
             msgDiv.className = 'message bot-message';
-            msgDiv.innerHTML = `<p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)} ${timeHtml}</p>`;
+            msgDiv.innerHTML = `
+                ${orderCardHtml}
+                <p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)} ${timeHtml}</p>`;
         } else if (sender === 'bot') {
             msgDiv.className = 'message bot-message';
             msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;

@@ -686,7 +686,7 @@
                 const time = msg.timestamp ? msg.timestamp.toDate().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
                 if (dom.chatLastActivity && time) dom.chatLastActivity.textContent = `Last: ${time}`;
                 
-                appendMessage(msg.sender, msg.text, time);
+                appendMessage(msg.sender, msg.text, time, msg.order_context || null); // ← add order_context
             });
             
             if (dom.chatMessages) dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
@@ -699,19 +699,48 @@
     }
 
     // ===== APPEND MESSAGE =====
-    function appendMessage(sender, text, time) {
+    function appendMessage(sender, text, time, orderContext) {
         if (!dom.chatMessages) return;
         
         const wrapper = document.createElement('div');
         wrapper.className = 'msg-wrapper';
         
         const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // Build order card if present
+        let orderCardHtml = '';
+        if (orderContext) {
+            const itemDetails = orderContext.item_details
+                ? `<div style="font-size:11px;color:#aaa;margin-bottom:3px;">${orderContext.item_details}</div>`
+                : '';
+            const typeLabel = orderContext.order_type === 'custom' ? 'Custom' : 'Premade';
+            const amount = parseFloat(orderContext.amount || 0).toFixed(2);
+            orderCardHtml = `
+                <div style="background:#fff0f6;border:1.5px solid #f5c2dc;border-radius:8px;
+                            padding:9px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:center;">
+                    ${orderContext.item_image
+                        ? `<img src="${orderContext.item_image}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+                        : `<div style="width:48px;height:48px;border-radius:6px;background:#f5c2dc;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎂</div>`}
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:#d63384;margin-bottom:3px;">
+                            ${orderContext.item_label || 'Order'}
+                        </div>
+                        ${itemDetails ? `<div style="font-size:11px;color:#aaa;margin-bottom:3px;">${orderContext.item_details}</div>` : ''}
+                        <div style="font-size:11px;color:#aaa;">
+                            ${typeLabel} · ₱${amount} · ${orderContext.status || ''}
+                        </div>
+                        <div style="font-size:10px;color:#bbb;margin-top:3px;font-family:monospace;">
+                            Order ID #${orderContext.order_id}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
         let html = '';
-        
         if (sender === 'customer') {
-            html = `<div class="msg-customer"><div class="bubble">${safe}<div class="msg-meta">${time}</div></div></div>`;
+            html = `<div class="msg-customer"><div class="bubble">${orderCardHtml}${safe}<div class="msg-meta">${time}</div></div></div>`;
         } else if (sender === 'admin') {
-            html = `<div class="msg-admin"><div class="bubble">${safe}<div class="msg-meta">${time}</div></div></div>`;
+            html = `<div class="msg-admin"><div class="bubble">${orderCardHtml}${safe}<div class="msg-meta">${time}</div></div></div>`;
         } else if (sender === 'bot') {
             html = `<div class="msg-bot"><div class="bubble">${safe}</div></div>`;
         }

@@ -379,7 +379,8 @@
           <div class="grid-col">
             <div class="field">
               <label for="cakeType">Cake Flavor</label>
-              <select id="cakeType" name="cakeType">
+              <select id="cakeType" name="cakeType" required>
+                <option value="" disabled selected>Select Cake Flavors</option>
                 <option value="chocolate|0">Chocolate</option>
                 <option value="vanilla|0">Vanilla</option>
                 <option value="redvelvet|0">Red Velvet</option>
@@ -390,14 +391,16 @@
             </div>
             <div class="field">
               <label for="cakeShape">Cake Shape</label>
-              <select id="cakeShape" name="cakeShape">
+              <select id="cakeShape" name="cakeShape" required>
+                <option value="" disabled selected>Select Cake Shape</option>
                 <option value="circle">Circle (Round)</option>
                 <option value="rectangle">Rectangle (Sheet)</option>
               </select>
             </div>
             <div class="field">
               <label for="cakeSize">Cake Size</label>
-              <select id="cakeSize" name="cakeSize">
+              <select id="cakeSize" name="cakeSize" required>
+                <option value="" disabled selected>Select Cake Size</option>
                 <option value="6|{{ custom_prices.size['6'] }}">6 inches (₱{{ custom_prices.size['6'] | int }})</option>
                 <option value="8|{{ custom_prices.size['8'] }}">8 inches (₱{{ custom_prices.size['8'] | int }})</option>
                 <option value="10|{{ custom_prices.size['10'] }}">10 inches (₱{{ custom_prices.size['10'] | int }})</option>
@@ -407,6 +410,7 @@
             <div class="field">
               <label for="toppers">Toppers</label>
               <select id="toppers" name="toppers">
+                <option value="" disabled selected>Select Toppers</option>
                 <option value="0|{{ custom_prices.toppers['0'] }}">None</option>
                 <option value="1|{{ custom_prices.toppers['1'] }}">1 set (₱{{ custom_prices.toppers['1'] | int }})</option>
                 <option value="3|{{ custom_prices.toppers['3'] }}">Set of 3 (₱{{ custom_prices.toppers['3'] | int }})</option>
@@ -417,16 +421,17 @@
           <!-- COL 2 -->
           <div class="grid-col">
             <div class="field">
-              <label for="design">Cake Type</label>
-              <select id="design" name="design">
-                <option value="0|0">None</option>
+              <label for="design">Cake Type </label>
+              <select id="design" name="design" required>
+                <option value="" disabled selected>Select Cake Type</option>
                 <option value="fondant|{{ custom_prices.icing.fondant }}">Fondant (₱{{ custom_prices.icing.fondant | int }})</option>
                 <option value="buttercream|{{ custom_prices.icing.buttercream }}">Soft Icing (₱{{ custom_prices.icing.buttercream | int }})</option>
               </select>
             </div>
             <div class="field">
-              <label for="layers">Layers</label>
-              <select id="layers" name="layers">
+              <label for="layers">Cake Layers</label>
+              <select id="layers" name="layers" required>
+                <option value="" disabled selected>Select Cake Layers</option>
                 <option value="1|{{ custom_prices.layers['1'] }}">Single Layer (₱{{ custom_prices.layers['1'] | int }})</option>
                 <option value="2|{{ custom_prices.layers['2'] }}">Double Layer (₱{{ custom_prices.layers['2'] | int }})</option>
                 <option value="3|{{ custom_prices.layers['3'] }}">Triple Layer (₱{{ custom_prices.layers['3'] | int }})</option>
@@ -435,6 +440,7 @@
             <div class="field">
               <label for="candles">Candles</label>
               <select id="candles" name="candles">
+                <option value="" disabled selected>Select Candles</option>
                 <option value="0">None</option>
                 <option value="1">1 candle</option>
                 <option value="3">3 candles</option>
@@ -486,69 +492,69 @@
             <label for="notes">Special Instructions</label>
             <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..." maxlength="500"></textarea>
           </div>
-<div style="display:flex; align-items:center; gap:14px;">
-    
-    <!-- Upload button OR thumbnail (toggles) -->
-    <label for="image" id="uploadLabel" class="custom-file-btn" style="cursor:pointer; margin:0;">
-        <i class="bi bi-upload"></i> Upload Reference Image
-    </label>
+        <div style="display:flex; align-items:center; gap:14px;">
+            
+            <!-- Upload button OR thumbnail (toggles) -->
+            <label for="image" id="uploadLabel" class="custom-file-btn" style="cursor:pointer; margin:0;">
+                <i class="bi bi-upload"></i> Upload Reference Image
+            </label>
 
-    <!-- Thumbnail (hidden until image picked) -->
-    <div id="uploadedPreview" style="display:none; align-items:center; gap:10px;">
-        <label for="image" style="cursor:pointer; position:relative; display:block;">
-            <img id="imagePreview" src="" alt="Preview"
-                 style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:2px solid #e75480; display:block;">
-            <span style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"
-                  onmouseover="this.style.background='rgba(0,0,0,0.35)'"
-                  onmouseout="this.style.background='rgba(0,0,0,0)'"></span>
-        </label>
-        <div style="display:flex; flex-direction:column; gap:2px;">
-            <span style="color:#e75480; font-size:13px; font-weight:500;">
-                <i class="bi bi-check-circle-fill"></i> <span id="uploadedFileName">Image attached</span>
-            </span>
-            <span style="color:rgba(255,255,255,0.4); font-size:11px;">
-                Click image to change · <span onclick="clearImage()" style="text-decoration:underline; cursor:pointer;">Remove</span>
-            </span>
+            <!-- Thumbnail (hidden until image picked) -->
+            <div id="uploadedPreview" style="display:none; align-items:center; gap:10px;">
+                <label for="image" style="cursor:pointer; position:relative; display:block;">
+                    <img id="imagePreview" src="" alt="Preview"
+                        style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:2px solid #e75480; display:block;">
+                    <span style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"
+                          onmouseover="this.style.background='rgba(0,0,0,0.35)'"
+                          onmouseout="this.style.background='rgba(0,0,0,0)'"></span>
+                </label>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <span style="color:#e75480; font-size:13px; font-weight:500;">
+                        <i class="bi bi-check-circle-fill"></i> <span id="uploadedFileName">Image attached</span>
+                    </span>
+                    <span style="color:rgba(255,255,255,0.4); font-size:11px;">
+                        Click image to change · <span onclick="clearImage()" style="text-decoration:underline; cursor:pointer;">Remove</span>
+                    </span>
+                </div>
+            </div>
+
+            <input type="file" name="image" id="image" accept="image/*"
+                  onchange="checkFileSize(this); previewImage(this)" hidden>
+
+            <!-- Rush Order stays on same line -->
+            <div class="rush-row" style="margin-left:auto;">
+                <input type="checkbox" name="rush" value="yes" id="rush">
+                <label for="rush">Rush Order</label>
+            </div>
         </div>
-    </div>
-
-    <input type="file" name="image" id="image" accept="image/*"
-           onchange="checkFileSize(this); previewImage(this)" hidden>
-
-    <!-- Rush Order stays on same line -->
-    <div class="rush-row" style="margin-left:auto;">
-        <input type="checkbox" name="rush" value="yes" id="rush">
-        <label for="rush">Rush Order</label>
-    </div>
-</div>
-<small style="font-size:11px; color:rgba(255,255,255,0.5);">Optional — max 2MB</small>
+        <small style="font-size:11px; color:rgba(255,255,255,0.5);">Optional — max 2MB</small>
         </div>
 
         <input type="hidden" name="order_item" id="orderItem">
         <input type="hidden" name="amount" id="orderAmount">
       </form>
       <form method="POST" action="/consultation" enctype="multipart/form-data" id="consultForm">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <input type="hidden" name="cakeType" id="c_cakeType">
-  <input type="hidden" name="cakeShape" id="c_cakeShape">
-  <input type="hidden" name="cakeSize" id="c_cakeSize">
-  <input type="hidden" name="design" id="c_design">
-  <input type="hidden" name="layers" id="c_layers">
-  <input type="hidden" name="toppers" id="c_toppers">
-  <input type="hidden" name="candles" id="c_candles">
-  <input type="hidden" name="filling" id="c_filling">
-  <input type="hidden" name="cupcake" id="c_cupcake">
-  <input type="hidden" name="ediblepaper" id="c_ediblepaper">
-  <input type="hidden" name="fondanttoppers" id="c_fondanttoppers">
-  <input type="hidden" name="sprinkles" id="c_sprinkles">
-  <input type="hidden" name="drip" id="c_drip">
-  <input type="hidden" name="flowers" id="c_flowers">
-  <input type="hidden" name="notes" id="c_notes">
-  <input type="hidden" name="order_item" id="c_orderItem">
-  <input type="hidden" name="amount" id="c_amount">
-  <input type="file" name="image" id="c_image" accept="image/*" hidden>
-  <input type="hidden" name="rush" id="c_rush">
-</form>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="cakeType" id="c_cakeType">
+        <input type="hidden" name="cakeShape" id="c_cakeShape">
+        <input type="hidden" name="cakeSize" id="c_cakeSize">
+        <input type="hidden" name="design" id="c_design">
+        <input type="hidden" name="layers" id="c_layers">
+        <input type="hidden" name="toppers" id="c_toppers">
+        <input type="hidden" name="candles" id="c_candles">
+        <input type="hidden" name="filling" id="c_filling">
+        <input type="hidden" name="cupcake" id="c_cupcake">
+        <input type="hidden" name="ediblepaper" id="c_ediblepaper">
+        <input type="hidden" name="fondanttoppers" id="c_fondanttoppers">
+        <input type="hidden" name="sprinkles" id="c_sprinkles">
+        <input type="hidden" name="drip" id="c_drip">
+        <input type="hidden" name="flowers" id="c_flowers">
+        <input type="hidden" name="notes" id="c_notes">
+        <input type="hidden" name="order_item" id="c_orderItem">
+        <input type="hidden" name="amount" id="c_amount">
+        <input type="file" name="image" id="c_image" accept="image/*" hidden>
+        <input type="hidden" name="rush" id="c_rush">
+      </form>
     </div>
 
     <!-- ===== 3D PREVIEW + TOTAL ===== -->

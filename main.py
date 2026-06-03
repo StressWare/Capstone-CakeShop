@@ -729,13 +729,13 @@ def loyalty_claim():
             "used":       False,
             "used_at":    None,
         })
-
-        update_data = {"loyalty_unclaimed": None, "loyalty_unclaimed_tier": None}
-        if tier == 10:
-            update_data["loyalty_stamps"] = 0
-
+        update_data = {
+            "loyalty_unclaimed": None,
+            "loyalty_unclaimed_tier": None,
+            "loyalty_stamps": max(0, stamps - tier)
+        }
         user_ref.update(update_data)
-        flash(f"🎁 Your free {gift_name} has been claimed! Show this at the shop.", "success")
+        flash(f"Your free {gift_name} has been claimed! Show this at the shop or use it during your next order!.", "success")
 
     except Exception:
         app.logger.exception("[LOYALTY CLAIM GIFT] Failed")
@@ -1569,16 +1569,15 @@ def finalize_order():
 def cancel_order(order_id):
     user_id = session.get("user_id")
 
-    order_ref = orders.document(order_id)  # ← CHANGED
+    order_ref = orders.document(order_id)
     order_doc = order_ref.get()
 
     if not order_doc.exists:
         flash("Order not found.", "danger")
         return redirect(url_for("customer_dashboard"))
-    
+
     order = order_doc.to_dict()
-    
-    # Verify order belongs to current user
+
     if order.get("user_id") != user_id:
         flash("Unauthorized access.", "danger")
         return redirect(url_for("customer_dashboard"))
@@ -1587,7 +1586,7 @@ def cancel_order(order_id):
         flash("Order cannot be cancelled anymore.", "warning")
         return redirect(url_for("customer_dashboard"))
 
-    # Restore stock if premade order
+    # Restore stock if premade
     if order.get("order_type") == "premade":
         for item in order.get("selected_items", []):
             cake_ref = cakes.document(item["cake_id"])
@@ -1597,7 +1596,17 @@ def cancel_order(order_id):
                 restore_qty = int(item.get("quantity", 1))
                 cake_ref.update({"quantity": current_qty + restore_qty, "status": True})
 
-    order_ref.update({"status": "Cancelled"})
+    cancel_reason = request.form.get("cancel_reason", "").strip()
+    cancel_reason_other = request.form.get("cancel_reason_other", "").strip()
+
+    order_ref.update({
+        "status": "Cancelled",
+        "cancel_reason": cancel_reason,
+        "cancel_reason_other": cancel_reason_other if cancel_reason == "Other" else "",
+        "cancelled_by": "customer",
+        "cancelled_at": datetime.now(PH_TZ),
+    })
+
     flash("Order cancelled successfully.", "info")
     return redirect(url_for("customer_dashboard"))
 # ================================================================
@@ -2269,6 +2278,8 @@ def admin_sales():
 @app.route("/admin/analytics")
 @admin_required
 def admin_analytics():
+    from collections import defaultdict
+
     now      = datetime.now(PH_TZ)
     week_ago = now - timedelta(days=7)
     days_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -2283,7 +2294,7 @@ def admin_analytics():
     monthly_expenses = {m: 0 for m in months}
 
     # ── All time (by year-month) ──
-    alltime_data = {}  # "Jan 2025" → {sales, expenses, profit}
+    alltime_data = {}
 
     # ── Summary cards ──
     total_revenue   = 0
@@ -2292,8 +2303,18 @@ def admin_analytics():
     total_completed = 0
     payment_counts  = {}
     premade_sales   = {}
-    custom_sales    = {}
 
+    # ── KPI accumulators ──
+    user_order_counts = defaultdict(int)
+    user_order_spend  = defaultdict(float)
+    user_order_names  = {}
+    peak_days         = defaultdict(int)
+    custom_revenue    = 0
+    premade_revenue   = 0
+    rush_count        = 0
+    cancel_reasons    = defaultdict(int)
+    cancelled_by_data = {"customer": 0, "admin": 0}
+    total_cancelled   = 0
     # ── Fetch expenses ──
     for doc in expenses.stream():
         e = doc.to_dict()
@@ -2310,42 +2331,49 @@ def admin_analytics():
         total_expenses += cost
 
         if isinstance(date_val, datetime):
-            # Weekly
             if date_val >= week_ago:
                 weekly_expenses[date_val.strftime("%a")] += cost
-
-            # Monthly
             if date_val.year == now.year:
                 monthly_expenses[date_val.strftime("%b")] += cost
-
-            # All time
             key = date_val.strftime("%b %Y")
             if key not in alltime_data:
                 alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": date_val}
             alltime_data[key]["expenses"] += cost
 
-    # ── Fetch orders ──
+    # ── Fetch orders (single loop) ──
     for order_doc in orders.stream():
-        order = order_doc.to_dict()
-        status = order.get("status", "")
-        amount = float(order.get("amount", 0))
+        order      = order_doc.to_dict()
+        status     = order.get("status", "")
+        amount     = float(order.get("amount", 0))
+        order_type = order.get("order_type", "")
+        uid        = order.get("user_id")
 
         total_orders += 1
         if status == "Completed":
             total_completed += 1
 
+        # Payment methods
         payment = order.get("payment_method", "Unknown")
         payment_counts[payment] = payment_counts.get(payment, 0) + 1
 
-        order_type = order.get("order_type", "")
-
-        # Track premade cake sales
+        # Premade cake popularity
         if order_type == "premade":
             for item in order.get("selected_items", []):
                 name = item.get("cake_name", "Unknown")
                 premade_sales[name] = premade_sales.get(name, 0) + 1
 
+        # Rush count
+        if order.get("rush"):
+            rush_count += 1
 
+        if status == "Cancelled":
+            total_cancelled += 1
+            reason = order.get("cancel_reason") or "No reason"
+            cancel_reasons[reason] += 1
+            cancelled_by = order.get("cancelled_by", "unknown")
+            if cancelled_by in ("customer", "admin"):
+                cancelled_by_data[cancelled_by] += 1
+        # created_at — parse once, reuse below
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             created_at = datetime.fromisoformat(created_at)
@@ -2354,9 +2382,24 @@ def admin_analytics():
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
+            peak_days[created_at.strftime("%A")] += 1
 
+        # Revenue + charts (Completed or Pickup)
         if status in ["Completed", "Pickup"]:
             total_revenue += amount
+
+            # KPI: revenue split
+            if order_type == "custom":
+                custom_revenue += amount
+            elif order_type == "premade":
+                premade_revenue += amount
+
+            # KPI: top customers
+            if uid:
+                user_order_counts[uid] += 1
+                user_order_spend[uid]  += amount
+                if uid not in user_order_names:
+                    user_order_names[uid] = order.get("customer", {}).get("name", "Unknown")
 
             if isinstance(created_at, datetime):
                 if created_at >= week_ago:
@@ -2368,20 +2411,11 @@ def admin_analytics():
                     alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": created_at}
                 alltime_data[key]["sales"] += amount
 
-    # ── Compute profits — floor at 0 per period to avoid negative display ──
-    weekly_profit = {}
-    for day in days_order:
-        raw = weekly_sales[day] - weekly_expenses[day]
-        weekly_profit[day] = max(0, raw)
-
-    monthly_profit = {}
-    for m in months:
-        raw = monthly_sales[m] - monthly_expenses[m]
-        monthly_profit[m] = max(0, raw)
-
+    # ── Profits ──
+    weekly_profit = {day: max(0, weekly_sales[day] - weekly_expenses[day]) for day in days_order}
+    monthly_profit = {m: max(0, monthly_sales[m] - monthly_expenses[m]) for m in months}
     for key in alltime_data:
-        raw = alltime_data[key]["sales"] - alltime_data[key]["expenses"]
-        alltime_data[key]["profit"] = max(0, raw)
+        alltime_data[key]["profit"] = max(0, alltime_data[key]["sales"] - alltime_data[key]["expenses"])
 
     alltime_sorted       = sorted(alltime_data.items(), key=lambda x: x[1]["sort"])
     alltime_labels       = [k for k, v in alltime_sorted]
@@ -2390,16 +2424,30 @@ def admin_analytics():
     alltime_profit_vals  = [v["profit"]   for k, v in alltime_sorted]
 
     # Top 3 premade cakes
-    top_premade       = sorted(premade_sales.items(), key=lambda x: x[1], reverse=True)[:3]
+    top_premade        = sorted(premade_sales.items(), key=lambda x: x[1], reverse=True)[:3]
     top_premade_names  = [c[0] for c in top_premade]
     top_premade_counts = [c[1] for c in top_premade]
 
-    # Net profit (all time)
-    net_profit = total_revenue - total_expenses
-
-    # Stats
+    # Net profit / stats
+    net_profit      = total_revenue - total_expenses
     completion_rate = round((total_completed / total_orders * 100), 1) if total_orders > 0 else 0
     avg_order_value = round(total_revenue / total_completed, 2)        if total_completed > 0 else 0
+
+    # ── KPI calculations ──
+    walkin_count   = sum(1 for _ in walkin_orders.stream())
+    total_online_customers = len(user_order_counts)
+    repeat_customers       = sum(1 for c in user_order_counts.values() if c >= 2)
+    repeat_rate            = round(repeat_customers / total_online_customers * 100, 1) if total_online_customers > 0 else 0
+    rush_pct               = round(rush_count / total_orders * 100, 1) if total_orders > 0 else 0
+    peak_day               = max(peak_days, key=peak_days.get) if peak_days else "N/A"
+    total_rev_split        = custom_revenue + premade_revenue
+    custom_pct             = round(custom_revenue  / total_rev_split * 100, 1) if total_rev_split > 0 else 0
+    premade_pct            = round(premade_revenue / total_rev_split * 100, 1) if total_rev_split > 0 else 0
+    top_customers          = sorted(
+        [{"name": user_order_names.get(uid, "Unknown"), "spend": spend, "orders": user_order_counts[uid]}
+         for uid, spend in user_order_spend.items()],
+        key=lambda x: x["spend"], reverse=True
+    )[:5]
 
     return render_template("admin_analytics.html",
         now              = now,
@@ -2429,6 +2477,23 @@ def admin_analytics():
         top_premade_names  = top_premade_names,
         top_premade_counts = top_premade_counts,
         payment_counts     = payment_counts,
+        # KPIs
+        repeat_rate            = repeat_rate,
+        repeat_customers       = repeat_customers,
+        total_online_customers = total_online_customers,
+        rush_count             = rush_count,
+        rush_pct               = rush_pct,
+        peak_day               = peak_day,
+        top_customers          = top_customers,
+        custom_revenue         = custom_revenue,
+        premade_revenue        = premade_revenue,
+        custom_pct             = custom_pct,
+        premade_pct            = premade_pct,
+        walkin_count           = walkin_count,
+        online_count           = total_orders,
+        cancel_reasons    = dict(cancel_reasons),
+        cancelled_by_data = cancelled_by_data,
+        total_cancelled   = total_cancelled,
     )
 # ---------------- ADMIN CAKES ----------------
 @app.route("/admin/cakes")
@@ -2681,10 +2746,11 @@ def update_order_status(order_id):
             update_data = {"status": new_status}
             if new_status == "Completed" and order_data.get("payment_method") == "Cash on Delivery":
                 update_data["payment_status"] = "Paid"
-            order_ref.update(update_data)
-            if new_status in ("Completed", "Cancelled"):
-                invalidate_cache("completed_cancelled_orders")
-            
+            if new_status == "Cancelled":
+                update_data["cancel_reason"]       = request.form.get("cancel_reason", "").strip()
+                update_data["cancel_reason_other"] = request.form.get("cancel_reason_other", "").strip() if request.form.get("cancel_reason") == "Other" else ""
+                update_data["cancelled_by"]        = "admin"
+                update_data["cancelled_at"]        = datetime.now(PH_TZ)
             # CREATE NOTIFICATION
             status_messages = {
                 "Accepted": "has been accepted",
@@ -3400,8 +3466,7 @@ def payment_failed():
 # ================================================================
 # CHATBOT ROUTES
 # ================================================================
-
-# ---------------- SEND MESSAGE ----------------
+# ---------------- CUSTOMER SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
 @limiter.limit("20 per minute")
 def send_message():
@@ -3411,6 +3476,7 @@ def send_message():
         message = data.get('message', '').strip()
         conversation_id = data.get('conversation_id')
         is_escalation = data.get('is_escalation', False)
+        order_context = data.get('order_context')  # ← NEW
 
         if not message:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
@@ -3446,7 +3512,16 @@ def send_message():
             })
             is_escalated = True
 
-        # Save customer message ✅ CORRECT
+        # ← NEW: auto-escalate if customer sends with order_context
+        if order_context and not is_escalated:
+            conv_ref.update({
+                'escalated': True,
+                'escalated_at': now,
+                'escalated_by': 'customer'
+            })
+            is_escalated = True
+            is_escalation = True
+
         messages_ref = conv_ref.collection("messages")
 
         # Only save to Firestore if escalated
@@ -3455,7 +3530,8 @@ def send_message():
                 "text": message,
                 "sender": "customer",
                 "timestamp": now,
-                "created_at": now
+                "created_at": now,
+                "order_context": order_context  # ← NEW
             })
 
             conv_ref.update({'last_updated': now})
@@ -3484,7 +3560,6 @@ def send_message():
 
         # Not escalated — just return bot reply directly, nothing saved
         if is_escalation:
-            # First time escalating — save to Firestore now
             conv_ref.update({
                 'escalated': True,
                 'escalated_at': now,
@@ -3494,7 +3569,8 @@ def send_message():
                 "text": message,
                 "sender": "customer",
                 "timestamp": now,
-                "created_at": now
+                "created_at": now,
+                "order_context": order_context  # ← NEW
             })
             messages_ref.add({
                 "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
@@ -3510,7 +3586,94 @@ def send_message():
     except Exception:
         app.logger.exception("Error in send_message")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
-# ---------------- RESET/START NEW CONVERSATION ----------------
+    
+# ---------------- ADMIN START CONVERSATION VIA ORDER ----------------
+@app.route('/admin/initiate-conversation', methods=['POST'])
+@admin_required
+def admin_initiate_conversation():
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        message = data.get('message', '').strip()
+
+        if not user_id or not message:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+
+        now = datetime.now(PH_TZ)
+
+        # Fetch customer data from users collection
+        user_data = users.document(user_id).get().to_dict() or {}
+        customer_name = user_data.get('fname') or user_data.get('username') or 'Customer'
+        customer_email = user_data.get('email') or ''
+
+        # Check if customer has an existing open conversation
+        existing_convos = users.document(user_id).collection('conversations') \
+            .where('closed', '==', False) \
+            .order_by('created_at', direction='DESCENDING') \
+            .limit(1) \
+            .get()
+
+        if existing_convos:
+            conv_id = existing_convos[0].id
+            conv_ref = users.document(user_id).collection('conversations').document(conv_id)
+            conv_ref.update({
+                'escalated': True,
+                'escalated_at': now,
+                'escalated_by': 'admin',
+                'last_updated': now
+            })
+        else:
+            # Create new conversation
+            conv_id = f'conv_{int(now.timestamp() * 1000)}'
+            conv_ref = users.document(user_id).collection('conversations').document(conv_id)
+            conv_ref.set({
+                'created_at': now,
+                'last_updated': now,
+                'escalated': True,
+                'escalated_at': now,
+                'escalated_by': 'admin',
+                'closed': False
+            })
+
+        # Save admin message
+        order_context = data.get('order_context')
+        conv_ref.collection('messages').add({
+            'text': message,
+            'sender': 'admin',
+            'timestamp': now,
+            'created_at': now,
+            'order_context': order_context
+        })
+
+        # Update root conversations collection (shows in admin conversations page)
+        conversations.document(conv_id).set({
+            'user_id': user_id,
+            'conversation_id': conv_id,
+            'customer_name': customer_name,
+            'email': customer_email,
+            'last_message': message[:50],
+            'last_updated': now,
+            'escalated': True,
+            'unread': False
+        }, merge=True)
+
+        # Write notification for customer (triggers notification.js onSnapshot)
+        db.collection('notifications').add({
+            'user_id': user_id,
+            'title': '💬 Message from Mrs. Brave\'s',
+            'message': message[:80],
+            'is_read': False,
+            'created_at': now,
+            'order_id': None
+        })
+
+        return jsonify({'success': True, 'conversation_id': conv_id})
+
+    except Exception:
+        app.logger.exception("Error in admin_initiate_conversation")
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500    
+    
+# ---------------- CUSTOMER RESET/START NEW CONVERSATION ----------------
 @app.route('/reset-conversation', methods=['POST'])
 @login_required
 @limiter.limit("5 per minute")

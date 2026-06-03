@@ -240,6 +240,138 @@
       </div>
     </div>
   </div>
+  <!-- KPI SECTION -->
+  <div class="section-label mt-2">Customer & Operational KPIs</div>
+  <div class="row g-3 mb-4">
+
+    <!-- Repeat Customer Rate -->
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#8e44ad;">
+        <div class="stat-label" style="color:#8e44ad;">Repeat Customer Rate</div>
+        <div class="stat-value" style="color:#8e44ad;">{{ repeat_rate }}%</div>
+        <div class="stat-sub">{{ repeat_customers }} of {{ total_online_customers }} customers reordered</div>
+      </div>
+    </div>
+
+    <!-- Rush Order % -->
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#e67e22;">
+        <div class="stat-label" style="color:#e67e22;">Rush Order Rate</div>
+        <div class="stat-value" style="color:#e67e22;">{{ rush_pct }}%</div>
+        <div class="stat-sub">{{ rush_count }} rush out of {{ total_orders }} orders</div>
+      </div>
+    </div>
+
+    <!-- Peak Day -->
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#2980b9;">
+        <div class="stat-label" style="color:#2980b9;">Peak Order Day</div>
+        <div class="stat-value" style="color:#2980b9; font-size:1.3rem;">{{ peak_day }}</div>
+        <div class="stat-sub">Most orders placed on this day</div>
+      </div>
+    </div>
+
+    <!-- Walk-in vs Online -->
+    <div class="col-md-3 col-sm-6">
+      <div class="stat-card-analytics" style="border-color:#27ae60;">
+        <div class="stat-label" style="color:#27ae60;">Walk-in vs Online</div>
+        <div class="stat-value" style="color:#27ae60; font-size:1.3rem;">{{ walkin_count }} / {{ online_count }}</div>
+        <div class="stat-sub">Walk-in / Online orders</div>
+      </div>
+    </div>
+
+    <!-- Custom vs Premade Revenue -->
+    <div class="col-md-6 col-sm-12">
+      <div class="stat-card-analytics" style="border-color:#c71585;">
+        <div class="stat-label">Custom vs Premade Revenue</div>
+        <div class="d-flex gap-4 mt-1">
+          <div>
+            <div class="stat-value" style="font-size:1.2rem;">₱{{ "%.0f"|format(custom_revenue) }}</div>
+            <div class="stat-sub">Custom ({{ custom_pct }}%)</div>
+          </div>
+          <div style="border-left:2px solid #f0e0f0; padding-left:16px;">
+            <div class="stat-value" style="font-size:1.2rem;">₱{{ "%.0f"|format(premade_revenue) }}</div>
+            <div class="stat-sub">Premade ({{ premade_pct }}%)</div>
+          </div>
+        </div>
+        <!-- Mini bar -->
+        <div style="margin-top:10px; height:6px; border-radius:4px; background:#f0e0f0; overflow:hidden;">
+          <div style="height:100%; width:{{ custom_pct }}%; background:#c71585; border-radius:4px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top 5 Customers -->
+    <div class="col-md-6 col-sm-12">
+      <div class="stat-card-analytics" style="border-color:#c71585;">
+        <div class="stat-label">Top Customers by Spend</div>
+        <div style="margin-top:8px;">
+          {% for c in top_customers %}
+          <div style="display:flex; justify-content:space-between; align-items:center;
+                      padding:5px 0; border-bottom:1px solid #fce8f3; font-size:0.83rem;">
+            <div>
+              <span style="font-weight:600; color:#333;">{{ loop.index }}. {{ c.name }}</span>
+              <span style="color:#aaa; margin-left:6px;">{{ c.orders }} order{{ 's' if c.orders != 1 else '' }}</span>
+            </div>
+            <span style="font-weight:700; color:#c71585;">₱{{ "%.0f"|format(c.spend) }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANCELLATION ANALYTICS -->
+  {% if total_cancelled > 0 %}
+  <div class="section-label mt-2">Cancellation Insights</div>
+  <div class="row g-3 mb-4">
+
+    <!-- Cancelled by split -->
+    <div class="col-md-4">
+      <div class="stat-card-analytics" style="border-color:#dc3545;">
+        <div class="stat-label" style="color:#dc3545;">Total Cancelled</div>
+        <div class="stat-value" style="color:#dc3545;">{{ total_cancelled }}</div>
+        <div class="stat-sub">
+          Customer: {{ cancelled_by_data.customer }} |
+          Admin: {{ cancelled_by_data.admin }}
+        </div>
+        <!-- Mini bar -->
+        {% if total_cancelled > 0 %}
+        {% set cust_pct = (cancelled_by_data.customer / total_cancelled * 100)|int %}
+        <div style="margin-top:10px; height:6px; border-radius:4px; background:#f5c2dc; overflow:hidden;">
+          <div style="height:100%; width:{{ cust_pct }}%; background:#dc3545; border-radius:4px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:4px;">
+          <span>Customer {{ cust_pct }}%</span>
+          <span>Admin {{ 100 - cust_pct }}%</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Cancellation reasons -->
+    <div class="col-md-8">
+      <div class="stat-card-analytics" style="border-color:#dc3545;">
+        <div class="stat-label" style="color:#dc3545;">Cancellation Reasons</div>
+        <div style="margin-top:10px;">
+          {% for reason, count in cancel_reasons.items() | sort(attribute='1', reverse=True) %}
+          {% set pct = (count / total_cancelled * 100)|int %}
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.83rem; margin-bottom:4px;">
+              <span style="font-weight:600; color:#333;">{{ reason }}</span>
+              <span style="color:#dc3545; font-weight:700;">{{ count }} ({{ pct }}%)</span>
+            </div>
+            <div style="height:6px; border-radius:4px; background:#f5c2dc; overflow:hidden;">
+              <div style="height:100%; width:{{ pct }}%; background:#dc3545; border-radius:4px;"></div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
 
   <!-- MAIN CHART -->
   <div class="section-label">Sales vs Expenses vs Profit</div>

@@ -497,7 +497,7 @@ function selectDelivery(type) {
     document.getElementById('landmarkSection').style.display = isPickup ? 'none' : 'block';
   }
 
-  var onlinePayments = ['GCash', 'PayMaya', 'Card'];
+  var onlinePayments = ['GCash', 'PayMaya', 'Card',  'Online Payment'];
   function selectPayment(element, method) {
     document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('active'));
     element.classList.add('active');
@@ -575,10 +575,10 @@ function selectDelivery(type) {
       title: 'Leave Checkout?',
       text: 'Your order has not been placed yet. Are you sure you want to leave?',
       showCancelButton: true,
-      confirmButtonText: 'Leave',
-      cancelButtonText: 'Stay',
+      confirmButtonText: 'Stay',
+      cancelButtonText: 'Leave',
     });
-    if (result.isConfirmed) {
+    if (result.isDismissed) {
       handledBySwal = true;
       history.back();
     } else {
@@ -597,10 +597,10 @@ function selectDelivery(type) {
         title: 'Leave Checkout?',
         text: 'Your order has not been placed yet. Are you sure you want to leave?',
         showCancelButton: true,
-        confirmButtonText: 'Leave',
-        cancelButtonText: 'Stay',
+        confirmButtonText: 'Stay',
+        cancelButtonText: 'Leave',
       });
-      if (result.isConfirmed) {
+      if (result.isDismissed) {
         handledBySwal = true;
         window.location.href = href;
       }
