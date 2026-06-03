@@ -7,7 +7,7 @@
   <title>Order Map — Mrs. Brave's Cakes Iloilo</title>
   <link rel="icon" type="image/png" href="../static/img/logo.png">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <style>
+  <style nonce="{{ csp_nonce() }}">
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #f9f0f5; }
 
@@ -58,7 +58,7 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   const SHOP     = { lat: 10.711925117255893, lng: 122.53996450415457 };
   const CUSTOMER = { 
     lat: {{ order.customer.lat }}, 

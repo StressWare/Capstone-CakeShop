@@ -390,7 +390,7 @@
 {% block extra_js %}
 <!-- unchanged JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   const ILOILO = { lat: 10.7202, lng: 122.5621 };
   const SHOP   = { lat: 10.711925117255893, lng: 122.53996450415457 };
   const bounds = L.latLngBounds(
@@ -607,7 +607,7 @@ function selectDelivery(type) {
     });
   });
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
     // ── Downpayment state (custom orders only) ──
   var currentDownpaymentType = 'full'; // '50', '75', or 'full'
   var ORDER_TYPE = '{{ order_type }}';

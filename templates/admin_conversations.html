@@ -3,7 +3,7 @@
 {% block title %}Conversations – Mrs. Brave's Cakes Iloilo {% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
     /* ===== LAYOUT ===== */
     .conversation-container {
         display: flex;
@@ -433,7 +433,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function() {
     'use strict';
     

@@ -4,7 +4,7 @@
 {% block extra_css %}
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
+<style nonce="{{ csp_nonce() }}">
   :root {
     --pink:    #f472b6;
     --pink-d:  #db2777;
@@ -20,345 +20,345 @@
     background-attachment: fixed;
   }
 
-.customize-section {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 24px 16px 48px;
-  overflow: visible; /* ✅ Add this */
-}
-
-  .page-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 28px;
-    font-weight: 600;
-    margin: 0 0 4px;
-    color: white;
-  }
-.page-sub {
-  font-size: 13px;
-  color: white;
-  margin: 0 0 12px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ✅ Adds depth */
-}
-  .layout {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
+  .customize-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    overflow: visible; /* ✅ Add this */
   }
 
-  /* --- FORM PANEL --- */
-  .form-panel {
-    flex: 1;
-    min-width: 0;
-    background: rgba(236, 9, 107, 0.15);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 167, 205, 0.3);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-    border-radius: 16px;
-    padding: 24px;
-    color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  }
-
-  .step-label {
-    font-size: 11px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: white;
-    margin: 0 0 6px;
-  }
-
-  .section-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 18px;
-    color: white;
-    margin: 0 0 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .dropdowns-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-    align-items: start;
-  }
-
-  .grid-col {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .field { margin-bottom: 0; }
-  .field > label {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-    color: white;
-    margin-bottom: 5px;
-  }
-
-  select, textarea {
-    width: 100%;
-    padding: 9px 12px;
-    border: 1px solid #e5d5c5;
-    border-radius: 8px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 13px;
-    background: #fffcf9;
-    color: #3d2010;
-    box-sizing: border-box;
-    transition: border-color 0.2s;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a07060' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-  }
-  select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--pink);
-  }
-  textarea {
-    background-image: none;
-    resize: vertical;
-    color: white;
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.2);
-  }
-
-  .addons-label {
-    font-size: 12px;
-    font-weight: 500;
-    color: white;
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .addon-grid {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 6px;
-    color: white;
-  }
-
-  .addon-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 10px;
-    border: 1px solid #e5d5c5;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
-    font-size: 12px;
-    color: white
-  }
-  .addon-item:hover { border-color: var(--pink); background: rgba(255,255,255,0.05); }
-  .addon-item input { margin: 0; accent-color: var(--pink-d); }
-
-  .below-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .custom-file-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border: 1px dashed #d4a090;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--pink-d);
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .custom-file-btn:hover { background: rgba(255,255,255,0.05); }
-
-  .rush-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    .page-title {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 28px;
+      font-weight: 600;
+      margin: 0 0 4px;
+      color: white;
+    }
+  .page-sub {
     font-size: 13px;
     color: white;
+    margin: 0 0 12px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ✅ Adds depth */
   }
-  .rush-row input { accent-color: var(--pink-d); }
+    .layout {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
 
-  .btn-checkout {
-    display: block;
-    width: 100%;
-    margin-top: 14px;
-    padding: 13px;
-    background: var(--pink-d);
-    color: #fff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    /* --- FORM PANEL --- */
+    .form-panel {
+      flex: 1;
+      min-width: 0;
+      background: rgba(236, 9, 107, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 167, 205, 0.3);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+      border-radius: 16px;
+      padding: 24px;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: white;
+      margin: 0 0 6px;
+    }
+
+    .section-title {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 18px;
+      color: white;
+      margin: 0 0 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dropdowns-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+      align-items: start;
+    }
+
+    .grid-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .field { margin-bottom: 0; }
+    .field > label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      margin-bottom: 5px;
+    }
+
+    select, textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #e5d5c5;
+      border-radius: 8px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 13px;
+      background: #fffcf9;
+      color: #3d2010;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a07060' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--pink);
+    }
+    textarea {
+      background-image: none;
+      resize: vertical;
+      color: white;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .addons-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .addon-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 6px;
+      color: white;
+    }
+
+    .addon-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 1px solid #e5d5c5;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 12px;
+      color: white
+    }
+    .addon-item:hover { border-color: var(--pink); background: rgba(255,255,255,0.05); }
+    .addon-item input { margin: 0; accent-color: var(--pink-d); }
+
+    .below-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .custom-file-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 1px dashed #d4a090;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--pink-d);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .custom-file-btn:hover { background: rgba(255,255,255,0.05); }
+
+    .rush-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: white;
+    }
+    .rush-row input { accent-color: var(--pink-d); }
+
+    .btn-checkout {
+      display: block;
+      width: 100%;
+      margin-top: 14px;
+      padding: 13px;
+      background: var(--pink-d);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-checkout:hover { background: #be185d; }
+    .btn-checkout:active { transform: scale(0.98); }
+
+    /* --- PREVIEW PANEL --- */
+    .preview-panel {
+      width: 360px;
+      min-width: 320px;
+      position: sticky;
+      top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .preview-card {
+      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .preview-header {
+      padding: 14px 18px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .preview-title {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      color: var(--brown);
+    }
+    .preview-hint {
+      font-size: 11px;
+      color: #c09080;
+    }
+
+    #cake-canvas {
+      display: block;
+      width: 100%;
+      height: 340px;
+    }
+
+    .preview-badges {
+      padding: 10px 16px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+  .preview-disclaimer {
     text-align: center;
-    text-decoration: none;
+    color: #3f4041; /* Grey text */
+    font-size: 11px;
+    font-style: italic;
+    margin: 0;
+    padding: 12px 0 0; /* Pushes it slightly down from the header */
   }
-  .btn-checkout:hover { background: #be185d; }
-  .btn-checkout:active { transform: scale(0.98); }
+    .badge {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: #fff0f5;
+      color: var(--pink-d);
+      border: 1px solid #fcc;
+      transition: all 0.2s;
+    }
 
-  /* --- PREVIEW PANEL --- */
-  .preview-panel {
-    width: 360px;
-    min-width: 320px;
-    position: sticky;
-    top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    .total-card {
+      background: #fff;
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 18px;
+    }
+    .total-card .total-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .total-card .total-label {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--brown);
+    }
+    .total-card .total-amount {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--pink-d);
+    }
+  /* ── Downpayment notice banner ── */
+  .downpayment-notice {
+    background: linear-gradient(135deg, rgba(214,51,132,0.18), rgba(160,32,94,0.12));
+    border: 1px solid rgba(214,51,132,0.45);
+    border-left: 4px solid #d63384;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 18px;
+    color: white;
+    font-size: 13px;
   }
-
-  .preview-card {
-    background: #fff;
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    overflow: hidden;
-  }
-
-  .preview-header {
-    padding: 14px 18px 0;
+  .downpayment-notice .notice-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: #f9a8d4;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-  }
-  .preview-title {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--brown);
-  }
-  .preview-hint {
-    font-size: 11px;
-    color: #c09080;
-  }
-
-  #cake-canvas {
-    display: block;
-    width: 100%;
-    height: 340px;
-  }
-
-  .preview-badges {
-    padding: 10px 16px 14px;
-    display: flex;
-    flex-wrap: wrap;
     gap: 6px;
   }
-.preview-disclaimer {
-  text-align: center;
-  color: #3f4041; /* Grey text */
-  font-size: 11px;
-  font-style: italic;
-  margin: 0;
-  padding: 12px 0 0; /* Pushes it slightly down from the header */
-}
-  .badge {
-    font-size: 11px;
-    padding: 3px 9px;
-    border-radius: 20px;
-    background: #fff0f5;
-    color: var(--pink-d);
-    border: 1px solid #fcc;
-    transition: all 0.2s;
+  .downpayment-notice ul {
+    margin: 6px 0 10px 16px;
+    padding: 0;
+    color: rgba(75, 71, 71, 0.75);
+    font-size: 12px;
+    line-height: 1.8;
   }
-
-  .total-card {
-    background: #fff;
-    border: 0.5px solid var(--border);
-    border-radius: 16px;
-    padding: 16px 18px;
-  }
-  .total-card .total-row {
+  .agree-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
+    gap: 8px;
+    margin-top: 8px;
+    cursor: pointer;
   }
-  .total-card .total-label {
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--brown);
+  .agree-row input[type="checkbox"] {
+    accent-color: #d63384;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    flex-shrink: 0;
   }
-  .total-card .total-amount {
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--pink-d);
+  .agree-row label {
+    font-size: 12px;
+    color: rgba(75, 71, 71, 0.75);
+    cursor: pointer;
+    margin: 0;
   }
-/* ── Downpayment notice banner ── */
-.downpayment-notice {
-  background: linear-gradient(135deg, rgba(214,51,132,0.18), rgba(160,32,94,0.12));
-  border: 1px solid rgba(214,51,132,0.45);
-  border-left: 4px solid #d63384;
-  border-radius: 10px;
-  padding: 14px 16px;
-  margin-top: 18px;
-  color: white;
-  font-size: 13px;
-}
-.downpayment-notice .notice-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: #f9a8d4;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.downpayment-notice ul {
-  margin: 6px 0 10px 16px;
-  padding: 0;
-  color: rgba(75, 71, 71, 0.75);
-  font-size: 12px;
-  line-height: 1.8;
-}
-.agree-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  cursor: pointer;
-}
-.agree-row input[type="checkbox"] {
-  accent-color: #d63384;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-.agree-row label {
-  font-size: 12px;
-  color: rgba(75, 71, 71, 0.75);
-  cursor: pointer;
-  margin: 0;
-}
-.btn-checkout.locked {
-  opacity: 0.45;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-  @media (max-width: 720px) {
-    .layout { flex-direction: column-reverse; }
-    .preview-panel { width: 100%; min-width: 0; position: static; }
-    #cake-canvas { height: 280px; }
+  .btn-checkout.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
   }
+    @media (max-width: 720px) {
+      .layout { flex-direction: column-reverse; }
+      .preview-panel { width: 100%; min-width: 0; position: static; }
+      #cake-canvas { height: 280px; }
+    }
 
-  @media (max-width: 520px) {
-    .dropdowns-grid { grid-template-columns: 1fr; }
-    .addon-grid { grid-template-columns: repeat(2, 1fr) !important; }
-  }
+    @media (max-width: 520px) {
+      .dropdowns-grid { grid-template-columns: 1fr; }
+      .addon-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
 </style>
 {% endblock %}
 
@@ -617,7 +617,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   function previewImage(input) {
     const file = input.files[0];
     if (!file) return;
@@ -639,7 +639,7 @@ function clearImage() {
     document.getElementById('uploadLabel').style.display = 'inline-flex';
 }
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   /* =========================================================
     PRICING HELPERS
     ========================================================= */
@@ -1177,7 +1177,7 @@ function clearImage() {
     window.updateBadges = updateBadges;
   }); // end load
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
  function submitConsultation() {
   updateOrderData();
   glassAlert({

@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
+<style nonce="{{ csp_nonce() }}">
   .status-bar {
     background: white;
     padding: 10px 20px;
@@ -196,6 +196,9 @@
     <div class="legend-item" id="liveIndicator" style="display:none;">
       <span class="live-indicator"><span class="live-dot"></span> LIVE</span>
     </div>
+    <div class="legend-item" style="margin-left:auto; color:#888; font-size:0.72rem;">
+      Routes by <a href="http://project-osrm.org/" target="_blank" style="color:#888;">OSRM</a>
+    </div>
   </div>
 
   <!-- Rider status card -->
@@ -290,7 +293,7 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   const SHOP     = { lat: 10.711925117255893, lng: 122.53996450415457 };
   const CUSTOMER = {
     lat: {{ order.customer.lat or 10.7202 }},

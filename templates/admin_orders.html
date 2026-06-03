@@ -2,7 +2,7 @@
 {% block title %}Orders – Mrs. Brave's Cakes Iloilo{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   :root {
     --pink-primary:   #d63384;
     --pink-light:     #fde8f1;
@@ -726,7 +726,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 /* ── Fix 1: Prevent pinch-zoom ──
    admin_base.html has <meta name="viewport" content="width=device-width, initial-scale=1">
    We update it to also block user scaling. */
@@ -1791,7 +1791,7 @@ window.sendMessageToCustomer = async function() {
   }
 };
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 // ══════════════════════════════════════════════
 //  NEW ORDER NOTIFICATION SYSTEM
 // ══════════════════════════════════════════════

@@ -108,7 +108,7 @@
 </div>
 
 <!-- Styles -->
-<style>
+<style nonce="{{ csp_nonce() }}">
   .bg-pink { background-color: #e91e8c !important; }
   .btn-outline-pink { color: #e91e8c; border-color: #e91e8c; }
   .btn-outline-pink:hover { background-color: #e91e8c; color: white; }
@@ -179,7 +179,7 @@
 </style>
 
 <!-- Filter + Search JS -->
-<script>
+<script nonce="{{ csp_nonce() }}">
   const ITEMS_PER_PAGE = 15;
  
   const filterBtns  = document.querySelectorAll("#filterBtns button");

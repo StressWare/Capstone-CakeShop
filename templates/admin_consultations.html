@@ -1,7 +1,7 @@
 {% extends 'admin_base.html' %}
 {% block title %}Consultations – Mrs. Brave's Cakes Iloilo{% endblock %}
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   /* ── PAGINATION (copied from inventory) ── */
   .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
   .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
@@ -185,7 +185,7 @@
 </div>
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 function confirmConvert(formId, customerName) {
   glassAlert({
     icon: 'question',

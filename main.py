@@ -41,12 +41,79 @@ def csrf_error(_):
        'application/json' in request.headers.get('Content-Type', ''):
         return jsonify({'error': 'csrf_expired', 'message': 'Session expired.'}), 400
     return render_template('400.html'), 400
+csp = {
+    'default-src': ["'self'"],
+    'base-uri': ["'self'"],
+    'form-action': ["'self'"],
+    'script-src': [
+        "'self'",
+        "cdn.jsdelivr.net",
+        "cdnjs.cloudflare.com",
+        "unpkg.com",
+        "www.gstatic.com",
+        "www.google.com",
+        "apis.google.com",
+
+    ],
+
+    'style-src': [
+        "'self'",
+        "cdn.jsdelivr.net",
+        "cdnjs.cloudflare.com",
+        "unpkg.com",
+        "fonts.googleapis.com",
+        "'unsafe-inline'",
+       
+    ],
+
+    'font-src': [
+        "'self'",
+        "fonts.gstatic.com",
+        "cdnjs.cloudflare.com",
+        "cdn.jsdelivr.net",
+        "unpkg.com",
+    ],
+
+    'img-src': [
+        "'self'",
+        "data:",
+        "*.tile.openstreetmap.org",
+        "firebasestorage.googleapis.com",
+        "lh3.googleusercontent.com",  # Google profile pictures
+        "res.cloudinary.com",
+    ],
+
+    'connect-src': [
+        "'self'",
+        "nominatim.openstreetmap.org",
+        "firestore.googleapis.com",
+        "identitytoolkit.googleapis.com",
+        "securetoken.googleapis.com",
+        "fcmregistrations.googleapis.com",
+        "fcm.googleapis.com",
+        "www.google.com",
+        "firebaseinstallations.googleapis.com",
+    ],
+
+    'frame-src': [
+        "'self'",
+        "www.google.com",       # reCAPTCHA iframe
+        "cakeshop-2faf4.firebaseapp.com",  # Firebase auth popup
+    ],
+
+    'worker-src': [
+        "'self'",
+        "blob:",  # service workers
+    ],
+}
+
 Talisman(app,
     force_https=is_production,
     session_cookie_secure=is_production,
     session_cookie_http_only=True,
     session_cookie_samesite='Lax',
-    content_security_policy=False
+    content_security_policy=csp,
+    content_security_policy_nonce_in=['script-src'],
 )
 
 limiter.init_app(app)
@@ -713,6 +780,12 @@ def loyalty_claim():
     try:
         user_ref  = users.document(user_id)
         user_data = user_ref.get().to_dict() or {}
+        unclaimed      = user_data.get("loyalty_unclaimed", False)
+        unclaimed_tier = user_data.get("loyalty_unclaimed_tier")
+
+        if not unclaimed or unclaimed_tier != tier:
+            flash("You haven't reached this reward milestone yet.", "warning")
+            return redirect(url_for("customer_dashboard") + "#loyalty")
         stamps    = int(user_data.get("loyalty_stamps", 0))
 
         if stamps < tier:
@@ -1168,6 +1241,10 @@ def finalize_order():
         flash("Invalid image reference.", "danger")
         return redirect(url_for("customer_dashboard"))
 
+    if delivery_type == "Delivery" and not address:
+        flash("Please provide a delivery address.", "warning")
+        return redirect(url_for("customer_dashboard"))
+
     if delivery_type == "Delivery" and len(address) > 300:
         flash("Address too long. Max 300 characters.", "danger")
         return redirect(url_for("customer_dashboard"))
@@ -1520,7 +1597,7 @@ def finalize_order():
                 "used": True,
                 "used_at": now
             })
-        handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes)
+        handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes, order_id=order_id)
         return redirect(url_for("cod_success", order_id=order_id))
 
     # ── Online Payment → PayMongo ──
@@ -2751,6 +2828,7 @@ def update_order_status(order_id):
                 update_data["cancel_reason_other"] = request.form.get("cancel_reason_other", "").strip() if request.form.get("cancel_reason") == "Other" else ""
                 update_data["cancelled_by"]        = "admin"
                 update_data["cancelled_at"]        = datetime.now(PH_TZ)
+            order_ref.update(update_data)
             # CREATE NOTIFICATION
             status_messages = {
                 "Accepted": "has been accepted",
@@ -3327,7 +3405,8 @@ def paymongo_webhook():
             order_data.get('user_id'),
             order_data.get('order_type'),
             order_data.get('selected_items', []),
-            cakes
+            cakes,
+            order_id=order_id
         )
         # Delete pending order
         pending_ref.delete()
@@ -3420,7 +3499,8 @@ def payment_success():
         order_data.get('user_id'),
         order_data.get('order_type'),
         order_data.get('selected_items', []),
-        cakes
+        cakes,
+        order_id=order_id
     )
         # ── Mark voucher as used ──
     for cv in order_data.get("claimed_vouchers", []):

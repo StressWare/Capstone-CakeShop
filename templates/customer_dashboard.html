@@ -919,7 +919,7 @@
 
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   function openCancelModal(orderId) {
   document.getElementById('cancelReasonForm').action = '/order/cancel/' + orderId;
   // Reset
@@ -1049,7 +1049,7 @@ function showOrderContextInChat(ctx) {
   messages.scrollTop = messages.scrollHeight;
 }
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 /* ── Tab switcher ── */
 function showTab(tab) {
     const tabs = { orders: 'ordersTab', favorites: 'favoritesTab', loyalty: 'loyaltyTab' };
@@ -1279,7 +1279,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initOrderStatusListener();
 });
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   /* ── 3-dots profile menu ── */
 function toggleProfileMenu() {
   const menu = document.getElementById('profileDropdown');

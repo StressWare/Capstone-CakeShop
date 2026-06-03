@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 from flask import session, request, current_app
 from dotenv import load_dotenv
 from google import genai
+from firebase_admin import messaging as fcm_messaging
+from firebase_admin import firestore as admin_fs
 import logging
 load_dotenv()
 
@@ -522,7 +524,7 @@ def safe_float(value, min_val=None, max_val=None):
     except (ValueError, TypeError):
         return None
 
-def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_ref):
+def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_ref, order_id=None):
     try:
         earns_stamps = 0
 
@@ -543,28 +545,36 @@ def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_r
         user_ref  = users_ref.document(user_id)
         user_data = user_ref.get().to_dict() or {}
 
-        old_stamps         = int(user_data.get('loyalty_stamps', 0))
-        loyalty_unclaimed  = user_data.get('loyalty_unclaimed', None)
-        unclaimed_tier     = user_data.get('loyalty_unclaimed_tier', None)
-        new_stamps         = old_stamps + earns_stamps
+        # Fix 1: double-stamp guard
+        if order_id:
+            if order_id in user_data.get('stamped_order_ids', []):
+                return
+
+        old_stamps        = int(user_data.get('loyalty_stamps', 0))
+        loyalty_unclaimed = user_data.get('loyalty_unclaimed', None)
+        unclaimed_tier    = user_data.get('loyalty_unclaimed_tier', None)
+        new_stamps        = old_stamps + earns_stamps
 
         update = {}
 
-        if new_stamps >= 10:
-            # Only set 10-stamp reward if not already unclaimed at tier 10
-            update['loyalty_stamps'] = new_stamps  # don't reset here, reset on claim
+        # Fix 3: consistent crossing logic for both tiers
+        if old_stamps < 10 <= new_stamps:
+            update['loyalty_stamps'] = new_stamps
             if not (loyalty_unclaimed and unclaimed_tier == 10):
                 update['loyalty_unclaimed']      = True
                 update['loyalty_unclaimed_tier'] = 10
 
         elif old_stamps < 5 <= new_stamps:
-            # Crossed 5-stamp threshold
             update['loyalty_stamps'] = new_stamps
             if not loyalty_unclaimed:
                 update['loyalty_unclaimed']      = True
                 update['loyalty_unclaimed_tier'] = 5
         else:
             update['loyalty_stamps'] = new_stamps
+
+        # Fix 1: record order_id after stamping
+        if order_id:
+            update['stamped_order_ids'] = admin_fs.ArrayUnion([order_id])
 
         user_ref.update(update)
 
@@ -575,7 +585,7 @@ def send_new_order_fcm(db_ref, order_id, customer_name, order_type, rush=False):
     """Send FCM push notification to all admin tokens for a new order."""
 
     try:
-        from firebase_admin import messaging as fcm_messaging
+
         admin_tokens_doc = db_ref.collection('fcm_tokens').document('admins').get()
         if not admin_tokens_doc.exists:
             logger.warning('[FCM NEW ORDER] No admin tokens doc found')
@@ -624,7 +634,7 @@ def send_new_order_fcm(db_ref, order_id, customer_name, order_type, rush=False):
             admin_ref = db_ref.collection('fcm_tokens').document('admins')
             updates = {uid: 'DELETE_FIELD_SENTINEL' for uid in failed_uids}
             # Use firestore.DELETE_FIELD in the caller context
-            from firebase_admin import firestore as admin_fs
+
             admin_ref.update({uid: admin_fs.firestore.DELETE_FIELD for uid in failed_uids})
 
     except Exception as e:

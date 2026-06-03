@@ -9,7 +9,7 @@
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
 
     <!-- ✅ UPDATED / FIXED RESPONSIVE SIDEBAR CSS -->
-    <style>
+    <style nonce="{{ csp_nonce() }}">
         /* ===== SIDEBAR BASE ===== */
         .sidebar {
         width: 250px;
@@ -145,7 +145,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         try {
             firebase.initializeApp({
                 apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
@@ -170,81 +170,81 @@
     <link rel="manifest" href="/manifest-admin.json">
     <meta name="theme-color" content="#d63384">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script>
+    <script nonce="{{ csp_nonce() }}">
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker-admin.js')
         .then(() => console.log('Admin SW registered'))
         .catch(err => console.warn('Admin SW failed:', err));
     }
     </script>
-        <script>
-(function injectGlassStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .glass-popup {
-            background: rgba(255,255,255, 0.97) !important;
-            border: 1px solid rgba(255, 192, 203, 0.45) !important;
-            border-radius: 20px !important;
-            backdrop-filter: blur(8px) !important;
-            -webkit-backdrop-filter: blur(8px) !important;
-            box-shadow: 0 8px 32px rgba(199, 21, 133, 0.15) !important;
-        }
-        .glass-title { color: #1a1a1a !important; font-weight: 700 !important; font-size: 1.1rem !important; }
-        .glass-popup .swal2-title::after, .glass-popup .swal2-title::before { display: none !important; }
-        .glass-popup .swal2-header { border-bottom: none !important; }
-        .glass-popup .swal2-html-container { color: #2a2a2a !important; font-size: 0.88rem !important; }
-        .glass-confirm-btn {
-            background: linear-gradient(135deg, #e75480, #C71585) !important;
-            border: none !important; border-radius: 12px !important;
-            padding: 8px 20px !important; font-weight: 600 !important; color: #fff !important;
-        }
-        .glass-cancel-btn {
-            background: transparent !important;
-            border: 1px solid rgba(26,26,26,0.4) !important;
-            border-radius: 12px !important; padding: 8px 20px !important;
-            font-weight: 600 !important; color: #1a1a1a !important;
-        }
-        .glass-popup.swal2-icon-success .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
-        .glass-popup.swal2-icon-success .swal2-success-ring { border-color: rgba(231,84,128,0.3) !important; }
-        .glass-popup.swal2-icon-success [class^="swal2-success-line"] { background-color: #e75480 !important; }
-        .glass-popup.swal2-icon-success .swal2-success-circular-line-left,
-        .glass-popup.swal2-icon-success .swal2-success-circular-line-right,
-        .glass-popup.swal2-icon-success .swal2-success-fix { background-color: transparent !important; }
-        .glass-popup.swal2-icon-error .swal2-icon { border-color: #C71585 !important; }
-        .glass-popup.swal2-icon-error .swal2-icon [class^="swal2-x-mark-line"] { background-color: #C71585 !important; }
-        .glass-popup.swal2-icon-warning .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
-        .glass-popup.swal2-icon-warning .swal2-icon .swal2-icon-content { color: #e75480 !important; }
-    `;
-    document.head.appendChild(style);
-})();
+        <script nonce="{{ csp_nonce() }}">
+        (function injectGlassStyles() {
+            const style = document.createElement('style');
+            style.textContent = `
+                .glass-popup {
+                    background: rgba(255,255,255, 0.97) !important;
+                    border: 1px solid rgba(255, 192, 203, 0.45) !important;
+                    border-radius: 20px !important;
+                    backdrop-filter: blur(8px) !important;
+                    -webkit-backdrop-filter: blur(8px) !important;
+                    box-shadow: 0 8px 32px rgba(199, 21, 133, 0.15) !important;
+                }
+                .glass-title { color: #1a1a1a !important; font-weight: 700 !important; font-size: 1.1rem !important; }
+                .glass-popup .swal2-title::after, .glass-popup .swal2-title::before { display: none !important; }
+                .glass-popup .swal2-header { border-bottom: none !important; }
+                .glass-popup .swal2-html-container { color: #2a2a2a !important; font-size: 0.88rem !important; }
+                .glass-confirm-btn {
+                    background: linear-gradient(135deg, #e75480, #C71585) !important;
+                    border: none !important; border-radius: 12px !important;
+                    padding: 8px 20px !important; font-weight: 600 !important; color: #fff !important;
+                }
+                .glass-cancel-btn {
+                    background: transparent !important;
+                    border: 1px solid rgba(26,26,26,0.4) !important;
+                    border-radius: 12px !important; padding: 8px 20px !important;
+                    font-weight: 600 !important; color: #1a1a1a !important;
+                }
+                .glass-popup.swal2-icon-success .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
+                .glass-popup.swal2-icon-success .swal2-success-ring { border-color: rgba(231,84,128,0.3) !important; }
+                .glass-popup.swal2-icon-success [class^="swal2-success-line"] { background-color: #e75480 !important; }
+                .glass-popup.swal2-icon-success .swal2-success-circular-line-left,
+                .glass-popup.swal2-icon-success .swal2-success-circular-line-right,
+                .glass-popup.swal2-icon-success .swal2-success-fix { background-color: transparent !important; }
+                .glass-popup.swal2-icon-error .swal2-icon { border-color: #C71585 !important; }
+                .glass-popup.swal2-icon-error .swal2-icon [class^="swal2-x-mark-line"] { background-color: #C71585 !important; }
+                .glass-popup.swal2-icon-warning .swal2-icon { border-color: #e75480 !important; color: #e75480 !important; }
+                .glass-popup.swal2-icon-warning .swal2-icon .swal2-icon-content { color: #e75480 !important; }
+            `;
+            document.head.appendChild(style);
+        })();
 
-function glassToast(options = {}) {
-    return Swal.fire({
-        toast: true,
-        position: 'top-end',
-        customClass: {
-            popup: 'glass-popup',
-            title: 'glass-title',
-            confirmButton: 'glass-confirm-btn',
-            cancelButton: 'glass-cancel-btn',
-        },
-        buttonsStyling: false,
-        ...options
-    });
-}
+        function glassToast(options = {}) {
+            return Swal.fire({
+                toast: true,
+                position: 'top-end',
+                customClass: {
+                    popup: 'glass-popup',
+                    title: 'glass-title',
+                    confirmButton: 'glass-confirm-btn',
+                    cancelButton: 'glass-cancel-btn',
+                },
+                buttonsStyling: false,
+                ...options
+            });
+        }
 
-function glassAlert(options = {}) {
-    return Swal.fire({
-        customClass: {
-            popup: 'glass-popup',
-            title: 'glass-title',
-            confirmButton: 'glass-confirm-btn',
-            cancelButton: 'glass-cancel-btn',
-        },
-        buttonsStyling: false,
-        ...options
-    });
-}
+        function glassAlert(options = {}) {
+            return Swal.fire({
+                customClass: {
+                    popup: 'glass-popup',
+                    title: 'glass-title',
+                    confirmButton: 'glass-confirm-btn',
+                    cancelButton: 'glass-cancel-btn',
+                },
+                buttonsStyling: false,
+                ...options
+            });
+        }
 </script>
     {% block extra_css %}{% endblock %}
 </head>
@@ -295,7 +295,7 @@ function glassAlert(options = {}) {
         <!-- Flash Messages -->
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <script>
+            <script nonce="{{ csp_nonce() }}">
                 document.addEventListener('DOMContentLoaded', function() {
                     const flashes = {{ messages | tojson }};
 
@@ -330,7 +330,7 @@ function glassAlert(options = {}) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Toggle JS -->
-    <script>
+    <script nonce="{{ csp_nonce() }}">
     function toggleSidebar() {
         console.log("Sidebar clicked");
         document.querySelector('.sidebar').classList.toggle('active');
@@ -339,7 +339,7 @@ function glassAlert(options = {}) {
     </script>
 
     <!-- Existing JS (UNCHANGED) -->
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         function confirmStatus(currentStatus) {
             return confirm("Current status: " + currentStatus + "\n\nAre you sure you want to update this order?");
         }
@@ -388,7 +388,7 @@ function glassAlert(options = {}) {
         }, 5000);
     </script>
 
-    <script>
+    <script nonce="{{ csp_nonce() }}">
 (async function registerAdminFCMToken() {
     try {
         // 1. Register SW first — outside auth state
@@ -463,7 +463,7 @@ function glassAlert(options = {}) {
     }
 })();
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   async function handleLogout() {
     try {
       await firebase.auth().signOut();
@@ -477,7 +477,7 @@ function glassAlert(options = {}) {
     }
   });
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 const originalFetch = window.fetch;
 window.fetch = function(url, options = {}) {
   const isOwnServer = typeof url === 'string' && !url.startsWith('http') 

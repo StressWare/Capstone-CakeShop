@@ -2,7 +2,7 @@
 {% block title %}Users – Mrs. Braves Cakes Iloilo{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
 
   #usersTable tbody td:nth-child(1),
   #usersTable tbody td:nth-child(2),
@@ -207,7 +207,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 function handleUserAction(btn, action) {
     const isDisable = action === 'disable';
     glassAlert({

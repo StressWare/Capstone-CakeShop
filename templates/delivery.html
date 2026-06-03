@@ -7,7 +7,7 @@
   <link rel="icon" href="/static/img/logo.png" type="image/png">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script>
+    <script nonce="{{ csp_nonce() }}">
     try {
       firebase.initializeApp({
         apiKey:            "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
@@ -26,14 +26,14 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css">
   <link rel="manifest" href="/manifest-delivery.json">
   <meta name="theme-color" content="#d63384">
-  <script>
+  <script nonce="{{ csp_nonce() }}">
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker-delivery.js', { scope: '/delivery' })
         .then(() => console.log('Delivery SW registered'))
         .catch(err => console.warn('Delivery SW failed:', err));
     }
   </script>
-  <style>
+  <style nonce="{{ csp_nonce() }}">
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
@@ -230,7 +230,7 @@
   </style>
 </head>
 <body>
-<script>
+<script nonce="{{ csp_nonce() }}">
   if (/FBAN|FBAV|FB_IAB|Instagram/.test(navigator.userAgent)) {
     const url = window.location.href;
     const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
@@ -297,6 +297,9 @@
     <div class="legend-item"><div class="legend-dot dot-customer"></div> Customer</div>
     <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
     <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
+    <div class="legend-item" style="margin-left:auto; color:#888; font-size:0.72rem;">
+      Routes by <a href="http://project-osrm.org/" target="_blank" style="color:#888;">OSRM</a>
+    </div>
   </div>
 
 {% if order.order_type == 'custom' and order.delivery_date %}
@@ -463,7 +466,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
 {% if not expired %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
 const CUSTOMER = {
   lat: {{ order.customer.lat or 10.7202 }},
@@ -564,7 +567,7 @@ if (navigator.geolocation) {
   }, null, { enableHighAccuracy: true });
 }
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 async function notifyDelivered() {
   const btn = document.getElementById('deliveredBtn');
   const err = document.getElementById('deliveredErr');

@@ -3,7 +3,7 @@
 
 {% block extra_css %}
 
-<style>
+<style nonce="{{ csp_nonce() }}">
   :root {
     --pink-primary: #d63384;
     --pink-light: #fde8f1;
@@ -312,7 +312,7 @@
 
 {% block extra_js %}
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   const SHOP = { lat: 10.711925117255893, lng: 122.53996450415457 };
 
   {% for o in orders %}

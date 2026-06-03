@@ -2,7 +2,7 @@
 {% block title %}Sales – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   .card-header.card-header-custom {
     border-top: 4px solid #c71585;
     background: #ffffff;
@@ -580,7 +580,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 let currentSalesPage = 1;
 const salesPerPage   = 5;
 let currentTab       = 'online';

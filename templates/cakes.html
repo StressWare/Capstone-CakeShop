@@ -4,7 +4,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cakes.css">
 
-<style>
+<style nonce="{{ csp_nonce() }}">
   /* Quantity selector */
   .qty-selector {
     display: flex; align-items: center; justify-content: center;
@@ -229,14 +229,14 @@
     color: white;
     text-align: center;
     padding: 20px;
-}
-#noSearchResults.empty-state i {
-    color: white;
-}
-#noSearchResults.empty-state h3,
-#noSearchResults.empty-state p {
-    color: white;
-}
+  }
+  #noSearchResults.empty-state i {
+      color: white;
+  }
+  #noSearchResults.empty-state h3,
+  #noSearchResults.empty-state p {
+      color: white;
+  }
 </style>
 {% endblock %}
 
@@ -553,7 +553,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}"> 
 // ── Quantity selector (handles both card and modal quantities) ──
 function changeQty(cakeId, delta, maxQty) {
   const display  = document.getElementById('qty-' + cakeId);

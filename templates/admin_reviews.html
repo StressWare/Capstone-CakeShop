@@ -2,7 +2,7 @@
 {% block title %}Reviews – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   .table-pink th {
     background-color: #c71585;
     color: white;
@@ -172,13 +172,13 @@
     #reviewsTable tbody td:last-child {
       border-bottom: none;
     }
-#reviewsTable thead th,
-#reviewsTable tbody td {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  width: 100% !important;
-}
+    #reviewsTable thead th,
+    #reviewsTable tbody td {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      width: 100% !important;
+    }
     #reviewsTable tbody td::before {
       content: attr(data-label);
       font-weight: 700;
@@ -347,7 +347,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 /* ── Fix 1: Prevent pinch-zoom ── */
 (function() {
   var vp = document.querySelector('meta[name="viewport"]');

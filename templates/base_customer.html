@@ -9,7 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script>
+  <script nonce="{{ csp_nonce() }}">
     try {
       firebase.initializeApp({
         apiKey:            "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
@@ -28,7 +28,7 @@
   <link rel="manifest" href="/static/manifest.json">
   <meta name="theme-color" content="#d63384">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <script>
+  <script nonce="{{ csp_nonce() }}">
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
         .then(() => console.log('Service Worker registered'))
@@ -50,7 +50,7 @@
   {% block extra_css %}{% endblock %}
 </head>
 <body {% if session.get('user_id') %}data-user-id="{{ session.get('user_id') }}"{% endif %}>
-<script>
+<script nonce="{{ csp_nonce() }}">
 (function() {
     const ua = navigator.userAgent;
     const isMessenger = /FBAN|FBAV|FB_IAB|Messenger/i.test(ua);
@@ -146,7 +146,7 @@
 <!-- ── FLASH MESSAGES ── -->
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
-  <script>
+  <script nonce="{{ csp_nonce() }}">
     document.addEventListener('DOMContentLoaded', function() {
       const flashes = {{ messages | tojson }};
       const iconMap = { 'success': 'success', 'danger': 'error', 'warning': 'warning', 'info': 'info' };
@@ -284,7 +284,7 @@
 {% block modals %}{% endblock %}
 
 <!-- Bootstrap JS -->
-<script>
+<script nonce="{{ csp_nonce() }}">
   const menuBtn    = document.getElementById("menuToggle");
   const offcanvas  = document.getElementById("offcanvasMenu");
   const menuClose  = document.getElementById("menuClose");
@@ -311,7 +311,7 @@
     overlay.addEventListener("click", closeMenu);
   }
 </script> 
-<script>
+<script nonce="{{ csp_nonce() }}">
 // ── Shared shop-open check (used by home, cakes, cart) ──
   async function checkShopOpen(proceedFn, orderType = 'premade') {
     try {
@@ -340,7 +340,7 @@
     }
   }
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   async function handleLogout() {
     try {
       await firebase.auth().signOut();
@@ -355,7 +355,7 @@
   });
 </script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
   (function injectGlassStyles() {
     const style = document.createElement('style');
     style.textContent = `
@@ -512,7 +512,7 @@ function glassToast(options = {}) {
     });
 }
 </script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 const originalFetch = window.fetch;
 window.fetch = function(url, options = {}) {
   const isOwnServer = typeof url === 'string' && !url.startsWith('http') 

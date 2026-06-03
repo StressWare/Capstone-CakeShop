@@ -6,7 +6,7 @@
   <title>429 – Too Many Requests | Mrs. Brave's</title>
   <link rel="icon" type="image/png" href="/static/img/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
-  <style>
+  <style nonce="{{ csp_nonce() }}">
     :root {
       --pink: #d63384;
       --pink-dark: #a0205e;
@@ -193,7 +193,7 @@
     <div class="brand">Mrs. Brave's Cakes Iloilo</div>
   </div>
 
-  <script>
+  <script nonce="{{ csp_nonce() }}">
     // Flask passes retry_after (seconds) into the template
     const retryAfter = parseInt("{{ retry_after | default(60) }}", 10) || 60;
 

@@ -3,7 +3,7 @@
 
 {% block extra_css %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-<style>
+<style nonce="{{ csp_nonce() }}">
     .stat-card-analytics {
       background: #ffffff;
       border-radius: 12px;
@@ -497,7 +497,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   let analyticsExportRange  = 'weekly';
   let analyticsExportFormat = 'pdf';
 
@@ -640,7 +640,7 @@
       }
   }
 </script>
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{ csp_nonce() }}">
   google.charts.load("current", {packages: ["corechart"]});
   google.charts.setOnLoadCallback(initCharts);
 

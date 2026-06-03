@@ -2,7 +2,7 @@
 {% block title %}Cakes – Mrs. Brave's Cakes Iloilo{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   /* ── Pink Theme Variables ── */
   :root {
     --pink-primary:  #d63384;
@@ -625,7 +625,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
+<script nonce="{{ csp_nonce() }}">
   /* ── TAB SWITCHER ── */
 function switchTab(tab) {
   document.getElementById('panelProducts').style.display    = tab === 'products' ? '' : 'none';

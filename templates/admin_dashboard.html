@@ -2,7 +2,7 @@
 {% block title %}Dashboard – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   /* ===== GENERAL RESPONSIVENESS ===== */
   body { overflow-x: hidden; }
   .container-fluid { max-width: 1400px; margin: auto; }
@@ -587,7 +587,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   let dashExportFormat = 'pdf';
 
 function openDashExportModal() {

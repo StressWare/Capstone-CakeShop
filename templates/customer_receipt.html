@@ -2,7 +2,7 @@
 {% block title %}Order Receipt – Mrs. Brave's Cakes{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   .receipt-wrapper {
     min-height: 80vh;
     background: #f5f5f5;
@@ -547,7 +547,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
 function downloadReceipt() {
     const element = document.getElementById('receiptDoc');
     const btn     = document.querySelector('.btn-print');

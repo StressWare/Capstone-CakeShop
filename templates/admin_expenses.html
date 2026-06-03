@@ -2,7 +2,7 @@
 {% block title %}Expenses – Mrs. Brave Cake Shop{% endblock %}
 
 {% block extra_css %}
-<style>
+<style nonce="{{ csp_nonce() }}">
   .card-header.card-header-custom {
     border-top: 4px solid #c71585;
     background: #ffffff;
@@ -323,7 +323,7 @@
   .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
   .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
   .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
-}
+  }
 
 </style>
 {% endblock %}
@@ -575,7 +575,7 @@
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script>
+<script nonce="{{ csp_nonce() }}">
   function handleDeleteExpense(btn) {
     glassAlert({
         icon: 'warning',
