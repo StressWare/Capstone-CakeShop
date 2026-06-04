@@ -135,7 +135,7 @@
     {% if session.get('user_id') %}
       <a href="/customer_dashboard">Profile</a>
       <a href="/cart">Cart</a>
-      <a href="#" onclick="handleLogout()">Logout</a>
+      <a href="#" id="logoutBtn">Logout</a>
     {% else %}
       <a href="/authentication">Login</a>
     {% endif %}
@@ -341,6 +341,7 @@
   }
 </script>
 <script nonce="{{ csp_nonce() }}">
+  document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
   async function handleLogout() {
     try {
       await firebase.auth().signOut();
@@ -515,8 +516,8 @@ function glassToast(options = {}) {
 <script nonce="{{ csp_nonce() }}">
 const originalFetch = window.fetch;
 window.fetch = function(url, options = {}) {
-  const isOwnServer = typeof url === 'string' && !url.startsWith('http') 
-    || (typeof url === 'string' && url.includes(window.location.hostname));
+  const isOwnServer = typeof url === 'string' && 
+    (!url.startsWith('http') || url.includes(window.location.hostname));
   
   if (isOwnServer) {
     options.headers = options.headers || {};

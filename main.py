@@ -12,6 +12,27 @@ from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations
 from firebase_admin import messaging
 import requests as http_requests
+from webauthn import (
+    generate_registration_options,
+    generate_authentication_options,
+    verify_registration_response,
+    verify_authentication_response,
+    options_to_json,
+    base64url_to_bytes
+)
+from webauthn.helpers.structs import (
+    AuthenticatorSelectionCriteria,
+    UserVerificationRequirement,
+    ResidentKeyRequirement,
+    AuthenticatorAttachment,
+    PublicKeyCredentialDescriptor,
+    RegistrationCredential,
+    AuthenticatorAttestationResponse,
+    AuthenticationCredential,
+    AuthenticatorAssertionResponse,
+)
+from webauthn.helpers.cose import COSEAlgorithmIdentifier
+import base64
 import re
 import os
 import json
@@ -27,6 +48,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+# WebAuthn config
+RP_NAME   = "Mrs. Brave's Cakes"                 
+RP_ID     = "acceptant-impalpable-axton.ngrok-free.dev" # change to yourdomain.com in production
+RP_ORIGIN = "https://acceptant-impalpable-axton.ngrok-free.dev"       # change to https://yourdomain.com in production
+
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
 is_production = os.environ.get('FLASK_ENV') == 'production'
@@ -449,7 +475,285 @@ def complete_profile():
     doc = users.document(user_id).get()
     customer = doc.to_dict()
     return render_template('complete_profile.html', customer=customer)
+# ---------------- FINGERPRINT ROUTES ----------------
+# ---------------- WEBAUTHN — REGISTER START----------------
+@app.route('/webauthn/register/start', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def webauthn_register_start():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
 
+    try:
+        user_doc = users.document(user_id).get()
+        if not user_doc.exists:
+            return jsonify({'error': 'User not found'}), 404
+        user_data = user_doc.to_dict()
+
+        options = generate_registration_options(
+            rp_id=RP_ID,
+            rp_name=RP_NAME,
+            user_id=user_id.encode(),
+            user_name=user_data.get('email', user_id),
+            user_display_name=user_data.get('fname') or user_data.get('username') or 'Customer',
+            authenticator_selection=AuthenticatorSelectionCriteria(
+                authenticator_attachment=AuthenticatorAttachment.PLATFORM,
+                resident_key=ResidentKeyRequirement.PREFERRED,
+                user_verification=UserVerificationRequirement.REQUIRED,
+            ),
+            supported_pub_key_algs=[COSEAlgorithmIdentifier.ECDSA_SHA_256],
+        )
+
+        session['webauthn_reg_challenge'] = base64.b64encode(options.challenge).decode()
+
+        return jsonify({
+            "publicKey": {
+                "challenge": base64.urlsafe_b64encode(options.challenge).rstrip(b'=').decode(),
+                "rp": {"id": options.rp.id, "name": options.rp.name},
+                "user": {
+                    "id": base64.urlsafe_b64encode(options.user.id).rstrip(b'=').decode(),
+                    "name": options.user.name,
+                    "displayName": options.user.display_name,
+                },
+                "pubKeyCredParams": [{"type": p.type, "alg": p.alg} for p in options.pub_key_cred_params],
+                "authenticatorSelection": {
+                    "authenticatorAttachment": "platform",
+                    "userVerification": "required",
+                    "residentKey": "preferred",
+                },
+                "timeout": 60000,
+                "attestation": "none",
+            }
+        }), 200
+
+    except Exception:
+        app.logger.exception("Error in webauthn_register_start")
+        return jsonify({'error': 'Internal server error'}), 500
+
+# ---------------- WEBAUTHN — REGISTER FINISH----------------
+@app.route('/webauthn/register/finish', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def webauthn_register_finish():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    challenge_b64 = session.pop('webauthn_reg_challenge', None)
+    if not challenge_b64:
+        return jsonify({'error': 'No registration challenge found. Please try again.'}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        credential = RegistrationCredential(
+            id=data['id'],
+            raw_id=base64url_to_bytes(data['rawId']),
+            type=data.get('type', 'public-key'),
+            response=AuthenticatorAttestationResponse(
+                client_data_json=base64url_to_bytes(data['response']['clientDataJSON']),
+                attestation_object=base64url_to_bytes(data['response']['attestationObject']),
+            ),
+        )
+
+        verification = verify_registration_response(
+            credential=credential,
+            expected_challenge=base64.b64decode(challenge_b64),
+            expected_rp_id=RP_ID,
+            expected_origin=RP_ORIGIN,
+            require_user_verification=True,
+        )
+
+        credential_id_b64 = base64.b64encode(verification.credential_id).decode()
+        public_key_b64 = base64.b64encode(verification.credential_public_key).decode()
+
+        db.collection('webauthn_credentials').document(user_id).set({
+            'user_id': user_id,
+            'credentials': firestore.ArrayUnion([{
+                'credential_id': credential_id_b64,
+                'public_key': public_key_b64,
+                'sign_count': verification.sign_count,
+                'created_at': datetime.now(PH_TZ).isoformat(),
+            }])
+        }, merge=True)
+
+        app.logger.info(f"WebAuthn credential registered for user {user_id}")
+        return jsonify({'success': True}), 200
+
+    except Exception:
+        app.logger.exception("Error in webauthn_register_finish")
+        return jsonify({'error': 'Registration verification failed'}), 400
+
+# ---------------- WEBAUTHN — LOGIN START----------------
+@app.route('/webauthn/login/start', methods=['POST'])
+@limiter.limit("10 per minute")
+def webauthn_login_start():
+    try:
+        creds_docs = db.collection('webauthn_credentials').stream()
+        allow_credentials = []
+        for doc in creds_docs:
+            d = doc.to_dict()
+            for c in d.get('credentials', []):
+                allow_credentials.append(
+                    PublicKeyCredentialDescriptor(id=base64.b64decode(c['credential_id']))
+                )
+
+        options = generate_authentication_options(
+            rp_id=RP_ID,
+            allow_credentials=allow_credentials,
+            user_verification=UserVerificationRequirement.REQUIRED,
+        )
+
+        session['webauthn_auth_challenge'] = base64.b64encode(options.challenge).decode()
+
+        return jsonify({
+            "publicKey": {
+                "challenge": base64.urlsafe_b64encode(options.challenge).rstrip(b'=').decode(),
+                "timeout": 60000,
+                "rpId": RP_ID,
+                "allowCredentials": [
+                    {
+                        "type": "public-key",
+                        "id": base64.urlsafe_b64encode(c.id).rstrip(b'=').decode()
+                    }
+                    for c in options.allow_credentials
+                ],
+                "userVerification": "required"
+            }
+        }), 200
+
+    except Exception:
+        app.logger.exception("Error in webauthn_login_start")
+        return jsonify({'error': 'Internal server error'}), 500
+
+# ---------------- WEBAUTHN — LOGIN FINISH----------------
+@app.route('/webauthn/login/finish', methods=['POST'])
+@limiter.limit("10 per minute")
+def webauthn_login_finish():
+    challenge_b64 = session.pop('webauthn_auth_challenge', None)
+    if not challenge_b64:
+        return jsonify({'error': 'No authentication challenge found. Please try again.'}), 400
+
+    data = request.get_json()
+    if not data:
+        return jsonify({'error': 'Invalid request'}), 400
+
+    try:
+        cred_id_b64 = base64.b64encode(base64url_to_bytes(data.get('id'))).decode()
+
+        # find user doc containing this credential
+        cred_doc = None
+        matched_cred = None
+        for doc in db.collection('webauthn_credentials').stream():
+            d = doc.to_dict()
+            for c in d.get('credentials', []):
+                if c['credential_id'] == cred_id_b64:
+                    cred_doc = doc
+                    matched_cred = c
+                    break
+            if cred_doc:
+                break
+
+        if not cred_doc or not matched_cred:
+            return jsonify({'error': 'Credential not found. Please register your device first.'}), 404
+
+        cred_data = cred_doc.to_dict()
+        user_id = cred_data['user_id']
+        stored_public_key = base64.b64decode(matched_cred['public_key'])
+        stored_sign_count = matched_cred.get('sign_count', 0)
+
+        credential = AuthenticationCredential(
+            id=data['id'],
+            raw_id=base64url_to_bytes(data['rawId']),
+            type=data.get('type', 'public-key'),
+            response=AuthenticatorAssertionResponse(
+                client_data_json=base64url_to_bytes(data['response']['clientDataJSON']),
+                authenticator_data=base64url_to_bytes(data['response']['authenticatorData']),
+                signature=base64url_to_bytes(data['response']['signature']),
+                user_handle=base64url_to_bytes(data['response']['userHandle']) if data['response'].get('userHandle') else None,
+            ),
+        )
+
+        verification = verify_authentication_response(
+            credential=credential,
+            expected_challenge=base64.b64decode(challenge_b64),
+            expected_rp_id=RP_ID,
+            expected_origin=RP_ORIGIN,
+            credential_public_key=stored_public_key,
+            credential_current_sign_count=stored_sign_count,
+            require_user_verification=True,
+        )
+
+        # update sign count for matched credential only
+        updated_creds = [
+            {**c, 'sign_count': verification.new_sign_count} if c['credential_id'] == cred_id_b64 else c
+            for c in cred_data.get('credentials', [])
+        ]
+        cred_doc.reference.update({'credentials': updated_creds})
+
+        user_doc = users.document(user_id).get()
+        if not user_doc.exists:
+            return jsonify({'error': 'User account not found'}), 404
+
+        user_data = user_doc.to_dict()
+        firebase_user = auth.get_user(user_id)
+        if firebase_user.disabled:
+            return jsonify({'error': 'Your account has been disabled. Contact support.'}), 403
+
+        fname = user_data.get('fname', '')
+        email = user_data.get('email', '')
+        is_admin = user_data.get('role') == 'admin'
+
+        session['user'] = {'uid': user_id, 'email': email, 'name': fname or email, 'admin': is_admin}
+        session['user_id'] = user_id
+        session['username'] = email
+
+        app.logger.info(f"WebAuthn login successful for user {user_id}")
+        return jsonify({'success': True, 'redirect': '/admin/dashboard' if is_admin else '/customer_dashboard'}), 200
+
+    except Exception:
+        app.logger.exception("Error in webauthn_login_finish")
+        return jsonify({'error': 'Authentication verification failed'}), 400
+
+
+
+# ---------------- WEBAUTHN — CHECK-----------------
+@app.route('/webauthn/check', methods=['GET'])
+@limiter.limit("20 per minute")
+def webauthn_check():
+    user_id = session.get('user_id')
+    try:
+        if user_id:
+            doc = db.collection('webauthn_credentials').document(user_id).get()
+            if not doc.exists:
+                return jsonify({'registered': False}), 200
+            creds = doc.to_dict().get('credentials', [])
+            return jsonify({'registered': len(creds) > 0}), 200
+        else:
+            creds = db.collection('webauthn_credentials').limit(1).stream()
+            has_any = any(True for _ in creds)
+            return jsonify({'registered': has_any}), 200
+    except Exception:
+        return jsonify({'registered': False}), 200
+
+
+# ---------------- WEBAUTHN — DELETE----------------
+@app.route('/webauthn/delete', methods=['POST'])
+@login_required
+@limiter.limit("5 per minute")
+def webauthn_delete():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not authenticated'}), 401
+    try:
+        db.collection('webauthn_credentials').document(user_id).delete()
+        return jsonify({'success': True}), 200
+    except Exception:
+        app.logger.exception("Error deleting WebAuthn credential")
+        return jsonify({'error': 'Internal server error'}), 500
 # ---------------- FORGOT PASS RECAPTCHA----------------
 @app.route('/verify-recaptcha', methods=['POST'])
 @limiter.limit("5 per minute")

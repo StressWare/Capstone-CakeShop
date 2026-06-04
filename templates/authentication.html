@@ -65,6 +65,13 @@
                     <p class="toggle-msg">
                     Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
+                    <p class="toggle-msg" id="fingerprint-login-wrapper" style="display:none;">
+                        Or
+                        <span class="toggle-btn" id="device-signin-btn">
+                            <i class="fa-solid fa-fingerprint"></i> Sign in with fingerprint
+                        </span>
+                    </p>
+                    
                 </form>
 
                 <!-- Sign Up Form -->
@@ -654,6 +661,182 @@ window.fetch = function(url, options = {}) {
         return response;
     });
 };
+
+/* Check on page load if fingerprint login is available for this device */
+(async function initFingerprintButton() {
+    if (!window.PublicKeyCredential) return; // browser doesn't support WebAuthn
+ 
+    try {
+        // Check if platform authenticator (fingerprint/face) is available
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!available) return;
+ 
+        // Check if any credential is registered in our backend
+        const res = await fetch('/webauthn/check');
+        const data = await res.json();
+ 
+        if (data.registered) {
+            // Show the fingerprint login button
+            document.getElementById('fingerprint-login-wrapper').style.display = 'block';
+        }
+    } catch (e) {
+        console.log('WebAuthn init check failed silently:', e);
+    }
+})();
+ 
+/* Helper: convert ArrayBuffer to base64url */
+function bufferToBase64url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let str = '';
+    for (const b of bytes) str += String.fromCharCode(b);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+ 
+/* Helper: convert base64url to Uint8Array */
+function base64urlToBuffer(base64url) {
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+ 
+/* ── FINGERPRINT LOGIN ── */
+async function startDeviceLogin() {
+    try {
+        const resp = await fetch('/webauthn/login/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        if (!resp.ok) throw new Error('Failed to start device login');
+        const options = await resp.json();
+ 
+        // Convert base64url challenge and credential IDs to ArrayBuffers
+        options.publicKey.challenge = base64urlToBuffer(options.publicKey.challenge);
+        if (options.publicKey.allowCredentials) {
+            options.publicKey.allowCredentials = options.publicKey.allowCredentials.map(cred => ({
+                ...cred,
+                id: base64urlToBuffer(cred.id)
+            }));
+        }
+ 
+        // This triggers the device fingerprint/face prompt
+        const assertion = await navigator.credentials.get(options);
+ 
+        const result = {
+            id: assertion.id,
+            rawId: bufferToBase64url(assertion.rawId),
+            type: assertion.type,
+            response: {
+                clientDataJSON: bufferToBase64url(assertion.response.clientDataJSON),
+                authenticatorData: bufferToBase64url(assertion.response.authenticatorData),
+                signature: bufferToBase64url(assertion.response.signature),
+                userHandle: assertion.response.userHandle
+                    ? bufferToBase64url(assertion.response.userHandle)
+                    : null
+            }
+        };
+ 
+        const finishResp = await fetch('/webauthn/login/finish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(result)
+        });
+ 
+        if (!finishResp.ok) {
+            const err = await finishResp.json();
+            throw new Error(err.error || 'Device login failed');
+        }
+ 
+        const data = await finishResp.json();
+        window.location.href = data.redirect || '/customer_dashboard';
+ 
+    } catch (err) {
+        if (err.name === 'NotAllowedError') {
+            // User cancelled the fingerprint prompt — don't show error
+            return;
+        }
+        glassAlert({
+            icon: 'error',
+            title: 'Device Login Failed',
+            text: err.message || 'Unable to sign in with device.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+ 
+/* ── FINGERPRINT REGISTRATION (called from dashboard) ── */
+async function startDeviceRegistration() {
+    try {
+        const resp = await fetch('/webauthn/register/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        if (!resp.ok) throw new Error('Failed to start registration');
+        const raw = await resp.json();
+
+        // py_webauthn returns options without publicKey wrapper — wrap it
+        const publicKey = raw.publicKey || raw;
+        publicKey.challenge = base64urlToBuffer(publicKey.challenge);
+        publicKey.user.id = base64urlToBuffer(publicKey.user.id);
+        if (publicKey.excludeCredentials) {
+            publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
+                ...c, id: base64urlToBuffer(c.id)
+            }));
+        }
+
+        const credential = await navigator.credentials.create({ publicKey });
+
+ 
+        const response = {
+            id: credential.id,
+            rawId: bufferToBase64url(credential.rawId),
+            type: credential.type,
+            response: {
+                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                attestationObject: bufferToBase64url(credential.response.attestationObject)
+            }
+        };
+ 
+        const finishResp = await fetch('/webauthn/register/finish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(response)
+        });
+ 
+        if (!finishResp.ok) {
+            const err = await finishResp.json();
+            throw new Error(err.error || 'Registration failed');
+        }
+ 
+        glassAlert({
+            icon: 'success',
+            title: 'Fingerprint Enabled!',
+            text: 'You can now sign in using your fingerprint or face on this device.',
+            confirmButtonText: 'Great!'
+        });
+ 
+        // Update button state
+        const btn = document.getElementById('enable-fingerprint-btn');
+        if (btn) {
+            btn.textContent = '✓ Fingerprint Login Enabled';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        }
+ 
+    } catch (err) {
+        if (err.name === 'NotAllowedError') return; // user cancelled
+        glassAlert({
+            icon: 'error',
+            title: 'Setup Failed',
+            text: err.message || 'Unable to set up fingerprint login.',
+            confirmButtonText: 'OK'
+        });
+    }
+}
+ 
+/* Attach login button */
+document.getElementById('device-signin-btn')?.addEventListener('click', startDeviceLogin);
 </script>
 </body>
 </html>

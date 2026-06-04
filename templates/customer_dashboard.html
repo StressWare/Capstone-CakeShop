@@ -39,7 +39,7 @@
   </button>
 
   <div style="position:relative;">
-    <button id="profileDotsBtn" onclick="toggleProfileMenu()"
+    <button id="profileDotsBtn"
             style="background:rgba(232,24,110,0.06); border:1px solid rgba(232,24,110,0.35);
                    color:var(--pink); border-radius:var(--radius-sm); padding:8px 10px;
                    cursor:pointer; font-size:14px;">
@@ -50,6 +50,17 @@
                 background:rgba(255,255,255,0.96); border:1px solid rgba(220,40,40,0.20);
                 border-radius:var(--radius-sm); min-width:160px; z-index:100;
                 box-shadow:0 4px 20px rgba(30,0,15,0.12);">
+      <button id="removeDeviceBtn" style="display:none; width:100%; background:transparent; border:none; padding:12px 16px;
+                     font-size:13px; color:#b02020; cursor:pointer; display:flex;
+                     align-items:center; gap:8px; text-align:left;">
+        <i class="fa-solid fa-fingerprint"></i> Remove This Device
+      </button>                
+      <button id="fingerprintMenuBtn"
+              style="width:100%; background:transparent; border:none; padding:12px 16px;
+                     font-size:13px; color:#d63384; cursor:pointer; display:flex;
+                     align-items:center; gap:8px; text-align:left;">
+        <i class="fa-solid fa-fingerprint"></i> <span id="fingerprintMenuLabel">Enable Fingerprint</span>
+      </button>
       <button onclick="startDeleteAccount()"
               style="width:100%; background:transparent; border:none; padding:12px 16px;
                      font-size:13px; color:#b02020; cursor:pointer; display:flex;
@@ -78,6 +89,29 @@
         <div class="profile-field-val">{{ customer.username or '—' }}</div>
       </div>
     </div>
+    <!-- Fingerprint Login -->
+<!-- Fingerprint Login — aligned with edit profile buttons -->
+  <div id="fingerprint-setup-section" style="display:none; margin-top:10px;">
+    <button id="enable-fingerprint-btn"
+        style="
+            background: linear-gradient(135deg, #e75480, #C71585);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 18px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        ">
+        <i class="fa-solid fa-fingerprint"></i>
+        Enable Fingerprint Login
+    </button>
+  </div>
   </div>
 </div>
 
@@ -109,20 +143,20 @@
         <div class="loyalty-fill" style="width: {{ (loyalty_stamps / 10 * 100)|int }}%;"></div>
       </div>
      {% if loyalty_unclaimed %}
-  <div class="loyalty-sub">🎉 You have an unclaimed <span>reward</span>!</div>
-        <div style="margin-top:8px;">
-          <button onclick="showTab('loyalty')"
-                  style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
-                          padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;">
-            <i class="bi bi-gift me-1"></i>Claim your reward →
-          </button>
-        </div>
-{% elif loyalty_stamps >= 5 %}
-  <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock a bigger free gift!
-{% else %}
-  <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock a free gift!
-{% endif %}
-    </div>
+      <div class="loyalty-sub">🎉 You have an unclaimed <span>reward</span>!</div>
+            <div style="margin-top:8px;">
+              <button onclick="showTab('loyalty')"
+                      style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
+                              padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;">
+                <i class="bi bi-gift me-1"></i>Claim your reward →
+              </button>
+            </div>
+      {% elif loyalty_stamps >= 5 %}
+        <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock a bigger free gift!
+      {% else %}
+        <span>{{ 5 - loyalty_stamps }} more stamp{{ 's' if (5 - loyalty_stamps) != 1 else '' }}</span> to unlock a free gift!
+      {% endif %}
+          </div>
 
     <!-- Tab nav -->
     <div class="dashboard-nav-icons">
@@ -1281,6 +1315,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script nonce="{{ csp_nonce() }}">
   /* ── 3-dots profile menu ── */
+document.getElementById('profileDotsBtn')?.addEventListener('click', toggleProfileMenu);
 function toggleProfileMenu() {
   const menu = document.getElementById('profileDropdown');
   menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
@@ -1394,6 +1429,165 @@ async function startDeleteAccount() {
       confirmButtonText: 'OK'
     });
   }
+}
+
+/* ── Fingerprint enable button check ── */
+(async function checkFingerprintStatus() {
+    if (!window.PublicKeyCredential) return;
+    try {
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const section = document.getElementById('fingerprint-setup-section');
+        const menuBtn = document.getElementById('fingerprintMenuBtn');
+        const menuLabel = document.getElementById('fingerprintMenuLabel');
+
+        if (!available) {
+            if (menuBtn) menuBtn.style.display = 'none';
+            return;
+        }
+
+        const res = await fetch('/webauthn/check');
+        const data = await res.json();
+
+        if (section) section.style.display = 'none'; // hide old button
+
+        const removeBtn = document.getElementById('removeDeviceBtn');
+        if (data.registered) {
+            if (menuLabel) menuLabel.textContent = 'Fingerprint Enabled ✓';
+            if (menuBtn) {
+                menuBtn.disabled = true;
+                menuBtn.style.opacity = '0.5';
+                menuBtn.style.cursor = 'default';
+            }
+            if (removeBtn) {
+                removeBtn.style.display = 'flex';
+                removeBtn.addEventListener('click', async () => {
+                    document.getElementById('profileDropdown').style.display = 'none';
+                    const confirm = await glassAlert({
+                        icon: 'warning',
+                        title: 'Remove Device?',
+                        text: 'You will no longer be able to sign in with fingerprint on this device.',
+                        confirmButtonText: 'Remove',
+                        showCancelButton: true,
+                        cancelButtonText: 'Cancel',
+                    });
+                    if (!confirm.isConfirmed) return;
+                    const res = await fetch('/webauthn/delete', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        glassAlert({ icon: 'success', title: 'Device Removed', confirmButtonText: 'OK' });
+                        menuLabel.textContent = 'Enable Fingerprint';
+                        menuBtn.disabled = false;
+                        menuBtn.style.opacity = '1';
+                        menuBtn.style.cursor = 'pointer';
+                        removeBtn.style.display = 'none';
+                        menuBtn.addEventListener('click', () => {
+                            document.getElementById('profileDropdown').style.display = 'none';
+                            startDeviceRegistration();
+                        });
+                    }
+                });
+            }
+        } else {
+            if (menuBtn) menuBtn.addEventListener('click', () => {
+                document.getElementById('profileDropdown').style.display = 'none';
+                startDeviceRegistration();
+            });
+        }
+    } catch (e) {
+        console.log('Fingerprint check:', e);
+    }
+})();
+/* ── WebAuthn helpers (needed for registration on dashboard) ── */
+function bufferToBase64url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let str = '';
+    for (const b of bytes) str += String.fromCharCode(b);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+function base64urlToBuffer(base64url) {
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+    return Uint8Array.from(atob(padded), c => c.charCodeAt(0));
+}
+
+async function startDeviceRegistration() {
+    try {
+        const resp = await fetch('/webauthn/register/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        if (!resp.ok) throw new Error('Failed to start registration');
+        const raw = await resp.json();
+
+        const publicKey = raw.publicKey ? raw.publicKey : raw;
+
+        // challenge and user.id may be objects {0:x, 1:y...} or strings
+        function toBuffer(val) {
+            if (typeof val === 'string') return base64urlToBuffer(val);
+            if (val instanceof ArrayBuffer) return new Uint8Array(val);
+            if (typeof val === 'object') return new Uint8Array(Object.values(val));
+            return val;
+        }
+
+        publicKey.challenge = toBuffer(publicKey.challenge);
+        publicKey.user.id   = toBuffer(publicKey.user.id);
+
+        if (publicKey.excludeCredentials) {
+            publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
+                ...c, id: toBuffer(c.id)
+            }));
+        }
+
+        const credential = await navigator.credentials.create({ publicKey });
+
+        const response = {
+            id: credential.id,
+            rawId: bufferToBase64url(credential.rawId),
+            type: credential.type,
+            response: {
+                clientDataJSON: bufferToBase64url(credential.response.clientDataJSON),
+                attestationObject: bufferToBase64url(credential.response.attestationObject)
+            }
+        };
+
+        const finishResp = await fetch('/webauthn/register/finish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(response)
+        });
+
+        if (!finishResp.ok) {
+            const err = await finishResp.json();
+            throw new Error(err.error || 'Registration failed');
+        }
+
+        glassAlert({
+            icon: 'success',
+            title: 'Fingerprint Enabled!',
+            text: 'You can now sign in using your fingerprint on this device.',
+            confirmButtonText: 'Great!'
+        });
+
+        const btn = document.getElementById('enable-fingerprint-btn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-fingerprint"></i> Fingerprint Login Enabled';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'default';
+            btn.onclick = null;
+        }
+
+    } catch (err) {
+        if (err.name === 'NotAllowedError') return;
+        glassAlert({
+            icon: 'error',
+            title: 'Setup Failed',
+            text: err.message || 'Unable to set up fingerprint login.',
+            confirmButtonText: 'OK'
+        });
+    }
 }
 </script>
 {% endblock %}

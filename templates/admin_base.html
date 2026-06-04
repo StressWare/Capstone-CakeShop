@@ -275,20 +275,20 @@
         </ul>
 
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #34495e;">
-            <a href="#" onclick="handleLogout()" style="color: #ffffff; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
+            <a href="#" id="adminLogoutBtn" style="color: #ffffff; text-decoration: none; padding: 12px 15px; display: block; border-radius: 5px; transition: all 0.3s;">
                 <i class="fas fa-sign-out-alt me-2"></i>Logout
             </a>
         </div>
     </div>
 
     <!-- Overlay -->
-    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- Main Content -->
     <div class="main-content">
 
         <!-- Toggle Button -->
-        <button class="sidebar-toggle-btn d-lg-none" onclick="toggleSidebar()">
+        <button class="sidebar-toggle-btn d-lg-none" id="sidebarToggleBtn">
             <i class="fas fa-bars"></i>
         </button>
 
@@ -331,6 +331,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Toggle JS -->
     <script nonce="{{ csp_nonce() }}">
+    document.getElementById('sidebarToggleBtn')?.addEventListener('click', toggleSidebar);
+    document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
     function toggleSidebar() {
         console.log("Sidebar clicked");
         document.querySelector('.sidebar').classList.toggle('active');
@@ -464,18 +466,19 @@
 })();
 </script>
 <script nonce="{{ csp_nonce() }}">
-  async function handleLogout() {
-    try {
-      await firebase.auth().signOut();
-    } catch(e) {}
-    window.location.href = "/logout";
-  }
-
-    window.addEventListener("pageshow", function(e) {
-    if (e.persisted) {
-      window.location.reload();
+    document.getElementById('adminLogoutBtn')?.addEventListener('click', handleLogout);
+    async function handleLogout() {
+        try {
+        await firebase.auth().signOut();
+        } catch(e) {}
+        window.location.href = "/logout";
     }
-  });
+
+        window.addEventListener("pageshow", function(e) {
+        if (e.persisted) {
+        window.location.reload();
+        }
+    });
 </script>
 <script nonce="{{ csp_nonce() }}">
 const originalFetch = window.fetch;
