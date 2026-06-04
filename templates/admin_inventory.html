@@ -393,13 +393,13 @@
   <!-- PAGE HEADER -->
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Inventory Management</h1>
-    <button class="btn-export" onclick="openExportModal()">Export</button>
+    <button class="btn-export" id="btnOpenExport">Export</button>
   </div>
 
   <div class="card shadow-sm">
     <div class="card-header card-header-custom d-flex align-items-center justify-content-between">
       <h4 class="mb-0">Stock List</h4>
-      <button class="btn-add-inventory" onclick="openAddInventoryModal()">+ Add Inventory</button>
+      <button class="btn-add-inventory" id="btnAddInventory">+ Add Inventory</button>
     </div>
     <div class="card-body">
 
@@ -465,8 +465,7 @@
               </td>
           <td>
             <div class="d-flex gap-2 align-items-center">
-              <button class="btn btn-sm btn-outline-success"
-                onclick="openRestockModal('{{ i.id }}', '{{ i.item }}')">
+              <button class="btn btn-sm btn-outline-success" data-restock-id="{{ i.id }}" data-restock-name="{{ i.item }}">
                 <i class="fas fa-plus"></i> Restock
               </button>
               
@@ -486,7 +485,7 @@
                     <form method="POST" action="/inventory/delete/{{ i.id }}" style="display:inline;">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                      <button type="button" class="dropdown-item text-danger" 
-                        onclick="handleDeleteInventory(this, '{{ i.item }}')" 
+                         data-item-name="{{ i.item }}"
                         style="border:none;background:none;width:100%;text-align:left;padding:0.5rem 1rem;cursor:pointer;">
                         <i class="fas fa-trash"></i> Delete
                     </button>
@@ -638,27 +637,27 @@
 {% endfor %}
 
 <!-- ── EXPORT MODAL ── -->
-<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+<div class="export-modal-overlay" id="exportModalOverlay" >
   <div class="export-modal">
-    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <button class="export-modal-close" id="btnCloseExport">×</button>
     <h5>Export Inventory</h5>
 
     <div class="date-range-row">
       <div>
         <label for="exportFrom">From</label>
-        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+        <input type="date" id="exportFrom" >
       </div>
       <div>
         <label for="exportTo">To</label>
-        <input type="date" id="exportTo" onchange="updateExportPreview()">
+        <input type="date" id="exportTo">
       </div>
     </div>
 
     <div style="margin-bottom:10px;">
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
-        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">PDF</button>
-        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">CSV</button>
+        <button class="format-btn active" id="fmtPDF">PDF</button>
+        <button class="format-btn" id="fmtCSV">CSV</button>
       </div>
     </div>
 
@@ -673,7 +672,7 @@
       </div>
     </div>
 
-    <button class="btn-download" onclick="runExport()">
+    <button class="btn-download"  id="btnDownload">
       <span id="downloadBtnIcon"></span>
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
@@ -884,6 +883,25 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('searchInventory').addEventListener('keyup', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
   document.getElementById('statusFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
   document.getElementById('categoryFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
+
+  document.getElementById('btnOpenExport').addEventListener('click', openExportModal);
+  document.getElementById('btnAddInventory').addEventListener('click', openAddInventoryModal);
+  document.getElementById('btnCloseExport').addEventListener('click', closeExportModal);
+  document.getElementById('btnDownload').addEventListener('click', runExport);
+  document.getElementById('fmtPDF').addEventListener('click', () => selectFormat('pdf'));
+  document.getElementById('fmtCSV').addEventListener('click', () => selectFormat('csv'));
+  document.getElementById('exportModalOverlay').addEventListener('click', handleOverlayClick);
+  document.getElementById('exportFrom').addEventListener('change', updateExportPreview);
+  document.getElementById('exportTo').addEventListener('change', updateExportPreview);
+
+  document.getElementById('inventoryTable').addEventListener('click', function(e) {
+    const restockBtn = e.target.closest('[data-restock-id]');
+    if (restockBtn) openRestockModal(restockBtn.dataset.restockId, restockBtn.dataset.restockName);
+
+    const deleteBtn = e.target.closest('.dropdown-item.text-danger');
+    if (deleteBtn) handleDeleteInventory(deleteBtn, deleteBtn.dataset.itemName);
+  });
+
   updateInventoryDisplay();
 });
 </script>

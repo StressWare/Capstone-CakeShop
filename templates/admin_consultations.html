@@ -36,28 +36,27 @@
             {% else %}
               <span style="background:#fef3c7; color:#92400e; font-size:11px; padding:3px 10px; border-radius:20px;">Pending</span>
               {% if cd %}
-              <form method="POST" action="/admin/consultation-to-order" style="display:inline;" id="convertForm-{{ loop.index }}">
+              <form method="POST" action="/admin/consultation-to-order" style="display:none;" id="convertForm-{{ loop.index }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="user_id" value="{{ c.user_id }}">
                 <input type="hidden" name="conversation_id" value="{{ c.conversation_id }}">
-            <button data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}"
-              style="background:#f3f4f6; color:#374151; border:none; border-radius:8px;
-              padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
-              View Details
-            </button>
               </form>
+              <button data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}"
+                style="background:#f3f4f6; color:#374151; border:none; border-radius:8px;
+                padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
+                View Details
+              </button>
+              <button type="button"
+                class="btn-convert"
+                data-convert-form="convertForm-{{ loop.index }}"
+                data-customer-name="{{ c.customer_name }}"
+                style="background:#db2777; color:white; border:none; border-radius:8px;
+                padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
+                Convert to Order
+              </button>
               {% endif %}
             {% endif %}
-            {% if cd %}
-            <button type="button"
-                  onclick="confirmConvert('convertForm-{{ loop.index }}', '{{ c.customer_name }}')"
-                  style="background:#db2777; color:white; border:none; border-radius:8px;
-                  padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
-                  Convert to Order
-                </button>
-            {% endif %}
           </div>
-        </div>
 
         {% if cd %}
         <hr style="border-color:#f0f0f0; margin:14px 0;">
@@ -223,6 +222,11 @@ function updateConsultationDisplay() {
 
 document.addEventListener('DOMContentLoaded', function () {
   updateConsultationDisplay();
+  document.querySelectorAll('.btn-convert').forEach(btn => {
+  btn.addEventListener('click', () => {
+    confirmConvert(btn.dataset.convertForm, btn.dataset.customerName);
+  });
+});
 });
 </script>
 {% endblock %}

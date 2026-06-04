@@ -84,6 +84,7 @@ csp = {
 
     'style-src': [
         "'self'",
+         "*.gstatic.com",
         "cdn.jsdelivr.net",
         "cdnjs.cloudflare.com",
         "unpkg.com",
@@ -111,6 +112,7 @@ csp = {
 
     'connect-src': [
         "'self'",
+        "*.gstatic.com",
         "nominatim.openstreetmap.org",
         "firestore.googleapis.com",
         "identitytoolkit.googleapis.com",

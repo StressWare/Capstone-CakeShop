@@ -513,8 +513,8 @@
             </div>
         </div>
         <div class="banner-actions">
-            <button class="banner-btn-view" onclick="bannerViewOrders()">View Orders</button>
-            <button class="banner-btn-dismiss" onclick="bannerDismiss()">✕ Dismiss</button>
+            <button class="banner-btn-view" id="btnBannerView">View Orders</button>
+            <button class="banner-btn-dismiss" id="btnBannerDismiss">✕ Dismiss</button>
         </div>
     </div>
 </div>
@@ -527,13 +527,13 @@
 
       <!-- TABS -->
       <div class="order-tabs">
-        <button class="order-tab-btn active" onclick="switchOrderTab('all', this)">
+        <button class="order-tab-btn active" id="tab-all">
           All <span class="tab-count" id="count-all">0</span>
         </button>
-        <button class="order-tab-btn" onclick="switchOrderTab('custom', this)">
+        <button class="order-tab-btn" id="tab-custom">
           Online - Customized <span class="tab-count" id="count-custom">0</span>
         </button>
-        <button class="order-tab-btn" onclick="switchOrderTab('premade', this)">
+        <button class="order-tab-btn" id="tab-premade">
           Online - Premade <span class="tab-count" id="count-premade">0</span>
         </button>
       </div>
@@ -681,7 +681,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning" onclick="updateEditOrderData()">
+          <button type="submit" class="btn btn-warning">
             <i class="fas fa-save me-2"></i>Save
           </button>
         </div>
@@ -715,8 +715,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-primary" id="sendMessageBtn"
-                style="background: var(--pink-gradient); border:none;"
-                onclick="sendMessageToCustomer()">
+                style="background: var(--pink-gradient); border:none;">
           <i class="fas fa-paper-plane me-2"></i>Send Message
         </button>
       </div>
@@ -800,6 +799,22 @@ document.addEventListener('hidden.bs.modal', function() {
 
       setupFilters();
       listenToOrders();
+      document.getElementById('ordersTableBody').addEventListener('click', function(e) {
+        const viewBtn = e.target.closest('.btn-outline-info');
+        if (viewBtn) {
+            const row = viewBtn.closest('tr');
+            if (row) showDetails(row.dataset.id);
+        }
+
+        const copyBtn = e.target.closest('.btn-outline-success[data-token]');
+        if (copyBtn) copyLink(copyBtn.dataset.token, copyBtn);
+
+        const updateBtn = e.target.closest('.btn-primary.btn-sm');
+        if (updateBtn) {
+            const wrapper = updateBtn.closest('.status-update-wrapper');
+            if (wrapper) updateOrderStatus(wrapper.dataset.orderId);
+        }
+    });
       window.addEventListener('beforeunload', () => {  
         if (unsubscribe) unsubscribe();
       });
@@ -975,11 +990,11 @@ document.addEventListener('hidden.bs.modal', function() {
     const paymentCell = paymentStatusMap[o.payment_status] ||
       `<span class="badge bg-secondary">${o.payment_status || 'Unknown'}</span>`;
     const detailsCell = `
-      <button class="btn btn-sm btn-outline-info" onclick="showDetails('${o.id}')">View</button>
+      <button class="btn btn-sm btn-outline-info">View</button>
       ${o.status === 'Out for Delivery' && o.delivery_type === 'Delivery' && o.delivery_token
-        ? `<button class="btn btn-sm btn-outline-success mt-1 w-100" onclick="copyLink('${window.location.origin}/delivery/${o.delivery_token}', this)">
-             <i class="fas fa-link"></i> Copy Link
-           </button>`
+        ? `<button class="btn btn-sm btn-outline-success mt-1 w-100" data-token="${window.location.origin}/delivery/${o.delivery_token}">
+            <i class="fas fa-link"></i> Copy Link
+          </button>`
         : ''}`;
 
     const updateCell = getUpdateCell(o);
@@ -1036,7 +1051,7 @@ document.addEventListener('hidden.bs.modal', function() {
     return `
       <div class="status-update-wrapper" data-order-id="${o.id}" data-current-status="${o.status}">
         <select class="form-select form-select-sm mb-1 status-select">${selectOptions}</select>
-        <button type="button" class="btn btn-primary btn-sm w-100" onclick="updateOrderStatus('${o.id}')">
+        <button type="button" class="btn btn-primary btn-sm w-100">
           <i class="fas fa-sync-alt"></i> Update
         </button>
       </div>`;
@@ -1396,10 +1411,10 @@ body.innerHTML = `
 `;
 footer.innerHTML = `
   ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
-    ? `<button type="button" class="btn btn-warning" onclick="showEdit('${o.id}')" data-bs-dismiss="modal"><i class="fas fa-edit me-2"></i>Edit</button>`
+    ? `<button type="button" class="btn btn-warning" data-action="edit" data-id="${o.id}"><i class="fas fa-edit me-2"></i>Edit</button>`
     : ''}
   ${o.order_type === 'custom' && o.payment_status === 'Downpayment Paid'
-    ? `<button type="button" class="btn btn-success" onclick="markBalanceCollected('${o.id}')">
+    ? `<button type="button" class="btn btn-success" data-action="balance" data-id="${o.id}">
          <i class="fas fa-check-circle me-2"></i>Mark Balance Collected
        </button>`
     : ''}
@@ -1410,13 +1425,27 @@ footer.innerHTML = `
        </a>`
     : ''}
   <button type="button" class="btn btn-outline-secondary" 
-          onclick="openMessageModal('${o.user_id || ''}', '${(o.customer?.name || '').replace(/'/g, "\\'")}', '${o.id}')">
+          data-action="message"
+          data-user-id="${o.user_id || ''}"
+          data-name="${esc(o.customer?.name || '')}"
+          data-id="${o.id}">
     <i class="fas fa-comment-dots me-2"></i>Message Customer
   </button>
   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
     new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
   };
-
+  document.getElementById('detailsModalFooter').addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
+    if (action === 'edit') {
+      bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal')).hide();
+      showEdit(id);
+    }
+    if (action === 'balance') markBalanceCollected(id);
+    if (action === 'message') openMessageModal(btn.dataset.userId, btn.dataset.name, id);
+  });
   // ── Show Edit Modal ──
   window.showEdit = function(orderId) {
     const o = allOrders.find(x => x.id === orderId);
@@ -1490,6 +1519,13 @@ footer.innerHTML = `
         btn.innerHTML = originalText;
       }
     });
+    document.getElementById('tab-all').addEventListener('click', function() { window.switchOrderTab('all', this); });
+    document.getElementById('tab-custom').addEventListener('click', function() { window.switchOrderTab('custom', this); });
+    document.getElementById('tab-premade').addEventListener('click', function() { window.switchOrderTab('premade', this); });
+    document.getElementById('btnBannerView').addEventListener('click', window.bannerViewOrders);
+    document.getElementById('btnBannerDismiss').addEventListener('click', window.bannerDismiss);
+    document.getElementById('sendMessageBtn').addEventListener('click', window.sendMessageToCustomer);
+
   });
 
   // ── Calculate Edit Total ──

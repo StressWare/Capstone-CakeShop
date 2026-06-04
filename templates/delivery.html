@@ -254,11 +254,14 @@
           <a href="${appUrl}" style="display:block;background:linear-gradient(135deg,#d63384,#a0205e);color:white;padding:12px;border-radius:10px;font-weight:700;text-decoration:none;margin-bottom:10px;">
             ${isIOS ? '🧭 Open in Safari' : 'Open in Chrome'}
           </a>
-          <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;">Continue without tracking</button>
+          <button id="closeTrackingModal" style="background:none;border:none;color:#888;font-size:13px;cursor:pointer;">Continue without tracking</button>
         </div>
       </div>
     `;
     document.body.appendChild(modal);
+        document.getElementById('closeTrackingModal').addEventListener('click', function() {
+        this.closest('div').parentElement.remove();
+    });
   }
 </script>
 {% if expired %}
@@ -298,7 +301,7 @@
     <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
     <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
     <div class="legend-item" style="margin-left:auto; color:#888; font-size:0.72rem;">
-      Routes by <a href="http://project-osrm.org/" target="_blank" style="color:#888;">OSRM</a>
+      Routes by <a href="http://project-osrm.org/" target="_blank" rel="noopener noreferrer" style="color:#888;">OSRM</a>
     </div>
   </div>
 
@@ -433,7 +436,7 @@
 
       <!-- Button (hidden if already delivered) -->
       <div id="btnWrapper" {% if order.status == 'Delivered' %}style="display:none;"{% endif %}>
-        <button id="deliveredBtn" onclick="notifyDelivered()" style="
+        <button id="deliveredBtn" style="
             background: linear-gradient(135deg, #198754, #146c43);
             color: white;
             border: none;
@@ -617,6 +620,10 @@ async function notifyDelivered() {
     btn.textContent = "✅ I've Delivered This Order";
     err.style.display = 'block';
   }
+}
+const deliveredBtn = document.getElementById('deliveredBtn');
+if (deliveredBtn) {
+    deliveredBtn.addEventListener('click', notifyDelivered);
 }
 </script>
 {% endif %}

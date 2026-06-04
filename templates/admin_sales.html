@@ -290,7 +290,6 @@
     body, html { overflow-x: hidden; }
     .container-fluid { padding-left: 10px !important; padding-right: 10px !important; }
 
-    /* Page header */
     .section-header.d-flex {
       flex-direction: row;
       align-items: center;
@@ -309,7 +308,6 @@
       flex-shrink: 0;
     }
 
-    /* Tabs and total */
     .tabs-revenue-row {
       flex-direction: column;
       align-items: stretch;
@@ -344,7 +342,6 @@
       font-size: 1.1rem;
     }
 
-    /* Filters */
     .row.mb-3 {
       gap: 8px;
     }
@@ -361,10 +358,8 @@
       font-size: 0.85rem;
     }
 
-    /* Hide table header */
     #salesTable thead { display: none; }
 
-    /* Convert rows to cards */
     #salesTable tbody tr {
       display: block;
       border: 1px solid #e8e8e8;
@@ -375,7 +370,6 @@
       box-shadow: 0 1px 6px rgba(0,0,0,0.06);
     }
 
-    /* Each cell becomes flex row with label */
     #salesTable tbody td {
       display: flex;
       align-items: center;
@@ -391,7 +385,6 @@
       padding-top: 12px;
     }
 
-    /* Add labels before each cell */
     #salesTable tbody td::before {
       content: attr(data-label);
       font-weight: 700;
@@ -403,7 +396,6 @@
       margin-right: 8px;
     }
 
-    /* Pagination */
     .pagination {
       flex-wrap: wrap;
       justify-content: center;
@@ -422,7 +414,7 @@
 <div class="container-fluid my-4 px-4">
   <div class="section-header d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Sales Records</h1>
-    <button class="btn-export" onclick="openExportModal()">Export</button>
+    <button class="btn-export" id="btnOpenExport">Export</button>
   </div>
 
   <div class="card shadow-sm">
@@ -431,10 +423,10 @@
       <!-- TABS + TOTAL REVENUE (same row) -->
       <div class="tabs-revenue-row">
         <div class="order-tabs">
-          <button class="order-tab-btn active" onclick="switchSalesTab('online', this)">
+          <button class="order-tab-btn active" data-tab="online">
             Online Sales <span class="tab-count" id="count-online">{{ online_count }}</span>
           </button>
-          <button class="order-tab-btn" onclick="switchSalesTab('walkin', this)">
+          <button class="order-tab-btn" data-tab="walkin">
             Walk-in Sales <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
           </button>
         </div>
@@ -454,7 +446,7 @@
           </div>
         </div>
         <div class="col-md-3 mb-2">
-          <select class="form-select" id="dateFilter" onchange="setDateFilterSelect(this.value)">
+          <select class="form-select" id="dateFilter">
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="week">Last 7 Days</option>
@@ -462,7 +454,7 @@
           </select>
         </div>
         <div class="col-md-3 mb-2">
-          <select class="form-select" id="paymentFilter" onchange="setPaymentFilter(this.value)">
+          <select class="form-select" id="paymentFilter">
             <option value="">All Methods</option>
             <option value="Cash">Cash</option>
             <option value="GCash">GCash</option>
@@ -528,20 +520,20 @@
 </div>
 
 <!-- ── EXPORT MODAL ── -->
-<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+<div class="export-modal-overlay" id="exportModalOverlay">
   <div class="export-modal">
-    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <button class="export-modal-close" id="btnCloseExport">×</button>
     <h5>Export Sales</h5>
 
     <!-- Date Range -->
     <div class="date-range-row">
       <div>
         <label for="exportFrom">From</label>
-        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+        <input type="date" id="exportFrom">
       </div>
       <div>
         <label for="exportTo">To</label>
-        <input type="date" id="exportTo" onchange="updateExportPreview()">
+        <input type="date" id="exportTo">
       </div>
     </div>
 
@@ -549,12 +541,8 @@
     <div style="margin-bottom:10px;">
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
-        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">
-          PDF
-        </button>
-        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">
-          CSV
-        </button>
+        <button class="format-btn active" id="fmtPDF">PDF</button>
+        <button class="format-btn" id="fmtCSV">CSV</button>
       </div>
     </div>
 
@@ -570,7 +558,7 @@
       </div>
     </div>
 
-    <button class="btn-download" onclick="runExport()">
+    <button class="btn-download" id="btnDownload">
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
   </div>
@@ -586,6 +574,7 @@ const salesPerPage   = 5;
 let currentTab       = 'online';
 let currentFilter    = 'all';
 let exportFormat     = 'pdf';
+let currentPayment   = '';
 
 // ── Date helpers ──
 function getFilterStart() {
@@ -649,23 +638,8 @@ function switchSalesTab(tab, btn) {
   updateSalesDisplay();
 }
 
-// ── Date/payment filter ──
-function setDateFilterSelect(value) {
-  currentFilter = value;
-  currentSalesPage = 1;
-  updateSalesDisplay();
-}
-
-let currentPayment = '';
-function setPaymentFilter(value) {
-  currentPayment = value;
-  currentSalesPage = 1;
-  updateSalesDisplay();
-}
-
 // ── Export Modal ──
 function openExportModal() {
-  // Default: today's date as "to", 30 days ago as "from"
   const today = new Date();
   const from  = new Date(); from.setDate(today.getDate() - 30);
   document.getElementById('exportTo').value   = today.toISOString().slice(0,10);
@@ -679,15 +653,10 @@ function closeExportModal() {
   document.getElementById('exportModalOverlay').classList.remove('open');
 }
 
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('exportModalOverlay')) closeExportModal();
-}
-
 function selectFormat(fmt) {
   exportFormat = fmt;
   document.getElementById('fmtPDF').classList.toggle('active', fmt === 'pdf');
   document.getElementById('fmtCSV').classList.toggle('active', fmt === 'csv');
-  document.getElementById('downloadBtnIcon').textContent = fmt === 'pdf' ? '📄' : '📊';
   document.getElementById('downloadBtnLabel').textContent = fmt === 'pdf' ? 'Download PDF' : 'Download CSV';
 }
 
@@ -840,10 +809,51 @@ function exportPDF() {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', function() {
+  // Search
   document.getElementById('searchSales').addEventListener('keyup', () => {
     currentSalesPage = 1;
     updateSalesDisplay();
   });
+
+  // Date filter
+  document.getElementById('dateFilter').addEventListener('change', function() {
+    currentFilter = this.value;
+    currentSalesPage = 1;
+    updateSalesDisplay();
+  });
+
+  // Payment filter
+  document.getElementById('paymentFilter').addEventListener('change', function() {
+    currentPayment = this.value;
+    currentSalesPage = 1;
+    updateSalesDisplay();
+  });
+
+  // Tab buttons
+  document.querySelectorAll('.order-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchSalesTab(btn.dataset.tab, btn));
+  });
+
+  // Export modal open/close
+  document.getElementById('btnOpenExport').addEventListener('click', openExportModal);
+  document.getElementById('btnCloseExport').addEventListener('click', closeExportModal);
+
+  // Overlay click to close
+  document.getElementById('exportModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeExportModal();
+  });
+
+  // Format buttons
+  document.getElementById('fmtPDF').addEventListener('click', () => selectFormat('pdf'));
+  document.getElementById('fmtCSV').addEventListener('click', () => selectFormat('csv'));
+
+  // Export date inputs
+  document.getElementById('exportFrom').addEventListener('change', updateExportPreview);
+  document.getElementById('exportTo').addEventListener('change', updateExportPreview);
+
+  // Download button
+  document.getElementById('btnDownload').addEventListener('click', runExport);
+
   updateSalesDisplay();
 });
 </script>

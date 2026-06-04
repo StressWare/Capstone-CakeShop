@@ -334,7 +334,7 @@
         {{ low_stock|length }} low stock item{{ 's' if low_stock|length > 1 else '' }}
       </div>
       {% endif %}
-      <button class="btn-refresh" onclick="location.reload()">
+      <button class="btn-refresh"  id="btn-refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10"/>
           <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/>
@@ -342,14 +342,14 @@
         Refresh
       </button>
       <div class="view-tabs">
-        <button class="view-tab-btn active" id="tab-dashboard" onclick="switchView('dashboard')">
+        <button class="view-tab-btn active" id="tab-dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
             <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
           </svg>
           Dashboard
         </button>
-        <button class="view-tab-btn" id="tab-calendar" onclick="switchView('calendar')">
+        <button class="view-tab-btn" id="tab-calendar" >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
             <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
@@ -427,7 +427,7 @@
       <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h3 class="mb-0">Daily Sale Report</h3>
         <div class="d-flex gap-2">
-          <button class="btn-export" onclick="openDashExportModal()">Export</button>
+          <button class="btn-export" id="btn-export">Export</button>
         </div>
       </div>
       <div class="row g-3">
@@ -502,10 +502,10 @@
     <div class="cal-wrapper">
       <div>
         <div class="cal-nav">
-          <button class="cal-nav-btn" onclick="calPrevMonth()">&#8592;</button>
+          <button class="cal-nav-btn" id="cal-prev">&#8592;</button>
           <span class="cal-month-label" id="cal-month-label"></span>
-          <button class="cal-today-btn" onclick="calGoToday()">Today</button>
-          <button class="cal-nav-btn" onclick="calNextMonth()">&#8594;</button>
+          <button class="cal-today-btn" id="cal-today">Today</button>
+          <button class="cal-nav-btn" id="cal-next">&#8594;</button>
         </div>
         <div class="cal-grid-header">
           <span>Sun</span><span>Mon</span><span>Tue</span>
@@ -528,19 +528,19 @@
       </div>
     </div>
   </div><!-- /view-calendar -->
-  <div class="export-modal-overlay" id="dashExportOverlay" onclick="if(event.target===this)closeDashExportModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
+  <div class="export-modal-overlay" id="dashExportOverlay"  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(107,26,58,0.18);padding:32px 28px 24px;width:100%;max-width:420px;position:relative;animation:modalIn 0.22s ease;">
-    <button onclick="closeDashExportModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;">×</button>
+    <button id="dashCloseExport" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;" >×</button>
     <h5 style="margin:0 0 20px;font-size:1.1rem;font-weight:700;color:#6B1A3A;">Export Daily Report</h5>
 
     <div style="margin-bottom:14px;">
       <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:8px;">Format</label>
       <div style="display:flex;gap:10px;">
-        <button class="dash-fmt-btn active" id="dashFmtPDF" onclick="selectDashFormat('pdf')"
+        <button class="dash-fmt-btn active" id="dashFmtPDF"
           style="flex:1;padding:10px 0;border:1.5px solid #6B1A3A;border-radius:10px;background:#f5eef0;color:#6B1A3A;font-weight:700;font-size:0.92rem;cursor:pointer;">
           PDF
         </button>
-        <button class="dash-fmt-btn" id="dashFmtCSV" onclick="selectDashFormat('csv')"
+        <button class="dash-fmt-btn" id="dashFmtCSV"
           style="flex:1;padding:10px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f8f8f8;color:#666;font-weight:700;font-size:0.92rem;cursor:pointer;">
           CSV
         </button>
@@ -558,7 +558,7 @@
       </div>
     </div>
 
-    <button onclick="runDashExport()"
+    <button id="dashRunExport"
       style="width:100%;padding:11px 0;border:none;border-radius:10px;background:#6B1A3A;color:white;font-weight:700;font-size:0.97rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
       <span id="dashDownloadLabel">Download PDF</span>
     </button>
@@ -567,9 +567,9 @@
 </div><!-- /container-fluid -->
 
 <!-- ORDER QUICK-VIEW MODAL -->
-<div class="cal-modal-overlay" id="cal-modal-overlay" style="display:none;" onclick="closeOrderModal(event)">
+<div class="cal-modal-overlay" id="cal-modal-overlay" style="display:none;">
   <div class="cal-modal" id="cal-modal">
-    <button class="cal-modal-close" onclick="closeModal()">&times;</button>
+    <button class="cal-modal-close" id="cal-modal-close">&times;</button>
     <div class="cal-modal-name"  id="modal-name"></div>
     <div class="cal-modal-item"  id="modal-item"></div>
     <div class="cal-modal-row"><span class="cal-modal-label">Status</span>     <span class="cal-modal-val" id="modal-status"></span></div>
@@ -722,7 +722,8 @@ async function renderCalendar() {
       document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">No active orders for this day.</p>';
     } else {
       document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
-        <div class="cal-order-card ${o.rush ? 'rush' : ''}" onclick='openOrderModal(${JSON.stringify(o)})'>
+        // Fix:
+<div class="cal-order-card ${o.rush ? 'rush' : ''}" data-order='${JSON.stringify(o).replace(/'/g, "&#39;")}'>
           <div class="cal-order-top">
             <span class="cal-order-name">${o.customer}</span>
             <span class="status-badge ${STATUS_CLASS[o.status] || 'status-New'}">${o.status}</span>
@@ -759,7 +760,7 @@ async function renderCalendar() {
           <div style="font-size:11px;color:#991b1b;">Type: ${lockedTypes.join(", ")}</div>
           <div style="font-size:11px;color:#991b1b;">Reason: ${lockInfo.reason}</div>
         </div>
-        <button onclick="unlockDate('${dateStr}')"
+        <button data-action="unlock" data-date="${dateStr}
           style="width:100%;padding:8px;border-radius:8px;border:1px solid #dc2626;
                 background:#fef2f2;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;">
           Unlock ${dateStr}
@@ -797,7 +798,7 @@ async function renderCalendar() {
           </label>
         </div>
         
-        <button onclick="lockDate('${dateStr}')"
+        <button data-action="lock" data-date="${dateStr}"
           style="width:100%;padding:8px;border-radius:8px;border:none;
                 background:#6B1A3A;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
           Lock This Date
@@ -1031,5 +1032,67 @@ function downloadCSV() {
   a.href=url; a.download=`daily-sale-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  document.getElementById('btn-refresh')
+    .addEventListener('click', () => location.reload());
+
+  document.getElementById('tab-dashboard')
+    .addEventListener('click', () => switchView('dashboard'));
+
+  document.getElementById('tab-calendar')
+    .addEventListener('click', () => switchView('calendar'));
+
+  document.getElementById('cal-prev')
+    .addEventListener('click', calPrevMonth);
+
+  document.getElementById('cal-next')
+    .addEventListener('click', calNextMonth);
+
+  document.getElementById('cal-today')
+    .addEventListener('click', calGoToday);
+
+  document.getElementById('cal-modal-close')
+    .addEventListener('click', closeModal);
+
+  document.getElementById('cal-modal-overlay')
+    .addEventListener('click', closeOrderModal);
+
+  document.getElementById('btn-export')
+    .addEventListener('click', openDashExportModal);
+
+  document.getElementById('dashCloseExport')
+    .addEventListener('click', closeDashExportModal);
+
+  document.getElementById('dashFmtPDF')
+    .addEventListener('click', () => selectDashFormat('pdf'));
+
+  document.getElementById('dashFmtCSV')
+    .addEventListener('click', () => selectDashFormat('csv'));
+
+  document.getElementById('dashRunExport')
+    .addEventListener('click', runDashExport);
+
+  document.getElementById('dashExportOverlay')
+    .addEventListener('click', e => {
+      if (e.target === document.getElementById('dashExportOverlay'))
+        closeDashExportModal();
+    });
+
+  // Dynamic buttons (lock/unlock/order cards)
+  document.getElementById('cal-detail-body')
+    .addEventListener('click', e => {
+      const lockBtn   = e.target.closest('[data-action="lock"]');
+      const unlockBtn = e.target.closest('[data-action="unlock"]');
+      const orderCard = e.target.closest('[data-order]');
+
+      if (lockBtn)   lockDate(lockBtn.dataset.date);
+      if (unlockBtn) unlockDate(unlockBtn.dataset.date);
+      if (orderCard) openOrderModal(JSON.parse(orderCard.dataset.order));
+    });
+
+});
 </script>
 {% endblock %}

@@ -61,10 +61,10 @@
                      align-items:center; gap:8px; text-align:left;">
         <i class="fa-solid fa-fingerprint"></i> <span id="fingerprintMenuLabel">Enable Fingerprint</span>
       </button>
-      <button onclick="startDeleteAccount()"
+      <button id="deleteAccountBtn"
               style="width:100%; background:transparent; border:none; padding:12px 16px;
-                     font-size:13px; color:#b02020; cursor:pointer; display:flex;
-                     align-items:center; gap:8px; text-align:left;">
+                    font-size:13px; color:#b02020; cursor:pointer; display:flex;
+                    align-items:center; gap:8px; text-align:left;">
         <i class="bi bi-trash"></i> Delete Account
       </button>
     </div>
@@ -145,7 +145,7 @@
      {% if loyalty_unclaimed %}
       <div class="loyalty-sub">🎉 You have an unclaimed <span>reward</span>!</div>
             <div style="margin-top:8px;">
-              <button onclick="showTab('loyalty')"
+              <button id="claimRewardBtn"
                       style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
                               padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;">
                 <i class="bi bi-gift me-1"></i>Claim your reward →
@@ -160,11 +160,11 @@
 
     <!-- Tab nav -->
     <div class="dashboard-nav-icons">
-      <button class="nav-icon active" onclick="showTab('orders')">
+      <button class="nav-icon active" data-tab="orders">
         <i class="bi bi-box-seam"></i>
         <span>Orders</span>
       </button>
-      <button class="nav-icon" onclick="showTab('favorites')">
+      <button class="nav-icon" data-tab="favorites">
         <i class="bi bi-heart"></i>
         <span>Favorites</span>
         {% if favorites_list %}
@@ -174,7 +174,7 @@
         </span>
         {% endif %}
       </button>
-      <button class="nav-icon" onclick="showTab('loyalty')">
+      <button class="nav-icon" data-tab="loyalty">
         <i class="bi bi-star"></i>
         <span>Loyalty</span>
         {% if loyalty_unclaimed %}
@@ -251,9 +251,9 @@
 
       <!-- Active orders pagination -->
       <div class="active-orders-pagination" id="activeOrdersPagination" style="display:none;">
-        <button class="aop-btn" id="aopPrev" onclick="activeOrdersPage(-1)" disabled>← Prev</button>
+        <button class="aop-btn" id="aopPrev" disabled>← Prev</button>
         <span class="aop-info" id="aopInfo"></span>
-        <button class="aop-btn" id="aopNext" onclick="activeOrdersPage(1)">Next →</button>
+        <button class="aop-btn" id="aopNext">Next →</button>
       </div>
     </div>
     {% endif %}
@@ -364,7 +364,7 @@
           <div class="fav-card-stock">{% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %}😔 Sold Out{% endif %}</div>
           {% if cake.quantity > 0 %}
           <div class="fav-btn-group">
-            <form method="POST" action="/order/cake" onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+            <form method="POST" action="/order/cake" class="order-form">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="cake_id" value="{{ cake.id }}">
               <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -382,7 +382,7 @@
             </form>
           </div>
           {% endif %}
-          <button class="btn-unfav mt-2" onclick="removeFavorite('{{ cake.id }}', '{{ cake.name }}')">Remove from Favorites</button>
+          <button class="btn-unfav mt-2" data-cake-id="{{ cake.id }}" data-cake-name="{{ cake.name }}">Remove from Favorites</button>
         </div>
       </div>
       {% endfor %}
@@ -513,10 +513,9 @@
 
       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
         {% for gift in gift_list %}
-        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;
-                      padding:10px 12px; border-radius:8px; border:1.5px solid #f0d0e8;
-                      background:#fff; font-size:13px; font-weight:500;"
-               onclick="this.style.borderColor='#e8186e'; this.style.background='#fff0f7';">
+        <label class="gift-label" style="display:flex; align-items:center; gap:10px; cursor:pointer;
+              padding:10px 12px; border-radius:8px; border:1.5px solid #f0d0e8;
+              background:#fff; font-size:13px; font-weight:500;">
           <input type="radio" name="gift_name" value="{{ gift }}" required
                  style="accent-color:var(--pink);">
            {{ gift }}
@@ -641,10 +640,9 @@
             <div style="display:flex; flex-direction:column; gap:8px;">
               {% set reasons = ['Changed my mind', 'Ordered by mistake', 'Taking too long', 'Found cheaper elsewhere', 'Other'] %}
               {% for reason in reasons %}
-              <label style="display:flex; align-items:center; gap:10px; cursor:pointer;
-                            padding:10px 12px; border-radius:8px; border:1.5px solid #e0e0e0;
-                            background:#fff; font-size:13px; font-weight:500;"
-                    onclick="selectCancelReason(this, '{{ reason }}')">
+              <label class="cancel-reason-label" data-reason="{{ reason }}" style="display:flex; align-items:center; gap:10px; cursor:pointer;
+              padding:10px 12px; border-radius:8px; border:1.5px solid #e0e0e0;
+              background:#fff; font-size:13px; font-weight:500;">
                 <input type="radio" name="_cancel_reason_radio" value="{{ reason }}" required
                       style="accent-color:#dc3545;">
                 {{ reason }}
@@ -658,7 +656,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Back</button>
-            <button type="submit" class="btn btn-danger" onclick="return submitCancelReason()">Confirm Cancel</button>
+            <button type="submit" class="btn btn-danger">Confirm Cancel</button>
           </div>
         </form>
       </div>
@@ -843,8 +841,8 @@
         </div><!-- /modal-body -->
           <div class="modal-footer">
             {% if order.status == 'New' %}
-            <button type="button" class="btn btn-danger btn-sm"
-                    onclick="openCancelModal('{{ order.id }}')">
+            <button type="button" class="btn btn-danger btn-sm cancel-order-btn"
+              data-order-id="{{ order.id }}">
               Cancel Order
             </button>
             {% endif %}
@@ -864,9 +862,15 @@
                         data-bs-target="#reviewModal{{ order.id }}">⭐ Review</button>
               {% endif %}
             {% endif %}
-            <button type="button" class="btn btn-sm"
-                    style="background:var(--pink);color:#fff;border:none;"
-                    onclick="messageShopAboutOrder('{{ order.id }}', '{{ order.order_type }}', '{{ order.item[:40] }}', '{{ order.amount }}', '{{ order.status }}', {% if order.order_type == 'premade' and order.selected_items %}'{{ order.selected_items[0].image_url }}'{% else %}null{% endif %}, {% if order.order_type == 'custom' and order.custom_components %}'{{ order.custom_components | map(attribute='name') | join(' · ') }}'{% else %}null{% endif %})">
+            <button type="button" class="btn btn-sm message-shop-btn"
+                style="background:var(--pink);color:#fff;border:none;"
+                data-order-id="{{ order.id }}"
+                data-order-type="{{ order.order_type }}"
+                data-item-label="{{ order.item[:40] }}"
+                data-amount="{{ order.amount }}"
+                data-status="{{ order.status }}"
+                data-image-url="{% if order.order_type == 'premade' and order.selected_items %}{{ order.selected_items[0].image_url }}{% else %}{% endif %}"
+                data-item-details="{% if order.order_type == 'custom' and order.custom_components %}{{ order.custom_components | map(attribute='name') | join(' · ') }}{% else %}{% endif %}">
               <i class="fas fa-comment-dots me-1"></i> Message Shop
             </button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -894,7 +898,7 @@
               <div class="mb-3">
                 <label class="form-label fw-bold">Rating *</label>
                 <div class="star-rating" id="stars_{{ order.id }}_{{ item.cake_id }}">
-                  {% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}_{{ item.cake_id }}" onmouseover="hoverStars(this)" onmouseout="resetStars(this)" onclick="selectStar(this)"></i>{% endfor %}
+                  {% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}_{{ item.cake_id }}"></i>{% endfor %}
                 </div>
                 <input type="hidden" name="rating" id="rating_{{ order.id }}_{{ item.cake_id }}" value="5">
                 <small class="text-muted" id="ratingLabel_{{ order.id }}_{{ item.cake_id }}">⭐⭐⭐⭐⭐ Excellent!</small>
@@ -927,7 +931,7 @@
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label fw-bold">Rating *</label>
-              <div class="star-rating">{% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}" onmouseover="hoverStars(this)" onmouseout="resetStars(this)" onclick="selectStar(this)"></i>{% endfor %}</div>
+              <div class="star-rating">{% for i in range(1,6) %}<i class="fas fa-star star-btn" data-value="{{ i }}" data-target="rating_{{ order.id }}"></i>{% endfor %}</div>
               <input type="hidden" name="rating" id="rating_{{ order.id }}" value="5">
               <small class="text-muted" id="ratingLabel_{{ order.id }}">⭐⭐⭐⭐⭐ Excellent!</small>
             </div>
@@ -1248,16 +1252,25 @@ function updatePaginationButtons(totalPages) {
   const el = document.getElementById('ordersPagination');
   if (!el || totalPages <= 1) { if (el) el.innerHTML = ''; return; }
   let html = '';
-  html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage-1});return false;">Previous</a></li>`;
+  html += `<li class="page-item ${currentPage===1?'disabled':''}"><a class="page-link page-link-btn" href="#" data-page="${currentPage-1}">Previous</a></li>`;
   for (let i = 1; i <= totalPages; i++) {
     if (totalPages <= 5 || i===1 || i===totalPages || (i>=currentPage-1 && i<=currentPage+1)) {
-      html += `<li class="page-item ${currentPage===i?'active':''}"><a class="page-link" href="#" onclick="goToPage(${i});return false;">${i}</a></li>`;
+      html += `<li class="page-item ${currentPage===i?'active':''}"><a class="page-link page-link-btn" href="#" data-page="${i}">${i}</a></li>`;
     } else if (i===currentPage-2 || i===currentPage+2) {
       html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
     }
   }
-  html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link" href="#" onclick="goToPage(${currentPage+1});return false;">Next</a></li>`;
+  html += `<li class="page-item ${currentPage===totalPages?'disabled':''}"><a class="page-link page-link-btn" href="#" data-page="${currentPage+1}">Next</a></li>`;
   el.innerHTML = html;
+
+  // Bind pagination clicks via event delegation
+  el.onclick = function(e) {
+      e.preventDefault();
+      const target = e.target.closest('.page-link-btn');
+      if (target && !target.closest('.disabled')) {
+          goToPage(parseInt(target.dataset.page));
+      }
+  };
 }
 
 function goToPage(page) {
@@ -1521,7 +1534,7 @@ async function startDeviceRegistration() {
         if (!resp.ok) throw new Error('Failed to start registration');
         const raw = await resp.json();
 
-        const publicKey = raw.publicKey ? raw.publicKey : raw;
+        const publicKey = raw.publicKey || raw;
 
         // challenge and user.id may be objects {0:x, 1:y...} or strings
         function toBuffer(val) {
@@ -1589,5 +1602,87 @@ async function startDeviceRegistration() {
         });
     }
 }
+// ── CSP COMPLIANT EVENT BINDINGS ──
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Claim Reward Button
+    const claimBtn = document.getElementById('claimRewardBtn');
+    if (claimBtn) claimBtn.addEventListener('click', () => showTab('loyalty'));
+
+    // 2. Tab Nav Buttons
+    document.querySelectorAll('.nav-icon[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => showTab(btn.dataset.tab));
+    });
+
+    // 3. Active Orders Pagination
+    const aopPrev = document.getElementById('aopPrev');
+    const aopNext = document.getElementById('aopNext');
+    if (aopPrev) aopPrev.addEventListener('click', () => activeOrdersPage(-1));
+    if (aopNext) aopNext.addEventListener('click', () => activeOrdersPage(1));
+
+    // 4. Favorites Order Forms
+    document.querySelectorAll('form.order-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            checkShopOpen(() => this.submit());
+        });
+    });
+
+    // 5. Favorites Remove Buttons
+    document.querySelectorAll('.btn-unfav').forEach(btn => {
+        btn.addEventListener('click', () => removeFavorite(btn.dataset.cakeId, btn.dataset.cakeName));
+    });
+
+    // 6. Loyalty Gift Labels
+    document.querySelectorAll('.gift-label').forEach(label => {
+        label.addEventListener('click', function() {
+            this.style.borderColor = '#e8186e';
+            this.style.background = '#fff0f7';
+        });
+    });
+
+    // 7. Cancel Reason Labels
+    document.querySelectorAll('.cancel-reason-label').forEach(label => {
+        label.addEventListener('click', function() {
+            selectCancelReason(this, this.dataset.reason);
+        });
+    });
+
+    // 8. Cancel Reason Form Submit
+    const cancelForm = document.getElementById('cancelReasonForm');
+    if (cancelForm) {
+        cancelForm.addEventListener('submit', function(e) {
+            if (!submitCancelReason()) {
+                e.preventDefault();
+            }
+        });
+    }
+
+    // 9. Cancel Order Buttons
+    document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openCancelModal(btn.dataset.orderId));
+    });
+
+    // 10. Message Shop Buttons
+    document.querySelectorAll('.message-shop-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const d = this.dataset;
+            messageShopAboutOrder(
+                d.orderId, d.orderType, d.itemLabel, d.amount, d.status,
+                d.imageUrl || null, d.itemDetails || null
+            );
+        });
+    });
+
+    // 11. Review Stars
+    document.querySelectorAll('.star-btn').forEach(star => {
+        star.addEventListener('mouseover', function() { hoverStars(this); });
+        star.addEventListener('mouseout', function() { resetStars(this); });
+        star.addEventListener('click', function() { selectStar(this); });
+    });
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', startDeleteAccount);
+    }
+});
 </script>
 {% endblock %}

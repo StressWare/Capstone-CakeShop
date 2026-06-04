@@ -777,8 +777,16 @@ async function startDeviceRegistration() {
 
         // py_webauthn returns options without publicKey wrapper — wrap it
         const publicKey = raw.publicKey || raw;
-        publicKey.challenge = base64urlToBuffer(publicKey.challenge);
-        publicKey.user.id = base64urlToBuffer(publicKey.user.id);
+
+        function toBuffer(val) {
+            if (typeof val === 'string') return base64urlToBuffer(val);
+            if (val instanceof ArrayBuffer) return new Uint8Array(val);
+            if (typeof val === 'object') return new Uint8Array(Object.values(val));
+            return val;
+        }
+
+        publicKey.challenge = toBuffer(publicKey.challenge);
+        publicKey.user.id   = toBuffer(publicKey.user.id);
         if (publicKey.excludeCredentials) {
             publicKey.excludeCredentials = publicKey.excludeCredentials.map(c => ({
                 ...c, id: base64urlToBuffer(c.id)
