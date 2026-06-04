@@ -472,6 +472,92 @@
       line-height: 1.3;
     }
   }
+
+  /* =========================================
+   MOBILE RESPONSIVE OVERRIDES
+   Fixes cutoff text and layout issues without 
+   changing your intentional desktop design
+   ========================================= */
+
+@media (max-width: 768px) {
+  /* 1. Fix Headings pushed off-screen by large margin-left */
+  /* This resets the margin to 0 and centers them ONLY on mobile */
+  h2 {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    text-align: center !important;
+    width: 100% !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2. Fix "About Us" section text and button cutoff */
+  .about-snippet-text {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center !important;
+  }
+  .about-snippet-text p {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+  .about-snippet-text a {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  /* 3. Fix Top Cakes section padding */
+  .top-cakes-section {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+  }
+  .top-cakes-scroll {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* 4. Fix "Most Ordered" card text overflow */
+  .card-title {
+    font-size: 1.5rem !important;
+    line-height: 1.3 !important;
+  }
+  .card-small .card-title {
+    font-size: 1.2rem !important;
+  }
+  .card-content {
+    padding: 20px !important;
+  }
+  .book-btn {
+    padding: 10px 20px !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* 5. Ensure containers don't exceed screen width */
+  .custom-carousel-container,
+  .location-map-container {
+    width: 90% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* Extra small devices (phones less than 480px) */
+@media (max-width: 480px) {
+  .card-title {
+    font-size: 1.3rem !important;
+  }
+  .card-small .card-title {
+    font-size: 1.1rem !important;
+  }
+  
+  /* Make sure the About Us image doesn't overflow */
+  .about-snippet-grid img {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 300px !important;
+  }
+}
   </style>
 {% endblock %}
 
@@ -763,7 +849,7 @@
 {% if top_cakes %}
 <section class="top-cakes-section" style="padding: 0 40px;">
   <div class="container-fluid">
-    <h2 class="text-center mb-3" style= "margin-top: 120px;margin-bottom: 90px; text-align: center; font-weight: 500; margin-left: 410px;">Our Best Cakes Rated By Customers</h2>
+    <h2 class="text-center mb-3" style= "margin-top: 120px;margin-bottom: 90px; text-align: center; font-weight: 500; margin-left: 410px;">Best Cakes Rated By Customers</h2>
     <div class="top-cakes-scroll">
       {% for cake in top_cakes %}
       <div class="review-card" style="margin-top:20px;">
