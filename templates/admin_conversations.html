@@ -371,7 +371,7 @@
             <h4 class="fw-bold mb-0 text-white">Customer Conversations</h4>
             <small class="text-white-50">Real-time chat — reply to customers instantly</small>
         </div>
-        <button class="btn btn-sm btn-outline-light" onclick="location.reload()" title="Refresh">
+        <button class="btn btn-sm btn-outline-light" id="refreshBtn" title="Refresh">
             <i class="fas fa-sync-alt"></i> Refresh
         </button>
     </div>
@@ -602,7 +602,9 @@
             });
     }
     // ===== EVENTS =====
+    
     function setupEvents() {
+        document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
         dom.sendReplyBtn.addEventListener('click', sendReply);
         dom.replyInput.addEventListener('keypress', e => { if(e.key === 'Enter' && !e.shiftKey) sendReply(); });
         dom.replyInput.addEventListener('input', () => {

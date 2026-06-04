@@ -285,7 +285,8 @@
             {% if user_id %}
             <button class="heart-btn {% if cake.id in favorite_ids %}favorited{% endif %}"
                     id="heart-{{ cake.id }}"
-                    onclick="event.stopPropagation(); toggleFavorite('{{ cake.id }}', '{{ cake.name }}'); return false;"
+                    data-cake-id="{{ cake.id }}"
+                    data-cake-name="{{ cake.name }}"
                     title="{% if cake.id in favorite_ids %}Remove from favorites{% else %}Add to favorites{% endif %}">
               {% if cake.id in favorite_ids %}❤️{% else %}🤍{% endif %}
             </button>
@@ -321,14 +322,14 @@
             {% if cake.quantity > 0 %}
               <div class="qty-label">Quantity</div>
               <div class="qty-selector">
-                <button type="button" class="qty-btn"
-                        onclick="changeQty('{{ cake.id }}', -1, {{ cake.quantity }})"
-                        id="qty-minus-{{ cake.id }}" disabled>−</button>
-                <span class="qty-display" id="qty-{{ cake.id }}">1</span>
-                <button type="button" class="qty-btn"
-                        onclick="changeQty('{{ cake.id }}', 1, {{ cake.quantity }})"
-                        id="qty-plus-{{ cake.id }}" 
-                        {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
+              <button type="button" class="qty-btn"
+                      data-cake-id="{{ cake.id }}" data-delta="-1" data-max-qty="{{ cake.quantity }}"
+                      id="qty-minus-{{ cake.id }}" disabled>−</button>
+              <span class="qty-display" id="qty-{{ cake.id }}">1</span>
+              <button type="button" class="qty-btn"
+                      data-cake-id="{{ cake.id }}" data-delta="1" data-max-qty="{{ cake.quantity }}"
+                      id="qty-plus-{{ cake.id }}" 
+                      {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
                         <br>
                        <span class="stock" style="background:#d63384 !important; color:white !important; padding:1px 8px !important; border-radius:8px !important; font-weight:600 !important; display:inline-block !important;">{{ cake.quantity }} left</span>
               </div>
@@ -346,9 +347,8 @@
                 </form>
 
                 <!-- Order Now SA BABA -->
-                <form method="POST" action="/order/cake"
-      onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <form method="POST" action="/order/cake" class="order-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                     <input type="hidden" name="cake_name" value="{{ cake.name }}">
                     <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -400,9 +400,10 @@
           {{ cake.name }}
           {% if user_id %}
           <button class="modal-heart-btn ms-2"
-                  id="modal-heart-{{ cake.id }}"
-                  onclick="toggleFavorite('{{ cake.id }}', '{{ cake.name }}')"
-                  title="Toggle favorite">
+            id="modal-heart-{{ cake.id }}"
+            data-cake-id="{{ cake.id }}"
+            data-cake-name="{{ cake.name }}"
+            title="Toggle favorite">
             {% if cake.id in favorite_ids %}❤️{% else %}🤍{% endif %}
           </button>
           {% endif %}
@@ -459,19 +460,18 @@
 
         <div class="qty-label">Quantity</div>
         <div class="qty-selector mb-3">
-          <button type="button" class="qty-btn"
-                  onclick="changeQty('m{{ cake.id }}', -1, {{ cake.quantity }})"
-                  id="qty-minus-m{{ cake.id }}" disabled>−</button>
-          <span class="qty-display" id="qty-m{{ cake.id }}">1</span>
-          <button type="button" class="qty-btn"
-                  onclick="changeQty('m{{ cake.id }}', 1, {{ cake.quantity }})"
-                  id="qty-plus-m{{ cake.id }}"
-                  {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
+        <button type="button" class="qty-btn"
+                data-cake-id="m{{ cake.id }}" data-delta="-1" data-max-qty="{{ cake.quantity }}"
+                id="qty-minus-m{{ cake.id }}" disabled>−</button>
+        <span class="qty-display" id="qty-m{{ cake.id }}">1</span>
+        <button type="button" class="qty-btn"
+                data-cake-id="m{{ cake.id }}" data-delta="1" data-max-qty="{{ cake.quantity }}"
+                id="qty-plus-m{{ cake.id }}"
+                {% if cake.quantity <= 1 %}disabled{% endif %}>+</button>
         </div>
 
         <div class="d-flex gap-2">
-          <form method="POST" action="/order/cake"  class="flex-fill"
-      onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+          <form method="POST" action="/order/cake" class="flex-fill order-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="cake_id"   value="{{ cake.id }}">
             <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -660,6 +660,29 @@ document.addEventListener('click', function(e) {
     if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
         suggestionsBox.style.display = 'none';
     }
+});
+// 1. Heart buttons (card + modal)
+document.querySelectorAll('.heart-btn, .modal-heart-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevents triggering card click if inside .cake-image
+        toggleFavorite(this.dataset.cakeId, this.dataset.cakeName);
+    });
+});
+
+// 2. Quantity buttons (card + modal)
+document.querySelectorAll('.qty-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        changeQty(this.dataset.cakeId, parseInt(this.dataset.delta), parseInt(this.dataset.maxQty));
+    });
+});
+
+// 3. Order forms (card + modal)
+document.querySelectorAll('form.order-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        checkShopOpen(() => this.submit());
+    });
 });
 </script>
 {% endblock %}

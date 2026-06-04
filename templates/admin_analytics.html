@@ -189,7 +189,7 @@
     <h1 class="mb-1" style="font-size: clamp(1.2rem, 5vw, 2rem);">Analytics</h1>      
     <p class="mb-0 opacity-75">Business performance overview</p>
     </div>
-    <button class="btn-export" onclick="openAnalyticsExportModal()">Export</button>
+    <button class="btn-export" id="btn-analytics-export">Export</button>
   </div>
 
   <!-- SUMMARY CARDS -->
@@ -379,9 +379,9 @@
     <div class="chart-title">
       <span id="chartTitleText">Weekly Overview</span>
       <div class="tab-switcher">
-        <button class="tab-btn active" onclick="switchTab('weekly', this)">Weekly</button>
-        <button class="tab-btn" onclick="switchTab('monthly', this)">Monthly</button>
-        <button class="tab-btn" onclick="switchTab('alltime', this)">All Time</button>
+        <button class="tab-btn active" data-tab="weekly">Weekly</button>
+        <button class="tab-btn" data-tab="monthly">Monthly</button>
+        <button class="tab-btn" data-tab="alltime">All Time</button>
       </div>
     </div>
     <div class="chart-wrapper">
@@ -433,25 +433,25 @@
       </div>
     </div>
   </div>
-  <div id="analyticsExportOverlay" onclick="if(event.target===this)closeAnalyticsExportModal()"
+  <div id="analyticsExportOverlay"
   style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(199,21,133,0.18);padding:32px 28px 24px;width:100%;max-width:420px;position:relative;animation:modalIn 0.22s ease;">
-    <button onclick="closeAnalyticsExportModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;">×</button>
+    <button id="aExpClose" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;">×</button>
     <h5 style="margin:0 0 20px;font-size:1.1rem;font-weight:700;color:#c71585;">Export Analytics</h5>
 
     <!-- Data range selector -->
     <div style="margin-bottom:16px;">
       <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:8px;">Data Range</label>
       <div style="display:flex;gap:8px;">
-        <button id="aExpWeekly"  onclick="selectAnalyticsRange('weekly')"
+        <button id="aExpWeekly"  
           style="flex:1;padding:8px 0;border:1.5px solid #c71585;border-radius:10px;background:#fff0f7;color:#c71585;font-weight:700;font-size:0.82rem;cursor:pointer;">
           Weekly
         </button>
-        <button id="aExpMonthly" onclick="selectAnalyticsRange('monthly')"
+        <button id="aExpMonthly" 
           style="flex:1;padding:8px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f8f8f8;color:#666;font-weight:700;font-size:0.82rem;cursor:pointer;">
           Monthly
         </button>
-        <button id="aExpAlltime" onclick="selectAnalyticsRange('alltime')"
+        <button id="aExpAlltime" 
           style="flex:1;padding:8px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f8f8f8;color:#666;font-weight:700;font-size:0.82rem;cursor:pointer;">
           All Time
         </button>
@@ -462,11 +462,11 @@
     <div style="margin-bottom:16px;">
       <label style="font-size:0.82rem;font-weight:600;color:#555;display:block;margin-bottom:8px;">Format</label>
       <div style="display:flex;gap:10px;">
-        <button id="aExpPDF" onclick="selectAnalyticsFormat('pdf')"
+        <button id="aExpPDF"
           style="flex:1;padding:10px 0;border:1.5px solid #c71585;border-radius:10px;background:#fff0f7;color:#c71585;font-weight:700;font-size:0.92rem;cursor:pointer;">
           PDF
         </button>
-        <button id="aExpCSV" onclick="selectAnalyticsFormat('csv')"
+        <button id="aExpCSV" 
           style="flex:1;padding:10px 0;border:1.5px solid #e0e0e0;border-radius:10px;background:#f8f8f8;color:#666;font-weight:700;font-size:0.92rem;cursor:pointer;">
           CSV
         </button>
@@ -485,7 +485,7 @@
       </div>
     </div>
 
-    <button onclick="runAnalyticsExport()"
+    <button id="aExpRun"
       style="width:100%;padding:11px 0;border:none;border-radius:10px;background:#c71585;color:white;font-weight:700;font-size:0.97rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
       <span id="aExpDownloadLabel">Download PDF</span>
     </button>
@@ -824,5 +824,40 @@
     a.click();
     URL.revokeObjectURL(url);
   }
+  document.addEventListener('DOMContentLoaded', () => {
+
+  document.getElementById('btn-analytics-export')
+    .addEventListener('click', openAnalyticsExportModal);
+
+  document.getElementById('aExpClose')
+    .addEventListener('click', closeAnalyticsExportModal);
+
+  document.getElementById('analyticsExportOverlay')
+    .addEventListener('click', e => {
+      if (e.target === document.getElementById('analyticsExportOverlay'))
+        closeAnalyticsExportModal();
+    });
+
+  ['Weekly','Monthly','Alltime'].forEach(r => {
+    document.getElementById('aExp' + r)
+      .addEventListener('click', () => selectAnalyticsRange(r.toLowerCase()));
+  });
+
+  document.getElementById('aExpPDF')
+    .addEventListener('click', () => selectAnalyticsFormat('pdf'));
+
+  document.getElementById('aExpCSV')
+    .addEventListener('click', () => selectAnalyticsFormat('csv'));
+
+  document.getElementById('aExpRun')
+    .addEventListener('click', runAnalyticsExport);
+
+  // Tab buttons via delegation
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn));
+  });
+
+});
 </script>
+
 {% endblock %}

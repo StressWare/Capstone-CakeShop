@@ -416,7 +416,7 @@
       <h5>POS Transaction History</h5>
     </div>
     <div class="history-header-actions">
-      <button class="btn-download" onclick="downloadPDF()">
+      <button class="btn-download" id="btnDownloadPDF">
         <i class="fas fa-file-pdf"></i> <span>Download PDF</span>
       </button>
       <a href="/pos" class="btn-back">
@@ -429,14 +429,11 @@
   <div class="date-filter-bar">
     <label>Filter:</label>
     <div class="date-filter-buttons">
-      <button class="date-btn {% if filter_type == 'today' %}active{% endif %}" onclick="setFilter('today', this)">Today</button>
-      <button class="date-btn {% if filter_type == 'yesterday' %}active{% endif %}" onclick="setFilter('yesterday', this)">Yesterday</button>
-      <button class="date-btn {% if filter_type == 'week' %}active{% endif %}" onclick="setFilter('week', this)">This Week</button>
+      <button class="date-btn {% if filter_type == 'today' %}active{% endif %}" data-filter="today">Today</button>
+      <button class="date-btn {% if filter_type == 'yesterday' %}active{% endif %}" data-filter="yesterday">Yesterday</button>
+      <button class="date-btn {% if filter_type == 'week' %}active{% endif %}" data-filter="week">This Week</button>
     </div>
-    <input type="date" class="custom-date-input" id="customDate"
-           value="{{ custom_date or '' }}"
-           onchange="setFilter('custom', null)"
-           placeholder="Pick a date">
+    <input type="date" class="custom-date-input" id="customDate" value="{{ custom_date or '' }}" placeholder="Pick a date">
   </div>
 
   <!-- SUMMARY CARDS -->
@@ -626,7 +623,10 @@
   }
 
   function formatDate(d) {
-    return d.toISOString().split('T')[0];
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   function downloadPDF() {
@@ -647,6 +647,17 @@
       report.style.display = 'none';
     });
   }
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('btnDownloadPDF').addEventListener('click', downloadPDF);
+
+    document.querySelectorAll('[data-filter]').forEach(function (btn) {
+      btn.addEventListener('click', function () { setFilter(btn.dataset.filter, btn); });
+    });
+
+    document.getElementById('customDate').addEventListener('change', function () {
+      setFilter('custom', null);
+    });
+  });
 </script>
 </body>
 </html>

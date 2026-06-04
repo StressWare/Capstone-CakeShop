@@ -122,7 +122,7 @@
     </div>
 
     <!-- type="button" so it doesn't submit directly -->
-    <button type="button" onclick="confirmApprove()"
+    <button type="button" id="approveBtn"
       style="width:100%; padding:13px; background:#db2777; color:white; border:none;
       border-radius:10px; font-size:14px; font-weight:600; cursor:pointer;">
       Approve &amp; Notify Customer
@@ -151,6 +151,9 @@ function confirmApprove() {
     }
   });
 }
+document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('approveBtn').addEventListener('click', confirmApprove);
+});
 </script>
 {% endblock %}
 {% endblock %}

@@ -239,13 +239,13 @@
     <!-- ── HEADER WITH TABS ── -->
     <div class="card-header bg-light text-dark d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div class="d-flex gap-2">
-        <button class="btn tab-btn active" id="tabProducts" onclick="switchTab('products')">
+        <button class="btn tab-btn active" id="tabProducts" >
            Premade Pricing
         </button>
-        <button class="btn tab-btn" id="tabCustomPricing" onclick="switchTab('custom')">
+        <button class="btn tab-btn" id="tabCustomPricing" >
            Customize Pricing
         </button>
-        <button class="btn tab-btn" id="tabLoyaltyGifts" onclick="switchTab('loyalty')">
+        <button class="btn tab-btn" id="tabLoyaltyGifts" >
           Loyalty Gifts
         </button>
       </div>
@@ -340,12 +340,12 @@
                       <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox"
                               id="replaceImgToggle{{ cake.id }}"
-                              onchange="toggleImageUpload('{{ cake.id }}', this)">
+                              >
                         <label class="form-check-label" for="replaceImgToggle{{ cake.id }}">Replace Image</label>
                       </div>
                       <div id="imageUploadBox{{ cake.id }}" style="display:none;">
                         <input type="file" class="form-control" name="image" accept="image/*"
-                              onchange="previewNewImage('{{ cake.id }}', this)">
+                        >
                         <small class="text-muted">Max 2MB. Leave empty to keep current image.</small>
                       </div>
                     </div>
@@ -411,7 +411,9 @@
                 <label class="form-label">Soft Icing (₱)</label>
                 <input type="number" class="form-control" id="price_icing_buttercream" value="{{ custom_prices.icing.buttercream }}" min="0">
               </div>
-              <button class="btn btn-save-pricing" onclick="saveCustomPricing('icing', {fondant:'price_icing_fondant', buttercream:'price_icing_buttercream'})">
+              <button class="btn btn-save-pricing"
+                data-category="icing"
+                data-fields='{"fondant":"price_icing_fondant","buttercream":"price_icing_buttercream"}'>
                 <i class="fas fa-save me-1"></i> Save Icing Prices
               </button>
             </div>
@@ -437,7 +439,9 @@
                 <label class="form-label">12 inches (₱)</label>
                 <input type="number" class="form-control" id="price_size_12" value="{{ custom_prices.size['12'] }}" min="0">
               </div>
-              <button class="btn btn-save-pricing" onclick="saveCustomPricing('size', {'6':'price_size_6','8':'price_size_8','10':'price_size_10','12':'price_size_12'})">
+              <button class="btn btn-save-pricing"
+                      data-category="size"
+                      data-fields='{"6":"price_size_6","8":"price_size_8","10":"price_size_10","12":"price_size_12"}'>
                 <i class="fas fa-save me-1"></i> Save Size Prices
               </button>
             </div>
@@ -459,7 +463,9 @@
                 <label class="form-label">Triple Layer (₱)</label>
                 <input type="number" class="form-control" id="price_layers_3" value="{{ custom_prices.layers['3'] }}" min="0">
               </div>
-              <button class="btn btn-save-pricing" onclick="saveCustomPricing('layers', {'1':'price_layers_1','2':'price_layers_2','3':'price_layers_3'})">
+              <button class="btn btn-save-pricing"
+                      data-category="layers"
+                      data-fields='{"1":"price_layers_1","2":"price_layers_2","3":"price_layers_3"}'>
                 <i class="fas fa-save me-1"></i> Save Layer Prices
               </button>
             </div>
@@ -481,9 +487,12 @@
                 <label class="form-label">Set of 3 (₱)</label>
                 <input type="number" class="form-control" id="price_toppers_3" value="{{ custom_prices.toppers['3'] }}" min="0">
               </div>
-              <button class="btn btn-save-pricing" onclick="saveCustomPricing('toppers', {'0':'price_toppers_0','1':'price_toppers_1','3':'price_toppers_3'})">
+              <button class="btn btn-save-pricing"
+                      data-category="toppers"
+                      data-fields='{"0":"price_toppers_0","1":"price_toppers_1","3":"price_toppers_3"}'>
                 <i class="fas fa-save me-1"></i> Save Topper Prices
               </button>
+
             </div>
           </div>
 
@@ -521,16 +530,9 @@
                   <input type="number" class="form-control" id="price_addons_flowers" value="{{ custom_prices.addons.flowers }}" min="0">
                 </div>
               </div>
-              <button class="btn btn-save-pricing mt-3" 
-                      onclick="saveCustomPricing('addons', {
-                                filling:'price_addons_filling', 
-                                cupcake:'price_addons_cupcake', 
-                                ediblepaper:'price_addons_ediblepaper', 
-                                fondanttoppers:'price_addons_fondanttoppers',
-                                sprinkles:'price_addons_sprinkles',
-                                drip:'price_addons_drip',
-                                flowers:'price_addons_flowers'
-                              })">
+              <button class="btn btn-save-pricing mt-3"
+                      data-category="addons"
+                      data-fields='{"filling":"price_addons_filling","cupcake":"price_addons_cupcake","ediblepaper":"price_addons_ediblepaper","fondanttoppers":"price_addons_fondanttoppers","sprinkles":"price_addons_sprinkles","drip":"price_addons_drip","flowers":"price_addons_flowers"}'>
                 <i class="fas fa-save me-1"></i> Save Add-on Prices
               </button>
             </div>
@@ -553,10 +555,10 @@
         <div id="smallGiftsList" class="mb-2">
           <!-- dynamic inputs will appear here -->
         </div>
-        <button class="btn btn-sm btn-outline-primary mb-3" onclick="addGiftInput('small')">
+        <button class="btn btn-sm btn-outline-primary mb-3" data-action="add-gift" data-tier="small">
           <i class="fas fa-plus"></i> Add gift
         </button>
-        <button class="btn btn-save-pricing" onclick="saveLoyaltyGifts('small')">
+        <button class="btn btn-save-pricing" data-action="save-gifts" data-tier="small">
           <i class="fas fa-save me-1"></i> Save Small Gifts
         </button>
       </div>
@@ -568,10 +570,10 @@
         <div id="bigGiftsList" class="mb-2">
           <!-- dynamic inputs will appear here -->
         </div>
-        <button class="btn btn-sm btn-outline-primary mb-3" onclick="addGiftInput('big')">
+        <button class="btn btn-sm btn-outline-primary mb-3" data-action="add-gift" data-tier="big">
           <i class="fas fa-plus"></i> Add gift
         </button>
-        <button class="btn btn-save-pricing" onclick="saveLoyaltyGifts('big')">
+        <button class="btn btn-save-pricing" data-action="save-gifts" data-tier="big">
           <i class="fas fa-save me-1"></i> Save Big Gifts
         </button>
       </div>
@@ -593,7 +595,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3"><label class="form-label">Product Image</label><input type="file" class="form-control" name="image" accept="image/*" onchange="checkFileSize(this)"><small class="text-muted">Max 2MB</small></div>
+          <div class="mb-3"><label class="form-label">Product Image</label><input type="file" class="form-control" name="image" accept="image/*" ><small class="text-muted">Max 2MB</small></div>
           <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label">Product Name *</label><input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream"></div>
             <div class="col-md-6 mb-3">
@@ -637,7 +639,7 @@ function switchTab(tab) {
   document.getElementById('addCakeBtn').style.display       = tab === 'products' ? '' : 'none';
 }
   /* ── SAVE CUSTOM PRICING ── */
-  async function saveCustomPricing(category, fieldMap) {
+  async function saveCustomPricing(category, fieldMap, btn) {
     const fields = {};
     for (const [key, inputId] of Object.entries(fieldMap)) {
       const val = document.getElementById(inputId).value;
@@ -649,7 +651,7 @@ function switchTab(tab) {
     }
 
     // Disable the clicked button
-    const btn = event.currentTarget;
+    
     const originalHTML = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
@@ -699,68 +701,105 @@ function switchTab(tab) {
     updatePaginationButtons('cakesPagination', currentCakesPage, totalPages, (page) => { currentCakesPage = page; updateCakesDisplay(); });
   }
 
-  /* ── AJAX FORM HANDLER ── */
+    /* ── AJAX FORM HANDLER ── */
   document.addEventListener('DOMContentLoaded', function () {
-    const addForm = document.querySelector('#cakeModal form');
-    if (addForm) {
-      addForm.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        await handleCakeFormSubmit(e.target, 'add');
-      });
-    }
+      document.getElementById('tabProducts').addEventListener('click', function() { switchTab('products'); });
+      document.getElementById('tabCustomPricing').addEventListener('click', function() { switchTab('custom'); });
+      document.getElementById('tabLoyaltyGifts').addEventListener('click', function() { switchTab('loyalty'); });
 
-    document.querySelectorAll('[id^="editCakeModal"] form').forEach(form => {
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        await handleCakeFormSubmit(e.target, 'edit');
-      });
-    });
-
-    document.querySelectorAll('.cake-card form').forEach(form => {
-      form.addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const result = await glassToast({
-          icon: 'warning',
-          title: 'Delete this cake?',
-          showConfirmButton: true, showCancelButton: true,
-          confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel',
-          timer: 0
+      const addForm = document.querySelector('#cakeModal form');
+      if (addForm) {
+        addForm.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          await handleCakeFormSubmit(e.target, 'add');
         });
-        if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');
-      });
-    });
-
-    document.getElementById('searchCakes').addEventListener('keyup',   () => { currentCakesPage = 1; updateCakesDisplay(); });
-    document.getElementById('categoryFilter').addEventListener('change',() => { currentCakesPage = 1; updateCakesDisplay(); });
-    document.getElementById('cakeStatusFilter').addEventListener('change',() => { currentCakesPage = 1; updateCakesDisplay(); });
-    updateCakesDisplay();
-  });
-
-async function handleCakeFormSubmit(form, type) {
-    const btn = form.querySelector('button[type="submit"]');
-    const originalHTML = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    try {
-      const formData = new FormData(form);
-      const response = await fetch(form.action, { method: 'POST', body: formData });
-      const result   = await response.json();
-      glassToast({
-        icon: result.success ? 'success' : 'error',
-        title: result.message,
-        showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
-      });
-      if (result.success) {
-        document.querySelectorAll('.modal.show').forEach(m => bootstrap.Modal.getInstance(m)?.hide());
-        setTimeout(() => location.reload(), 800);
       }
-    } catch (err) {
-      glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = originalHTML;
+
+      document.querySelectorAll('[id^="editCakeModal"] form').forEach(form => {
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          await handleCakeFormSubmit(e.target, 'edit');
+        });
+      });
+
+      document.querySelectorAll('.cake-card form').forEach(form => {
+        form.addEventListener('submit', async function (e) {
+          e.preventDefault();
+          const result = await glassToast({
+            icon: 'warning',
+            title: 'Delete this cake?',
+            showConfirmButton: true, showCancelButton: true,
+            confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel',
+            timer: 0
+          });
+          if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');
+        });
+      });
+
+      document.getElementById('searchCakes').addEventListener('keyup',   () => { currentCakesPage = 1; updateCakesDisplay(); });
+      document.getElementById('categoryFilter').addEventListener('change',() => { currentCakesPage = 1; updateCakesDisplay(); });
+      document.getElementById('cakeStatusFilter').addEventListener('change',() => { currentCakesPage = 1; updateCakesDisplay(); });
+      updateCakesDisplay();
+      loadLoyaltyGiftsUI();  // ← moved inside
+
+      document.getElementById('cakesGrid').addEventListener('change', function(e) {  // ← moved inside
+        const toggle = e.target.closest('[id^="replaceImgToggle"]');
+        if (toggle) {
+          const cakeId = toggle.id.replace('replaceImgToggle', '');
+          toggleImageUpload(cakeId, toggle);
+        }
+        const fileInput = e.target.closest('input[type="file"][name="image"]');
+        if (fileInput) {
+          checkFileSize(fileInput);
+          const modal = fileInput.closest('.modal');
+          if (modal) {
+            const cakeId = modal.id.replace('editCakeModal', '');
+            previewNewImage(cakeId, fileInput);
+          }
+        }
+      });
+
+      document.getElementById('panelCustom').addEventListener('click', function(e) {  // ← also inside
+        const btn = e.target.closest('.btn-save-pricing[data-category]');
+        if (!btn) return;
+        saveCustomPricing(btn.dataset.category, JSON.parse(btn.dataset.fields), btn);
+      });
+
+      document.getElementById('panelLoyalty').addEventListener('click', function(e) {  // ← also inside
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        if (btn.dataset.action === 'add-gift')    addGiftInput(btn.dataset.tier);
+        if (btn.dataset.action === 'save-gifts')  saveLoyaltyGifts(btn.dataset.tier, btn);
+        if (btn.dataset.action === 'remove-gift') removeGiftInput(btn);
+      });
+
+    }); // ← ONE closing here, everything above is inside
+    
+    async function handleCakeFormSubmit(form, type) {
+      const btn = form.querySelector('button[type="submit"]');
+      const originalHTML = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, { method: 'POST', body: formData });
+        const result   = await response.json();
+        glassToast({
+          icon: result.success ? 'success' : 'error',
+          title: result.message,
+          showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
+        });
+        if (result.success) {
+          document.querySelectorAll('.modal.show').forEach(m => bootstrap.Modal.getInstance(m)?.hide());
+          setTimeout(() => location.reload(), 800);
+        }
+      } catch (err) {
+        glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+      }
     }
-  }
 
   /* ── IMAGE HELPERS ── */
   function toggleImageUpload(cakeId, checkbox) {
@@ -785,7 +824,7 @@ async function handleCakeFormSubmit(form, type) {
     inputGroup.className = 'input-group mb-2';
     inputGroup.innerHTML = `
       <input type="text" class="form-control" value="${escapeHtml(gift)}" data-index="${idx}">
-      <button class="btn btn-outline-danger" type="button" onclick="removeGiftInput('${tier}', this)">
+      <button class="btn btn-outline-danger" type="button">
         <i class="fas fa-trash-alt"></i>
       </button>
     `;
@@ -798,7 +837,7 @@ async function handleCakeFormSubmit(form, type) {
 }
 
 // Remove a gift input row
-function removeGiftInput(tier, btn) {
+function removeGiftInput( btn) {
   const inputGroup = btn.closest('.input-group');
   inputGroup.remove();
   // after removal, reindex the remaining inputs (optional, but not strictly needed)
@@ -815,11 +854,11 @@ function addGiftInput(tier) {
   const inputGroup = document.createElement('div');
   inputGroup.className = 'input-group mb-2';
   inputGroup.innerHTML = `
-    <input type="text" class="form-control" value="" placeholder="New gift">
-    <button class="btn btn-outline-danger" type="button" onclick="removeGiftInput('${tier}', this)">
-      <i class="fas fa-trash-alt"></i>
-    </button>
-  `;
+  <input type="text" class="form-control" value="" placeholder="New gift">
+  <button class="btn btn-outline-danger" type="button" data-action="remove-gift">
+    <i class="fas fa-trash-alt"></i>
+  </button>
+`;
   container.appendChild(inputGroup);
 }
 
@@ -834,7 +873,7 @@ function escapeHtml(str) {
 }
 
 // Save loyalty gifts – collects all inputs and sends array to backend
-async function saveLoyaltyGifts(tier) {
+async function saveLoyaltyGifts(tier, btn) {
   const container = document.getElementById(`${tier}GiftsList`);
   if (!container) return;
   
@@ -851,7 +890,7 @@ async function saveLoyaltyGifts(tier) {
     return;
   }
   
-  const btn = event.currentTarget;
+  
   const originalHTML = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
@@ -886,12 +925,21 @@ function loadLoyaltyGiftsUI() {
   const bigGifts = {{ loyalty_gifts.big | tojson }};
   renderGiftInputs('small', smallGifts);
   renderGiftInputs('big', bigGifts);
-}
-
-// Call this when the document is ready
-document.addEventListener('DOMContentLoaded', function() {
-  // ... your existing DOMContentLoaded code ...
-  loadLoyaltyGiftsUI();   // add this line
+} 
+document.getElementById('panelCustom').addEventListener('click', function(e) {
+  const btn = e.target.closest('.btn-save-pricing[data-category]');
+  if (!btn) return;
+  const category = btn.dataset.category;
+  const fieldMap = JSON.parse(btn.dataset.fields);
+  saveCustomPricing(category, fieldMap, btn);
 });
+document.getElementById('panelLoyalty').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  if (btn.dataset.action === 'add-gift')   addGiftInput(btn.dataset.tier);
+  if (btn.dataset.action === 'save-gifts') saveLoyaltyGifts(btn.dataset.tier, btn);
+  if (btn.dataset.action === 'remove-gift') removeGiftInput(btn);
+});
+
 </script>
 {% endblock %}

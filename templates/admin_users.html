@@ -180,14 +180,14 @@
                 {% if u.disabled %}
                     <form method="POST" action="/admin/user/enable/{{ u.uid }}">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="button" class="btn btn-sm btn-success" onclick="handleUserAction(this, 'enable')">
+                        <button type="button" class="btn btn-sm btn-success" data-action="enable">
                             <i class="fas fa-check me-1"></i>Enable
                         </button>
                     </form>
                 {% else %}
                     <form method="POST" action="/admin/user/disable/{{ u.uid }}">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="button" class="btn btn-sm btn-danger" onclick="handleUserAction(this, 'disable')">
+                        <button type="button" class="btn btn-sm btn-danger" data-action="disable">
                             <i class="fas fa-ban me-1"></i>Disable
                         </button>
                     </form>
@@ -256,6 +256,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('statusFilterUsers').addEventListener('change', () => { currentUsersPage = 1; updateUsersDisplay(); });
   document.getElementById('verifiedFilterUsers').addEventListener('change', () => { currentUsersPage = 1; updateUsersDisplay(); });
   updateUsersDisplay();
+  document.getElementById('usersTable').addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    handleUserAction(btn, btn.dataset.action);
+  });
 });
 </script>
 {% endblock %}

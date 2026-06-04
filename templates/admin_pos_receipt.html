@@ -162,7 +162,7 @@
 
 <!-- Action Buttons -->
 <div class="action-buttons">
-  <button onclick="bluetoothPrint()" class="btn btn-dark" id="btnPrint">
+  <button class="btn btn-dark" id="btnPrint">
     <i class="fas fa-print me-2"></i>Print Receipt
   </button>
   <a href="/pos" class="btn btn-outline-secondary">
@@ -358,6 +358,9 @@
 
     setBtnLoading(false);
   }
+  document.addEventListener('DOMContentLoaded', function () {
+  document.getElementById('btnPrint').addEventListener('click', bluetoothPrint);
+});
 </script>
 
 </body>

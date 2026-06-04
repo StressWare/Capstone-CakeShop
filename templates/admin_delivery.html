@@ -284,7 +284,7 @@
               </div>
 
               <div class="delivery-actions">
-                <button class="btn-copy-link" onclick="copyDeliveryLink('{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}', this)">
+                <button class="btn-copy-link" data-url="{{ request.host_url.rstrip('/') }}/delivery/{{ o.delivery_token }}">
                   <i class="fas fa-link"></i> Copy Delivery Link
                 </button>
                 <a href="/admin/orders" class="btn-view-order">
@@ -353,7 +353,10 @@
       }, 2000);
     });
   }
-
+  document.getElementById('deliveryCardsContainer').addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-copy-link');
+    if (btn && btn.dataset.url) copyDeliveryLink(btn.dataset.url, btn);
+  });
   // ✅ onSnapshot — listen to Out for Delivery + Delivered orders in real-time
   (function() {
     const db = firebase.firestore();

@@ -335,8 +335,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
     <h1 class="mb-0">Expenses Records</h1>
     <div class="d-flex gap-2">
-      
-      <button class="btn-export" onclick="openExportModal()">Export</button>
+      <button class="btn-export" id="btnOpenExport">Export</button>
     </div>
   </div>
 
@@ -349,7 +348,7 @@
     <span class="total-value">₱<span id="totalExpenses">0.00</span></span>
     <span class="total-label" id="totalExpensesCount"></span>
   </div>
-  <button class="btn-export" style="background:transparent;color:#c71585;border-color:#c71585;" onclick="openAddExpenseModal()">+ Add Expense</button>
+  <button class="btn-export" style="background:transparent;color:#c71585;border-color:#c71585;" id="btnAddExpense">+ Add Expense</button>
 </div>
       <!-- SEARCH + FILTERS -->
       <div class="row mb-3">
@@ -360,7 +359,7 @@
           </div>
         </div>
         <div class="col-md-3 mb-2">
-          <select class="form-select" id="dateFilter" onchange="updateExpensesDisplay()">
+          <select class="form-select" id="dateFilter" >
             <option value="all">All Time</option>
             <option value="today">Today</option>
             <option value="week">Last 7 Days</option>
@@ -368,7 +367,7 @@
           </select>
         </div>
         <div class="col-md-3 mb-2">
-          <select class="form-select" id="categoryFilter" onchange="updateExpensesDisplay()">
+          <select class="form-select" id="categoryFilter" >
             <option value="">All Categories</option>
             <option value="Ingredients">Ingredients</option>
             <option value="Equipment">Equipment</option>
@@ -419,7 +418,7 @@
                     <form method="POST" action="/expenses/delete/{{ e.id }}">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button type="button" class="btn btn-sm btn-outline-danger" 
-                            onclick="handleDeleteExpense(this)">Delete</button>
+                            >Delete</button>
                     </form>
                 </div>
               </td>
@@ -529,27 +528,27 @@
 </div>
 
 <!-- EXPORT MODAL -->
-<div class="export-modal-overlay" id="exportModalOverlay" onclick="handleOverlayClick(event)">
+<div class="export-modal-overlay" id="exportModalOverlay">
   <div class="export-modal">
-    <button class="export-modal-close" onclick="closeExportModal()">×</button>
+    <button class="export-modal-close" id="btnCloseExport">×</button>
     <h5>Export Expenses</h5>
 
     <div class="date-range-row">
       <div>
         <label for="exportFrom">From</label>
-        <input type="date" id="exportFrom" onchange="updateExportPreview()">
+        <input type="date" id="exportFrom" >
       </div>
       <div>
         <label for="exportTo">To</label>
-        <input type="date" id="exportTo" onchange="updateExportPreview()">
+        <input type="date" id="exportTo">
       </div>
     </div>
 
     <div style="margin-bottom:10px;">
       <label style="margin-bottom:8px;">Format</label>
       <div class="format-toggle">
-        <button class="format-btn active" id="fmtPDF" onclick="selectFormat('pdf')">PDF</button>
-        <button class="format-btn" id="fmtCSV" onclick="selectFormat('csv')">CSV</button>
+        <button class="format-btn active" id="fmtPDF" >PDF</button>
+        <button class="format-btn" id="fmtCSV">CSV</button>
       </div>
     </div>
 
@@ -564,7 +563,7 @@
       </div>
     </div>
 
-    <button class="btn-download" onclick="runExport()">
+    <button class="btn-download" id="btnDownload">
       <span id="downloadBtnIcon"></span>
       <span id="downloadBtnLabel">Download PDF</span>
     </button>
@@ -815,6 +814,26 @@ document.addEventListener('DOMContentLoaded', function() {
     currentExpensesPage = 1;
     updateExpensesDisplay();
   });
+  document.getElementById('expensesTable').addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-outline-danger');
+    if (btn) handleDeleteExpense(btn);
+  });
+  document.getElementById('dateFilter').addEventListener('change', updateExpensesDisplay);
+  document.getElementById('categoryFilter').addEventListener('change', updateExpensesDisplay);
+
+  document.getElementById('btnOpenExport').addEventListener('click', openExportModal);
+  document.getElementById('btnAddExpense').addEventListener('click', openAddExpenseModal);
+  document.getElementById('btnCloseExport').addEventListener('click', closeExportModal);
+  document.getElementById('btnDownload').addEventListener('click', runExport);
+
+  document.getElementById('fmtPDF').addEventListener('click', () => selectFormat('pdf'));
+  document.getElementById('fmtCSV').addEventListener('click', () => selectFormat('csv'));
+
+  document.getElementById('exportModalOverlay').addEventListener('click', handleOverlayClick);
+
+  document.getElementById('exportFrom').addEventListener('change', updateExportPreview);
+  document.getElementById('exportTo').addEventListener('change', updateExportPreview);
+
   updateExpensesDisplay();
 });
 </script>
