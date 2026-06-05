@@ -616,10 +616,9 @@ const cakeNames = Array.from(document.querySelectorAll('.cake-title')).map(el =>
 const searchInput = document.getElementById('cakeSearch');
 const suggestionsBox = document.getElementById('suggestions');
 
-searchInput.addEventListener('input', function() {
+const handleSearch = function() {
     const query = this.value.toLowerCase().trim();
     
-    // Filter suggestions
     const matches = cakeNames.filter(name => name.toLowerCase().includes(query));
     
     if (query !== '' && matches.length > 0) {
@@ -629,7 +628,6 @@ searchInput.addEventListener('input', function() {
         suggestionsBox.style.display = 'none';
     }
     
-    // Existing filter logic for cakes grid
     const cards = document.querySelectorAll('.cake-card');
     let anyVisible = false;
     cards.forEach(card => {
@@ -643,7 +641,11 @@ searchInput.addEventListener('input', function() {
     if (noResultsDiv) {
         noResultsDiv.style.display = (!anyVisible && query !== '') ? 'block' : 'none';
     }
-});
+};
+
+// Attach to BOTH input and keyup for mobile Safari compatibility
+searchInput.addEventListener('input', handleSearch);
+searchInput.addEventListener('keyup', handleSearch);
 
 // When clicking a suggestion, fill input and hide dropdown
 suggestionsBox.addEventListener('click', function(e) {

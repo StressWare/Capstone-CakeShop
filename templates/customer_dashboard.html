@@ -1470,6 +1470,7 @@ async function startDeleteAccount() {
                 menuBtn.disabled = true;
                 menuBtn.style.opacity = '0.5';
                 menuBtn.style.cursor = 'default';
+                menuBtn.onclick = null;
             }
             if (removeBtn) {
                 removeBtn.style.display = 'flex';
@@ -1487,16 +1488,9 @@ async function startDeleteAccount() {
                     const res = await fetch('/webauthn/delete', { method: 'POST' });
                     const data = await res.json();
                     if (data.success) {
-                        glassAlert({ icon: 'success', title: 'Device Removed', confirmButtonText: 'OK' });
-                        menuLabel.textContent = 'Enable Fingerprint';
-                        menuBtn.disabled = false;
-                        menuBtn.style.opacity = '1';
-                        menuBtn.style.cursor = 'pointer';
-                        removeBtn.style.display = 'none';
-                        menuBtn.addEventListener('click', () => {
-                            document.getElementById('profileDropdown').style.display = 'none';
-                            startDeviceRegistration();
-                        });
+                        await glassAlert({ icon: 'success', title: 'Device Removed', confirmButtonText: 'OK' });
+                        // Reload page so everything resets cleanly
+                        window.location.reload();
                     }
                 });
             }

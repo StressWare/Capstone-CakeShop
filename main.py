@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, make_response
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
@@ -40,7 +40,7 @@ import hmac
 import hashlib
 import secrets
 import firebase
-from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials
 from firebase_admin import auth, firestore, messaging
 from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
@@ -70,7 +70,7 @@ def csrf_error(_):
 csp = {
     'default-src': ["'self'"],
     'base-uri': ["'self'"],
-    'form-action': ["'self'"],
+    'form-action': ["'self'", "checkout.paymongo.com"],
     'script-src': [
         "'self'",
         "cdn.jsdelivr.net",
@@ -574,7 +574,7 @@ def webauthn_register_finish():
         credential_id_b64 = base64.b64encode(verification.credential_id).decode()
         public_key_b64 = base64.b64encode(verification.credential_public_key).decode()
 
-        db.collection('webauthn_credentials').document(user_id).set({
+        webauthn_credentials.document(user_id).set({
             'user_id': user_id,
             'credentials': firestore.ArrayUnion([{
                 'credential_id': credential_id_b64,
@@ -585,7 +585,10 @@ def webauthn_register_finish():
         }, merge=True)
 
         app.logger.info(f"WebAuthn credential registered for user {user_id}")
-        return jsonify({'success': True}), 200
+        resp = make_response(jsonify({'success': True}), 200)
+        resp.set_cookie('webauthn_registered', 'true', max_age=365*24*3600, secure=True, samesite='Lax')
+        resp.set_cookie('webauthn_credential_id', credential_id_b64, max_age=365*24*3600, secure=True, samesite='Lax')
+        return resp
 
     except Exception:
         app.logger.exception("Error in webauthn_register_finish")
@@ -596,7 +599,7 @@ def webauthn_register_finish():
 @limiter.limit("10 per minute")
 def webauthn_login_start():
     try:
-        creds_docs = db.collection('webauthn_credentials').stream()
+        creds_docs = webauthn_credentials.stream()
         allow_credentials = []
         for doc in creds_docs:
             d = doc.to_dict()
@@ -632,43 +635,19 @@ def webauthn_login_start():
     except Exception:
         app.logger.exception("Error in webauthn_login_start")
         return jsonify({'error': 'Internal server error'}), 500
-
 # ---------------- WEBAUTHN — LOGIN FINISH----------------
 @app.route('/webauthn/login/finish', methods=['POST'])
 @limiter.limit("10 per minute")
 def webauthn_login_finish():
-    challenge_b64 = session.pop('webauthn_auth_challenge', None)
-    if not challenge_b64:
-        return jsonify({'error': 'No authentication challenge found. Please try again.'}), 400
-
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
 
+    challenge_b64 = session.pop('webauthn_auth_challenge', None)
+    if not challenge_b64:
+        return jsonify({'error': 'No authentication challenge found. Please try again.'}), 400
+
     try:
-        cred_id_b64 = base64.b64encode(base64url_to_bytes(data.get('id'))).decode()
-
-        # find user doc containing this credential
-        cred_doc = None
-        matched_cred = None
-        for doc in db.collection('webauthn_credentials').stream():
-            d = doc.to_dict()
-            for c in d.get('credentials', []):
-                if c['credential_id'] == cred_id_b64:
-                    cred_doc = doc
-                    matched_cred = c
-                    break
-            if cred_doc:
-                break
-
-        if not cred_doc or not matched_cred:
-            return jsonify({'error': 'Credential not found. Please register your device first.'}), 404
-
-        cred_data = cred_doc.to_dict()
-        user_id = cred_data['user_id']
-        stored_public_key = base64.b64decode(matched_cred['public_key'])
-        stored_sign_count = matched_cred.get('sign_count', 0)
-
         credential = AuthenticationCredential(
             id=data['id'],
             raw_id=base64url_to_bytes(data['rawId']),
@@ -677,10 +656,32 @@ def webauthn_login_finish():
                 client_data_json=base64url_to_bytes(data['response']['clientDataJSON']),
                 authenticator_data=base64url_to_bytes(data['response']['authenticatorData']),
                 signature=base64url_to_bytes(data['response']['signature']),
-                user_handle=base64url_to_bytes(data['response']['userHandle']) if data['response'].get('userHandle') else None,
+                user_handle=base64url_to_bytes(data['response']['userHandle']) if data['response']['userHandle'] else None,
             ),
         )
 
+        # Find which user this credential belongs to & get stored public key + sign_count
+        user_doc = None
+        stored_public_key = None
+        stored_sign_count = 0
+
+        for doc in webauthn_credentials.stream():
+            creds = doc.to_dict().get('credentials', [])
+            for c in creds:
+                cred_id_bytes = base64.b64decode(c['credential_id'])
+                # match on credential id
+                if cred_id_bytes == credential.raw_id:
+                    user_doc = users.document(doc.id).get()
+                    stored_public_key = base64.b64decode(c['public_key'])
+                    stored_sign_count = c.get('sign_count', 0)
+                    break
+            if user_doc:
+                break
+
+        if not user_doc or not user_doc.exists:
+            return jsonify({'error': 'User not found for this credential'}), 404
+
+        # Now verify with stored key + sign count
         verification = verify_authentication_response(
             credential=credential,
             expected_challenge=base64.b64decode(challenge_b64),
@@ -691,37 +692,68 @@ def webauthn_login_finish():
             require_user_verification=True,
         )
 
-        # update sign count for matched credential only
-        updated_creds = [
-            {**c, 'sign_count': verification.new_sign_count} if c['credential_id'] == cred_id_b64 else c
-            for c in cred_data.get('credentials', [])
-        ]
-        cred_doc.reference.update({'credentials': updated_creds})
-
-        user_doc = users.document(user_id).get()
-        if not user_doc.exists:
-            return jsonify({'error': 'User account not found'}), 404
-
         user_data = user_doc.to_dict()
-        firebase_user = auth.get_user(user_id)
-        if firebase_user.disabled:
-            return jsonify({'error': 'Your account has been disabled. Contact support.'}), 403
+        user_id = user_doc.id
 
-        fname = user_data.get('fname', '')
-        email = user_data.get('email', '')
-        is_admin = user_data.get('role') == 'admin'
+        # Update sign count for this credential
+        db = firestore.client()
+        cred_ref = webauthn_credentials.document(user_id)
 
-        session['user'] = {'uid': user_id, 'email': email, 'name': fname or email, 'admin': is_admin}
+        @firestore.transactional
+        def update_sign_count_txn(transaction, doc_ref):
+            doc = doc_ref.get(transaction=transaction)
+            data = doc.to_dict() or {}
+            creds = data.get('credentials', [])
+            target_id_b64 = base64.b64encode(verification.credential_id).decode()
+            for c in creds:
+                if c.get('credential_id') == target_id_b64:
+                    c['sign_count'] = verification.new_sign_count
+                    break
+            transaction.set(doc_ref, {'credentials': creds}, merge=True)
+
+        transaction = db.transaction()
+        update_sign_count_txn(transaction, cred_ref)
+
+        # Determine admin from Firebase Auth custom claims (source of truth)
+        try:
+            firebase_user = auth.get_user(user_id)
+            custom_claims = firebase_user.custom_claims or {}
+            is_admin_role = bool(custom_claims.get('admin', False))
+        except Exception as e:
+            app.logger.warning(f"Failed to fetch Firebase user for {user_id}: {e}")
+            is_admin_role = False
+
+        # Set Flask session
         session['user_id'] = user_id
-        session['username'] = email
+        session['user'] = {
+            'uid': user_id,
+            'email': user_data.get('email', ''),
+            'name': user_data.get('fname') or user_data.get('username') or 'Customer',
+            'admin': is_admin_role
+        }
 
         app.logger.info(f"WebAuthn login successful for user {user_id}")
-        return jsonify({'success': True, 'redirect': '/admin/dashboard' if is_admin else '/customer_dashboard'}), 200
+
+        redirect_url = '/admin/dashboard' if is_admin_role else '/customer_dashboard'
+
+        # Create Firebase custom token so frontend can sign into Firebase Auth
+        firebase_custom_token = None
+        try:
+            # Mirror the 'admin' custom claim for Firebase ID token
+            additional_claims = {'admin': True} if is_admin_role else None
+            firebase_custom_token = auth.create_custom_token(user_id, additional_claims).decode('utf-8')
+        except Exception as e:
+            app.logger.warning(f"Failed to create Firebase custom token for {user_id}: {e}")
+
+        return jsonify({
+            'success': True,
+            'redirect': redirect_url,
+            'firebase_custom_token': firebase_custom_token
+        }), 200
 
     except Exception:
         app.logger.exception("Error in webauthn_login_finish")
         return jsonify({'error': 'Authentication verification failed'}), 400
-
 
 
 # ---------------- WEBAUTHN — CHECK-----------------
@@ -729,15 +761,18 @@ def webauthn_login_finish():
 @limiter.limit("20 per minute")
 def webauthn_check():
     user_id = session.get('user_id')
+    this_device = request.cookies.get('webauthn_registered') == 'true'
     try:
         if user_id:
-            doc = db.collection('webauthn_credentials').document(user_id).get()
+            doc = webauthn_credentials.document(user_id).get()
             if not doc.exists:
                 return jsonify({'registered': False}), 200
             creds = doc.to_dict().get('credentials', [])
-            return jsonify({'registered': len(creds) > 0}), 200
+            has_any = len(creds) > 0
+            return jsonify({'registered': this_device and has_any}), 200
         else:
-            creds = db.collection('webauthn_credentials').limit(1).stream()
+            # Login page — just check if any credential exists (for showing the button)
+            creds = webauthn_credentials.limit(1).stream()
             has_any = any(True for _ in creds)
             return jsonify({'registered': has_any}), 200
     except Exception:
@@ -753,8 +788,10 @@ def webauthn_delete():
     if not user_id:
         return jsonify({'error': 'Not authenticated'}), 401
     try:
-        db.collection('webauthn_credentials').document(user_id).delete()
-        return jsonify({'success': True}), 200
+        webauthn_credentials.document(user_id).delete()
+        resp = make_response(jsonify({'success': True}), 200)
+        resp.set_cookie('webauthn_registered', '', expires=0, secure=True, samesite='Lax')
+        return resp
     except Exception:
         app.logger.exception("Error deleting WebAuthn credential")
         return jsonify({'error': 'Internal server error'}), 500
@@ -1110,11 +1147,17 @@ def loyalty_claim():
             "used":       False,
             "used_at":    None,
         })
-        update_data = {
-            "loyalty_unclaimed": None,
-            "loyalty_unclaimed_tier": None,
-            "loyalty_stamps": max(0, stamps - tier)
-        }
+        if tier == 5:
+            update_data = {
+                "loyalty_unclaimed": None,
+                "loyalty_unclaimed_tier": None,
+            }
+        else:
+            update_data = {
+                "loyalty_unclaimed": None,
+                "loyalty_unclaimed_tier": None,
+                "loyalty_stamps": 0,
+            }
         user_ref.update(update_data)
         flash(f"Your free {gift_name} has been claimed! Show this at the shop or use it during your next order!.", "success")
 
@@ -1143,7 +1186,6 @@ def update_loyalty_gifts():
         if not gift_list or len(gift_list) > 10:
             return jsonify({"success": False, "message": "Please enter 1–10 gifts."})
 
-        from db import loyalty_gifts
         docs = list(loyalty_gifts.limit(1).stream())
         if not docs:
             # Create first document with defaults
@@ -1303,10 +1345,8 @@ def place_order():
     # ── Consult token + image handling ──
     consult_token = request.form.get('consult_token', '').strip()
     if consult_token:
-        token_ref = db.collection('pending_consultations').document(consult_token)
+        token_ref = pending_consultations.document(consult_token)
         token_doc = token_ref.get()
-        if token_doc.exists and not token_doc.to_dict().get('used'):
-            token_ref.update({'used': True, 'used_at': datetime.now(PH_TZ)})
         # ✅ carry image from consultation, no re-upload needed
         inspo_image = token_doc.to_dict().get('consultation_data', {}).get('inspo_image') if token_doc.exists else None
     else:
@@ -1347,7 +1387,8 @@ def place_order():
         for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
             if request.form.get(addon_key):
                 amount += float(addon_prices.get(addon_key, 0))
-                
+        others_price = float(request.form.get('others_price', 0) or 0)
+        amount += others_price       
 
     except Exception as e:
         app.logger.exception("Error computing custom cake price")
@@ -1378,6 +1419,7 @@ def place_order():
         customer       = customer,
         min_date       = min_date,
         active_vouchers = active_vouchers,
+        consult_token  = consult_token,
         cake_design         = request.form.get('design', '0|0'),
         cake_size           = request.form.get('cakeSize', '6|0'),
         cake_layers         = request.form.get('layers', '1|0'),
@@ -1704,27 +1746,38 @@ def finalize_order():
         inspo_image    = request.form.get("inspo_image") or None
 
         try:
-            icing_key   = request.form.get("design", "").split("|")[0]
-            size_key    = request.form.get("cakeSize", "").split("|")[0]
-            layers_key  = request.form.get("layers", "").split("|")[0]
-            toppers_key = request.form.get("toppers", "").split("|")[0]
+            # If from consultation token, use admin-approved price directly
+            consult_token = request.form.get('consult_token', '').strip()
+            if consult_token:
+                token_doc = pending_consultations.document(consult_token).get()
+                if token_doc.exists:
+                    amount = float(token_doc.to_dict().get('consultation_data', {}).get('amount', 0))
+                else:
+                    amount = 0.0
+            else:
+                icing_key   = request.form.get("design", "").split("|")[0]
+                size_key    = request.form.get("cakeSize", "").split("|")[0]
+                layers_key  = request.form.get("layers", "").split("|")[0]
+                toppers_key = request.form.get("toppers", "").split("|")[0]
 
-            prices         = get_custom_prices()
-            icing_prices   = prices["icing"]
-            size_prices    = prices["size"]
-            layers_prices  = prices["layers"]
-            toppers_prices = prices["toppers"]
-            addon_prices   = prices["addons"]
+                prices         = get_custom_prices()
+                icing_prices   = prices["icing"]
+                size_prices    = prices["size"]
+                layers_prices  = prices["layers"]
+                toppers_prices = prices["toppers"]
+                addon_prices   = prices["addons"]
 
-            amount  = 0.0
-            amount += float(icing_prices.get(icing_key, 0))
-            amount += float(size_prices.get(size_key, 0))
-            amount += float(layers_prices.get(layers_key, 0))
-            amount += float(toppers_prices.get(toppers_key, 0))
+                amount  = 0.0
+                amount += float(icing_prices.get(icing_key, 0))
+                amount += float(size_prices.get(size_key, 0))
+                amount += float(layers_prices.get(layers_key, 0))
+                amount += float(toppers_prices.get(toppers_key, 0))
 
-            for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
-                if request.form.get(addon_key):
-                    amount += float(addon_prices.get(addon_key, 0))
+                for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
+                    if request.form.get(addon_key):
+                        amount += float(addon_prices.get(addon_key, 0))
+                others_price = float(request.form.get('others_price', 0) or 0)
+                amount += others_price
 
         except Exception as e:
             app.logger.exception("Error recomputing custom price in place-order")
@@ -1906,6 +1959,11 @@ def finalize_order():
                 "used_at": now
             })
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes, order_id=order_id)
+        consult_token = request.form.get('consult_token', '').strip()
+        if consult_token:
+            pending_consultations.document(consult_token).update({
+                'used': True, 'used_at': now
+            })
         return redirect(url_for("cod_success", order_id=order_id))
 
     # ── Online Payment → PayMongo ──
@@ -3717,6 +3775,11 @@ def paymongo_webhook():
             order_id=order_id
         )
         # Delete pending order
+        consult_token = pending.get('consult_token', '')
+        if consult_token:
+            pending_consultations.document(consult_token).update({
+                'used': True, 'used_at': datetime.now(PH_TZ)
+            })
         pending_ref.delete()
     return jsonify({"status": "ok"}), 200
 # ---------------- PAYMENT SUCCESS ----------------
@@ -3818,6 +3881,11 @@ def payment_success():
         })
         
     # Delete pending order
+    consult_token = pending.get('consult_token', '')
+    if consult_token:
+        pending_consultations.document(consult_token).update({
+            'used': True, 'used_at': datetime.now(PH_TZ)
+        })
     pending_ref.delete()
 
     session.pop('paymongo_session_id', None)
@@ -4046,7 +4114,7 @@ def admin_initiate_conversation():
         }, merge=True)
 
         # Write notification for customer (triggers notification.js onSnapshot)
-        db.collection('notifications').add({
+        notifications.add({
             'user_id': user_id,
             'title': '💬 Message from Mrs. Brave\'s',
             'message': message[:80],
@@ -4281,7 +4349,9 @@ def admin_conversations():
         app.logger.exception("Error in admin_conversations")
         flash("Error loading conversations", "danger")
         return render_template("admin_conversations.html", conversations=[])
-    
+# ================================================================
+# CUSTOMIZED CAKE CONSULTATION ROUTES
+# ================================================================
 @app.route('/consultation', methods=['POST'])
 @login_required
 @limiter.limit("5 per minute")
@@ -4320,7 +4390,7 @@ def consultation():
         app.logger.exception('Error computing consultation price')
         flash('Unable to process. Please try again.', 'danger')
         return redirect(url_for('customize'))
-
+    
     order_item = request.form.get('order_item', '')
 
     # Get or create conversation ID
@@ -4356,6 +4426,8 @@ def consultation():
         'drip':           request.form.get('drip', ''),
         'flowers':        request.form.get('flowers', ''),
         'rush': request.form.get('rush', ''),
+        'others_desc': request.form.get('others_desc', '')[:200],
+        'others_price': 0,
     }
 
     conv_ref = users.document(user_id).collection('conversations').document(conv_id)
@@ -4380,6 +4452,7 @@ def consultation():
 
     # Top-level conversations mirror (for admin dashboard)
     user_doc = users.document(user_id).get().to_dict() or {}
+    consultation_data['number'] = user_doc.get('number', '')
     conversations.document(conv_id).set({
         'user_id':           user_id,
         'conversation_id':   conv_id,
@@ -4446,6 +4519,8 @@ def consultation_confirm():
     for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
         if request.form.get(addon_key):
             amount += float(prices['addons'].get(addon_key, 0))
+    others_price = float(request.form.get('others_price', 0) or 0)
+    amount += others_price
     if old_cd.get('rush') == 'yes':
         amount += 300
     cd = {
@@ -4465,6 +4540,8 @@ def consultation_confirm():
         'sprinkles':      request.form.get('sprinkles', ''),
         'drip':           request.form.get('drip', ''),
         'flowers':        request.form.get('flowers', ''),
+        'others_desc':  request.form.get('others_desc', old_cd.get('others_desc', ''))[:200],
+        'others_price': others_price,
         'amount':         round(amount, 2),
         'rush': old_cd.get('rush', ''),
         'order_item': (
@@ -4477,6 +4554,8 @@ def consultation_confirm():
                     k for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']
                     if request.form.get(k)
                 ]) if any(request.form.get(k) for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']) else ''
+                ) + (
+                    f', Others: {request.form.get("others_desc", "")}' if request.form.get('others_desc') else ''
             )
         ),
     }
@@ -4485,7 +4564,7 @@ def consultation_confirm():
     token = secrets.token_urlsafe(32)
 
     # Save pending consultation
-    db.collection('pending_consultations').document(token).set({
+    pending_consultations.document(token).set({
         'user_id':           user_id,
         'conv_id':           conv_id,
         'consultation_data': cd,
@@ -4527,7 +4606,7 @@ def consultation_confirm():
 @login_required
 def complete_order(token):
     now      = datetime.now(PH_TZ)
-    doc_ref  = db.collection('pending_consultations').document(token)
+    doc_ref = pending_consultations.document(token)
     doc      = doc_ref.get()
 
     if not doc.exists:

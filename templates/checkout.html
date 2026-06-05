@@ -37,6 +37,7 @@
     <input type="hidden" name="idempotency_key" id="idempotencyKey" value="">
     <input type="hidden" name="downpayment_type" id="downpaymentTypeInput" value="full">
     <input type="hidden" name="downpayment_amount" id="downpaymentAmountInput" value="0">
+    <input type="hidden" name="consult_token"   value="{{ consult_token or '' }}">
     {% if order_type == 'custom' %}
     <input type="hidden" name="design"          value="{{ cake_design }}">
     <input type="hidden" name="cakeSize"        value="{{ cake_size }}">
@@ -551,7 +552,8 @@ function selectDelivery(type) {
   let handledBySwal = false;
 
   document.querySelector('form').addEventListener('submit', function() {
-      orderPlaced = true;
+    orderPlaced = true;
+    window.onbeforeunload = null;
   });
 
   window.addEventListener('beforeunload', function(e) {

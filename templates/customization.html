@@ -373,7 +373,6 @@
         <!-- FIX: added id="orderForm" so the submit button can reference it -->
       <form method="POST" action="/order" enctype="multipart/form-data" id="orderForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
         <div class="dropdowns-grid">
           <!-- COL 1 -->
           <div class="grid-col">
@@ -483,6 +482,24 @@
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.flowers }}" id="flowers" name="flowers">
               Sugar Flowers (₱{{ custom_prices.addons.flowers | int }})
             </label>
+            <label class="addon-item" id="othersLabel">
+              <input type="checkbox" id="others" name="others" class="addons" value="0">
+              Others
+            </label>
+          </div>
+          <div id="othersInputWrap" style="display:none; margin-top:10px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="text" id="othersDesc" name="others_desc" maxlength="200"
+                placeholder="Describe your custom add-on (e.g. gold leaf, edible glitter...)"
+                style="flex:1; padding:9px 12px; border:1px solid rgba(255,255,255,0.2);
+                border-radius:8px; font-size:13px; background:rgba(255,255,255,0.07);
+                color:white; box-sizing:border-box;">
+              <span id="othersPriceTag" style="display:none; background:rgba(255,255,255,0.1);
+                border:1px solid rgba(255,167,205,0.4); border-radius:8px; padding:9px 12px;
+                font-size:13px; color:#f9a8d4; white-space:nowrap;">
+                ₱<span id="othersPriceDisplay">0</span>
+              </span>
+            </div>
           </div>
         </div>
 
@@ -529,6 +546,7 @@
 
         <input type="hidden" name="order_item" id="orderItem">
         <input type="hidden" name="amount" id="orderAmount">
+        <input type="hidden" name="others_price" id="othersPrice" value="0">
       </form>
       <form method="POST" action="/consultation" enctype="multipart/form-data" id="consultForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -546,6 +564,7 @@
         <input type="hidden" name="sprinkles" id="c_sprinkles">
         <input type="hidden" name="drip" id="c_drip">
         <input type="hidden" name="flowers" id="c_flowers">
+        <input type="hidden" name="others_desc" id="c_othersDesc">
         <input type="hidden" name="notes" id="c_notes">
         <input type="hidden" name="order_item" id="c_orderItem">
         <input type="hidden" name="amount" id="c_amount">
@@ -595,7 +614,7 @@
               style="flex:1; background: #f472b6; margin-top:0; padding: 8px 13px;">
         Consult First
       </button>
-      <button type="submit" form="orderForm" class="btn-checkout locked"
+      <button type="submit" class="btn-checkout locked"
               id="proceedBtn"
               style="flex:1; margin-top:0; padding: 8px 13px;">
         Proceed to Checkout →
@@ -658,6 +677,10 @@ function clearImage() {
 
     let addons = 0;
     document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
+
+    // add admin-set others price if present
+    const othersPrice = parseFloat(document.getElementById('othersPrice').value || 0);
+    addons += othersPrice;
 
     const total = design + size + layers + toppers + addons + rush;
     document.getElementById('totalPrice').innerText = total.toFixed(2);
@@ -1177,6 +1200,7 @@ function clearImage() {
 <script nonce="{{ csp_nonce() }}">
  function submitConsultation() {
   const orderForm = document.getElementById('orderForm');
+  document.getElementById('c_othersDesc').value = document.getElementById('othersDesc').value;
   if (!orderForm.checkValidity()) {
     orderForm.reportValidity(); // Shows native browser error tooltips
     return; 
@@ -1234,7 +1258,17 @@ document.addEventListener('DOMContentLoaded', function() {
   if (prefill.candles)   document.getElementById('candles').value   = prefill.candles;
   if (prefill.notes)     document.getElementById('notes').value     = prefill.notes;
   if (prefill.rush) document.getElementById('rush').checked = true;
-
+  if (prefill.others_desc) {
+    document.getElementById('others').checked = true;
+    document.getElementById('othersInputWrap').style.display = 'block';
+    document.getElementById('othersDesc').value = prefill.others_desc;
+    document.getElementById('othersPrice').value = prefill.others_price || 0;
+    if (prefill.others_price && prefill.others_price > 0) {
+      document.getElementById('othersPriceDisplay').textContent = prefill.others_price.toLocaleString();
+      document.getElementById('othersPriceTag').style.display = 'inline-block';
+      document.getElementById('othersDesc').readOnly = true; // can't edit after admin set price
+    }
+  }
   // ✅ Add-on checkboxes
   ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers'].forEach(id => {
     if (prefill[id]) {
@@ -1293,11 +1327,29 @@ document.addEventListener('DOMContentLoaded', function() {
             previewImage(this);
         });
     }
-
+    document.getElementById('others').addEventListener('change', function() {
+      document.getElementById('othersInputWrap').style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) document.getElementById('othersDesc').value = '';
+    });
     // 5. Proceed Button Click
     const proceedBtn = document.getElementById('proceedBtn');
     if (proceedBtn) {
-        proceedBtn.addEventListener('click', updateOrderData);
+      proceedBtn.addEventListener('click', function(e) {
+        const othersPrice = parseFloat(document.getElementById('othersPrice').value || 0);
+        if (document.getElementById('others').checked && othersPrice === 0) {
+          e.preventDefault();
+          glassAlert({
+            icon: 'info',
+            title: 'Custom Add-on Detected',
+            html: `Your <strong>"Others"</strong> add-on needs a price set by the owner.<br>Please use <strong>Consult First</strong> so we can price it for you.`,
+            confirmButtonText: 'Got it',
+            confirmButtonColor: '#db2777',
+          });
+          return;
+        }
+        updateOrderData();
+        document.getElementById('orderForm').submit();
+      });
     }
 });
 </script>

@@ -736,20 +736,32 @@ async function startDeviceLogin() {
             }
         };
  
-        const finishResp = await fetch('/webauthn/login/finish', {
+const finishResp = await fetch('/webauthn/login/finish', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(result)
         });
- 
+
         if (!finishResp.ok) {
             const err = await finishResp.json();
             throw new Error(err.error || 'Device login failed');
         }
- 
+
         const data = await finishResp.json();
+
+        // If backend provided a Firebase custom token, sign into Firebase Auth
+        if (data.firebase_custom_token) {
+            try {
+                await auth.signInWithCustomToken(data.firebase_custom_token);
+                console.log('[webauthn] Signed into Firebase with custom token');
+            } catch (e) {
+                console.error('[webauthn] Firebase custom token sign-in failed:', e);
+                // We still have a valid Flask session; proceed with redirect
+            }
+        }
+
         window.location.href = data.redirect || '/customer_dashboard';
- 
+
     } catch (err) {
         if (err.name === 'NotAllowedError') {
             // User cancelled the fingerprint prompt — don't show error
