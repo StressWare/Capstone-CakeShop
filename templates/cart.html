@@ -70,10 +70,9 @@
       <div class="total-label">Selected Total</div>
       <div class="total-amount">₱<span id="selTotal">0.00</span></div>
     </div>
-    <button type="button" id="checkoutBtn" class="btn-checkout disabled"
-            onclick="submitCheckout()">
-      <i class="checkout"></i>Checkout
-    </button>
+  <button type="button" id="checkoutBtn" class="btn-checkout disabled">
+    <i class="checkout"></i>Checkout
+  </button>
   </div>
 
   {% else %}
@@ -97,46 +96,52 @@
   const selTotal    = document.getElementById('selTotal');
   const checkoutBtn = document.getElementById('checkoutBtn');
 
-  function update() {
-    let total = 0, any = false;
-    cbs.forEach(cb => {
-      if (cb.checked) {
-        const price = parseFloat(cb.dataset.price);
-        const qty   = parseInt(cb.dataset.qty) || 1;
-        total += price * qty;
-        any = true;
-      }
-    });
-    selTotal.textContent = total.toFixed(2);
-    checkoutBtn.classList.toggle('disabled', !any);
-    selAll.checked = [...cbs].every(cb => cb.checked);
-    selAll.indeterminate = !selAll.checked && [...cbs].some(cb => cb.checked);
-  }
+  if (cbs.length > 0) {
 
-  cbs.forEach(cb => cb.addEventListener('change', update));
-  selAll.addEventListener('change', function() {
-    cbs.forEach(cb => cb.checked = this.checked);
-    update();
-  });
-
-  async function submitCheckout() {
-    var selected = [];
-    cbs.forEach(cb => {
-      if (cb.checked) {
-        const price = parseFloat(cb.dataset.price);
-        const qty   = parseInt(cb.dataset.qty) || 1;
-        selected.push({
-          cake_id:   cb.dataset.id,
-          cake_name: cb.dataset.name,
-          price:     price,
-          quantity:  qty,
-          subtotal:  price * qty
-        });
+      function update() {
+          let total = 0, any = false;
+          cbs.forEach(cb => {
+              if (cb.checked) {
+                  const price = parseFloat(cb.dataset.price);
+                  const qty   = parseInt(cb.dataset.qty) || 1;
+                  total += price * qty;
+                  any = true;
+              }
+          });
+          selTotal.textContent = total.toFixed(2);
+          checkoutBtn.classList.toggle('disabled', !any);
+          selAll.checked = [...cbs].every(cb => cb.checked);
+          selAll.indeterminate = !selAll.checked && [...cbs].some(cb => cb.checked);
       }
-    });
-    document.getElementById('selectedItemsInput').value = JSON.stringify(selected);
-    // ── Check before submitting ──
-    checkShopOpen(() => document.getElementById('checkoutForm').submit());
+
+      cbs.forEach(cb => cb.addEventListener('change', update));
+      
+      selAll.addEventListener('change', function() {
+          cbs.forEach(cb => cb.checked = this.checked);
+          update();
+      });
+
+      async function submitCheckout() {
+          var selected = [];
+          cbs.forEach(cb => {
+              if (cb.checked) {
+                  const price = parseFloat(cb.dataset.price);
+                  const qty   = parseInt(cb.dataset.qty) || 1;
+                  selected.push({
+                      cake_id:   cb.dataset.id,
+                      cake_name: cb.dataset.name,
+                      price:     price,
+                      quantity:  qty,
+                      subtotal:  price * qty
+                  });
+              }
+          });
+          document.getElementById('selectedItemsInput').value = JSON.stringify(selected);
+          checkShopOpen(() => document.getElementById('checkoutForm').submit());
+      }
+
+      checkoutBtn.addEventListener('click', submitCheckout);
   }
 </script>
+
 {% endblock %}

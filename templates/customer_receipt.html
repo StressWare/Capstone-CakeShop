@@ -297,7 +297,7 @@
     <!-- ── HEADER ── -->
     <div class="receipt-header">
       <div>
-        <div class="receipt-shop-name">Ms. Brave Cake Shop</div>
+        <div class="receipt-shop-name">Mrs. Brave's Cakes</div>
         <div class="receipt-shop-info">R Mapa Street, Mandurriao, Iloilo City</div>
         <div class="receipt-shop-info">0956 350 4486</div>
       </div>
@@ -526,7 +526,7 @@
 
     <!-- ── FOOTER ── -->
     <div class="receipt-footer">
-      Thank you for ordering from Ms. Brave Cake Shop! <br>
+      Thank you for ordering from Mrs. Brave's Cakes <br>
       <small>This is an official e-receipt. Please keep for your records.</small>
     </div>
 
@@ -534,7 +534,7 @@
 
   <!-- ── ACTION BUTTONS ── -->
   <div class="receipt-actions">
-    <button onclick="downloadReceipt()" class="btn-print">
+    <button id="downloadReceiptBtn" class="btn-print">
       <i class="fas fa-download me-2"></i>Download Receipt
     </button>
     <a href="{{ url_for('customer_dashboard') }}" class="btn-back">
@@ -578,5 +578,6 @@ function downloadReceipt() {
         btn.disabled  = false;
     });
 }
+document.getElementById('downloadReceiptBtn').addEventListener('click', downloadReceipt);
 </script>
 {% endblock %}

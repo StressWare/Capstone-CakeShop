@@ -225,12 +225,12 @@
   <div id="deliveredBanner" class="delivered-banner" style="display:{{ 'block' if order.status == 'Delivered' else 'none' }};">
     <div class="check">✅</div>
     <h3>Your order has been delivered!</h3>
-    <p>Enjoy your cake from Mrs. Brave's! 🎂</p>
+    <p>Enjoy your cake from Mrs. Brave's! </p>
   </div>
 
   <!-- Order summary -->
   <div class="track-card">
-    <div class="track-card-header">🎂 Your Order</div>
+    <div class="track-card-header">Your Order</div>
     <div class="track-card-body">
       {% if order.order_type == 'premade' and order.selected_items %}
         {% for item in order.selected_items %}

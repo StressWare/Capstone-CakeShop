@@ -504,22 +504,19 @@
                 <label for="image" style="cursor:pointer; position:relative; display:block;">
                     <img id="imagePreview" src="" alt="Preview"
                         style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:2px solid #e75480; display:block;">
-                    <span style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"
-                          onmouseover="this.style.background='rgba(0,0,0,0.35)'"
-                          onmouseout="this.style.background='rgba(0,0,0,0)'"></span>
+                    <span id="imageHoverOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"></span>
                 </label>
                 <div style="display:flex; flex-direction:column; gap:2px;">
                     <span style="color:#e75480; font-size:13px; font-weight:500;">
                         <i class="bi bi-check-circle-fill"></i> <span id="uploadedFileName">Image attached</span>
                     </span>
                     <span style="color:rgba(255,255,255,0.4); font-size:11px;">
-                        Click image to change · <span onclick="clearImage()" style="text-decoration:underline; cursor:pointer;">Remove</span>
+                        Click image to change · <span id="removeImageBtn" style="text-decoration:underline; cursor:pointer;">Remove</span>
                     </span>
                 </div>
             </div>
 
-            <input type="file" name="image" id="image" accept="image/*"
-                  onchange="checkFileSize(this); previewImage(this)" hidden>
+            <input type="file" name="image" id="image" accept="image/*" hidden>
 
             <!-- Rush Order stays on same line -->
             <div class="rush-row" style="margin-left:auto;">
@@ -594,12 +591,12 @@
         {% if customer %}
     <div style="display:flex; gap:10px; margin-top:14px; justify-content: space-between;">
       <button type="button" class="btn-checkout locked"
-              id="consultBtn" onclick="submitConsultation()"
+              id="consultBtn" 
               style="flex:1; background: #f472b6; margin-top:0; padding: 8px 13px;">
         Consult First
       </button>
       <button type="submit" form="orderForm" class="btn-checkout locked"
-              id="proceedBtn" onclick="updateOrderData()"
+              id="proceedBtn"
               style="flex:1; margin-top:0; padding: 8px 13px;">
         Proceed to Checkout →
       </button>
@@ -1179,6 +1176,11 @@ function clearImage() {
 </script>
 <script nonce="{{ csp_nonce() }}">
  function submitConsultation() {
+  const orderForm = document.getElementById('orderForm');
+  if (!orderForm.checkValidity()) {
+    orderForm.reportValidity(); // Shows native browser error tooltips
+    return; 
+  }
   updateOrderData();
   glassAlert({
     icon: 'question',
@@ -1267,6 +1269,36 @@ document.addEventListener('DOMContentLoaded', function() {
   tokenInput.name  = 'consult_token';
   tokenInput.value = '{{ consult_token or "" }}';
   document.getElementById('orderForm').appendChild(tokenInput);
+});
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Image Hover Overlay
+    const overlay = document.getElementById('imageHoverOverlay');
+    if (overlay) {
+        overlay.addEventListener('mouseover', function() { this.style.background = 'rgba(0,0,0,0.35)'; });
+        overlay.addEventListener('mouseout', function() { this.style.background = 'rgba(0,0,0,0)'; });
+    }
+
+    // 2. Remove Image Button
+    const removeBtn = document.getElementById('removeImageBtn');
+    if (removeBtn) removeBtn.addEventListener('click', clearImage);
+
+    // 3. Consultation Button
+    const consultBtn = document.getElementById('consultBtn');
+    if (consultBtn) consultBtn.addEventListener('click', submitConsultation);
+    // 4. File Input Change
+    const imageInput = document.getElementById('image');
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            checkFileSize(this);
+            previewImage(this);
+        });
+    }
+
+    // 5. Proceed Button Click
+    const proceedBtn = document.getElementById('proceedBtn');
+    if (proceedBtn) {
+        proceedBtn.addEventListener('click', updateOrderData);
+    }
 });
 </script>
 {% endblock %}

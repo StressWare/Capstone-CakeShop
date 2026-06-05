@@ -105,6 +105,7 @@ csp = {
         "'self'",
         "data:",
         "*.tile.openstreetmap.org",
+        "unpkg.com",
         "firebasestorage.googleapis.com",
         "lh3.googleusercontent.com",  # Google profile pictures
         "res.cloudinary.com",
@@ -114,6 +115,7 @@ csp = {
         "'self'",
         "*.gstatic.com",
         "nominatim.openstreetmap.org",
+        "router.project-osrm.org",
         "firestore.googleapis.com",
         "identitytoolkit.googleapis.com",
         "securetoken.googleapis.com",

@@ -587,56 +587,56 @@
     <div class="cat-carousel-viewport" id="catViewport">
       <div class="cat-carousel-track" id="catTrack">
  
-        <div class="cat-card-wrap" onclick="openCategory('Girl')">
+        <div class="cat-card-wrap" data-category="Girl">
           <div class="cat-rect">
             <img src="../static/categories/girls/girl7-removebg-preview.png" alt="Girl Cakes">
           </div>
           <span class="cat-label">Girl</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Boy')">
+        <div class="cat-card-wrap" data-category="Boy">
           <div class="cat-rect">
             <img src="../static/categories/boys/boy10-removebg-preview.png" alt="Boy Cakes">
           </div>
           <span class="cat-label">Boy</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Birthdays')">
+        <div class="cat-card-wrap" data-category="Birthdays">
           <div class="cat-rect">
             <img src="../static/categories/bdaycakes/b2-removebg-preview.png" alt="Birthday Cakes">
           </div>
           <span class="cat-label">Birthdays</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Christening')">
+        <div class="cat-card-wrap" data-category="Christening">
           <div class="cat-rect">
             <img src="../static/categories/christening/ch2-removebg-preview.png" alt="Christening Cakes">
           </div>
           <span class="cat-label">Christening</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Ordinary')">
+        <div class="cat-card-wrap" data-category="Ordinary">
           <div class="cat-rect">
             <img src="../static/categories/ordinarycakes/c5-removebg-preview.png" alt="Ordinary Cakes">
           </div>
           <span class="cat-label">Ordinary Cakes</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Holiday')">
+        <div class="cat-card-wrap" data-category="Holiday">
           <div class="cat-rect">
             <img src="../static/categories/holiday/H3.png" alt="Holiday Cakes">
           </div>
           <span class="cat-label">Holiday Cakes</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Cartoons')">
+        <div class="cat-card-wrap" data-category="Cartoons">
           <div class="cat-rect">
             <img src="../static/categories/Cartoons/10.png" alt="Cartoons">
           </div>
           <span class="cat-label">Cartoons</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Others')">
+        <div class="cat-card-wrap" data-category="Others">
           <div class="cat-rect">
             <img src="../static/categories/others/ot1.png" alt="Others">
           </div>
@@ -644,56 +644,56 @@
         </div>
  
         <!-- DUPLICATES for seamless infinite loop -->
-        <div class="cat-card-wrap" onclick="openCategory('Girl')">
+        <div class="cat-card-wrap" data-category="Girl">
           <div class="cat-rect">
             <img src="../static/categories/girls/girl7-removebg-preview.png" alt="Girl Cakes">
           </div>
           <span class="cat-label">Girl</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Boy')">
+        <div class="cat-card-wrap" data-category="Boy">
           <div class="cat-rect">
             <img src="../static/categories/boys/boy10-removebg-preview.png" alt="Boy Cakes">
           </div>
           <span class="cat-label">Boy</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Birthdays')">
+        <div class="cat-card-wrap" data-category="Birthdays">
           <div class="cat-rect">
             <img src="../static/categories/bdaycakes/b2-removebg-preview.png" alt="Birthday Cakes">
           </div>
           <span class="cat-label">Birthdays</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Christening')">
+        <div class="cat-card-wrap" data-category="Christening">
           <div class="cat-rect">
             <img src="../static/categories/christening/ch2-removebg-preview.png" alt="Christening Cakes">
           </div>
           <span class="cat-label">Christening</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Ordinary')">
+        <div class="cat-card-wrap" data-category="Ordinary">
           <div class="cat-rect">
             <img src="../static/categories/ordinarycakes/c5-removebg-preview.png" alt="Ordinary Cakes">
           </div>
           <span class="cat-label">Ordinary Cakes</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Holiday')">
+        <div class="cat-card-wrap" data-category="Holiday">
           <div class="cat-rect">
             <img src="../static/categories/holiday/H3.png" alt="Holiday Cakes">
           </div>
           <span class="cat-label">Holiday Cakes</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Cartoons')">
+        <div class="cat-card-wrap" data-category="Cartoons">
           <div class="cat-rect">
             <img src="../static/categories/Cartoons/10.png" alt="Cartoons">
           </div>
           <span class="cat-label">Cartoons</span>
         </div>
  
-        <div class="cat-card-wrap" onclick="openCategory('Others')">
+        <div class="cat-card-wrap" data-category="Others">
           <div class="cat-rect">
             <img src="../static/categories/others/ot1.png" alt="Others">
           </div>
@@ -708,10 +708,10 @@
  
 <!-- Category Modal (unchanged logic, improved style) -->
 <div id="categoryModal" class="category-modal">
-  <div class="category-modal-overlay" onclick="closeModal()"></div>
+  <div class="category-modal-overlay" ></div>
   <div class="category-modal-content text-white text-center">
     <p>Tap cards for more details</p>
-    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <span class="close-btn">&times;</span>
     <div id="categoryCards" class="category-cards"></div>
   </div>
 </div>
@@ -762,9 +762,8 @@
                               SOLD OUT
                           </button>
                       {% elif customer %}
-                          <form method="POST" action="/order/cake" style="margin:0;"
-                            onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <form method="POST" action="/order/cake" style="margin:0;" class="home-order-form">
+                              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                               <input type="hidden" name="cake_name" value="{{ cake.name }}">
                               <input type="hidden" name="price"     value="{{ cake.price }}">
@@ -811,8 +810,7 @@
                               SOLD OUT
                           </button>
                       {% elif customer %}
-                          <form method="POST" action="/order/cake" style="margin:0;"
-                                onsubmit="event.preventDefault(); checkShopOpen(() => this.submit());">
+                          <form method="POST" action="/order/cake" style="margin:0;" class="home-order-form">
                               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                               <input type="hidden" name="cake_id"   value="{{ cake.id }}">
                               <input type="hidden" name="cake_name" value="{{ cake.name }}">
@@ -1186,5 +1184,32 @@ window.onclick = function(event) {
                   this.style.boxShadow = 'none';
               });
           });
+
+// 1. Category Cards (Event Delegation for infinite scroll clones)
+document.getElementById('catTrack').addEventListener('click', function(e) {
+    const wrap = e.target.closest('.cat-card-wrap');
+    if (wrap && wrap.dataset.category) {
+        openCategory(wrap.dataset.category);
+    }
+});
+
+// 2. Modal Close Triggers
+const categoryModal = document.getElementById('categoryModal');
+if (categoryModal) {
+    categoryModal.addEventListener('click', function(e) {
+        // Closes if you click the dark overlay OR the X button
+        if (e.target.classList.contains('category-modal-overlay') || e.target.classList.contains('close-btn')) {
+            closeModal();
+        }
+    });
+}
+
+// 3. Home Order Forms
+document.querySelectorAll('.home-order-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        checkShopOpen(() => this.submit());
+    });
+});
   </script>
 {% endblock %}

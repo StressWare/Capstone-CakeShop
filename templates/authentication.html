@@ -50,7 +50,7 @@
                     <input type="email" id="loginEmail" placeholder="Email" required>
                     <div class="password-wrapper">
                         <input type="password" id="loginPassword" placeholder="Password" required>
-                        <i class="fa-regular fa-eye-slash toggle-eye" onclick="togglePassword('loginPassword')"></i>
+                        <i class="fa-regular fa-eye-slash toggle-eye" data-target="loginPassword"></i>
                     </div>
                     <button type="submit">Login</button>
                     <p style="text-align: center; margin-top: 10px;">
@@ -59,7 +59,7 @@
 
                     <p class="toggle-msg">
                         Don't have an account? 
-                        <span class="toggle-btn" onclick="toggleForms()">Sign Up Here</span>
+                        <span class="toggle-btn"  id="showSignupBtn">Sign Up Here</span>
                     </p>
                     
                     <p class="toggle-msg">
@@ -90,11 +90,11 @@
                     <div class="signup-grid">
                         <div class="password-wrapper">
                             <input type="password" id="signupPassword" placeholder="Password" required>
-                            <i class="fa-regular fa-eye-slash toggle-eye" onclick="togglePassword('signupPassword')"></i>
+                            <i class="fa-regular fa-eye-slash toggle-eye"  data-target="signupPassword"></i>
                         </div>
                         <div class="password-wrapper">
                             <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-                            <i class="fa-regular fa-eye-slash toggle-eye" onclick="togglePassword('signupConfirmPassword')"></i>
+                            <i class="fa-regular fa-eye-slash toggle-eye" data-target="signupConfirmPassword"></i>
                         </div>
                     </div>
                     <div style="margin: 15px 0; display: flex; align-items: flex-start; gap: 8px;">
@@ -106,7 +106,7 @@
                     <button type="submit">Sign Up</button>
                     <p class="toggle-msg">
                         Already have an account? 
-                        <span class="toggle-btn" onclick="toggleForms()">Login Here</span>
+                        <span class="toggle-btn" id="showLoginBtn">Login Here</span>
                     </p>
                     <p class="toggle-msg">
                         Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
@@ -125,13 +125,13 @@
     <div>
       <h2 style="font-size: 20px; color: #d63384; margin: 0 0 8px;">Mrs. Brave's Cakes</h2>
       <p style="font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; margin: 0 0 16px;">Freshly baked happiness made with love. Custom cakes for every special moment in Iloilo City.</p>
-      <a href="https://www.facebook.com/mrsbraveonline" target="_blank" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none;">
+      <a href="https://www.facebook.com/mrsbraveonline" target="_blank" rel="noopener noreferrer" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none;">
         <i class="fab fa-facebook"></i>
       </a>
-        <a href="https://www.instagram.com/mrsbravecakes" target="_blank" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none; margin-left:8px;">
+        <a href="https://www.instagram.com/mrsbravecakes" target="_blank" rel="noopener noreferrer" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none; margin-left:8px;">
         <i class="fab fa-instagram"></i>
       </a>
-      <a href="https://www.tiktok.com/@mrsbravessweettreatsoff" target="_blank" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none; margin-left:8px;">
+      <a href="https://www.tiktok.com/@mrsbravessweettreatsoff" target="_blank" rel="noopener noreferrer" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none; margin-left:8px;">
         <i class="fab fa-tiktok"></i>
       </a>
     </div>
@@ -842,9 +842,22 @@ async function startDeviceRegistration() {
         });
     }
 }
- 
+
 /* Attach login button */
 document.getElementById('device-signin-btn')?.addEventListener('click', startDeviceLogin);
+
+// 1. Password Toggle Eyes
+document.querySelectorAll('.toggle-eye').forEach(eye => {
+    eye.addEventListener('click', function() {
+        togglePassword(this.dataset.target);
+    });
+});
+
+// 2. Form Toggles
+const showSignupBtn = document.getElementById('showSignupBtn');
+const showLoginBtn = document.getElementById('showLoginBtn');
+if (showSignupBtn) showSignupBtn.addEventListener('click', toggleForms);
+if (showLoginBtn) showLoginBtn.addEventListener('click', toggleForms);
 </script>
 </body>
 </html>

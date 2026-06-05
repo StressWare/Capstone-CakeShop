@@ -266,7 +266,9 @@
 </script>
 {% if expired %}
   <div class="header">
-    <div class="header-icon">🎂</div>
+    <div class="header-icon">
+      <img src="/static/img/logo.png" style="width: 2.5rem; height: 2.5rem; object-fit: contain; display: block;">
+    </div>
     <div class="header-text">
       <h1>Mrs. Brave's Cakes Iloilo</h1>
       <p>Delivery Details</p>
@@ -343,7 +345,7 @@
   </div>
 
   <div class="card">
-    <div class="card-header">🎂 Order Summary</div>
+    <div class="card-header">Order Summary</div>
     <div class="card-body">
       {% if order.order_type == 'premade' and order.selected_items %}
         {% for item in order.selected_items %}

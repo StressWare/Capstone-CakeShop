@@ -12,12 +12,10 @@
 <div class="checkout-container">
 
   <div class="checkout-header text-white" style="position:relative;">
-    <a href="/cakes" style="position:absolute;left:0;top:50%;transform:translateY(-50%);
+    <a href="/cakes" id="backToCakesLink" style="position:absolute;left:0;top:50%;transform:translateY(-50%);
         display:inline-flex;align-items:center;gap:6px;
         color:rgba(255,255,255,0.7);font-size:13px;text-decoration:none;
-        transition:color 0.15s;"
-      onmouseover="this.style.color='#fff'"
-      onmouseout="this.style.color='rgba(255,255,255,0.7)'">
+        transition:color 0.15s;">
       ← Back to Cakes
     </a>
     <h1>Checkout</h1>
@@ -62,11 +60,11 @@
         <div class="checkout-form-section">
           <div class="section-title">Delivery Options</div>
           <div class="delivery-options">
-            <div class="delivery-option active" id="btnDelivery" onclick="selectDelivery('Delivery')">
+            <div class="delivery-option active" id="btnDelivery" data-delivery="Delivery">
               <i class="fas fa-box"></i>
               <div>Delivery</div>
             </div>
-            <div class="delivery-option" id="btnPickup" onclick="selectDelivery('Pickup')">
+            <div class="delivery-option" id="btnPickup" data-delivery="Pickup">
               <i class="fas fa-map-marker-alt"></i>
               <div>Pick Up</div>
             </div>
@@ -169,8 +167,7 @@
           {% if order_type == 'custom' %}
             <!-- Custom orders: Online Payment ONLY -->
             <div class="payment-options">
-              <div class="payment-method active" id="onlinePaymentBtn"
-                   onclick="selectPayment(this, 'Online Payment')">
+              <div class="payment-method active" id="onlinePaymentBtn" data-payment="Online Payment">
                 <i class="fa-solid fa-credit-card"></i>
                 <span class="payment-method-label">Online Payment</span>
               </div>
@@ -188,8 +185,7 @@
               </div>
               <div style="display:flex; flex-direction:column; gap:8px;" id="downpaymentOptions">
 
-                <div class="downpayment-opt" id="dp-50"
-                     onclick="selectDownpayment('50')"
+                <div class="downpayment-opt" id="dp-50" data-downpayment="50"
                      style="padding:12px 14px; border-radius:9px;
                             border:1px solid rgba(214,51,132,0.4);
                             cursor:pointer; transition:all 0.2s;">
@@ -205,8 +201,7 @@
                   </div>
                 </div>
 
-                <div class="downpayment-opt" id="dp-75"
-                     onclick="selectDownpayment('75')"
+                <div class="downpayment-opt" id="dp-75" data-downpayment="75"
                      style="padding:12px 14px; border-radius:9px;
                             border:1px solid rgba(214,51,132,0.4);
                             cursor:pointer; transition:all 0.2s;">
@@ -222,8 +217,7 @@
                   </div>
                 </div>
 
-                <div class="downpayment-opt" id="dp-full"
-                     onclick="selectDownpayment('full')"
+                <div class="downpayment-opt" id="dp-full" data-downpayment="full"
                      style="padding:12px 14px; border-radius:9px;
                             border:2px solid #d63384;
                             background:rgba(214,51,132,0.1);
@@ -262,11 +256,11 @@
             <!-- Premade orders: COD or Online Payment -->
             <div class="payment-group-label text-white">Manual Payment</div>
             <div class="payment-options">
-              <div class="payment-method active" onclick="selectPayment(this, 'Cash on Delivery')">
+              <div class="payment-method active" data-payment="Cash on Delivery">
                 <i class="fas fa-money-bill-wave"></i>
                 <span class="payment-method-label">Cash on Delivery</span>
               </div>
-              <div class="payment-method" onclick="selectPayment(this, 'Online Payment')">
+              <div class="payment-method" data-payment="Online Payment">
                 <i class="fa-solid fa-credit-card"></i>
                 <span class="payment-method-label">Online Payment</span>
               </div>
@@ -322,10 +316,10 @@
                     ₱{{ "%.2f"|format(item.price|float) }}
                   </div>
                   <div class="qty-controls" style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                    <button type="button" class="qty-btn" onclick="changeQty({{ loop.index0 }}, -1)"
+                    <button type="button" class="qty-btn" data-index="{{ loop.index0 }}" data-delta="-1"
                             style="width:28px;height:28px;border-radius:50%;border:1px solid #d63384;background:none;color:#d63384;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
                     <span id="qty-{{ loop.index0 }}" style="font-weight:600; min-width:20px; text-align:center;">{{ item.quantity }}</span>
-                    <button type="button" class="qty-btn" onclick="changeQty({{ loop.index0 }}, 1)"
+                    <button type="button" class="qty-btn" data-index="{{ loop.index0 }}" data-delta="1"
                             style="width:28px;height:28px;border-radius:50%;border:1px solid #d63384;background:none;color:#d63384;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
                   </div>
                   <div class="order-item-price" id="subtotal-{{ loop.index0 }}">
@@ -792,5 +786,42 @@ async function recalcTotal() {
     if (ORDER_TYPE === 'custom') {
     selectDownpayment('full'); // default: full selected
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. Back to Cakes Link Hover
+    const backLink = document.getElementById('backToCakesLink');
+    if (backLink) {
+        backLink.addEventListener('mouseover', function() { this.style.color = '#fff'; });
+        backLink.addEventListener('mouseout', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
+    }
+
+    // 2. Delivery Options
+    document.querySelectorAll('.delivery-option').forEach(el => {
+        el.addEventListener('click', function() {
+            selectDelivery(this.dataset.delivery);
+        });
+    });
+
+    // 3. Payment Options
+    document.querySelectorAll('.payment-method').forEach(el => {
+        el.addEventListener('click', function() {
+            selectPayment(this, this.dataset.payment);
+        });
+    });
+
+    // 4. Downpayment Options
+    document.querySelectorAll('.downpayment-opt').forEach(el => {
+        el.addEventListener('click', function() {
+            selectDownpayment(this.dataset.downpayment);
+        });
+    });
+
+    // 5. Quantity Controls
+    document.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            changeQty(parseInt(this.dataset.index), parseInt(this.dataset.delta));
+        });
+    });
+});
 </script>
 {% endblock %}
