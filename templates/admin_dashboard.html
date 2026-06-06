@@ -400,7 +400,12 @@
         </div>
         <div class="col-md-5">
           <div class="card h-100">
-            <div class="card-header bg-white"><h5 class="mb-0">Today's Orders ({{ today_count }})</h5></div>
+            <div class="card-header bg-white d-flex align-items-center justify-content-between">
+              <h5 class="mb-0">Today's Orders ({{ today_count }})</h5>
+              <button id="btn-sort-deliveries" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;">
+                ↑ ASC
+              </button>
+            </div>
             <div class="card-body p-2" style="max-height: 400px; overflow-y: auto;">
               {% if today_deliveries %}
                 {% for delivery in today_deliveries %}
@@ -1092,7 +1097,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (unlockBtn) unlockDate(unlockBtn.dataset.date);
       if (orderCard) openOrderModal(JSON.parse(orderCard.dataset.order));
     });
+  
+  let deliveriesSortAsc = true;
 
+document.getElementById('btn-sort-deliveries').addEventListener('click', () => {
+  deliveriesSortAsc = !deliveriesSortAsc;
+  const btn = document.getElementById('btn-sort-deliveries');
+  btn.textContent = deliveriesSortAsc ? '↑ ASC' : '↓ DESC';
+
+  const container = btn.closest('.card').querySelector('.card-body');
+  const items = Array.from(container.querySelectorAll('.d-flex.justify-content-between'));
+
+  items.sort((a, b) => {
+    const timeA = a.querySelector('.badge').textContent.trim();
+    const timeB = b.querySelector('.badge').textContent.trim();
+    const parse = t => new Date('1970/01/01 ' + t);
+    return deliveriesSortAsc
+      ? parse(timeA) - parse(timeB)
+      : parse(timeB) - parse(timeA);
+  });
+
+  items.forEach(item => container.appendChild(item));
+});
 });
 </script>
 {% endblock %}

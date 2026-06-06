@@ -1736,9 +1736,6 @@ def finalize_order():
         rush           = False
         inspo_image    = None
 
-        for i in selected_items:
-            users.document(user_id).collection("cart").document(i["cake_id"]).delete()
-
     else:
         selected_items = []
         item_names     = request.form.get("order_item", "")
@@ -1888,9 +1885,12 @@ def finalize_order():
     else:
         charge_amount = amount
     # ── Deduct stock for premade orders (transactional fb built in decorator) ──
-    if order_type == "premade"and payment_method in ["Cash on Delivery", "Bank Transfer"]:
+    if order_type == "premade" and payment_method in ["Cash on Delivery", "Bank Transfer"]:
         @firestore.transactional
         def deduct_stock(transaction, items):
+            # Phase 1: all reads first
+            cake_refs  = []
+            quantities = []
             for item in items:
                 cake_id          = item.get("cake_id")
                 quantity_ordered = int(item.get("quantity", 1))
@@ -1900,15 +1900,22 @@ def finalize_order():
                 if not cake_snap.exists:
                     raise ValueError(f"NOEXIST:{cake_id}")
 
-                current_qty = cake_snap.to_dict().get("quantity", 0)
+                cake_data   = cake_snap.to_dict()
+                current_qty = int(cake_data.get("quantity", 0))
+
                 if quantity_ordered > current_qty:
-                    name = cake_snap.to_dict().get("name", "A cake")
+                    name = cake_data.get("name", "A cake")
                     raise ValueError(f"OVERSTOCK:{name}:{current_qty}")
 
-                new_qty = current_qty - quantity_ordered
+                cake_refs.append(cake_ref)
+                quantities.append(current_qty - quantity_ordered)
+
+            # Phase 2: all writes after
+            for cake_ref, new_qty in zip(cake_refs, quantities):
                 transaction.update(cake_ref, {"quantity": new_qty, "status": new_qty > 0})
 
         try:
+            # Let Firestore create & manage the transaction; pass only items
             transaction = db.transaction()
             deduct_stock(transaction, selected_items)
         except ValueError as e:
@@ -1918,7 +1925,8 @@ def finalize_order():
             else:
                 flash(f"{parts[1]} only has {parts[2]} available.", "danger")
             return redirect(url_for("customer_dashboard"))
-
+        for i in selected_items:
+            users.document(user_id).collection("cart").document(i["cake_id"]).delete()
     # COD  save immediately
     if payment_method == "Cash on Delivery":
         doc_ref  = orders.add(order_data)
@@ -1996,6 +2004,7 @@ def finalize_order():
 
     pending_orders.document(checkout["session_id"]).set({
         "user_id": user_id,
+        "consult_token": consult_token,
         "order_data": {
             **order_data,
             "delivery_date": delivery_datetime.isoformat(),
@@ -2252,6 +2261,16 @@ def cart_page():
     for doc in users.document(user_id).collection("cart").stream():
         item = doc.to_dict()
         item["id"] = doc.id
+
+        cake_doc = cakes.document(item["cake_id"]).get()
+        if cake_doc.exists:
+            cake_data = cake_doc.to_dict()
+            item["price"] = float(cake_data.get("price", 0))
+            item["cake_name"] = cake_data.get("name", item["cake_name"])
+            item["available"] = int(cake_data.get("quantity", 0))
+        else:
+            item["unavailable"] = True
+
         cart_items.append(item)
     return render_template("cart.html", cart_items=cart_items)
 
@@ -2273,7 +2292,6 @@ def add_to_cart():
         return redirect(url_for("cakes_page"))
 
     cake_data  = cake_doc.to_dict()
-    real_price = float(cake_data.get("price", 0))
     image      = image or cake_data.get("image")
 
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
@@ -2288,7 +2306,6 @@ def add_to_cart():
         cart_ref.set({
             "cake_id":   cake_id,
             "cake_name": cake_data.get("name", cake_name),
-            "price":     real_price,
             "quantity":  quantity,
             "image":     image,
             "added_at":  firestore.SERVER_TIMESTAMP

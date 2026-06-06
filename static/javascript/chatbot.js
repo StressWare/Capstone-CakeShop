@@ -611,7 +611,7 @@ showBadge() {
             msgDiv.className = 'message bot-message';
             msgDiv.innerHTML = `
                 ${orderCardHtml}
-                <p>👤 <strong>Owner:</strong> ${this.escapeHtml(text)} ${timeHtml}</p>`;
+                <p>👤 <strong>Owner:</strong> ${this.linkify(text)} ${timeHtml}</p>`;
         } else if (sender === 'bot') {
             msgDiv.className = 'message bot-message';
             msgDiv.innerHTML = `<p>${this.escapeHtml(text)} ${timeHtml}</p>`;
@@ -627,6 +627,28 @@ showBadge() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    linkify(text) {
+        if (!text) return '';
+        const parts = text.split(/(https?:\/\/[^\s]+)/g);
+        return parts.map((part, i) => {
+            if (i % 2 === 1) {
+                return `<br><a href="${part}" target="_blank" style="
+                    display:inline-block;
+                    margin-top:6px;
+                    padding:8px 16px;
+                    background:#d63384;
+                    color:#fff;
+                    border-radius:8px;
+                    text-decoration:none;
+                    font-size:12px;
+                    font-weight:600;
+                ">Complete Your Order</a>`;
+            }
+            const div = document.createElement('div');
+            div.textContent = part;
+            return div.innerHTML;
+        }).join('');
     }
 }
 class GuestChatbotWidget {

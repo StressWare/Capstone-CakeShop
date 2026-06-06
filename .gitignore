@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 firebase/serviceAccountKey.json
 .env
+.vscode/
 set-admin.py
 wipe-orders.py
 seed_custom_prices.py

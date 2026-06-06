@@ -660,12 +660,23 @@ function clearImage() {
     PRICING HELPERS
     ========================================================= */
   function getParts(selectId) {
-    const val = document.getElementById(selectId).value;
+    const el = document.getElementById(selectId);
+    if (!el) {
+      return { label: '', price: 0 };
+    }
+
+    const val = el.value || '';
     const parts = val.split('|');
-    return {
-      label: document.getElementById(selectId).selectedOptions[0].text,
-      price: parseFloat(parts[1]) || 0
-    };
+
+    // Safely get label; selectedOptions[0] can be undefined
+    const selected = el.selectedOptions && el.selectedOptions[0]
+      ? el.selectedOptions[0]
+      : null;
+    const label = selected ? selected.text : '';
+
+    const price = parts.length > 1 ? parseFloat(parts[1]) || 0 : 0;
+
+    return { label, price };
   }
 
   function calculateTotal() {
@@ -687,7 +698,7 @@ function clearImage() {
     return total;
   }
 
-  function updateOrderData() {
+function updateOrderData() {
     const total = calculateTotal();
     document.getElementById('orderAmount').value = total.toFixed(2);
 
@@ -699,13 +710,22 @@ function clearImage() {
 
     let addonsArr = [];
     document.querySelectorAll('.addons:checked').forEach(a => {
-      addonsArr.push(a.parentElement.innerText.trim());
+        if (a.id === 'others') return; // handle separately
+        addonsArr.push(a.parentElement.innerText.trim());
     });
+
+    // Add others with its price in the format finalize_order expects
+    const othersChecked = document.getElementById('others').checked;
+    const othersPrice   = parseFloat(document.getElementById('othersPrice').value || 0);
+    const othersDesc    = document.getElementById('othersDesc').value.trim();
+    if (othersChecked && othersDesc && othersPrice > 0) {
+        addonsArr.push(`${othersDesc} (₱${othersPrice})`);
+    }
 
     let desc = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
     if (addonsArr.length) desc += `, Add-ons: ${addonsArr.join(', ')}`;
     document.getElementById('orderItem').value = desc;
-  }
+}
 
   function checkFileSize(input) {
     if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
@@ -749,21 +769,37 @@ function clearImage() {
   /* =========================================================
     BADGES
     ========================================================= */
-  function updateBadges() {
-    const flavor  = document.getElementById('cakeType').selectedOptions[0].text.split(' ')[0];
-    const icing   = document.getElementById('design').selectedOptions[0].text.split(' ')[0];
-    const size    = document.getElementById('cakeSize').selectedOptions[0].text.split(' ')[0];
-    const layers  = document.getElementById('layers').selectedOptions[0].text.split(' ')[0];
-    const candles = document.getElementById('candles').value;
+ function updateBadges() {
+    function safeLabel(selectId) {
+      const el = document.getElementById(selectId);
+      if (!el || !el.selectedOptions || !el.selectedOptions[0]) return '';
+      return el.selectedOptions[0].text.split(' ')[0];
+    }
 
-    let tags = [flavor, icing, size, layers + ' layer'];
-    if (parseInt(candles) > 0) tags.push(candles + ' candle' + (candles > 1 ? 's' : ''));
-    if (document.getElementById('sprinkles').checked) tags.push('Sprinkles');
-    if (document.getElementById('drip').checked)      tags.push('Choco drip');
-    if (document.getElementById('flowers').checked)   tags.push('Flowers');
+    const flavor  = safeLabel('cakeType');
+    const icing   = safeLabel('design');
+    const size    = safeLabel('cakeSize');
+    const layers  = safeLabel('layers');
+    const candles = document.getElementById('candles')?.value || '0';
 
-    document.getElementById('badges').innerHTML = tags
-      .map(t => `<span class="badge">${t}</span>`).join('');
+    let tags = [];
+    if (flavor) tags.push(flavor);
+    if (icing)  tags.push(icing);
+    if (size)   tags.push(size);
+    if (layers) tags.push(layers + ' layer');
+
+    const candlesNum = parseInt(candles, 10) || 0;
+    if (candlesNum > 0) {
+      tags.push(candlesNum + ' candle' + (candlesNum > 1 ? 's' : ''));
+    }
+    if (document.getElementById('sprinkles')?.checked) tags.push('Sprinkles');
+    if (document.getElementById('drip')?.checked)      tags.push('Choco drip');
+    if (document.getElementById('flowers')?.checked)   tags.push('Flowers');
+
+    const badgesEl = document.getElementById('badges');
+    if (badgesEl) {
+      badgesEl.innerHTML = tags.map(t => `<span class="badge">${t}</span>`).join('');
+    }
   }
 
   /* =========================================================
@@ -1248,13 +1284,28 @@ document.addEventListener('DOMContentLoaded', function() {
   const prefill = {{ prefill | tojson if prefill else 'null' }};
   if (!prefill) return;
 
+  function selectByPrefix(selectId, value) {
+    const el = document.getElementById(selectId);
+    if (!el || !value) return;
+    const targetCode = String(value).split('|')[0];  // handles "2" or "2|2300"
+
+    for (const opt of el.options) {
+      if (!opt.value) continue;                     // skip placeholder
+      const [code] = opt.value.split('|');
+      if (code === targetCode) {
+        el.value = opt.value;
+        return;
+      }
+    }
+  }
+
   // Dropdowns
-  if (prefill.cakeType)  document.getElementById('cakeType').value  = prefill.cakeType;
+  if (prefill.cakeType)  selectByPrefix('cakeType',  prefill.cakeType);
   if (prefill.cakeShape) document.getElementById('cakeShape').value = prefill.cakeShape;
-  if (prefill.cakeSize)  document.getElementById('cakeSize').value  = prefill.cakeSize;
-  if (prefill.design)    document.getElementById('design').value    = prefill.design;
-  if (prefill.layers)    document.getElementById('layers').value    = prefill.layers;
-  if (prefill.toppers)   document.getElementById('toppers').value   = prefill.toppers;
+  if (prefill.cakeSize)  selectByPrefix('cakeSize',  prefill.cakeSize);
+  if (prefill.design)    selectByPrefix('design',    prefill.design);
+  if (prefill.layers)    selectByPrefix('layers',    prefill.layers);
+  if (prefill.toppers)   selectByPrefix('toppers',   prefill.toppers);
   if (prefill.candles)   document.getElementById('candles').value   = prefill.candles;
   if (prefill.notes)     document.getElementById('notes').value     = prefill.notes;
   if (prefill.rush) document.getElementById('rush').checked = true;
