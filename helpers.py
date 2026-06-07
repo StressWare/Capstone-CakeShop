@@ -38,7 +38,7 @@ FAQ = {
 
     "delivery": (
         "We deliver within Metro Iloilo and nearby areas.\n\n"
-        "Delivery fee: P50\n"
+        "Delivery fee starts at P50 (base rate); longer distances may have an additional charge.\n"
         "You can select your preferred delivery date and time at checkout.\n\n"
         "For premade cakes, expect delivery on your chosen date. "
         "For custom cakes, delivery is scheduled once production is complete.\n\n"
@@ -55,15 +55,17 @@ FAQ = {
 
     "customization": (
         "We offer full cake customization.\n\n"
-        "Available flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry, and more.\n"
-        "Frosting options: Buttercream, Cream Cheese, Fondant, Ganache.\n"
-        "We can also accommodate sugar-free, dairy-free, and vegan requests.\n\n"
-        "Custom designs, messages, and themed cakes are available. "
-        "A 50% downpayment is required before production begins. "
-        "Orders cannot be cancelled once confirmed.\n\n"
-        "For a personalized quote, click Chat with Owner."
+        "Use the \"Customize Your Cake\" option to choose your cake size, flavor, frosting, design, "
+        "message, and other details. You can also request sugar-free, dairy-free, or vegan options.\n\n"
+        "A 50% downpayment is required before production begins, and orders cannot be cancelled once confirmed."
     ),
-
+    "custom consultation": (
+        "Yes, you can consult with us first for a customized cake.\n\n"
+        "On the \"Customize Your Cake\" form, choose the option to consult first and upload your reference photo, "
+        "theme, budget, and event date.\n\n"
+        "We will review your details and contact you to discuss the design and price. "
+        "You can also chat with the owner if you have more questions."
+    ),
     "payment methods": (
         "We accept the following payment methods:\n\n"
         "- Cash on Delivery (COD)\n"
@@ -75,18 +77,17 @@ FAQ = {
     ),
 
     "return policy": (
-        "We accept refund requests only if the cake arrives damaged or incorrect.\n\n"
-        "To file a concern:\n"
-        "1. Contact us within 24 hours of delivery.\n"
-        "2. Send photos of the issue.\n"
-        "3. We will offer a full refund or replacement, whichever you prefer.\n\n"
-        "Please note that baked goods are non-returnable under normal circumstances."
+        "All sales are final and baked goods are non-refundable and non-returnable.\n\n"
+        "If the cake arrives damaged or clearly incorrect, please contact us within 24 hours "
+        "and send photos of the issue. We will review the case and may offer a replacement or "
+        "other resolution at our discretion."
     ),
 
     "pricing": (
         "Prices vary depending on the cake size, design complexity, and flavor.\n\n"
-        "You can browse our available cakes and their prices on the website. "
-        "For custom cake quotes, click Chat with Owner and we will provide a detailed estimate."
+        "You can browse premade cakes and their prices on the website. "
+        "For customized cakes, use the \"Customize Your Cake\" option (you may also choose consult first) "
+        "so we can review your details and give you a quote."
     ),
 
     "cancellation": (
@@ -198,7 +199,33 @@ FAQ_KEYWORDS = {
         "anong available nga lasa", "pwede ba vegan",
         "anu-ano ang frosting", "pwede ba sugar-free",
         "gusto ko special cake", "pwede ba themed cake",
-        "anong mga design available", "pwede lagyan ng ngalan"
+        "anong mga design available", "pwede lagyan ng ngalan",
+        "customize your cake", "customized template", "custom form",
+        "custom order form", "template for custom", "paano mag custom",
+        "paano mag-customize", "custom na cake", "gusto ko custom na cake",
+        "customized cake", "customized order", "paano mag pa custom",
+    ],
+     "custom consultation": [
+        "consultation", "consult", "talk first", "discuss design", "design ideas",
+        "design consultation", "quote first", "ask first", "before ordering",
+        "can i ask first", "can i talk to you", "send my design", "send a peg",
+        "show you a picture", "can you suggest", "help with design",
+        "consultation", "consult", "talk first", "discuss design", "design ideas",
+        "design consultation", "quote first", "ask first", "before ordering",
+        "can i ask first", "can i talk to you", "send my design", "send a peg",
+        "show you a picture", "can you suggest", "help with design",
+        "customized consultation", "consult for custom cake",
+        "usap tungkol sa custom", "tanong muna sa custom", "idea para sa custom cake",
+        "help with customized cake", "design for customized cake",
+        "mag consult", "mag-consult", "pwede mag tanong muna", "tanong muna",
+        "usap muna", "kausapin muna", "pwede ba mag usap", "usap tungkol sa design",
+        "mag pa quote", "magpa quote", "pa quote muna", "tanong tungkol sa custom",
+        "padala ng peg", "padala ng design", "picture muna", "idea sa cake",
+        "tulong sa design", "hingi ng suggestion", "magpatulong sa design",
+        "pamangkot anay", "pwede mag pamangkot", "istorya anay", "istorya ta anay",
+        "mga idea sa design", "pa idea sang cake", "padala sang peg",
+        "padala sang picture", "pwede ko anay magpamangkot", "consult anay",
+        "pangayo ko idea", "pangayo ko quote"
     ],
     "payment methods": [
         "how to pay", "payment method", "payment option", "payment",
@@ -350,6 +377,8 @@ FAQ_CONTEXT = """
     - Always reply in the same language the customer used (English, Tagalog, or Hiligaynon)
     - Keep answers short, friendly, and helpful
     - Never make up information not listed below
+    - When explaining custom orders, only mention the fields that are explicitly listed
+      in the CUSTOMIZATION section above
     - Never talk about other businesses or competitors
     - If asked who you are, say you are Brave Bot, the assistant of Mrs. Brave's Cake Shop
     SHOP INFO:
@@ -373,12 +402,12 @@ FAQ_CONTEXT = """
     - Choose pickup date and time at checkout
 
     CUSTOMIZATION:
-    - Flavors: Vanilla, Chocolate, Red Velvet, Ube, Strawberry and more
-    - Frosting: Buttercream, Cream Cheese, Fondant, Ganache
-    - Sugar-free, dairy-free, vegan available
-    - Custom designs, messages, themed cakes available
-    - 50% downpayment required before production
-
+    - Customers use the "Customize Your Cake" form in the website.
+    - The form asks for: occasion, event date, serving size, flavor, filling, frosting,
+      theme or peg, color motif, message on cake, and budget range.
+    - Customers can also upload a reference/peg image.
+    - After they submit, the owner reviews the details and confirms via chat or notification.
+    - 50% downpayment is required before production; orders cannot be cancelled once confirmed.
     PAYMENT:
     - Cash on Delivery (COD)
     - GCash
@@ -415,9 +444,18 @@ FAQ_CONTEXT = """
 # AI FALLBACK FUNCTION
 def ai_fallback(user_message):
     try:
+        prompt = (
+            f"{FAQ_CONTEXT}\n\n"
+            "You are Brave Bot. This is a LAST RESORT. "
+            "If the question is unclear, unrelated, or too complex, "
+            "politely tell the customer to use the quick buttons or Chat with Owner instead of guessing.\n"
+            "Keep your answer 1–3 short sentences.\n\n"
+            f"Customer: {user_message}\n"
+            "Brave Bot:"
+        )
         response = client.models.generate_content(
             model="gemini-2.5-flash-lite",
-            contents=FAQ_CONTEXT + "\n\nCustomer: " + user_message
+            contents=prompt
         )
         return response.text
     except Exception as e:
@@ -426,7 +464,7 @@ def ai_fallback(user_message):
 
 # MAIN FAQ FUNCTION 
 def get_faq_response(user_message):
-    user_message_lower = user_message.lower()
+    user_message_lower = " ".join(user_message.lower().split())
 
     best_match = None
     best_score = 0
@@ -439,7 +477,14 @@ def get_faq_response(user_message):
 
     if best_match and best_score > 0:
         return FAQ[best_match]  # keywords fired, no AI cost
-
+    cake_related_markers = [
+        "cake", "kek", "keyk", "order", "mag order", "mag-order",
+        "custom", "customize", "customized", "brave", "mrs brave",
+        "delivery", "pickup", "pick up", "pick-up", "bayad", "payment",
+        "presyo", "price", "pila", "magkano"
+    ]
+    if any(m in user_message_lower for m in cake_related_markers):
+        return FAQ["default"]
     return ai_fallback(user_message)  # only runs if keywords fail
 
 def log_admin_action(action, target, category="general"):
