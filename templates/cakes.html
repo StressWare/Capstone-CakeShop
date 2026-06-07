@@ -634,7 +634,7 @@ const handleSearch = function() {
         const name = card.querySelector('.cake-title')?.textContent.toLowerCase() || '';
         const category = card.querySelector('.badge.category')?.textContent.toLowerCase() || '';
         const matchesCard = name.includes(query) || category.includes(query);
-        card.style.display = matchesCard ? '' : 'none';
+        card.style.setProperty('display', matchesCard ? 'flex' : 'none', 'important');
         if (matchesCard) anyVisible = true;
     });
     const noResultsDiv = document.getElementById('noSearchResults');
