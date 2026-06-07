@@ -4589,7 +4589,18 @@ def consultation_confirm():
         'expires_at':        now + timedelta(days=7),
         'used':              False,
     })
-
+    try:
+        notifications.add({
+            "user_id":       user_id,
+            "type":          "consultation_approved",
+            "consult_token": token,
+            "title":         "Consultation Approved",
+            "message":       "Your cake consultation was approved. Check your message complete your order.",
+            "created_at":    now,
+            "is_read":       False,
+        })
+    except Exception:
+        app.logger.exception("[NOTIFY] Failed to write consultation approval notification")
     # Mark conversation as converted
     conv_ref.update({'status': 'converted', 'converted_at': now})
     conversations.document(conv_id).update({

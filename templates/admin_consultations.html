@@ -4,12 +4,67 @@
 <style nonce="{{ csp_nonce() }}">
   /* ── PAGINATION (copied from inventory) ── */
   .pagination .page-link { color: var(--pink-primary); border-color: #f5c2dc; border-radius: 7px !important; margin: 0 2px; font-size: 0.82rem; }
+
+  @keyframes bannerPulse {
+    0%   { box-shadow:0 0 0 0 rgba(214,51,132,0.5); }
+    70%  { box-shadow:0 0 0 8px rgba(214,51,132,0);  }
+    100% { box-shadow:0 0 0 0 rgba(214,51,132,0);   }
+  }
   .pagination .page-item.active .page-link { background: var(--pink-primary); border-color: var(--pink-primary); color: #fff; }
   .pagination .page-link:hover { background: var(--pink-light); border-color: var(--pink-primary); color: var(--pink-dark); }
+
+  /* Mobile adjustments for consultation banner */
+  @media (max-width: 768px) {
+    #newConsultationBanner {
+      left: 0;
+      right: 0;
+    }
+    #newConsultationBanner > div {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 8px 10px;
+      gap: 6px;
+    }
+    #newConsultationBanner button {
+      padding: 5px 10px;
+      font-size: 0.75rem;
+    }
+  }
 </style>
 {% endblock %}
 {% block content %}
-<div class="container-fluid px-4 py-4" style="display:flex; flex-direction:column; min-height:calc(100vh - 60px);">
+<audio id="consultChime" src="{{ url_for('static', filename='consult-chime.mp3') }}" preload="auto"></audio>
+<div id="newConsultationBanner" style="
+    position:fixed; top:0; left:250px; right:0; z-index:9999;
+    background:rgba(255,255,255,0.97);
+    border-bottom:1px solid rgba(255,192,203,0.45);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    box-shadow:0 8px 32px rgba(199,21,133,0.15);
+    color:#1a1a1a; display:none;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;gap:10px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="width:10px;height:10px;border-radius:50%;background:#d63384;box-shadow:0 0 0 0 rgba(214,51,132,0.5);animation:bannerPulse 1.2s infinite;"></div>
+      <div>
+        <div style="font-size:0.9rem;font-weight:600;">New Consultation Request</div>
+        <div id="newConsultationText" style="font-size:0.8rem;color:#666;"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button type="button" id="viewConsultationsBtn" style="
+        background:linear-gradient(135deg,#e75480,#C71585);color:#fff;border:none;
+        border-radius:999px;padding:6px 14px;font-size:0.8rem;font-weight:600;cursor:pointer;">
+        View Consultations
+      </button>
+      <button type="button" id="dismissConsultationBanner" style="
+        background:transparent;color:#1a1a1a;border:1px solid rgba(26,26,26,0.3);
+        border-radius:999px;padding:6px 12px;font-size:0.8rem;font-weight:500;cursor:pointer;">
+        Dismiss
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 py-4" style="display:flex; flex-direction:column; min-height:calc(100vh - 60px); margin-top:40px;">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h4 class="fw-bold mb-0 text-white">Customized Cake Consultations</h4>
@@ -35,17 +90,21 @@
               <span style="background:#dcfce7; color:#166534; font-size:11px; padding:3px 10px; border-radius:20px;">Converted</span>
             {% else %}
               <span style="background:#fef3c7; color:#92400e; font-size:11px; padding:3px 10px; border-radius:20px;">Pending</span>
-              {% if cd %}
-              <form method="POST" action="/admin/consultation-to-order" style="display:none;" id="convertForm-{{ loop.index }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="user_id" value="{{ c.user_id }}">
-                <input type="hidden" name="conversation_id" value="{{ c.conversation_id }}">
-              </form>
+            {% endif %}
+
+            {% if cd %}
               <button data-bs-toggle="modal" data-bs-target="#modal-{{ loop.index }}"
                 style="background:#f3f4f6; color:#374151; border:none; border-radius:8px;
                 padding:6px 14px; font-size:12px; cursor:pointer; font-weight:500;">
                 View Details
               </button>
+
+              {% if c.status != 'converted' %}
+              <form method="POST" action="/admin/consultation-to-order" style="display:none;" id="convertForm-{{ loop.index }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="user_id" value="{{ c.user_id }}">
+                <input type="hidden" name="conversation_id" value="{{ c.conversation_id }}">
+              </form>
               <button type="button"
                 class="btn-convert"
                 data-convert-form="convertForm-{{ loop.index }}"
@@ -149,6 +208,16 @@
                     <span style="color:#888;">Submitted</span>
                     <span style="font-weight:500;">{{ c.last_updated.strftime('%b %d, %Y %I:%M %p') if c.last_updated else '—' }}</span>
                   </div>
+                  <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
+                    <span style="color:#888;">Status</span>
+                    <span style="font-weight:500;">
+                      {% if c.status == 'converted' %}
+                        <span class="badge bg-success">Converted</span>
+                      {% else %}
+                        <span class="badge bg-warning text-dark">Pending</span>
+                      {% endif %}
+                    </span>
+                  </div>
                   <div style="margin-top:20px;">
                     <div style="font-size:11px; font-weight:600; letter-spacing:0.08em; color:#db2777; text-transform:uppercase; margin-bottom:14px;">Pricing</div>
                     <div style="display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid #f5f5f5; font-size:13px;">
@@ -191,6 +260,35 @@
 
 {% block extra_js %}
 <script nonce="{{ csp_nonce() }}">
+  (function() {
+    let consultSoundLoop = null;
+    let consultIsPlaying = false;
+
+    window.createConsultChime = function() {
+        try {
+            const audio = new Audio('/static/consult-chime.mp3');
+            audio.volume = 0.7;
+            audio.play().catch(e => console.warn('[CONSULT CHIME] Audio failed:', e));
+        } catch (e) {
+            console.warn('[CONSULT CHIME] Chime failed:', e);
+        }
+    };
+
+    window.startConsultSoundLoop = function() {
+        if (consultIsPlaying) return;
+        consultIsPlaying = true;
+        createConsultChime();                         // immediate ping
+        consultSoundLoop = setInterval(createConsultChime, 4000); // repeat every 4s
+    };
+
+    window.stopConsultSoundLoop = function() {
+        consultIsPlaying = false;
+        if (consultSoundLoop) {
+            clearInterval(consultSoundLoop);
+            consultSoundLoop = null;
+        }
+    };
+  })();
 function confirmConvert(formId, customerName) {
   glassAlert({
     icon: 'question',
@@ -226,13 +324,69 @@ function updateConsultationDisplay() {
   });
 }
 
+function initConsultationBannerListener() {
+  if (typeof firebase === 'undefined' || !firebase.firestore) return;
+  const db = firebase.firestore();
+  let firstLoad = true;
+
+  db.collection('conversations')
+    .where('is_consultation', '==', true)
+    .where('unread', '==', true)
+    .onSnapshot((snapshot) => {
+      if (firstLoad) {
+        firstLoad = false;
+        return; // don't flash banner for existing ones on first load
+      }
+
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === 'added') {
+          const data = change.doc.data() || {};
+          const name = data.customer_name || 'Customer';
+          const item = (data.consultation_data && data.consultation_data.order_item) || '';
+          const textEl = document.getElementById('newConsultationText');
+          if (textEl) {
+            textEl.textContent = `${name} sent a new consultation${item ? ' – ' + item.slice(0,60) : ''}`;
+          }
+
+          const banner = document.getElementById('newConsultationBanner');
+          if (banner) banner.style.display = 'block';
+
+          // Start looping chime (similar to orders)
+          if (typeof window.startConsultSoundLoop === 'function') {
+              window.startConsultSoundLoop();
+          }
+        }
+      });
+    }, (err) => console.error('Consultation banner listener error:', err));
+}
+
 document.addEventListener('DOMContentLoaded', function () {
   updateConsultationDisplay();
   document.querySelectorAll('.btn-convert').forEach(btn => {
-  btn.addEventListener('click', () => {
-    confirmConvert(btn.dataset.convertForm, btn.dataset.customerName);
+    btn.addEventListener('click', () => {
+      confirmConvert(btn.dataset.convertForm, btn.dataset.customerName);
+    });
   });
-});
+
+  // banner buttons
+  document.getElementById('dismissConsultationBanner')?.addEventListener('click', () => {
+    const banner = document.getElementById('newConsultationBanner');
+    if (banner) banner.style.display = 'none';
+    if (typeof window.stopConsultSoundLoop === 'function') {
+        window.stopConsultSoundLoop();
+    }
+  });
+  document.getElementById('viewConsultationsBtn')?.addEventListener('click', () => {
+    const banner = document.getElementById('newConsultationBanner');
+    if (banner) banner.style.display = 'none';
+    if (typeof window.stopConsultSoundLoop === 'function') {
+        window.stopConsultSoundLoop();
+    }
+    // optional: scroll to top or refresh
+    window.location.reload();
+  });
+
+  initConsultationBannerListener();
 });
 </script>
 {% endblock %}
