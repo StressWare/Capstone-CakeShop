@@ -114,8 +114,75 @@
   .modal-header.bg-success { background: linear-gradient(135deg, #198754, #0f5132) !important; }
   .modal-header.bg-danger  { background: linear-gradient(135deg, #dc3545, #9a1827) !important; }
   .modal-content { border-radius: var(--card-radius); border: none; overflow: hidden; box-shadow: 0 8px 40px rgba(214,51,132,0.14); border-top: 4px solid var(--pink-primary); }
-  .modal-footer .btn-warning { background: linear-gradient(135deg, #ffc107, #e0a800); border: none; font-weight: 600; border-radius: 8px; }
-  .modal-footer .btn-secondary { border-radius: 8px; }
+  
+  /* ════════════════════════════════════════════════
+     MODAL BUTTONS - PINK THEME REDESIGN
+  ════════════════════════════════════════════════ */
+  .modal-footer .btn {
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    padding: 8px 20px !important;
+    transition: all 0.25s ease !important;
+    letter-spacing: 0.3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  /* Primary Action Buttons (Edit, Save, Send Message, Mark Balance) */
+  .modal-footer .btn-warning,
+  .modal-footer .btn-primary,
+  .modal-footer .btn-success {
+    background: var(--pink-gradient) !important;
+    border: none !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(214, 51, 132, 0.25) !important;
+  }
+  .modal-footer .btn-warning:hover,
+  .modal-footer .btn-primary:hover,
+  .modal-footer .btn-success:hover {
+    background: linear-gradient(135deg, #a0205e 0%, #d63384 100%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(214, 51, 132, 0.35) !important;
+    color: #ffffff !important;
+  }
+  .modal-footer .btn-warning:active,
+  .modal-footer .btn-primary:active,
+  .modal-footer .btn-success:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(214, 51, 132, 0.2) !important;
+  }
+
+  /* Secondary / Outline Buttons (Close, Cancel, Message Customer) */
+  .modal-footer .btn-secondary,
+  .modal-footer .btn-outline-secondary {
+    background: transparent !important;
+    border: 1.5px solid var(--pink-mid) !important;
+    color: var(--pink-primary) !important;
+  }
+  .modal-footer .btn-secondary:hover,
+  .modal-footer .btn-outline-secondary:hover {
+    background: var(--pink-light) !important;
+    border-color: var(--pink-primary) !important;
+    color: var(--pink-dark) !important;
+  }
+
+  /* Info Button (PayMongo Link) */
+  .modal-footer .btn-info {
+    background: #ffffff !important;
+    border: 1.5px solid var(--pink-primary) !important;
+    color: var(--pink-primary) !important;
+    box-shadow: 0 2px 8px rgba(214, 51, 132, 0.1) !important;
+  }
+  .modal-footer .btn-info:hover {
+    background: var(--pink-light) !important;
+    border-color: var(--pink-dark) !important;
+    color: var(--pink-dark) !important;
+    transform: translateY(-1px);
+  }
+
   .price-box { background: var(--pink-light); border: 1.5px solid var(--pink-mid); border-radius: 9px; padding: 10px 16px; font-weight: 700; color: var(--pink-dark); font-size: 1rem; }
   #emptyTabMsg { color: #c07090; }
   .card-body { padding: 22px 24px; }

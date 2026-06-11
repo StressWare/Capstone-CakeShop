@@ -17,18 +17,199 @@
     <!--ReCaptcha-->
     <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
 </head>
-<body>
+<style>
 
-    <!-- NAVBAR -->
-    <nav class="navbar fixed-top" style="min-height:80px; height:auto; overflow:visible; padding:10px; background-color:#000000;">
-  <div class="container-fluid">
-    <a href="#">
-      <img src="/static/img/mrs.brave.jpg" 
-           alt="MRS. Brave's" 
-           style="height:160px; width:auto; object-fit:contain; display:block; margin-top: 18px;">
-    </a>
-  </div>
+/* ====== CUSTOM OFFCANVAS MENU ====== */
+.menu-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: 2px solid #000000;
+    color: #d63384;
+    border-radius: 8px;
+    padding: 5px 15px;
+    cursor: pointer;
+    transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+.menu-btn:hover {
+    background-color: #000000;
+    color: #fff;
+}
+
+/* ====== CUSTOM OFFCANVAS MENU ====== */
+.custom-offcanvas {
+    position: fixed;
+    top: 0;
+    right: -270px;                   /* nakatago sa kanan */
+    width: 270px;
+    height: 100%;
+     background-color: #630031;
+    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    transition: right 0.5s ease;
+    z-index: 1001;
+    padding: 30px 20px;
+    overflow-y: auto;
+}
+
+.custom-offcanvas.active {
+    right: 0;                        /* slide in mula sa kanan */
+}
+
+.offcanvas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
+}
+
+.offcanvas-header h5 {
+    color: #0b0b0b;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.offcanvas-body {
+    margin-top: 20px;
+    padding-top: 10px;
+}
+
+.offcanvas-body a {
+    display: block;
+    text-decoration: none;
+    color: #ffffff !important;      /* white text tulad ng admin */
+    font-weight: 400 !important;    /* hindi bold, same sa admin */
+    font-size: 1rem;
+    margin-bottom: 5px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.offcanvas-body a:hover {
+    background-color: #d63384 !important;
+    color: #ffffff !important;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    cursor: pointer;
+    color: #ffffff;              /* AYOS: black para makita */
+    line-height: 1;
+    font-weight: 700;
+}
+
+.close-btn:hover {
+    color: #060003;           /* pink on hover */
+}
+
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* ====== OVERLAY ====== */
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+</style>
+
+<body>
+<!-- NAVBAR -->
+<nav class="navbar fixed-top" style="min-height:80px; height:auto; overflow:visible; padding:10px; background-color:#000000;">
+    <div class="container-fluid" style="display:flex; justify-content:space-between; align-items:center;">
+
+        <a href="/">
+            <img src="/static/img/mrs.brave.jpg"
+                 alt="MRS. Brave's"
+                 style="height:160px; width:auto; object-fit:contain; display:block; margin-top:18px;">
+        </a>
+
+        <button class="menu-btn" id="menuToggle">
+            ☰ Menu
+        </button>
+
+    </div>
 </nav>
+
+<!-- OVERLAY -->
+<div class="menu-overlay" id="menuOverlay"></div>
+
+<!-- OFFCANVAS MENU -->
+<div class="custom-offcanvas" id="offcanvasMenu">
+    <div class="offcanvas-header">
+        <button class="close-btn" id="menuClose">&#9776;</button>
+    </div>          
+
+      <div class="offcanvas-body">
+        <a href="/">Home</a>
+        <a href="/cakes">Available Cakes</a>
+        <a href="/customize_cake">Customize Cake</a>
+        <a href="/about">About Us</a>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:10px 0;">
+
+        <a href="/authentication">Login</a>
+    </div>
+</div>
 
     <!-- Spacer for navbar -->
     <div style="height: 70px;"></div>
@@ -870,6 +1051,42 @@ const showSignupBtn = document.getElementById('showSignupBtn');
 const showLoginBtn = document.getElementById('showLoginBtn');
 if (showSignupBtn) showSignupBtn.addEventListener('click', toggleForms);
 if (showLoginBtn) showLoginBtn.addEventListener('click', toggleForms);
+
+/* ===========================
+   OFFCANVAS MENU
+=========================== */
+
+const menuBtn = document.getElementById("menuToggle");
+const offcanvas = document.getElementById("offcanvasMenu");
+const menuClose = document.getElementById("menuClose");
+const overlay = document.getElementById("menuOverlay");
+
+function openMenu() {
+    offcanvas.classList.add("active");
+    overlay.classList.add("active");
+}
+
+function closeMenu() {
+    offcanvas.classList.remove("active");
+    overlay.classList.remove("active");
+}
+
+if (menuBtn && offcanvas && menuClose && overlay) {
+
+    menuBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+
+        if (offcanvas.classList.contains("active")) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    menuClose.addEventListener("click", closeMenu);
+
+    overlay.addEventListener("click", closeMenu);
+}
 </script>
 </body>
 </html>

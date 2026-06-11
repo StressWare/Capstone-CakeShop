@@ -1,36 +1,291 @@
 {% extends 'base_customer.html' %}
 {% block title %}Consultation Sent - Mrs. Brave's Cakes{% endblock %}
 
-{% block content %}
-<section style="min-height:70vh; display:flex; align-items:center; justify-content:center;
-  background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88); padding: 40px 16px;">
-  <div style="background:rgba(236,9,107,0.15); backdrop-filter:blur(12px);
-    border:1px solid rgba(255,167,205,0.3); border-radius:20px;
-    padding:40px 32px; max-width:480px; width:100%; text-align:center; color:white;">
+{% block extra_css %}
+<style nonce="{{ csp_nonce() }}">
+  
+  /* ── GLOBAL RESET ── */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background-color: #0f0f0f !important;
+    overflow-x: hidden;
+  }
 
-    <div style="font-size:52px; margin-bottom:16px;">🎂</div>
-    <h1 style="font-size:24px; font-weight:700; margin:0 0 10px;">Consultation Sent!</h1>
-    <p style="font-size:14px; color:rgba(255,255,255,0.75); margin:0 0 24px;">
+  .main-content, .content-wrapper, main, .container, .container-fluid, #content {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    min-height: auto !important;
+  }
+
+  /* ── BACKGROUND ── */
+  .success-bg {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
+    padding: 120px 16px; /* Increased top padding for better spacing */
+    z-index: 1;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* ── GLASS CARD ── */
+  .glass-card {
+    position: relative;
+    z-index: 2;
+    background: rgba(236, 9, 107, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 167, 205, 0.3);
+    border-radius: 24px;
+    padding: 48px 36px;
+    max-width: 460px;
+    width: 100%;
+    margin-top: -50px;
+    text-align: center;
+    color: white;
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  @keyframes slideUpFade {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* ── SUCCESS ICON ── */
+  .success-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #ec096b, #ff4d88);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 24px rgba(236, 9, 107, 0.4);
+    position: relative;
+  }
+  
+  .success-icon::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 77, 136, 0.4);
+    animation: pulseRing 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+
+  @keyframes pulseRing {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.3); opacity: 0; }
+  }
+
+  .success-icon svg {
+    width: 36px;
+    height: 36px;
+    stroke: white;
+    stroke-width: 3;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .success-title {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0 0 12px;
+    background: linear-gradient(to right, #ffffff, #ffb3d1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .success-subtitle {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0 0 28px;
+    line-height: 1.5;
+  }
+
+  /* ── STATUS CHECKLIST ── */
+  .status-list {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 32px;
+    text-align: left;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 0;
+  }
+
+  .status-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .status-check {
+    width: 20px;
+    height: 20px;
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .status-check svg {
+    width: 12px;
+    height: 12px;
+    stroke: #4ade80;
+    stroke-width: 3;
+    fill: none;
+  }
+
+  .status-chat {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 77, 136, 0.15);
+    border: 1px solid rgba(255, 77, 136, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .status-chat svg {
+    width: 12px;
+    height: 12px;
+    stroke: #ff4d88;
+    stroke-width: 2;
+    fill: none;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-glass-primary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #ec096b, #c20756);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 16px rgba(236, 9, 107, 0.3);
+    transition: all 0.3s ease;
+  }
+
+  .btn-glass-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(236, 9, 107, 0.5);
+    color: white;
+  }
+
+  .btn-glass-secondary {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-glass-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* ── MOBILE ADJUSTMENTS ── */
+  @media (max-width: 576px) {
+    .glass-card {
+      padding: 36px 24px;
+      border-radius: 20px;
+    }
+    .success-title { font-size: 22px; }
+    .success-subtitle { font-size: 14px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="success-bg">
+  <div class="glass-card">
+    
+    <!-- Animated Success Icon -->
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    </div>
+
+    <h1 class="success-title">Consultation Sent!</h1>
+    <p class="success-subtitle">
       Your cake design has been sent to the owner. Open the chat below to continue the conversation.
     </p>
 
-    <div style="background:rgba(255,255,255,0.08); border-radius:12px;
-      padding:16px; margin-bottom:28px; font-size:13px; color:rgba(255,255,255,0.6); text-align:left;">
-      <div style="margin-bottom:6px;">✅ Design saved</div>
-      <div style="margin-bottom:6px;">✅ Owner notified</div>
-      <div>💬 Chat is ready — owner will reply shortly</div>
+    <!-- Glassmorphic Status List -->
+    <div class="status-list">
+      <div class="status-item">
+        <div class="status-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <span>Design successfully saved</span>
+      </div>
+      <div class="status-item">
+        <div class="status-check">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <span>Owner has been notified</span>
+      </div>
+      <div class="status-item">
+        <div class="status-chat">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <span>Chat is ready — owner will reply shortly</span>
+      </div>
     </div>
 
-    <a href="{{ url_for('customer_dashboard') }}"
-      style="display:block; padding:13px; background:#db2777; color:white;
-      border-radius:10px; text-decoration:none; font-weight:500; font-size:14px; margin-bottom:10px;">
+    <!-- Action Buttons -->
+    <a href="{{ url_for('customer_dashboard') }}" class="btn-glass-primary">
       Go to Dashboard
     </a>
-    <a href="{{ url_for('customize') }}"
-      style="display:block; padding:13px; background:rgba(255,255,255,0.1); color:white;
-      border-radius:10px; text-decoration:none; font-size:13px;">
+    <a href="{{ url_for('customize') }}" class="btn-glass-secondary">
       Design Another Cake
     </a>
+
   </div>
 </section>
 {% endblock %}
