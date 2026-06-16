@@ -42,7 +42,8 @@ import secrets
 import firebase
 from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials
 from firebase_admin import auth, firestore, messaging
-from pyngrok import ngrok
+if os.environ.get("FLASK_ENV") == "development":
+    from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
 load_dotenv()
