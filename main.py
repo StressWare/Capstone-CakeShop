@@ -1552,6 +1552,7 @@ def order_cake():
 def finalize_order():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
+    consult_token = request.form.get('consult_token', '').strip()
 
     order_type    = request.form.get("order_type")
     delivery_type = request.form.get("delivery_type", "Delivery")
@@ -1743,8 +1744,6 @@ def finalize_order():
         inspo_image    = request.form.get("inspo_image") or None
 
         try:
-            # If from consultation token, use admin-approved price directly
-            consult_token = request.form.get('consult_token', '').strip()
             if consult_token:
                 token_doc = pending_consultations.document(consult_token).get()
                 if token_doc.exists:
@@ -1967,7 +1966,6 @@ def finalize_order():
                 "used_at": now
             })
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes, order_id=order_id)
-        consult_token = request.form.get('consult_token', '').strip()
         if consult_token:
             pending_consultations.document(consult_token).update({
                 'used': True, 'used_at': now
@@ -4705,15 +4703,17 @@ def service_worker_pos():
     return app.send_static_file('javascript/service-worker-pos.js')
 
 
+if os.environ.get("FLASK_ENV") == "development":
+    from pyngrok import ngrok
+
 # ================================================================
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
-    #indi pag kaksa ang comment pang live server lng na
-    
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        ngrok.kill()
-        public_url = ngrok.connect(5000)
-        print(f"\n🌐 Public URL: {public_url}\n")
+    if os.environ.get("FLASK_ENV") == "development":
+        if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+            ngrok.kill()
+            public_url = ngrok.connect(5000)
+            print(f"\n🌐 Public URL: {public_url}\n")
     
     app.run(debug=True)

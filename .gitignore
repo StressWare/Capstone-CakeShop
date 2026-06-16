@@ -7,3 +7,4 @@ firebase/serviceAccountKey.json
 set-admin.py
 wipe-orders.py
 seed_custom_prices.py
+locustfile.py
