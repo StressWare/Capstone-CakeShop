@@ -259,14 +259,11 @@ def about():
 # ---------------- AUTHENTICATION ----------------
 @app.route('/authentication')
 def auth_page():
-    return render_template('authentication.html',
-        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
-    )
+    return render_template('authentication.html')
+
 @app.route('/forgot-password')
 def forgot_password_page():
-    return render_template('forgot_password.html',
-        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
-    )
+    return render_template('forgot_password.html')
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -282,30 +279,6 @@ def verify_token():
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
     id_token = data.get('idToken')
-    recaptcha_token = data.get('recaptchaToken')
-    # ── reCAPTCHA check ──
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-
-    if recaptcha_token:
-        try:
-            r = http_requests.post(
-                'https://www.google.com/recaptcha/api/siteverify',
-                data={
-                    'secret':   os.environ.get('RECAPTCHA_SECRET_KEY'),
-                    'response': recaptcha_token
-                },
-                timeout=5
-            )
-            result = r.json()
-            score = result.get('score', 0)
-            app.logger.info(f"reCAPTCHA: success={result.get('success')}, score={score}")
-            if not result.get('success') or score < 0.5:
-                app.logger.warning(f"reCAPTCHA failed: score={score}")
-                return jsonify({'error': 'Suspicious activity detected.'}), 403
-        except Exception as e:
-            app.logger.warning(f"reCAPTCHA check failed: {e}")
-            return jsonify({'error': 'reCAPTCHA verification failed'}), 403
 
     if not id_token:
         return jsonify({'error': 'No token provided'}), 400
@@ -365,28 +338,7 @@ def save_user_details():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
-        
-    # ── reCAPTCHA check 
-    recaptcha_token = data.get('recaptchaToken')
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-    try:
-        r = http_requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={
-                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
-                'response': recaptcha_token
-            },
-            timeout=5
-        )
-        result = r.json()
-        score = result.get('score', 0)
-        if not result.get('success') or score < 0.5:
-            app.logger.warning(f"reCAPTCHA failed on signup: score={score}")
-            return jsonify({'error': 'Suspicious activity detected.'}), 403
-    except Exception as e:
-        app.logger.warning(f"reCAPTCHA check failed: {e}")
-        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
+
     try:
         decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=10)
         token_uid = decoded_token['uid']
@@ -796,38 +748,7 @@ def webauthn_delete():
     except Exception:
         app.logger.exception("Error deleting WebAuthn credential")
         return jsonify({'error': 'Internal server error'}), 500
-# ---------------- FORGOT PASS RECAPTCHA----------------
-@app.route('/verify-recaptcha', methods=['POST'])
-@limiter.limit("5 per minute")
-def verify_recaptcha():
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Invalid request'}), 400
 
-    recaptcha_token = data.get('recaptchaToken')
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-
-    try:
-        r = http_requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={
-                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
-                'response': recaptcha_token
-            },
-            timeout=5
-        )
-        result = r.json()
-        score = result.get('score', 0)
-        app.logger.info(f"reCAPTCHA forgot_password: success={result.get('success')}, score={score}")
-        if not result.get('success') or score < 0.5:
-            app.logger.warning(f"reCAPTCHA failed: score={score}")
-            return jsonify({'error': 'Suspicious activity detected.'}), 403
-    except Exception as e:
-        app.logger.warning(f"reCAPTCHA check failed: {e}")
-        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
-
-    return jsonify({'success': True}), 200
 
 @app.route('/check-email-exists', methods=['POST'])
 @limiter.limit("5 per minute")  

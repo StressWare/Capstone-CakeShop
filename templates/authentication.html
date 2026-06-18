@@ -14,9 +14,7 @@
     <!-- Firebase SDK (v9 compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <!--ReCaptcha-->
-    <script src="https://www.google.com/recaptcha/api.js?render={{ recaptcha_site_key }}"></script>
-</head>
+    
 <style>
 
 /* ====== CUSTOM OFFCANVAS MENU ====== */
@@ -537,33 +535,17 @@ function validatePassword(password) {
     return null;
 }
  
-/* ============================================================
-   RECAPTCHA
-   ============================================================ */
-async function getRecaptchaToken(action) {
-    return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(null), 3000);
-        grecaptcha.ready(async () => {
-            clearTimeout(timeout);
-            const token = await grecaptcha.execute(
-                '{{ recaptcha_site_key }}',
-                { action: action }
-            );
-            resolve(token);
-        });
-    });
-}
+
  
 /* ============================================================
    SEND TOKEN TO BACKEND
    ============================================================ */
 async function sendTokenToBackend(user, action = 'login') {
     const idToken = await user.getIdToken(true);
-    const recaptchaToken = await getRecaptchaToken(action);
     const response = await fetch('/verify-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idToken: idToken, recaptchaToken: recaptchaToken })
+        body: JSON.stringify({ idToken: idToken })
     });
     if (response.ok) {
         const data = await response.json();
@@ -681,7 +663,7 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
         const user = userCredential.user;
         await user.sendEmailVerification();
         const idToken = await user.getIdToken();
-        const recaptchaToken = await getRecaptchaToken('signup');
+
  
         const response = await fetch('/save-user-details', {
             method: 'POST',
@@ -695,7 +677,6 @@ document.getElementById('signupForm').addEventListener('submit', async (e) => {
                 number: number,
                 address: address,
                 fname: fname,
-                recaptchaToken: recaptchaToken
             })
         });
  
