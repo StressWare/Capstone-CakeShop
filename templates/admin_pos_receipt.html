@@ -107,10 +107,10 @@
   <!-- Items -->
   <div class="receipt-label mb-1">Items</div>
   {% for item in order.order_items %}
-  <div class="item-row">
-    <span>{{ item.cake_name }}</span>
-    <span>₱{{ "%.2f"|format(item.price|float) }}</span>
-  </div>
+<div class="item-row">
+  <span>{{ item.cake_name }} x{{ item.quantity if item.quantity is defined else 1 }}</span>
+  <span>₱{{ "%.2f"|format(item.price|float) }}</span>
+</div>
   {% endfor %}
 
   <hr class="divider">

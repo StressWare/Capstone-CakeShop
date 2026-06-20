@@ -51,8 +51,8 @@ load_dotenv()
 app = Flask(__name__)
 # WebAuthn config
 RP_NAME   = "Mrs. Brave's Cakes"                 
-RP_ID     = "acceptant-impalpable-axton.ngrok-free.dev" # change to yourdomain.com in production
-RP_ORIGIN = "https://acceptant-impalpable-axton.ngrok-free.dev"       # change to https://yourdomain.com in production
+RP_ID     = os.environ["RP_ID"]
+RP_ORIGIN = os.environ["RP_ORIGIN"]
 
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
@@ -3027,7 +3027,7 @@ def mark_balance_collected(order_id):
                 "user_id":    notify_user_id,
                 "order_id":   order_id,
                 "title":      "Payment Complete",
-                "message":    f"Your remaining balance for order #{order_id[:8]} has been collected. You're fully paid! 🎂",
+                "message":    f"Your remaining balance for order #{order_id[:8]} has been collected. You're fully paid!",
                 "type":       "payment_update",
                 "is_read":    False,
                 "created_at": datetime.now(PH_TZ)

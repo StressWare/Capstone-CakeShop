@@ -721,20 +721,19 @@ function switchTab(tab) {
           await handleCakeFormSubmit(e.target, 'edit');
         });
       });
-
-      document.querySelectorAll('.cake-card form').forEach(form => {
-        form.addEventListener('submit', async function (e) {
-          e.preventDefault();
-          const result = await glassToast({
-            icon: 'warning',
-            title: 'Delete this cake?',
-            showConfirmButton: true, showCancelButton: true,
-            confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel',
-            timer: 0
-          });
-          if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');
+    document.querySelectorAll('.cake-delete-form').forEach(form => {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const result = await glassToast({
+          icon: 'warning',
+          title: 'Delete this cake?',
+          showConfirmButton: true, showCancelButton: true,
+          confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel',
+          timer: 0
         });
+        if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');// plain submit, no fetch
       });
+    });
 
       document.getElementById('searchCakes').addEventListener('keyup',   () => { currentCakesPage = 1; updateCakesDisplay(); });
       document.getElementById('categoryFilter').addEventListener('change',() => { currentCakesPage = 1; updateCakesDisplay(); });
@@ -824,7 +823,7 @@ function switchTab(tab) {
     inputGroup.className = 'input-group mb-2';
     inputGroup.innerHTML = `
       <input type="text" class="form-control" value="${escapeHtml(gift)}" data-index="${idx}">
-      <button class="btn btn-outline-danger" type="button">
+      <button class="btn btn-outline-danger" type="button" data-action="remove-gift">
         <i class="fas fa-trash-alt"></i>
       </button>
     `;
@@ -925,21 +924,7 @@ function loadLoyaltyGiftsUI() {
   const bigGifts = {{ loyalty_gifts.big | tojson }};
   renderGiftInputs('small', smallGifts);
   renderGiftInputs('big', bigGifts);
-} 
-document.getElementById('panelCustom').addEventListener('click', function(e) {
-  const btn = e.target.closest('.btn-save-pricing[data-category]');
-  if (!btn) return;
-  const category = btn.dataset.category;
-  const fieldMap = JSON.parse(btn.dataset.fields);
-  saveCustomPricing(category, fieldMap, btn);
-});
-document.getElementById('panelLoyalty').addEventListener('click', function(e) {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  if (btn.dataset.action === 'add-gift')   addGiftInput(btn.dataset.tier);
-  if (btn.dataset.action === 'save-gifts') saveLoyaltyGifts(btn.dataset.tier, btn);
-  if (btn.dataset.action === 'remove-gift') removeGiftInput(btn);
-});
+}
 
 </script>
 {% endblock %}
