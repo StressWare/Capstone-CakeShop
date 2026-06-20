@@ -3575,7 +3575,8 @@ def paymongo_webhook():
             parts = dict(p.split("=", 1) for p in signature_header.split(","))
             timestamp = parts.get("t", "")
             # use "te" for test mode, "li" for live mode
-            received_sig = parts.get("te") or parts.get("li", "")
+            sig_field = "li" if is_production else "te"     
+            received_sig = parts.get(sig_field, "")
 
             # Build the string to sign: timestamp + "." + raw_body
             signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
@@ -3663,11 +3664,21 @@ def paymongo_webhook():
                 app.logger.error(f"Stock deduction failed in webhook: {parts}")
                 pending_ref.delete()
                 return jsonify({"status": "stock error"}), 200
-
+        #verify paid amount matches expected
+        expected_amount = int(round((order_data.get("downpayment_amount") or order_data.get("amount", 0)) * 100))
+        actual_amount = payments[0].get("attributes", {}).get("amount", 0) if payments else 0
+        if actual_amount != expected_amount:
+            app.logger.warning(
+                f"Amount mismatch on session {session_id}: expected {expected_amount}, got {actual_amount}"
+            )
         # Save to orders collection
-        doc_ref  = orders.add(order_data)        # was  orders.add(order_data)
+        doc_ref  = orders.add(order_data)        
         order_id = doc_ref[1].id
-        users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+        try:
+            users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+        except Exception:
+            app.logger.warning(f"order_count increment failed for user {order_data.get('user_id')}, non-critical")
+
         invalidate_cache("order_counts")
         try:
             send_new_order_fcm(
@@ -3680,22 +3691,25 @@ def paymongo_webhook():
         except Exception:
             app.logger.warning('[FCM] New order notify failed (webhook), non-critical')
          # Confirmation email 
-        user_doc = users.document(order_data.get("user_id")).get()
-        fname    = user_doc.to_dict().get("fname", "Customer")
-        email    = user_doc.to_dict().get("email", "")
-        send_order_confirmation(
-            fname=fname,
-            email=email,
-            order_id=order_id,
-            amount=order_data.get("amount", 0),
-            payment_method=payment_method,
-            rush_fee=order_data.get("rush_fee", 0),
-            delivery_fee=order_data.get("delivery_fee", 0),
-            discount_amount=0,
-            downpayment_type=order_data.get("downpayment_type"),
-            downpayment_amount=order_data.get("downpayment_amount"),
-            remaining_balance=order_data.get("remaining_balance"),
-        )
+        try:
+            user_doc = users.document(order_data.get("user_id")).get()
+            fname    = user_doc.to_dict().get("fname", "Customer") if user_doc.exists else "Customer"
+            email    = user_doc.to_dict().get("email", "") if user_doc.exists else ""
+            send_order_confirmation(
+                fname=fname,
+                email=email,
+                order_id=order_id,
+                amount=order_data.get("amount", 0),
+                payment_method=payment_method,
+                rush_fee=order_data.get("rush_fee", 0),
+                delivery_fee=order_data.get("delivery_fee", 0),
+                discount_amount=0,
+                downpayment_type=order_data.get("downpayment_type"),
+                downpayment_amount=order_data.get("downpayment_amount"),
+                remaining_balance=order_data.get("remaining_balance"),
+            )
+        except Exception:
+            app.logger.warning(f"Confirmation email failed for order {order_id}, non-critical")
         # Mark voucher as used
         for cv in order_data.get("claimed_vouchers", []):
             users.document(order_data["user_id"]).collection("vouchers").document(cv["voucher_id"]).update({
