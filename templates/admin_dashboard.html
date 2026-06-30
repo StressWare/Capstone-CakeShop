@@ -765,7 +765,7 @@ async function renderCalendar() {
           <div style="font-size:11px;color:#991b1b;">Type: ${lockedTypes.join(", ")}</div>
           <div style="font-size:11px;color:#991b1b;">Reason: ${lockInfo.reason}</div>
         </div>
-        <button data-action="unlock" data-date="${dateStr}
+        <button data-action="unlock" data-date="${dateStr}"
           style="width:100%;padding:8px;border-radius:8px;border:1px solid #dc2626;
                 background:#fef2f2;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;">
           Unlock ${dateStr}
@@ -963,18 +963,18 @@ async function calGoToday() {
 }
 
 // ── PDF / CSV ──────────────────────────────────────────────────────────
-const pos_sales   = {{ pos_sales }};
-const pre_sales   = {{ pre_sales }};
-const cus_sales   = {{ cus_sales }};
-const pos_txn     = {{ pos_txn }};
-const pre_txn     = {{ pre_txn }};
-const cus_txn     = {{ cus_txn }};
-const pos_cash    = {{ pos_cash }};
-const pre_cash    = {{ pre_cash }};
-const cus_cash    = {{ cus_cash }};
-const pos_ewallet = {{ pos_ewallet }};
-const pre_ewallet = {{ pre_ewallet }};
-const cus_ewallet = {{ cus_ewallet }};
+const pos_sales   = "{{ pos_sales }}";
+const pre_sales   = "{{ pre_sales }}";
+const cus_sales   = "{{ cus_sales }}";
+const pos_txn     = "{{ pos_txn }}";
+const pre_txn     = "{{ pre_txn }}";
+const cus_txn     = "{{ cus_txn }}";
+const pos_cash    = "{{ pos_cash }}";
+const pre_cash    = "{{ pre_cash }}";
+const cus_cash    = "{{ cus_cash }}";
+const pos_ewallet = "{{ pos_ewallet }}";
+const pre_ewallet = "{{ pre_ewallet }}";
+const cus_ewallet = "{{ cus_ewallet }}";
 const pos_top     = "{{ pos_top }}";
 const pre_top     = "{{ pre_top }}";
 

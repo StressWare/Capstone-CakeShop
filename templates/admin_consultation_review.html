@@ -1,5 +1,16 @@
 {% extends 'admin_base.html' %}
 {% block title %}Review Consultation – Mrs. Brave's Cakes Iloilo{% endblock %}
+{% block extra_css %}
+<style nonce="{{ csp_nonce() }}">
+  .swal2-actions {
+    gap: 12px;
+  }
+  .swal2-confirm,
+  .swal2-cancel {
+    margin: 0 !important;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <div class="container py-4" style="max-width:600px;">
   <h4 class="text-white fw-bold mb-1">Review Consultation</h4>
