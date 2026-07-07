@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, make_response,send_file
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
@@ -39,6 +39,8 @@ import json
 import hmac
 import hashlib
 import secrets
+import qrcode
+import io
 import firebase
 from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials
 from firebase_admin import auth, firestore, messaging
@@ -912,6 +914,9 @@ def customer_dashboard():
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
         if not v.get('used', False) and expires > now_dt:
+            if not v.get('token'):
+                v['token'] = secrets.token_urlsafe(32)
+                v_doc.reference.update({'token': v['token']})
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
 
@@ -1068,6 +1073,8 @@ def loyalty_claim():
             "expires_at": expires_at,
             "used":       False,
             "used_at":    None,
+            "token":      secrets.token_urlsafe(32),
+            "used_by":    None,
         })
         if tier == 5:
             update_data = {
@@ -1088,6 +1095,90 @@ def loyalty_claim():
         flash("Something went wrong. Please try again.", "danger")
 
     return redirect(url_for("customer_dashboard") + "#loyalty")
+
+
+def _find_voucher_by_token(token: str):
+    """Collection-group query across every user's vouchers subcollection."""
+    query = db.collection_group("vouchers").where("token", "==", token).limit(1)
+    docs = list(query.stream())
+    if not docs:
+        return None, None
+    return docs[0], docs[0].reference
+
+
+@app.route("/voucher/qr/<token>.png")
+@login_required
+def voucher_qr_image(token):
+    redeem_url = url_for("voucher_redeem_page", token=token, _external=True)
+    qr = qrcode.QRCode(box_size=6, border=2)
+    qr.add_data(redeem_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png", max_age=3600)
+
+
+@app.route("/voucher/redeem/<token>", methods=["GET"])
+@admin_required
+def voucher_redeem_page(token):
+    voucher_doc, _ = _find_voucher_by_token(token)
+    if voucher_doc is None:
+        return render_template("voucher_redeem.html", state="not_found")
+
+    v = voucher_doc.to_dict()
+    now = datetime.now(PH_TZ)
+    expires = v.get("expires_at")
+    if expires and expires.tzinfo is None:
+        expires = expires.replace(tzinfo=PH_TZ)
+
+    if v.get("used"):
+        return render_template("voucher_redeem.html", state="already_used", voucher=v)
+    if expires and expires < now:
+        return render_template("voucher_redeem.html", state="expired", voucher=v)
+
+    return render_template("voucher_redeem.html", state="valid", voucher=v, token=token)
+
+
+@app.route("/voucher/redeem/<token>", methods=["POST"])
+@admin_required
+@limiter.limit("20 per minute")
+def voucher_redeem_confirm(token):
+    voucher_doc, voucher_ref = _find_voucher_by_token(token)
+    if voucher_doc is None:
+        flash("Voucher not found.", "danger")
+        return redirect(url_for("voucher_redeem_page", token=token))
+
+    now = datetime.now(PH_TZ)
+    staff_id = session.get("admin_id", "admin")  # CONFIRM this session key matches your admin login
+
+    transaction = db.transaction()
+
+    @firestore.transactional
+    def _redeem(transaction, ref):
+        snap = ref.get(transaction=transaction)
+        data = snap.to_dict()
+        if data.get("used"):
+            return False, "already_used"
+        expires = data.get("expires_at")
+        if expires and expires.tzinfo is None:
+            expires = expires.replace(tzinfo=PH_TZ)
+        if expires and expires < now:
+            return False, "expired"
+        transaction.update(ref, {"used": True, "used_at": now, "used_by": staff_id})
+        return True, "ok"
+
+    success, reason = _redeem(transaction, voucher_ref)
+
+    if success:
+        flash("Voucher marked as used ✅", "success")
+    elif reason == "already_used":
+        flash("This voucher was already redeemed.", "warning")
+    else:
+        flash("This voucher has expired.", "warning")
+
+    return redirect(url_for("voucher_redeem_page", token=token))
 @app.route("/admin/update-loyalty-gifts", methods=["POST"])
 @admin_required
 def update_loyalty_gifts():
@@ -1327,6 +1418,9 @@ def place_order():
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
         if not v.get('used', False) and expires > now_dt:
+            if not v.get('token'):
+                v['token'] = secrets.token_urlsafe(32)
+                v_doc.reference.update({'token': v['token']})
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
             
@@ -1455,6 +1549,9 @@ def order_cake():
         if expires.tzinfo is None:
             expires = expires.replace(tzinfo=PH_TZ)
         if not v.get('used', False) and expires > now_dt:
+            if not v.get('token'):
+                v['token'] = secrets.token_urlsafe(32)
+                v_doc.reference.update({'token': v['token']})
             v['expires_at_fmt'] = expires.strftime('%b %d, %Y')
             active_vouchers.append(v)
 
@@ -4646,10 +4743,10 @@ if os.environ.get("FLASK_ENV") == "development":
 # RUN SERVER
 # ================================================================
 if __name__ == "__main__":
-    #if os.environ.get("FLASK_ENV") == "development":
-        #if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-            #ngrok.kill()
-            #public_url = ngrok.connect(5000)
-            #print(f"\n🌐 Public URL: {public_url}\n")
-    
+    if os.environ.get("FLASK_ENV") == "development":
+        if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+            ngrok.kill()
+            public_url = ngrok.connect(5000)
+            print(f"\n🌐 Public URL: {public_url}\n")
+        
     app.run(debug=True)

@@ -558,6 +558,11 @@
   Expires: {{ v.expires_at_fmt }}
 </div>
           </div>
+          {% if v.type == 'gift' and v.token %}
+          <img src="{{ url_for('voucher_qr_image', token=v.token) }}"
+                alt="Redemption QR code"
+                style="width:64px;height:64px;border-radius:6px;">
+          {% endif %}
           <div class="loyalty-ready-badge">Ready to use</div>
         </div>
         {% endfor %}

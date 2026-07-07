@@ -1,0 +1,42 @@
+{% extends 'admin_base.html' %}
+{% block title %}Redeem Voucher{% endblock %}
+
+{% block content %}
+<div style="max-width:420px;margin:60px auto;text-align:center;font-family:sans-serif;">
+
+  {% if state == 'not_found' %}
+    <h2 style="color:#b02020;">❌ Voucher not found</h2>
+    <p style="color:#888;">This QR code doesn't match any voucher.</p>
+
+  {% elif state == 'already_used' %}
+    <h2 style="color:#b02020;">⚠️ Already redeemed</h2>
+    <p>
+      Gift: <strong>{{ voucher.gift_name }}</strong><br>
+      {% if voucher.used_at %}Used on {{ voucher.used_at.strftime('%b %d, %Y %I:%M %p') }}{% endif %}
+    </p>
+
+  {% elif state == 'expired' %}
+    <h2 style="color:#b02020;">⚠️ Expired</h2>
+    <p>
+      Gift: <strong>{{ voucher.gift_name }}</strong><br>
+      {% if voucher.expires_at %}Expired on {{ voucher.expires_at.strftime('%b %d, %Y') }}{% endif %}
+    </p>
+
+  {% elif state == 'valid' %}
+    <h2 style="color:#198754;">✅ Valid voucher</h2>
+    <p style="font-size:20px;font-weight:700;color:var(--pink);">
+      Free {{ voucher.gift_name }}
+    </p>
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit"
+              style="background:#e8186e;color:#fff;border:none;
+                     padding:12px 28px;border-radius:8px;
+                     font-size:15px;font-weight:600;cursor:pointer;">
+        Mark as Used
+      </button>
+    </form>
+  {% endif %}
+
+</div>
+{% endblock %}
