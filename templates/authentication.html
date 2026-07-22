@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login / Sign Up - Mrs. Brave's Cakes</title>
-    <link href="../static/css/authentication.css" rel="stylesheet">
-    <link rel="icon" type="image/png" href="../static/img/logo.png">    
+    <link href="{{ url_for('static', filename='css/authentication.css') }}" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">    
     <!-- SweetAlert2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -105,53 +105,6 @@
     color: #060003;           /* pink on hover */
 }
 
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
-}
-
-/* ====== OVERLAY ====== */
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
-}
-
-/* ====== OVERLAY ====== */
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
-}
-
 /* ====== OVERLAY ====== */
 .menu-overlay {
     display: none;
@@ -176,7 +129,7 @@
     <div class="container-fluid" style="display:flex; justify-content:space-between; align-items:center;">
 
         <a href="/">
-            <img src="/static/img/mrs.brave.jpg"
+            <img src="{{ url_for('static', filename='img/mrs.brave.jpg') }}"
                  alt="MRS. Brave's"
                  style="height:160px; width:auto; object-fit:contain; display:block; margin-top:18px;">
         </a>
@@ -219,7 +172,7 @@
         <div class="container auth-layout">
             <!-- LEFT SIDE: LOGO -->
             <div class="auth-left">
-                <img src="../static/img/logo.png" alt="Mrs. Brave's Logo" class="auth-logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Mrs. Brave's Logo" class="auth-logo">
             </div>
             <!-- RIGHT SIDE: FORMS -->
             <div class="form-container">
@@ -242,10 +195,9 @@
                     </p>
                     
                     <p class="toggle-msg">
-                    Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
+                     <span class="toggle-btn google-signin-btn" style="text-align: center; margin-top: 10px;"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
                     <p class="toggle-msg" id="fingerprint-login-wrapper" style="display:none;">
-                        Or
                         <span class="toggle-btn" id="device-signin-btn">
                             <i class="fa-solid fa-fingerprint"></i> Sign in with fingerprint
                         </span>
@@ -278,8 +230,8 @@
                     </div>
                     <div style="margin: 15px 0; display: flex; align-items: flex-start; gap: 8px;">
                         <input type="checkbox" id="agreeTerms" style="margin-top: 3px;">
-                        <label for="agreeTerms" style="font-size: 13px; color: #555;">
-                           I have read and agree to the <a href="/privacy-policy" target="_blank" style="color: #d63384;">Privacy Policy</a> and <a href="/terms-of-service" target="_blank" style="color: #d63384;">Terms of Service</a>.
+                        <label for="agreeTerms" style="font-size: 13px; color: #ffffff;">
+                           I have read and agree to the <a href="/privacy-policy" target="_blank" style="color: #ff4ea6;">Privacy Policy</a> and <a href="/terms-of-service" target="_blank" style="color: #ff4ea6;">Terms of Service</a>.
                         </label>
                     </div>
                     <button type="submit">Sign Up</button>
@@ -288,7 +240,7 @@
                         <span class="toggle-btn" id="showLoginBtn">Login Here</span>
                     </p>
                     <p class="toggle-msg">
-                        Or <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
+                         <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
                     </p>
                 </form>
 
@@ -296,13 +248,16 @@
         </div>
     </div>
 
+<!-- FOOTER (Updated to exactly match base_customer.html) -->
+<!-- Add this style block before the footer -->
+
 <!-- FOOTER -->
 <footer style="background: #1a0a10; color: #fff; padding: 48px 40px 24px; margin-top: 60px;">
   <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; padding-bottom: 32px; border-bottom: 0.5px solid rgba(255,255,255,0.15); margin-bottom: 24px;">
     
     <!-- Brand -->
     <div>
-      <h2 style="font-size: 20px; color: #d63384; margin: 0 0 8px;">Mrs. Brave's Cakes</h2>
+    <h2 style="font-size: 20px; color: #d63384; margin: 0 0 2px 2px; text-align: left;">Mrs. Brave's Cakes</h2>
       <p style="font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.6; margin: 0 0 16px;">Freshly baked happiness made with love. Custom cakes for every special moment in Iloilo City.</p>
       <a href="https://www.facebook.com/mrsbraveonline" target="_blank" rel="noopener noreferrer" style="width:36px; height:36px; border-radius:50%; background:rgba(214,51,132,0.15); border:0.5px solid rgba(214,51,132,0.4); display:inline-flex; align-items:center; justify-content:center; color:#d63384; text-decoration:none;">
         <i class="fab fa-facebook"></i>
@@ -321,7 +276,7 @@
         <a href="/" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Home</a>
         <a href="/cakes" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Available Cakes</a>
         <a href="/customize_cake" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Customize Your Cake</a>
-                <a href="/about" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">About Us</a>
+        <a href="/about" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">About Us</a>
         <br>
         <a href="/privacy-policy" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Privacy Policy</a>    
         <a href="/terms-of-service" style="display:block; font-size:14px; color:rgba(255,255,255,0.7); text-decoration:none; margin-bottom:10px;">Terms of Service</a>    
@@ -349,7 +304,7 @@
 
   <!-- Bottom bar -->
   <div style="display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,0.3);">
-    <span>© 2025 Mrs. Brave's Cakes Iloilo. All rights reserved.</span>
+    <span>© 2026 Mrs. Brave's Cakes Iloilo. All rights reserved.</span>
     <span>Made with love in Iloilo City</span>
       <span>Developed by STRESSWARE</span>
   </div>
