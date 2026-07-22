@@ -1,9 +1,13 @@
-# extensions.py
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import resend
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import os
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +18,27 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Resend
-resend.api_key = os.environ.get("RESEND_API_KEY")
+# Gmail SMTP config — SAME env var names as working portfolio
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = os.environ.get("SMTP_USER")
+SMTP_PASS = os.environ.get("SMTP_PASS")
 
 LOGO_URL = "https://res.cloudinary.com/dnystscn8/image/upload/v1779012991/logo_fburga.png"
+
+
+def _send_email(to_email, subject, html_body):
+    """Low-level SMTP send. Raises on failure — caller decides how to handle."""
+    msg = MIMEMultipart("alternative")
+    msg["From"] = SMTP_USER
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(html_body, "html"))
+
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        server.starttls()
+        server.login(SMTP_USER, SMTP_PASS)
+        server.send_message(msg)
 
 
 def send_order_confirmation(fname, email, order_id, amount, payment_method,
@@ -31,7 +52,6 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
             payment_note = f"Downpayment of <b>₱{float(downpayment_amount):,.2f}</b> received! Remaining balance of <b>₱{float(remaining_balance):,.2f}</b> is due upon delivery/pickup."
         else:
             payment_note = f"Payment of <b>₱{amount:,.2f}</b> received!"
-            
 
         html = f"""
 <!DOCTYPE html>
@@ -42,14 +62,10 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
   <title>Order Confirmation – Mrs. Brave's Cakes</title>
 </head>
 <body style="margin:0; padding:0; background-color:#fdf0f5; font-family: 'Helvetica Neue', Arial, sans-serif;">
-
-  <!-- Wrapper -->
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf0f5; padding: 32px 0;">
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:16px; overflow:hidden; box-shadow: 0 4px 24px rgba(214,51,132,0.10);">
-
-          <!-- HEADER -->
           <tr>
             <td style="background: linear-gradient(135deg, #d63384 0%, #f06eaa 100%); padding: 36px 32px; text-align:center;">
               <img src="{LOGO_URL}"
@@ -65,8 +81,6 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
               </p>
             </td>
           </tr>
-
-          <!-- HERO MESSAGE -->
           <tr>
             <td style="padding: 32px 40px 0; text-align:center;">
               <h2 style="margin:0 0 8px; color:#d63384; font-size:22px; font-weight:700;">
@@ -78,8 +92,6 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
               </p>
             </td>
           </tr>
-
-          <!-- ORDER DETAILS CARD -->
           <tr>
             <td style="padding: 28px 40px;">
               <table width="100%" cellpadding="0" cellspacing="0"
@@ -94,14 +106,12 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
                 <tr>
                   <td style="padding:20px;">
                     <table width="100%" cellpadding="0" cellspacing="0">
-
                       <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #f5c6db;">
                           <span style="color:#999; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Order ID</span><br>
                           <span style="color:#333; font-size:15px; font-weight:700; font-family:monospace;">#{order_id}</span>
                         </td>
                       </tr>
-
                       <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #f5c6db;">
                           <span style="color:#999; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Order Breakdown</span><br>
@@ -137,28 +147,23 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
                           </table>
                         </td>
                       </tr>
-
                       <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #f5c6db;">
                           <span style="color:#999; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Payment Method</span><br>
                           <span style="color:#333; font-size:14px; font-weight:600;"> {payment_method}</span>
                         </td>
                       </tr>
-
                       <tr>
                         <td style="padding:10px 0 2px;">
                           <span style="color:#333; font-size:13px;">{payment_note}</span>
                         </td>
                       </tr>
-
                     </table>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
-
-          <!-- REVIEW CTA -->
           <tr>
             <td style="padding: 0 40px 28px; text-align:center;">
               <div style="background:#fff8fb; border: 1px dashed #f0a0c8; border-radius:12px; padding:20px;">
@@ -175,15 +180,11 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
               </div>
             </td>
           </tr>
-
-          <!-- DIVIDER -->
           <tr>
             <td style="padding: 0 40px;">
               <hr style="border:none; border-top:1px solid #f5e0ec; margin:0;">
             </td>
           </tr>
-
-          <!-- FOOTER -->
           <tr>
             <td style="padding:24px 40px 32px; text-align:center;">
               <p style="margin:0 0 4px; color:#d63384; font-size:14px; font-weight:700;">
@@ -206,23 +207,20 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
   </table>
-
 </body>
 </html>
         """
 
-        response = resend.Emails.send({
-            "from": "onboarding@resend.dev",
-            "to": email,
-            "subject": f"Order Confirmed – Mrs. Brave's Cakes #{order_id}",
-            "html": html
-        })
-        logger.info(f"EMAIL SENT — {response}")
+        _send_email(
+            to_email=email,
+            subject=f"Order Confirmed – Mrs. Brave's Cakes #{order_id}",
+            html_body=html
+        )
+        logger.info(f"EMAIL SENT — order #{order_id} to {email}")
 
     except Exception as e:
         logger.error(f"EMAIL ERROR — {e}")
