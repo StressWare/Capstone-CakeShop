@@ -44,7 +44,8 @@ import io
 import firebase
 from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials
 from firebase_admin import auth, firestore, messaging
-from pyngrok import ngrok
+if os.environ.get("FLASK_ENV") == "development":
+    from pyngrok import ngrok
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
 load_dotenv()
@@ -52,8 +53,8 @@ load_dotenv()
 app = Flask(__name__)
 # WebAuthn config
 RP_NAME   = "Mrs. Brave's Cakes"                 
-RP_ID     = "acceptant-impalpable-axton.ngrok-free.dev" # change to yourdomain.com in production
-RP_ORIGIN = "https://acceptant-impalpable-axton.ngrok-free.dev"       # change to https://yourdomain.com in production
+RP_ID     = os.environ["RP_ID"]
+RP_ORIGIN = os.environ["RP_ORIGIN"]
 
 app.secret_key = os.getenv('SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
@@ -260,14 +261,11 @@ def about():
 # ---------------- AUTHENTICATION ----------------
 @app.route('/authentication')
 def auth_page():
-    return render_template('authentication.html',
-        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
-    )
+    return render_template('authentication.html')
+
 @app.route('/forgot-password')
 def forgot_password_page():
-    return render_template('forgot_password.html',
-        recaptcha_site_key=os.environ.get('RECAPTCHA_SITE_KEY')
-    )
+    return render_template('forgot_password.html')
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
@@ -283,30 +281,6 @@ def verify_token():
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
     id_token = data.get('idToken')
-    recaptcha_token = data.get('recaptchaToken')
-    # ── reCAPTCHA check ──
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-
-    if recaptcha_token:
-        try:
-            r = http_requests.post(
-                'https://www.google.com/recaptcha/api/siteverify',
-                data={
-                    'secret':   os.environ.get('RECAPTCHA_SECRET_KEY'),
-                    'response': recaptcha_token
-                },
-                timeout=5
-            )
-            result = r.json()
-            score = result.get('score', 0)
-            app.logger.info(f"reCAPTCHA: success={result.get('success')}, score={score}")
-            if not result.get('success') or score < 0.5:
-                app.logger.warning(f"reCAPTCHA failed: score={score}")
-                return jsonify({'error': 'Suspicious activity detected.'}), 403
-        except Exception as e:
-            app.logger.warning(f"reCAPTCHA check failed: {e}")
-            return jsonify({'error': 'reCAPTCHA verification failed'}), 403
 
     if not id_token:
         return jsonify({'error': 'No token provided'}), 400
@@ -366,28 +340,7 @@ def save_user_details():
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
-        
-    # ── reCAPTCHA check 
-    recaptcha_token = data.get('recaptchaToken')
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-    try:
-        r = http_requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={
-                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
-                'response': recaptcha_token
-            },
-            timeout=5
-        )
-        result = r.json()
-        score = result.get('score', 0)
-        if not result.get('success') or score < 0.5:
-            app.logger.warning(f"reCAPTCHA failed on signup: score={score}")
-            return jsonify({'error': 'Suspicious activity detected.'}), 403
-    except Exception as e:
-        app.logger.warning(f"reCAPTCHA check failed: {e}")
-        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
+
     try:
         decoded_token = auth.verify_id_token(id_token, clock_skew_seconds=10)
         token_uid = decoded_token['uid']
@@ -797,38 +750,7 @@ def webauthn_delete():
     except Exception:
         app.logger.exception("Error deleting WebAuthn credential")
         return jsonify({'error': 'Internal server error'}), 500
-# ---------------- FORGOT PASS RECAPTCHA----------------
-@app.route('/verify-recaptcha', methods=['POST'])
-@limiter.limit("5 per minute")
-def verify_recaptcha():
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Invalid request'}), 400
 
-    recaptcha_token = data.get('recaptchaToken')
-    if not recaptcha_token:
-        return jsonify({'error': 'reCAPTCHA token missing'}), 403
-
-    try:
-        r = http_requests.post(
-            'https://www.google.com/recaptcha/api/siteverify',
-            data={
-                'secret': os.environ.get('RECAPTCHA_SECRET_KEY'),
-                'response': recaptcha_token
-            },
-            timeout=5
-        )
-        result = r.json()
-        score = result.get('score', 0)
-        app.logger.info(f"reCAPTCHA forgot_password: success={result.get('success')}, score={score}")
-        if not result.get('success') or score < 0.5:
-            app.logger.warning(f"reCAPTCHA failed: score={score}")
-            return jsonify({'error': 'Suspicious activity detected.'}), 403
-    except Exception as e:
-        app.logger.warning(f"reCAPTCHA check failed: {e}")
-        return jsonify({'error': 'reCAPTCHA verification failed'}), 403
-
-    return jsonify({'success': True}), 200
 
 @app.route('/check-email-exists', methods=['POST'])
 @limiter.limit("5 per minute")  
@@ -1649,6 +1571,7 @@ def order_cake():
 def finalize_order():
     user_id = session.get("user_id")
     now     = datetime.now(PH_TZ)
+    consult_token = request.form.get('consult_token', '').strip()
 
     order_type    = request.form.get("order_type")
     delivery_type = request.form.get("delivery_type", "Delivery")
@@ -1840,8 +1763,6 @@ def finalize_order():
         inspo_image    = request.form.get("inspo_image") or None
 
         try:
-            # If from consultation token, use admin-approved price directly
-            consult_token = request.form.get('consult_token', '').strip()
             if consult_token:
                 token_doc = pending_consultations.document(consult_token).get()
                 if token_doc.exists:
@@ -2064,7 +1985,6 @@ def finalize_order():
                 "used_at": now
             })
         handle_loyalty_stamp(users, user_id, order_type, selected_items, cakes, order_id=order_id)
-        consult_token = request.form.get('consult_token', '').strip()
         if consult_token:
             pending_consultations.document(consult_token).update({
                 'used': True, 'used_at': now
@@ -3204,7 +3124,7 @@ def mark_balance_collected(order_id):
                 "user_id":    notify_user_id,
                 "order_id":   order_id,
                 "title":      "Payment Complete",
-                "message":    f"Your remaining balance for order #{order_id[:8]} has been collected. You're fully paid! 🎂",
+                "message":    f"Your remaining balance for order #{order_id[:8]} has been collected. You're fully paid!",
                 "type":       "payment_update",
                 "is_read":    False,
                 "created_at": datetime.now(PH_TZ)
@@ -3752,7 +3672,8 @@ def paymongo_webhook():
             parts = dict(p.split("=", 1) for p in signature_header.split(","))
             timestamp = parts.get("t", "")
             # use "te" for test mode, "li" for live mode
-            received_sig = parts.get("te") or parts.get("li", "")
+            sig_field = "li" if is_production else "te"     
+            received_sig = parts.get(sig_field, "")
 
             # Build the string to sign: timestamp + "." + raw_body
             signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
@@ -3840,11 +3761,21 @@ def paymongo_webhook():
                 app.logger.error(f"Stock deduction failed in webhook: {parts}")
                 pending_ref.delete()
                 return jsonify({"status": "stock error"}), 200
-
+        #verify paid amount matches expected
+        expected_amount = int(round((order_data.get("downpayment_amount") or order_data.get("amount", 0)) * 100))
+        actual_amount = payments[0].get("attributes", {}).get("amount", 0) if payments else 0
+        if actual_amount != expected_amount:
+            app.logger.warning(
+                f"Amount mismatch on session {session_id}: expected {expected_amount}, got {actual_amount}"
+            )
         # Save to orders collection
-        doc_ref  = orders.add(order_data)        # was  orders.add(order_data)
+        doc_ref  = orders.add(order_data)        
         order_id = doc_ref[1].id
-        users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+        try:
+            users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+        except Exception:
+            app.logger.warning(f"order_count increment failed for user {order_data.get('user_id')}, non-critical")
+
         invalidate_cache("order_counts")
         try:
             send_new_order_fcm(
@@ -3857,22 +3788,25 @@ def paymongo_webhook():
         except Exception:
             app.logger.warning('[FCM] New order notify failed (webhook), non-critical')
          # Confirmation email 
-        user_doc = users.document(order_data.get("user_id")).get()
-        fname    = user_doc.to_dict().get("fname", "Customer")
-        email    = user_doc.to_dict().get("email", "")
-        send_order_confirmation(
-            fname=fname,
-            email=email,
-            order_id=order_id,
-            amount=order_data.get("amount", 0),
-            payment_method=payment_method,
-            rush_fee=order_data.get("rush_fee", 0),
-            delivery_fee=order_data.get("delivery_fee", 0),
-            discount_amount=0,
-            downpayment_type=order_data.get("downpayment_type"),
-            downpayment_amount=order_data.get("downpayment_amount"),
-            remaining_balance=order_data.get("remaining_balance"),
-        )
+        try:
+            user_doc = users.document(order_data.get("user_id")).get()
+            fname    = user_doc.to_dict().get("fname", "Customer") if user_doc.exists else "Customer"
+            email    = user_doc.to_dict().get("email", "") if user_doc.exists else ""
+            send_order_confirmation(
+                fname=fname,
+                email=email,
+                order_id=order_id,
+                amount=order_data.get("amount", 0),
+                payment_method=payment_method,
+                rush_fee=order_data.get("rush_fee", 0),
+                delivery_fee=order_data.get("delivery_fee", 0),
+                discount_amount=0,
+                downpayment_type=order_data.get("downpayment_type"),
+                downpayment_amount=order_data.get("downpayment_amount"),
+                remaining_balance=order_data.get("remaining_balance"),
+            )
+        except Exception:
+            app.logger.warning(f"Confirmation email failed for order {order_id}, non-critical")
         # Mark voucher as used
         for cv in order_data.get("claimed_vouchers", []):
             users.document(order_data["user_id"]).collection("vouchers").document(cv["voucher_id"]).update({
@@ -4802,6 +4736,9 @@ def service_worker_pos():
     return app.send_static_file('javascript/service-worker-pos.js')
 
 
+if os.environ.get("FLASK_ENV") == "development":
+    from pyngrok import ngrok
+
 # ================================================================
 # RUN SERVER
 # ================================================================
@@ -4812,11 +4749,4 @@ if __name__ == "__main__":
             public_url = ngrok.connect(5000)
             print(f"\n🌐 Public URL: {public_url}\n")
         
-    #indi pag kaksa ang comment pang live server lng na
-    
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":
-        ngrok.kill()
-        public_url = ngrok.connect(5000)
-        print(f"\n🌐 Public URL: {public_url}\n")
-    
     app.run(debug=True)
