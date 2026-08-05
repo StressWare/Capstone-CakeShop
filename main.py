@@ -198,7 +198,7 @@ def too_many_requests():
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
-    # ❌ Not cached — user specific
+    #Not cached 
     user_id  = session.get("user_id")
     customer = None
     if user_id:
@@ -206,12 +206,12 @@ def home_page():
         if doc.exists:
             customer = doc.to_dict()
 
-    # ✅ All heavy reads from cache
+    #All heavy reads from cache
     available_cakes = get_all_cakes()
     all_reviews     = get_all_reviews()
     order_counts    = get_order_counts()
 
-    # ── Top rated cakes ──
+    # Top rated cakes 
     for cake in available_cakes:
         cake["avg_rating"]   = 0
         cake["review_count"] = 0
@@ -236,7 +236,7 @@ def home_page():
         reverse=True
     )[:5]
 
-    # ── Most ordered ──
+    # Most ordered
     top_ids      = sorted(order_counts, key=order_counts.get, reverse=True)[:5]
     cakes_by_id  = {c["id"]: c for c in available_cakes}
     most_ordered = [cakes_by_id.get(cid) for cid in top_ids]
