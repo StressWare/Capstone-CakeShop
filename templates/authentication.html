@@ -120,6 +120,34 @@
 .menu-overlay.active {
     display: block;
 }
+.pw-strength-wrapper {
+    margin-top: -8px;
+    margin-bottom: 10px;
+}
+
+.pw-strength-bar {
+    height: 6px;
+    width: 100%;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.pw-strength-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    background: #dc3545; /* default weak */
+}
+
+.pw-strength-label {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
 
 </style>
 
@@ -227,6 +255,13 @@
                             <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
                             <i class="fa-regular fa-eye-slash toggle-eye" data-target="signupConfirmPassword"></i>
                         </div>
+
+                    </div>
+                    <div id="pwStrengthWrapper" class="pw-strength-wrapper" style="display:none;">
+                        <div class="pw-strength-bar">
+                            <div id="pwStrengthFill" class="pw-strength-fill"></div>
+                        </div>
+                        <span id="pwStrengthLabel" class="pw-strength-label"></span>
                     </div>
                     <div style="margin: 15px 0; display: flex; align-items: flex-start; gap: 8px;">
                         <input type="checkbox" id="agreeTerms" style="margin-top: 3px;">
@@ -490,7 +525,46 @@ function validatePassword(password) {
     return null;
 }
  
+function calculatePasswordStrength(password) {
+    if (!password) return { score: 0, label: '', color: '#dc3545' };
 
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[a-z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[!@#$%^&*]/.test(password)) score++;
+
+    // Normalize 0-6 raw score into 4 buckets
+    if (score <= 2) return { score: 25, label: 'Weak', color: '#dc3545' };
+    if (score <= 3) return { score: 50, label: 'Fair', color: '#fd7e14' };
+    if (score <= 4) return { score: 75, label: 'Good', color: '#ffc107' };
+    return { score: 100, label: 'Strong', color: '#28a745' };
+}
+
+function updatePasswordStrengthUI(password) {
+    const wrapper = document.getElementById('pwStrengthWrapper');
+    const fill = document.getElementById('pwStrengthFill');
+    const label = document.getElementById('pwStrengthLabel');
+
+    if (!password) {
+        wrapper.style.display = 'none';
+        return;
+    }
+
+    wrapper.style.display = 'block';
+    const { score, label: text, color } = calculatePasswordStrength(password);
+
+    fill.style.width = score + '%';
+    fill.style.backgroundColor = color;
+    label.textContent = text;
+    label.style.color = color;
+}
+
+document.getElementById('signupPassword')?.addEventListener('input', (e) => {
+    updatePasswordStrengthUI(e.target.value);
+});
  
 /* ============================================================
    SEND TOKEN TO BACKEND

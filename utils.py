@@ -10,9 +10,9 @@ _lock = threading.Lock()
 
 CACHE_TTL = 43200 #12hrs
 
-def get_cache(key):
+def get_cache(key, ttl=CACHE_TTL):
     entry = _cache.get(key)
-    if entry and (time.time() - entry["timestamp"]) < CACHE_TTL:
+    if entry and (time.time() - entry["timestamp"]) < ttl:
         return entry["data"]
     return None
 

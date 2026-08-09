@@ -3613,7 +3613,8 @@ def update_custom_pricing():
 @admin_required
 def disable_user(uid):
     auth.update_user(uid, disabled=True)
-    auth.revoke_refresh_tokens(uid) 
+    auth.revoke_refresh_tokens(uid)
+    invalidate_cache(f"user_disabled_{uid}")
     log_admin_action(
         action="Disabled user account",
         target=uid,
@@ -3627,6 +3628,7 @@ def disable_user(uid):
 @admin_required
 def enable_user(uid):
     auth.update_user(uid, disabled=False)
+    invalidate_cache(f"user_disabled_{uid}")
     log_admin_action(
         action="Enabled user account",
         target=uid,

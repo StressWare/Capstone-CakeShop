@@ -1,6 +1,9 @@
 from functools import wraps
 from flask import session, redirect, url_for, render_template, flash, request
+from utils import get_cache, set_cache, invalidate_cache
 
+
+AUTH_CACHE_TTL = 300
 # ---------------- LOGIN REQUIRED ----------------
 def login_required(f):
     @wraps(f)
@@ -12,14 +15,22 @@ def login_required(f):
             flash("Please log in to continue.", "warning")
             return redirect(url_for('auth_page'))
 
-        try:
-            firebase_user = auth.get_user(user_id)
-            if firebase_user.disabled:
+        cache_key = f"user_disabled_{user_id}"
+        disabled = get_cache(cache_key, ttl=AUTH_CACHE_TTL)
+
+        if disabled is None:
+            try:
+                firebase_user = auth.get_user(user_id)
+                disabled = firebase_user.disabled
+                set_cache(cache_key, disabled)
+            except Exception:
                 session.clear()
-                flash("Your account has been disabled. Contact support.", "danger")
                 return redirect(url_for('auth_page'))
-        except Exception:
+
+        if disabled:
             session.clear()
+            invalidate_cache(cache_key)
+            flash("Your account has been disabled. Contact support.", "danger")
             return redirect(url_for('auth_page'))
 
         return f(*args, **kwargs)
