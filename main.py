@@ -117,6 +117,8 @@ csp = {
     'connect-src': [
         "'self'",
         "*.gstatic.com",
+        "unpkg.com",
+        "*.tile.openstreetmap.org",
         "nominatim.openstreetmap.org",
         "router.project-osrm.org",
         "firestore.googleapis.com",
