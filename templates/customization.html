@@ -1386,6 +1386,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const proceedBtn = document.getElementById('proceedBtn');
     if (proceedBtn) {
       proceedBtn.addEventListener('click', function(e) {
+        const orderForm = document.getElementById('orderForm');
+
+        
+        if (!orderForm.checkValidity()) {
+          orderForm.reportValidity();  
+          return;                       
+        }
+
         const othersPrice = parseFloat(document.getElementById('othersPrice').value || 0);
         if (document.getElementById('others').checked && othersPrice === 0) {
           e.preventDefault();
@@ -1399,7 +1407,7 @@ document.addEventListener('DOMContentLoaded', function() {
           return;
         }
         updateOrderData();
-        document.getElementById('orderForm').submit();
+        orderForm.submit();   
       });
     }
 });
