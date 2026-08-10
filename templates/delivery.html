@@ -303,7 +303,7 @@
     <div class="legend-item" id="distanceInfo" style="color:#d63384; font-weight:600;"></div>
     <div class="legend-item"><div class="legend-dot" style="background:#198754;"></div> Rider</div>
     <div class="legend-item" style="margin-left:auto; color:#888; font-size:0.72rem;">
-      Routes by <a href="http://project-osrm.org/" target="_blank" rel="noopener noreferrer" style="color:#888;">OSRM</a>
+      Routes by <a href="https://www.geoapify.com/" target="_blank" rel="noopener noreferrer" style="color:#888;">Geoapify</a>
     </div>
   </div>
 
@@ -477,6 +477,7 @@ const CUSTOMER = {
   lat: {{ order.customer.lat or 10.7202 }},
   lng: {{ order.customer.lng or 122.5621 }}
 };
+const GEOAPIFY_API_KEY = "{{ geoapify_key }}";
 
 var map = L.map('deliveryMap', { maxZoom: 15 }).setView([CUSTOMER.lat, CUSTOMER.lng], 14);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -514,7 +515,37 @@ L.Routing.control({
   lineOptions: {
     styles: [{ color: '#d63384', weight: 4, opacity: 0.8 }]
   },
-  createMarker: function() { return null; }
+  createMarker: function() { return null; },
+  router: {
+    route: function(waypoints, callback, context) {
+      const coordsString = waypoints
+        .map(wp => `${wp.latLng.lat},${wp.latLng.lng}`)
+        .join('|');
+      const url = `https://api.geoapify.com/v1/routing?waypoints=${coordsString}&mode=drive&apiKey=${GEOAPIFY_API_KEY}`;
+
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          const feature = data.features[0];
+          const coords = feature.geometry.coordinates[0];
+          const latLngs = coords.map(c => L.latLng(c[1], c[0]));
+
+          const result = [{
+            name: 'Delivery Route',
+            coordinates: latLngs,
+            summary: {
+              totalDistance: feature.properties.distance,
+              totalTime: feature.properties.time
+            },
+            waypoints: waypoints,
+            inputWaypoints: waypoints,
+            instructions: []
+          }];
+          callback.call(context, null, result);
+        })
+        .catch(err => callback.call(context, err));
+    }
+  }
 }).on('routesfound', function(e) {
   var km = (e.routes[0].summary.totalDistance / 1000).toFixed(1);
   document.getElementById('distanceInfo').textContent = '📍 ' + km + ' km away';

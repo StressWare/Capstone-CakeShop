@@ -119,6 +119,7 @@ csp = {
         "*.gstatic.com",
         "unpkg.com",
         "*.tile.openstreetmap.org",
+        "api.geoapify.com",
         "nominatim.openstreetmap.org",
         "router.project-osrm.org",
         "firestore.googleapis.com",
@@ -2103,8 +2104,8 @@ def delivery_page(token):
     # If order is completed, show expired page
     if order.get("status") == "Completed":
         return render_template("delivery.html", expired=True)
- 
-    return render_template("delivery.html", order=order, expired=False)
+    print("GEOAPIFY KEY LOADED:", os.environ.get("GEOAPIFY_API_KEY"))
+    return render_template("delivery.html", order=order, expired=False,geoapify_key=os.environ.get("GEOAPIFY_API_KEY"))
 # ---------------- NOTIFY DELIVERY TO ADMIN ----------------
 @app.route("/delivery/<token>/notify", methods=["POST"])
 @csrf.exempt
