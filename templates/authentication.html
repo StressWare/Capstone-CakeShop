@@ -590,6 +590,8 @@ async function sendTokenToBackend(user, action = 'login') {
         }
         if (data.is_admin) {
             window.location.href = '/admin/dashboard';
+        } else if (data.is_professor) {
+            window.location.href = '/monitoring/dashboard';    
         } else if (data.needs_profile) {
             window.location.href = '/complete-profile';
         } else {

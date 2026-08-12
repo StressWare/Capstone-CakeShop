@@ -49,6 +49,18 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# ---------------- PROF REQUIRED ----------------
+def professor_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        current_user = session.get('user')
+        if not current_user:
+            flash("Please log in.", "warning")
+            return redirect(url_for('auth_page'))
+        if not (current_user.get('professor') or current_user.get('developer')):
+            return render_template('403.html'), 403
+        return f(*args, **kwargs)
+    return decorated_function
 # ---------------- PROFILE COMPLETION REQUIRED ----------------
 def profile_required(f):
     @wraps(f)

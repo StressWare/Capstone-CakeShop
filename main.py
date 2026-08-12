@@ -42,7 +42,7 @@ import secrets
 import qrcode
 import io
 import firebase
-from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs
 from firebase_admin import auth, firestore, messaging
 if os.environ.get("FLASK_ENV") == "development":
     from pyngrok import ngrok
@@ -168,9 +168,11 @@ def add_common_headers(response):
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
     return response
 
-# POS BLUEPRINT REGISTRATION
+# POS/PROF MONITORING BLUEPRINT REGISTRATION
 from pos import pos_bp
 app.register_blueprint(pos_bp)
+from monitoring import monitoring_bp
+app.register_blueprint(monitoring_bp)
 
 #ERROR HANDLER
 @app.errorhandler(400)
@@ -315,11 +317,21 @@ def verify_token():
             })
 
         is_admin = decoded_token.get('admin', False)
-        session['user'] = {'uid': uid, 'email': email, 'name': fname or email, 'admin': is_admin}
+        is_professor = decoded_token.get('professor', False)
+        is_developer = decoded_token.get('developer', False)
+        session['user'] = {'uid': uid, 'email': email, 'name': fname or email,
+                     'admin': is_admin, 'professor': is_professor, 'developer': is_developer}
         session['user_id'] = uid
         session['username'] = email
+        session.permanent = True
+        login_logs.add({
+        "user_id": uid,
+        "email": email,
+        "method": "google" if is_google else "password",
+        "timestamp": firestore.SERVER_TIMESTAMP,
+        })
 
-        return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin}), 200
+        return jsonify({'success': True, 'needs_profile': is_new_user, 'is_admin': is_admin, 'is_professor': is_professor}), 200
 
     except auth.InvalidIdTokenError:
         app.logger.warning("Invalid ID token received")
@@ -677,9 +689,13 @@ def webauthn_login_finish():
             firebase_user = auth.get_user(user_id)
             custom_claims = firebase_user.custom_claims or {}
             is_admin_role = bool(custom_claims.get('admin', False))
+            is_professor_role = bool(custom_claims.get('professor', False))
+            is_developer_role = bool(custom_claims.get('developer', False))
         except Exception as e:
             app.logger.warning(f"Failed to fetch Firebase user for {user_id}: {e}")
             is_admin_role = False
+            is_professor_role = False
+            is_developer_role = False
 
         # Set Flask session
         session['user_id'] = user_id
@@ -687,12 +703,25 @@ def webauthn_login_finish():
             'uid': user_id,
             'email': user_data.get('email', ''),
             'name': user_data.get('fname') or user_data.get('username') or 'Customer',
-            'admin': is_admin_role
+            'admin': is_admin_role,
+            'professor': is_professor_role,
+            'developer': is_developer_role
         }
-
+        session.permanent = True
+        login_logs.add({
+            "user_id": user_id,
+            "email": user_data.get('email', ''),
+            "method": "webauthn",
+            "timestamp": firestore.SERVER_TIMESTAMP,
+        })
         app.logger.info(f"WebAuthn login successful for user {user_id}")
 
-        redirect_url = '/admin/dashboard' if is_admin_role else '/customer_dashboard'
+        if is_admin_role:
+            redirect_url = '/admin/dashboard'
+        elif is_professor_role:
+            redirect_url = '/monitoring/dashboard'
+        else:
+            redirect_url = '/customer_dashboard'
 
         # Create Firebase custom token so frontend can sign into Firebase Auth
         firebase_custom_token = None
