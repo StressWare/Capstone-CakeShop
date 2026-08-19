@@ -1,4 +1,5 @@
-# extensions.py
+
+from flask import session, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import resend
@@ -8,9 +9,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Rate limiter
+def get_rate_limit_key():
+    user_id = session.get('user_id')
+    return f"user:{user_id}" if user_id else f"ip:{get_remote_address()}"
+
 limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["2000 per day"],
+    key_func=get_rate_limit_key,
+    default_limits=["500 per day", "60 per minute"],
     storage_uri="memory://"
 )
 

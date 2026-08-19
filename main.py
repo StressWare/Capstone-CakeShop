@@ -46,6 +46,7 @@ from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, 
 from firebase_admin import auth, firestore, messaging
 if os.environ.get("FLASK_ENV") == "development":
     from pyngrok import ngrok
+from werkzeug.middleware.proxy_fix import ProxyFix
 from paymongo import create_checkout_session, verify_payment, build_line_items
 from dotenv import load_dotenv
 load_dotenv()
@@ -61,6 +62,7 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
 is_production = os.environ.get('FLASK_ENV') == 'production'
 app.config['SESSION_COOKIE_SECURE'] = is_production   
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
 
 csrf = CSRFProtect(app)
@@ -282,6 +284,8 @@ def logout():
 @app.route('/verify-token', methods=['POST'])
 @limiter.limit("5 per minute")
 def verify_token():
+    print("Remote addr:", request.remote_addr)
+    print("X-Forwarded-For:", request.headers.get('X-Forwarded-For'))
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
