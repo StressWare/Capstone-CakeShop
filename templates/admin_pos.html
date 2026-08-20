@@ -205,6 +205,12 @@
       padding: 10px; text-align: center; font-weight: 600;
     }
 
+    /* ── QUEUED ORDER BANNER ── */
+    #queued-banner {
+      display: none; background: #fff3cd; color: #664d03;
+      padding: 8px; text-align: center; font-size: 0.85rem;
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .pos-wrapper { grid-template-columns: 1fr; height: auto; }
@@ -252,7 +258,10 @@
 {% endwith %}
 
 <div id="offline-banner">
-  ⚠️ You're offline — transactions will not go through until reconnected.
+  ⚠️ You're offline — sales will be saved locally and synced automatically once reconnected.
+</div>
+<div id="queued-banner">
+  <i class="fas fa-clock me-2"></i>Order saved offline — will sync automatically when reconnected.
 </div>
 
 <div class="pos-wrapper">
@@ -409,7 +418,7 @@
       </button>
     </div>
 
-    <!-- HIDDEN FORM -->
+    <!-- HIDDEN FORM (no-JS fallback only — normal checkout no longer uses this) -->
     <form method="POST" action="/pos/order" id="posForm">
       <input type="hidden" name="csrf_token"     value="{{ csrf_token() }}">
       <input type="hidden" name="items"           id="itemsInput"      value="[]">
@@ -431,6 +440,11 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Expose the CSRF token to JS so the offline queue can attach it to fetch() requests -->
+<script nonce="{{ csp_nonce() }}">window.CSRF_TOKEN = "{{ csrf_token() }}";</script>
+<script src="{{ url_for('static', filename='javascript/pos-offline-queue.js') }}" nonce="{{ csp_nonce() }}"></script>
+
 <script nonce="{{ csp_nonce() }}">
   var orderItems       = [];
   var currentPayment   = 'Cash';
@@ -657,23 +671,87 @@
     document.getElementById('placeBtn').disabled = !canPlace;
   }
 
-  // ── PLACE ORDER ──
-  function placeOrder() {
-    document.getElementById('posForm').submit();
+  // ── SHOW "QUEUED / WILL SYNC" BANNER ──
+  function showQueuedOrderBanner() {
+    var el = document.getElementById('queued-banner');
+    el.style.display = 'block';
+    setTimeout(function () { el.style.display = 'none'; }, 5000);
   }
 
-  // ── CLEAR ORDER ──
+  // ── PLACE ORDER ──
+  async function placeOrder() {
+    var placeBtn = document.getElementById('placeBtn');
+    placeBtn.disabled = true;
+    placeBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+
+    var orderPayload = {
+      items:            orderItems.map(function (i) {
+                           return { cake_id: i.cake_id, cake_name: i.cake_name,
+                                    price: i.price, quantity: i.quantity };
+                         }),
+      amount:            parseFloat(document.getElementById('amountInput').value) || 0,
+      payment_method:    document.getElementById('paymentInput').value,
+      cash_received:     parseFloat(document.getElementById('cashInput').value) || 0,
+      order_type:        document.getElementById('orderTypeInput').value,
+      discount_type:     document.getElementById('discountInput').value,
+      discount_amount:   parseFloat(document.getElementById('discountAmtInput').value) || 0,
+    };
+
+    var result = await window.POSOfflineQueue.submitOrder(orderPayload);
+
+    if (result.synced) {
+      // Went through immediately
+      if (result.data.oversold) {
+        alert('⚠️ This order exceeded available stock for: ' +
+              result.data.oversold_items.map(function (o) { return o.cake_name; }).join(', ') +
+              '. Flagged for review.');
+      }
+      window.location.href = result.data.receipt_url;
+      return; // navigating away, no need to re-enable the button
+    } else if (result.queued) {
+      if (result.error) {
+        // A REAL error occurred (e.g. CSRF expired, validation) — saved locally,
+        // but this needs a human to look at it, not silent infinite retry.
+        console.error('Order queued due to a sync error:', result.error);
+      }
+      // Offline (or server rejected but is saved locally either way)
+      showQueuedOrderBanner();
+      // Locally deduct stock from the on-screen cards so the cashier
+      // doesn't oversell against a stale cached number while still offline
+      orderItems.forEach(function (i) {
+        var btn = document.getElementById('cakeBtn_' + i.cake_id);
+        if (btn) {
+          var newQty = Math.max(0, parseInt(btn.dataset.qty) - i.quantity);
+          btn.dataset.qty = newQty;
+          var stockEl = document.getElementById('stock_' + i.cake_id);
+          if (stockEl) stockEl.textContent = newQty <= 0 ? 'Sold Out' : newQty + ' left';
+          if (newQty <= 0) btn.classList.add('sold-out');
+        }
+      });
+      clearOrder();
+    }
+
+    placeBtn.disabled = false;
+    placeBtn.innerHTML = '<i class="fas fa-check-circle me-2"></i>Checkout';
+  }
+
+  // ── CLEAR ORDER (internal, no confirm — used after a successful queue) ──
   function clearOrder() {
+    orderItems.forEach(function(i) {
+      var badge = document.getElementById('badge_' + i.cake_id);
+      if (badge) badge.style.display = 'none';
+    });
+    orderItems     = [];
+    gcashConfirmed = false;
+    document.getElementById('cashReceived').value = '';
+    renderOrder();
+  }
+
+  // ── CLEAR ORDER (button, asks for confirmation first) ──
+  function clearOrderWithConfirm() {
     if (orderItems.length === 0) return;
     if (confirm('Clear all items?')) {
-      orderItems.forEach(function(i) {
-        var badge = document.getElementById('badge_' + i.cake_id);
-        if (badge) badge.style.display = 'none';
-      });
-      orderItems     = [];
-      gcashConfirmed = false;
-      document.getElementById('cashReceived').value = '';
-      renderOrder();
+      clearOrder();
     }
   }
 
@@ -683,6 +761,19 @@
   });
   window.addEventListener('online', function() {
     document.getElementById('offline-banner').style.display = 'none';
+  });
+
+  // ── QUEUED ORDER SUCCESSFULLY SYNCED (fired by pos-offline-queue.js) ──
+  window.addEventListener('pos-order-synced', function (e) {
+    console.log('Synced queued order:', e.detail);
+  });
+
+  // ── QUEUED ORDER FAILED TO SYNC FOR A REAL REASON (not just still offline) ──
+  window.addEventListener('pos-order-sync-failed', function (e) {
+    console.error('Order failed to sync:', e.detail);
+    alert('⚠️ A queued order (₱' + e.detail.order.amount + ') failed to sync: ' +
+          (e.detail.error && e.detail.error.message ? e.detail.error.message : 'HTTP ' + e.detail.status) +
+          '. It is still saved locally on this device — please check with an admin.');
   });
 
   // ── EVENT LISTENERS (CSP-safe, no inline onclick) ──
@@ -728,7 +819,7 @@
 
     // Place / Clear
     document.getElementById('placeBtn').addEventListener('click', placeOrder);
-    document.getElementById('clearBtn').addEventListener('click', clearOrder);
+    document.getElementById('clearBtn').addEventListener('click', clearOrderWithConfirm);
 
     // Cash input
     document.getElementById('cashReceived').addEventListener('input', calculateChange);

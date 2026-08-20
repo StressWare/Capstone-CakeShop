@@ -1,4 +1,4 @@
-const CACHE_NAME = 'brave-pos-v1';
+const CACHE_NAME = 'brave-pos-v2';
 
 // Only cache static assets
 const STATIC_ASSETS = [

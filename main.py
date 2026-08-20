@@ -62,10 +62,11 @@ app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024  # 2MB max file size
 is_production = os.environ.get('FLASK_ENV') == 'production'
 app.config['SESSION_COOKIE_SECURE'] = is_production   
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)  
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=1, x_host=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=3, x_proto=1, x_host=1)
 PAYMONGO_WEBHOOK_SECRET = os.getenv("PAYMONGO_WEBHOOK_SECRET")
 
 csrf = CSRFProtect(app)
+app.config['WTF_CSRF_TIME_LIMIT'] = None 
 @app.errorhandler(CSRFError)
 def csrf_error(_):
     if 'application/json' in request.headers.get('Accept', '') or \
@@ -2466,12 +2467,25 @@ def admin_page():
                     pre_items[name] = pre_items.get(name, 0) + 1
 
         elif otype == "custom":
+            amt = order.get("downpayment_amount", amt) or amt
             cus_sales += amt
             cus_txn   += 1
             if pm == "cash": cus_cash += amt
             else:            cus_ewallet += amt
 
     pre_top = max(pre_items, key=pre_items.get) if pre_items else "—"
+    cus_pending_total = 0
+    cus_pending_today = 0
+    for order in all_orders:
+        if order.get("order_type", "") != "custom":
+            continue
+        bal = order.get("remaining_balance", 0) or 0
+        if bal <= 0:
+            continue
+        cus_pending_total += bal
+        delivery_date = order.get("delivery_date")
+        if isinstance(delivery_date, datetime) and delivery_date.date() == today_date:
+            cus_pending_today += bal
 
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
@@ -2505,7 +2519,30 @@ def admin_page():
                 pos_items[name] = pos_items.get(name, 0) + 1
 
     pos_top = max(pos_items, key=pos_items.get) if pos_items else "—"
-
+    
+    cus_pending_total = 0
+    cus_pending_today = 0
+    cus_pending_list = []
+    for order in all_orders:
+        if order.get("order_type", "") != "custom":
+            continue
+        bal = order.get("remaining_balance", 0) or 0
+        if bal <= 0:
+            continue
+        cus_pending_total += bal
+        delivery_date = order.get("delivery_date")
+        is_due_today = isinstance(delivery_date, datetime) and delivery_date.date() == today_date
+        if is_due_today:
+            cus_pending_today += bal
+        cus_pending_list.append({
+            "customer": order.get("customer", {}).get("name", "N/A"),
+            "cake": order.get("item", "N/A"),
+            "delivery_date": delivery_date.strftime("%b %d, %Y") if isinstance(delivery_date, datetime) else "N/A",
+            "balance": bal,
+            "due_today": is_due_today,
+        })
+    cus_pending_list.sort(key=lambda x: not x["due_today"])
+        
     return render_template("admin_dashboard.html",
         # Status overview
         low_stock=low_stock,
@@ -2537,6 +2574,9 @@ def admin_page():
         cus_txn=cus_txn,
         cus_cash=cus_cash,
         cus_ewallet=cus_ewallet,
+        cus_pending_total=cus_pending_total,
+        cus_pending_today=cus_pending_today,
+        cus_pending_list =cus_pending_list,
     )
 @app.route("/admin/calendar-orders")
 @admin_required
@@ -2729,28 +2769,59 @@ def admin_sales():
     walkin_sales = []
 
     # Online orders (completed)
-    for doc in orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
+    for doc in orders.stream():
         order = doc.to_dict()
-        order["id"] = doc.id
+        order_type = order.get("order_type", "")
+        item = order.get("item", "N/A")
+        payment_method = order.get("payment_method")
 
-        # Convert created_at to datetime if it's a string
-        created_at = order.get("created_at")
-        if isinstance(created_at, str):
-            try:
-                created_at = datetime.fromisoformat(created_at.replace('Z', '+00:00'))
-            except Exception:
-                created_at = datetime.now(PH_TZ)
-        elif created_at is None:
-            created_at = datetime.now(PH_TZ)
+        def fix_dt(dt):
+            if isinstance(dt, str):
+                try:
+                    dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+                except Exception:
+                    return None
+            if isinstance(dt, datetime):
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    dt = dt.astimezone(PH_TZ)
+                return dt
+            return None
 
-        if isinstance(created_at, datetime):
-            if created_at.tzinfo is None:
-                created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-            else:
-                created_at = created_at.astimezone(PH_TZ)
-        order["created_at"] = created_at
+        if order_type == "custom":
+            dp_amt = order.get("downpayment_amount")
+            created_at = fix_dt(order.get("created_at"))
+            if dp_amt and created_at:
+                online_sales.append({
+                    "created_at": created_at,
+                    "amount": dp_amt,
+                    "payment_method": payment_method,
+                    "item": item,
+                })
+            bal_collected_at = fix_dt(order.get("balance_collected_at"))
+            if bal_collected_at:
+                # remaining_balance is zeroed after collection, so back-calc from amount - dp
+                bal_amt = (order.get("amount", 0) or 0) - (dp_amt or 0)
+                if bal_amt > 0:
+                    online_sales.append({
+                        "created_at": bal_collected_at,
+                        "amount": bal_amt,
+                        "payment_method": payment_method,
+                        "item": item,
+                    })
+        else:
+            if order.get("status") == "Completed":
+                created_at = fix_dt(order.get("created_at"))
+                if created_at:
+                    online_sales.append({
+                        "created_at": created_at,
+                        "amount": order.get("amount", 0) or 0,
+                        "payment_method": payment_method,
+                        "item": item,
+                    })
 
-        online_sales.append(order)
+    online_sales.sort(key=lambda x: x["created_at"], reverse=True)
 
     # Walk-in orders (completed)
     for doc in walkin_orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():

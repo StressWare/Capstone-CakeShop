@@ -1,11 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
 from datetime import datetime, timedelta, timezone, date
 import json
-from db import walkin_orders, cakes
+from db import walkin_orders, cakes, db
 from extensions import limiter
 from decorators import admin_required
 from helpers import log_admin_action
-
+import firebase
 
 pos_bp = Blueprint('pos', __name__)
 PH_TZ = timezone(timedelta(hours=8))
@@ -30,21 +30,51 @@ def pos_page():
 def pos_order():
     now = datetime.now(PH_TZ)
 
-    items_json     = request.form.get('items', '[]')
-    items          = json.loads(items_json)
-    payment_method = request.form.get('payment_method', 'Cash')
-    cash_received  = float(request.form.get('cash_received', 0))
-    amount         = float(request.form.get('amount', 0))
+    # Accept both classic form POST (offline fallback / no-JS) and the new
+    # fetch()-based JSON POST from the offline queue. Support both transparently.
+    is_json_request = request.is_json
+    payload = request.get_json(silent=True) if is_json_request else request.form
+
+    if is_json_request:
+        items = payload.get('items', [])
+    else:
+        items_json = payload.get('items', '[]')
+        items = json.loads(items_json)
+
+    payment_method = payload.get('payment_method', 'Cash')
+    cash_received  = float(payload.get('cash_received', 0) or 0)
+    amount         = float(payload.get('amount', 0) or 0)
     change         = cash_received - amount if payment_method == 'Cash' else 0
 
-    # ── NEW FIELDS ──
-    order_type      = request.form.get('order_type', 'Dine In')
-    discount_type   = request.form.get('discount_type', 'none')
-    discount_amount = float(request.form.get('discount_amount', 0))
+    order_type      = payload.get('order_type', 'Dine In')
+    discount_type   = payload.get('discount_type', 'none')
+    discount_amount = float(payload.get('discount_amount', 0) or 0)
+
+    # ── NEW: idempotency key, generated client-side at checkout time ──
+    idempotency_key = payload.get('idempotency_key')
 
     if not items:
+        if is_json_request:
+            return jsonify({"error": "No items selected"}), 400
         flash('No items selected!', 'warning')
         return redirect(url_for('pos.pos_page'))
+
+    # ── NEW: idempotency check — if this exact order already synced, don't redo it ──
+    if idempotency_key:
+        existing = walkin_orders.where("idempotency_key", "==", idempotency_key).limit(1).stream()
+        existing_doc = next(existing, None)
+        if existing_doc:
+            order_id = existing_doc.id
+            existing_data = existing_doc.to_dict()
+            if is_json_request:
+                return jsonify({
+                    "status": "duplicate_ignored",
+                    "order_id": order_id,
+                    "oversold": existing_data.get("oversold", False),
+                    "receipt_url": url_for('pos.pos_receipt', order_id=order_id),
+                }), 200
+            flash('Order already recorded.', 'info')
+            return redirect(url_for('pos.pos_receipt', order_id=order_id))
 
     item_names = ", ".join([
         f"{i['cake_name']} x{i.get('quantity', 1)} (₱{float(i['price']):.0f})"
@@ -62,30 +92,75 @@ def pos_order():
         "cashier_id":      session.get('user_id'),
         "status":          "Completed",
         "created_at":      now,
-        # ── NEW ──
         "order_type":      order_type,
         "discount_type":   discount_type,
         "discount_amount": discount_amount,
+        # ── NEW ──
+        "idempotency_key": idempotency_key,
+        "synced_at":       now,          # when the SERVER actually recorded it
+        "oversold":        False,        # flipped to True below if stock ran out mid-sale
+        "oversold_items":  [],
     }
 
     doc_ref  = walkin_orders.add(order_data)
     order_id = doc_ref[1].id
+
+    # ── NEW: atomic, transactional stock deduction (replaces read-then-write) ──
+    oversold_items = []
+
+    @firebase.firestore.transactional
+    def deduct_stock(transaction, cake_ref, ordered_qty, cake_name):
+        snapshot = cake_ref.get(transaction=transaction)
+        current_qty = snapshot.get("quantity") if snapshot.exists else 0
+        current_qty = current_qty or 0
+        new_qty = current_qty - ordered_qty
+
+        if new_qty < 0:
+            oversold_items.append({
+                "cake_id": cake_ref.id,
+                "cake_name": cake_name,
+                "requested": ordered_qty,
+                "actually_available": current_qty,
+                "oversold_by": abs(new_qty),
+            })
+            new_qty = 0  # never let stock go negative in the DB
+
+        transaction.update(cake_ref, {
+            "quantity": new_qty,
+            "status": new_qty > 0,
+        })
+
+    transaction = db.transaction()
+    for i in items:
+        cake_ref = cakes.document(i["cake_id"])
+        ordered_qty = int(i.get("quantity", 1))
+        deduct_stock(transaction, cake_ref, ordered_qty, i.get("cake_name", ""))
+
+    if oversold_items:
+        walkin_orders.document(order_id).update({
+            "oversold": True,
+            "oversold_items": oversold_items,
+        })
+        log_admin_action(
+            action="POS order OVERSOLD stock",
+            target=f"Order {order_id} — {oversold_items}",
+            category="pos"
+        )
+
     log_admin_action(
         action="Created POS order",
         target=f"Walk-in order {order_id} — {item_names}",
         category="pos"
     )
-    for i in items:
-        cake_ref = cakes.document(i["cake_id"])
-        cake_doc = cake_ref.get()
-        if cake_doc.exists:
-            current_qty = cake_doc.to_dict().get("quantity", 0)
-            ordered_qty = int(i.get("quantity", 1))
-            new_qty     = max(0, current_qty - ordered_qty)
-            cake_ref.update({
-                "quantity": new_qty,
-                "status":   new_qty > 0
-            })
+
+    if is_json_request:
+        return jsonify({
+            "status": "ok",
+            "order_id": order_id,
+            "oversold": bool(oversold_items),
+            "oversold_items": oversold_items,
+            "receipt_url": url_for('pos.pos_receipt', order_id=order_id),
+        }), 200
 
     flash('Order placed successfully! 🎂', 'success')
     return redirect(url_for('pos.pos_receipt', order_id=order_id))
