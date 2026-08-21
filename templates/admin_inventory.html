@@ -447,9 +447,9 @@
               <td data-label="Item"><strong>{{ i.item }}</strong></td>
               <td  data-label="Category">
                 {% if (i.category or 'Ingredients') == 'Ingredients' %}
-                  <span class="badge badge-ingredients">🥚 Ingredients</span>
+                  <span class="badge badge-ingredients">Ingredients</span>
                 {% else %}
-                  <span class="badge badge-equipment">🔧 Equipment</span>
+                  <span class="badge badge-equipment">Equipment</span>
                 {% endif %}
               </td>
               <td data-label="Quantity"><span class="badge {% if i.quantity < 5 %}bg-danger{% elif i.quantity < 10 %}bg-warning text-dark{% else %}bg-success{% endif %}">{{ i.quantity }}</span></td>

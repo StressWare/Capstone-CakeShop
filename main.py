@@ -42,6 +42,7 @@ import secrets
 import qrcode
 import io
 import firebase
+import requests
 from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs
 from firebase_admin import auth, firestore, messaging
 if os.environ.get("FLASK_ENV") == "development":
@@ -1656,6 +1657,47 @@ def finalize_order():
         flash("Address too long. Max 300 characters.", "danger")
         return redirect(url_for("customer_dashboard"))
     
+        # ── Service area validation (Delivery only) ──
+    ALLOWED_PLACES = [
+        'iloilo city',
+        'pavia',
+        'oton',
+        'leganes',
+        'san miguel',
+        'santa barbara',
+        'cabatuan',
+    ]
+
+    def is_within_service_area(lat, lng):
+        if lat is None or lng is None:
+            return False
+        try:
+            resp = requests.get(
+                "https://nominatim.openstreetmap.org/reverse",
+                params={"lat": lat, "lon": lng, "format": "json"},
+                headers={"User-Agent": "MrsBraveCakesCheckout/1.0 (jbs.soll29@gmail.com)"},
+                timeout=5,
+            )
+            resp.raise_for_status()
+            addr = resp.json().get("address", {})
+            place = (
+                addr.get("city") or addr.get("town") or
+                addr.get("municipality") or addr.get("village") or ""
+            ).lower()
+            return any(allowed in place for allowed in ALLOWED_PLACES)
+        except Exception:
+            app.logger.warning("[geofence] Nominatim check failed, rejecting order")
+            return False  # fail closed — don't silently allow orders outside area
+
+    cust_lat = None
+    cust_lng = None
+    if delivery_type == "Delivery":
+        cust_lat = safe_float(request.form.get("lat"), -90, 90)
+        cust_lng = safe_float(request.form.get("lng"), -180, 180)
+        if not is_within_service_area(cust_lat, cust_lng):
+            flash("Sorry, we currently only deliver within our service area (Iloilo City). Please choose a different location or select Pick Up.", "danger")
+            return redirect(url_for("customer_dashboard"))
+        
     # Shop lock check
     today = datetime.now(PH_TZ).strftime("%Y-%m-%d")
     info  = get_locked_dates_cached().get(today)
@@ -2091,6 +2133,28 @@ def cancel_order(order_id):
     if order.get("status") != "New":
         flash("Order cannot be cancelled anymore.", "warning")
         return redirect(url_for("customer_dashboard"))
+    
+    if order.get("payment_status") in ("Downpayment Paid", "Paid", "Fully Paid"):
+        flash("This order has already been paid and can no longer be cancelled.", "warning")
+        return redirect(url_for("customer_dashboard"))
+    
+    # payment-based cancel gate
+    order_type = order.get("order_type")
+    payment_status = order.get("payment_status", "Pending")
+
+    if order_type == "custom":
+        if payment_status in ("Downpayment Paid", "Paid", "Fully Paid"):
+            flash("Customized cake orders can't be cancelled once a payment (50%, 75%, or full) has been made.", "warning")
+            return redirect(url_for("customer_dashboard"))
+
+    elif order_type == "premade":
+        if payment_status != "Pending":
+            flash("This order has already been paid and can no longer be cancelled.", "warning")
+            return redirect(url_for("customer_dashboard"))
+
+    else:
+        flash("Order type could not be verified.", "danger")
+        return redirect(url_for("customer_dashboard"))
 
     # Restore stock if premade
     if order.get("order_type") == "premade":
@@ -2411,10 +2475,25 @@ def admin_page():
     # ---- Daily Report: Online Premade & Custom ----
     pre_sales = pre_txn = pre_cash = pre_ewallet = 0
     cus_sales = cus_txn = cus_cash = cus_ewallet = 0
+    delivery_earned = 0
     pre_items = {}
 
     def is_today(ts):
         return isinstance(ts, datetime) and today_start <= ts <= today_end
+
+    def fix_dt(dt):
+        if isinstance(dt, str):
+            try:
+                dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            except Exception:
+                return None
+        if isinstance(dt, datetime):
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                dt = dt.astimezone(PH_TZ)
+            return dt
+        return None
 
     def classify_payment_online(method):
         return "cash" if method and "cash" in method.lower() else "ewallet"
@@ -2425,7 +2504,6 @@ def admin_page():
     for order in all_orders:
         status = order.get("status", "")
 
-        # Status counters
         if status == "New":                total_new += 1
         elif status == "Accepted":         total_accepted += 1
         elif status == "Pending":          total_pending += 1
@@ -2435,7 +2513,6 @@ def admin_page():
         elif status == "Cancelled":        total_cancelled += 1
         if order.get("rush"):              total_rush += 1
 
-        # Today's deliveries
         delivery_date = order.get("delivery_date")
         if isinstance(delivery_date, datetime) and delivery_date.date() == today_date and status not in ["Completed", "Cancelled"]:
             today_count += 1
@@ -2447,16 +2524,20 @@ def admin_page():
                     "rush":     order.get("rush", False)
                 })
 
-        # Daily report — online orders (filter by created_at today)
-        ts = order.get("created_at")
-        if not is_today(ts):
+        if status != "Completed":
+            continue
+        completed_at = fix_dt(order.get("completed_at")) or fix_dt(order.get("created_at"))
+        if not is_today(completed_at):
             continue
 
         otype = order.get("order_type", "")
         amt   = order.get("amount", 0) or 0
+        delivery_fee = order.get("delivery_fee", 0) or 0
+        amt   = amt - delivery_fee
         pm    = classify_payment_online(order.get("payment_method"))
 
         if otype == "premade":
+            delivery_earned += delivery_fee
             pre_sales += amt
             pre_txn   += 1
             if pm == "cash": pre_cash += amt
@@ -2467,25 +2548,25 @@ def admin_page():
                     pre_items[name] = pre_items.get(name, 0) + 1
 
         elif otype == "custom":
-            amt = order.get("downpayment_amount", amt) or amt
+            delivery_earned += delivery_fee
             cus_sales += amt
             cus_txn   += 1
             if pm == "cash": cus_cash += amt
             else:            cus_ewallet += amt
 
     pre_top = max(pre_items, key=pre_items.get) if pre_items else "—"
-    cus_pending_total = 0
-    cus_pending_today = 0
+    # Pending Sales — dp/full payment collected on custom orders not yet Completed
+    pending_sales_total = 0
+    pending_sales_count = 0
     for order in all_orders:
         if order.get("order_type", "") != "custom":
             continue
-        bal = order.get("remaining_balance", 0) or 0
-        if bal <= 0:
+        if order.get("status") == "Completed":
             continue
-        cus_pending_total += bal
-        delivery_date = order.get("delivery_date")
-        if isinstance(delivery_date, datetime) and delivery_date.date() == today_date:
-            cus_pending_today += bal
+        dp_amt = order.get("downpayment_amount", 0) or 0
+        if dp_amt > 0:
+            pending_sales_total += dp_amt
+            pending_sales_count += 1
 
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
@@ -2574,10 +2655,14 @@ def admin_page():
         cus_txn=cus_txn,
         cus_cash=cus_cash,
         cus_ewallet=cus_ewallet,
+        delivery_earned=delivery_earned,
+        pending_sales_total=pending_sales_total,
+        pending_sales_count=pending_sales_count,
         cus_pending_total=cus_pending_total,
         cus_pending_today=cus_pending_today,
         cus_pending_list =cus_pending_list,
     )
+    
 @app.route("/admin/calendar-orders")
 @admin_required
 @limiter.exempt
@@ -2766,69 +2851,61 @@ def admin_expenses():
 @admin_required
 def admin_sales():
     online_sales = []
+    pending_sales = []
     walkin_sales = []
 
-    # Online orders (completed)
+    def fix_dt(dt):
+        if isinstance(dt, str):
+            try:
+                dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
+            except Exception:
+                return None
+        if isinstance(dt, datetime):
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+            else:
+                dt = dt.astimezone(PH_TZ)
+            return dt
+        return None
+
     for doc in orders.stream():
         order = doc.to_dict()
         order_type = order.get("order_type", "")
         item = order.get("item", "N/A")
         payment_method = order.get("payment_method")
+        status = order.get("status")
 
-        def fix_dt(dt):
-            if isinstance(dt, str):
-                try:
-                    dt = datetime.fromisoformat(dt.replace('Z', '+00:00'))
-                except Exception:
-                    return None
-            if isinstance(dt, datetime):
-                if dt.tzinfo is None:
-                    dt = dt.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-                else:
-                    dt = dt.astimezone(PH_TZ)
-                return dt
-            return None
-
-        if order_type == "custom":
+        if status == "Completed":
+            sale_date = fix_dt(order.get("completed_at")) or fix_dt(order.get("created_at"))
+            if sale_date:
+                delivery_fee = order.get("delivery_fee", 0) or 0
+                cake_amt = (order.get("amount", 0) or 0) - delivery_fee
+                online_sales.append({
+                    "created_at": sale_date,
+                    "amount": cake_amt,
+                    "delivery_fee": delivery_fee,
+                    "payment_method": payment_method,
+                    "item": item,
+                })
+        elif order_type == "custom":
             dp_amt = order.get("downpayment_amount")
             created_at = fix_dt(order.get("created_at"))
             if dp_amt and created_at:
-                online_sales.append({
+                pending_sales.append({
                     "created_at": created_at,
                     "amount": dp_amt,
                     "payment_method": payment_method,
                     "item": item,
+                    "status": status,
+                    "downpayment_type": order.get("downpayment_type"),
                 })
-            bal_collected_at = fix_dt(order.get("balance_collected_at"))
-            if bal_collected_at:
-                # remaining_balance is zeroed after collection, so back-calc from amount - dp
-                bal_amt = (order.get("amount", 0) or 0) - (dp_amt or 0)
-                if bal_amt > 0:
-                    online_sales.append({
-                        "created_at": bal_collected_at,
-                        "amount": bal_amt,
-                        "payment_method": payment_method,
-                        "item": item,
-                    })
-        else:
-            if order.get("status") == "Completed":
-                created_at = fix_dt(order.get("created_at"))
-                if created_at:
-                    online_sales.append({
-                        "created_at": created_at,
-                        "amount": order.get("amount", 0) or 0,
-                        "payment_method": payment_method,
-                        "item": item,
-                    })
 
     online_sales.sort(key=lambda x: x["created_at"], reverse=True)
+    pending_sales.sort(key=lambda x: x["created_at"], reverse=True)
 
-    # Walk-in orders (completed)
     for doc in walkin_orders.where("status", "==", "Completed").order_by("created_at", direction="DESCENDING").stream():
         order = doc.to_dict()
         order["id"] = doc.id
-
-        # Convert created_at to datetime if it's a string
         created_at = order.get("created_at")
         if isinstance(created_at, str):
             try:
@@ -2837,23 +2914,22 @@ def admin_sales():
                 created_at = datetime.now(PH_TZ)
         elif created_at is None:
             created_at = datetime.now(PH_TZ)
-
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
                 created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
             else:
                 created_at = created_at.astimezone(PH_TZ)
-
         order["created_at"] = created_at
-
-
         walkin_sales.append(order)
 
-    return render_template("admin_sales.html", 
-        online_sales=online_sales, 
+    return render_template("admin_sales.html",
+        online_sales=online_sales,
+        pending_sales=pending_sales,
         walkin_sales=walkin_sales,
         online_count=len(online_sales),
+        pending_count=len(pending_sales),
         walkin_count=len(walkin_sales),
+        pending_total=sum(p["amount"] for p in pending_sales),
         today=datetime.now(PH_TZ).strftime("%B %d, %Y")
     )
     
@@ -2928,7 +3004,7 @@ def admin_analytics():
     for order_doc in orders.stream():
         order      = order_doc.to_dict()
         status     = order.get("status", "")
-        amount     = float(order.get("amount", 0))
+        amount     = float(order.get("amount", 0)) - float(order.get("delivery_fee", 0) or 0)
         order_type = order.get("order_type", "")
         uid        = order.get("user_id")
 
@@ -2985,14 +3061,24 @@ def admin_analytics():
                 if uid not in user_order_names:
                     user_order_names[uid] = order.get("customer", {}).get("name", "Unknown")
 
-            if isinstance(created_at, datetime):
-                if created_at >= week_ago:
-                    weekly_sales[created_at.strftime("%a")] += amount
-                if created_at.year == now.year:
-                    monthly_sales[created_at.strftime("%b")] += amount
-                key = created_at.strftime("%b %Y")
+            completed_at = order.get("completed_at")
+            if isinstance(completed_at, str):
+                completed_at = datetime.fromisoformat(completed_at)
+            if isinstance(completed_at, datetime):
+                if completed_at.tzinfo is None:
+                    completed_at = completed_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+                else:
+                    completed_at = completed_at.astimezone(PH_TZ)
+            sale_date = completed_at if isinstance(completed_at, datetime) else created_at
+
+            if isinstance(sale_date, datetime):
+                if sale_date >= week_ago:
+                    weekly_sales[sale_date.strftime("%a")] += amount
+                if sale_date.year == now.year:
+                    monthly_sales[sale_date.strftime("%b")] += amount
+                key = sale_date.strftime("%b %Y")
                 if key not in alltime_data:
-                    alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": created_at}
+                    alltime_data[key] = {"sales": 0, "expenses": 0, "profit": 0, "sort": sale_date}
                 alltime_data[key]["sales"] += amount
 
     # ── Profits ──
@@ -3328,8 +3414,11 @@ def update_order_status(order_id):
 
             # Update order status
             update_data = {"status": new_status}
+            if new_status == "Completed":
+                update_data["completed_at"] = datetime.now(PH_TZ)
             if new_status == "Completed" and order_data.get("payment_method") == "Cash on Delivery":
                 update_data["payment_status"] = "Paid"
+                
             if new_status == "Cancelled":
                 update_data["cancel_reason"]       = request.form.get("cancel_reason", "").strip()
                 update_data["cancel_reason_other"] = request.form.get("cancel_reason_other", "").strip() if request.form.get("cancel_reason") == "Other" else ""

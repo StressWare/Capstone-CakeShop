@@ -401,11 +401,11 @@
               <td data-label="Category">
                 {% set cat = e.category or 'Others' %}
                 {% if cat == 'Ingredients' %}
-                  <span class="badge badge-ingredients">🥚 Ingredients</span>
+                  <span class="badge badge-ingredients">Ingredients</span>
                 {% elif cat == 'Equipment' %}
-                  <span class="badge badge-equipment">🔧 Equipment</span>
+                  <span class="badge badge-equipment">Equipment</span>
                 {% else %}
-                  <span class="badge badge-others">📦 Others</span>
+                  <span class="badge badge-others">Others</span>
                 {% endif %}
               </td>
               <td data-label="Total Cost (₱)"class="fw-bold text-danger">₱{{ "%.2f"|format(e.cost) }}</td>
@@ -448,15 +448,15 @@
                         <div class="category-radio-group">
                           <label class="category-radio-label">
                             <input type="radio" name="category" value="Ingredients"
-                              {% if (e.category or 'Others') == 'Ingredients' %}checked{% endif %}> 🥚 Ingredients
+                              {% if (e.category or 'Others') == 'Ingredients' %}checked{% endif %}> Ingredients
                           </label>
                           <label class="category-radio-label">
                             <input type="radio" name="category" value="Equipment"
-                              {% if (e.category or 'Others') == 'Equipment' %}checked{% endif %}> 🔧 Equipment
+                              {% if (e.category or 'Others') == 'Equipment' %}checked{% endif %}> Equipment
                           </label>
                           <label class="category-radio-label">
                             <input type="radio" name="category" value="Others"
-                              {% if (e.category or 'Others') == 'Others' %}checked{% endif %}> 📦 Others
+                              {% if (e.category or 'Others') == 'Others' %}checked{% endif %}> Others
                           </label>
                         </div>
                       </div>

@@ -1406,8 +1406,24 @@ document.addEventListener('DOMContentLoaded', function() {
           });
           return;
         }
-        updateOrderData();
-        orderForm.submit();   
+        e.preventDefault();
+
+        Swal.fire({
+          icon: 'warning',
+          title: 'Order is Final',
+          html: 'Once your customized cake order is placed and payment is made, it <b>cannot be cancelled or refunded</b>.<br>Please review your cake details carefully before proceeding.',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, Place Order',
+          cancelButtonText: 'Go Back',
+          confirmButtonColor: '#d63384',
+          cancelButtonColor: '#6c757d',
+          reverseButtons: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            updateOrderData();
+            orderForm.submit();
+          }
+        });   
       });
     }
 });

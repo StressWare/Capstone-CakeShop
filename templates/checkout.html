@@ -100,6 +100,10 @@
               </div>
               <p class="map-hint text-white">📍 Click on map or drag the pin to set your delivery location</p>
               <p id="distanceInfo" style="display:none; font-size:12px; color:#f9a8d4; margin:4px 10px;"></p>
+              <p id="areaWarning" style="display:none; font-size:12px; color:#ffc107; margin:4px 10px;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span id="areaWarningText"></span>
+              </p>
               <div id="map"></div>
             </div>
           </div>
@@ -393,6 +397,48 @@
     [11.198765432109876, 123.098765432109876]
   );
 
+  // ── Service area allow-list ──
+  // Add/remove municipality names here as the owner expands or restricts coverage.
+  const ALLOWED_PLACES = [
+    'iloilo city',
+    'pavia',
+    'oton',
+    'leganes',
+    'san miguel',
+    'santa barbara',
+    'cabatuan',
+  ];
+
+  function isAllowedLocation(nominatimAddress) {
+    if (!nominatimAddress) return false;
+    const place = (
+      nominatimAddress.city ||
+      nominatimAddress.town ||
+      nominatimAddress.municipality ||
+      nominatimAddress.village ||
+      ''
+    ).toLowerCase();
+    return ALLOWED_PLACES.some(allowed => place.includes(allowed));
+  }
+
+  function setAreaWarning(show, message) {
+    var warnEl = document.getElementById('areaWarning');
+    var textEl = document.getElementById('areaWarningText');
+    var submitBtn = document.getElementById('submitBtn');
+    if (show) {
+      textEl.textContent = message || 'Sorry, we don\u2019t deliver to this area yet.';
+      warnEl.style.display = 'block';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.6';
+      submitBtn.style.cursor = 'not-allowed';
+    } else {
+      warnEl.style.display = 'none';
+      submitBtn.disabled = false;
+      submitBtn.style.opacity = '';
+      submitBtn.style.cursor = '';
+    }
+  }
+
   var deliveryMap = null, deliveryMarker = null, pickupMap = null;
 
   function initDeliveryMap() {
@@ -419,9 +465,14 @@
       .then(data => {
         if (data && data.display_name)
           document.getElementById('addressInput').value = data.display_name;
-        recalcTotal(); // ← ADD THIS
+        if (data && data.address && !isAllowedLocation(data.address)) {
+          setAreaWarning(true, 'Sorry, we currently only deliver within our service area (Iloilo City and select nearby municipalities). Please choose a different location.');
+        } else {
+          setAreaWarning(false);
+        }
+        recalcTotal(); 
       })
-      .catch(() => { recalcTotal(); }); // ← AND THIS
+      .catch(() => { recalcTotal(); });
   }
 
   var searchTimeout;
@@ -449,7 +500,8 @@
               document.getElementById('lngInput').value = lon;
               document.getElementById('mapSearch').value = '';
               box.style.display = 'none';
-              recalcTotal(); // ← ADD THIS
+              // Re-check allow-list for this picked suggestion too
+              reverseGeocode(lat, lon);
             });
             box.appendChild(div);
           });
@@ -485,6 +537,8 @@ function selectDelivery(type) {
       if (isPickup && el.textContent === 'Cash on Delivery') el.textContent = 'Cash';
       if (!isPickup && el.textContent === 'Cash') el.textContent = 'Cash on Delivery';
     });
+    // Pickup is always at the shop (which is in Iloilo City), so clear any area warning
+    if (isPickup) setAreaWarning(false);
     setTimeout(function() {
       if (isPickup) { initPickupMap(); if (pickupMap) pickupMap.invalidateSize(); }
       else          { initDeliveryMap(); if (deliveryMap) deliveryMap.invalidateSize(); }
@@ -521,6 +575,8 @@ function selectDelivery(type) {
             }
             document.getElementById('latInput').value = lat;
             document.getElementById('lngInput').value = lon;
+            // Re-check allow-list for the typed address too
+            reverseGeocode(lat, lon);
           }
         })
         .catch(() => {});
@@ -537,6 +593,11 @@ function selectDelivery(type) {
         e.preventDefault();
         alert('Please select your delivery location on the map.');
         document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      if (document.getElementById('submitBtn').disabled) {
+        e.preventDefault();
+        document.getElementById('areaWarning').scrollIntoView({ behavior: 'smooth' });
         return;
       }
     }

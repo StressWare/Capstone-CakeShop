@@ -598,7 +598,7 @@ def handle_loyalty_stamp(users_ref, user_id, order_type, selected_items, cakes_r
         old_stamps        = int(user_data.get('loyalty_stamps', 0))
         loyalty_unclaimed = user_data.get('loyalty_unclaimed', None)
         unclaimed_tier    = user_data.get('loyalty_unclaimed_tier', None)
-        new_stamps        = old_stamps + earns_stamps
+        new_stamps = min(old_stamps + earns_stamps, 10)
 
         update = {}
 

@@ -845,7 +845,10 @@
   </div>
         </div><!-- /modal-body -->
           <div class="modal-footer">
-            {% if order.status == 'New' %}
+            {% if order.status == 'New' and (
+                (order.order_type == 'premade' and order.payment_status == 'Pending') or
+                (order.order_type == 'custom' and order.payment_status not in ['Downpayment Paid', 'Paid', 'Fully Paid'])
+              ) %}
             <button type="button" class="btn btn-danger btn-sm cancel-order-btn"
               data-order-id="{{ order.id }}">
               Cancel Order

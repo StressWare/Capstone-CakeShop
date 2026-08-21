@@ -429,6 +429,9 @@
           <button class="order-tab-btn" data-tab="walkin">
             Walk-in Sales <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
           </button>
+          <button class="order-tab-btn" data-tab="pending">
+            Pending Sales <span class="tab-count" id="count-pending">{{ pending_count }}</span>
+          </button>
         </div>
         <div class="total-display">
           <span class="total-label">Total Revenue</span>
@@ -507,6 +510,24 @@
               <td data-label="AMOUNT" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
             </tr>
             {% endfor %}
+            {% for sale in pending_sales %}
+            <tr data-source="pending"
+                class="pending-row"
+                style="display:none;"
+                data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
+                data-amount="{{ sale.amount }}"
+                data-delivery="0"
+                data-payment="{{ sale.payment_method or 'N/A' }}"
+                data-item="{{ sale.item }}">
+              <td data-label="DATE">
+                <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
+                <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
+              </td>
+              <td data-label="ORDER">{{ sale.item }}</td>
+              <td data-label="PAYMENT"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
+              <td data-label="AMOUNT" class="fw-bold text-warning">₱{{ "%.2f"|format(sale.amount) }} <span class="badge bg-light text-dark">{{ sale.status }}</span></td>
+            </tr>
+            {% endfor %}
           </tbody>
         </table>
       </div>
@@ -575,6 +596,9 @@ let currentTab       = 'online';
 let currentFilter    = 'all';
 let exportFormat     = 'pdf';
 let currentPayment   = '';
+const TAB_ROW_CLASS = { online: '.online-row', walkin: '.walkin-row', pending: '.pending-row' };
+const TAB_COUNT_ID  = { online: 'count-online', walkin: 'count-walkin', pending: 'count-pending' };
+const TAB_LABEL     = { online: 'Online Sales', walkin: 'Walk-in Sales', pending: 'Pending Sales' };
 
 // ── Date helpers ──
 function getFilterStart() {
@@ -598,7 +622,7 @@ function rowPassesFilter(row) {
 // ── Main display ──
 function updateSalesDisplay() {
   const searchValue = document.getElementById('searchSales').value.toLowerCase();
-  const rows = document.querySelectorAll(currentTab === 'online' ? '.online-row' : '.walkin-row');
+  const rows = document.querySelectorAll(TAB_ROW_CLASS[currentTab]);
 
   let visibleRows = [];
   rows.forEach(row => {
@@ -611,7 +635,7 @@ function updateSalesDisplay() {
   const totalPages = Math.ceil(visibleRows.length / salesPerPage);
   const start = (currentSalesPage - 1) * salesPerPage;
 
-  document.querySelectorAll('.online-row, .walkin-row').forEach(r => r.style.display = 'none');
+  document.querySelectorAll('.online-row, .walkin-row, .pending-row').forEach(r => r.style.display = 'none');
   visibleRows.forEach((row, i) => {
     if (i >= start && i < start + salesPerPage) row.style.display = '';
   });
@@ -620,7 +644,7 @@ function updateSalesDisplay() {
   visibleRows.forEach(row => { total += parseFloat(row.getAttribute('data-amount')) || 0; });
   document.getElementById('totalRevenue').textContent = total.toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
   document.getElementById('totalCount').textContent   = `(${visibleRows.length} orders)`;
-  document.getElementById(currentTab === 'online' ? 'count-online' : 'count-walkin').textContent = visibleRows.length;
+  document.getElementById(TAB_COUNT_ID[currentTab]).textContent = visibleRows.length;
 
   updatePaginationButtons('salesPagination', currentSalesPage, totalPages, (page) => {
     currentSalesPage = page;
@@ -644,7 +668,7 @@ function openExportModal() {
   const from  = new Date(); from.setDate(today.getDate() - 30);
   document.getElementById('exportTo').value   = today.toISOString().slice(0,10);
   document.getElementById('exportFrom').value = from.toISOString().slice(0,10);
-  document.getElementById('previewTabLabel').textContent = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  document.getElementById('previewTabLabel').textContent = TAB_LABEL[currentTab]
   updateExportPreview();
   document.getElementById('exportModalOverlay').classList.add('open');
 }
@@ -663,7 +687,7 @@ function selectFormat(fmt) {
 function getExportRows() {
   const fromVal = document.getElementById('exportFrom').value;
   const toVal   = document.getElementById('exportTo').value;
-  const rows    = document.querySelectorAll(currentTab === 'online' ? '.online-row' : '.walkin-row');
+  const rows    = document.querySelectorAll(TAB_ROW_CLASS[currentTab]);
 
   return Array.from(rows).filter(row => {
     const d = row.getAttribute('data-date');
@@ -698,7 +722,7 @@ function runExport() {
 // ── Export CSV ──
 function exportCSV() {
   const visibleRows = getExportRows();
-  const tabLabel    = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  const tabLabel    = TAB_LABEL[currentTab]
   const today       = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
   const fromVal     = document.getElementById('exportFrom').value || 'All';
   const toVal       = document.getElementById('exportTo').value   || 'All';
@@ -739,7 +763,7 @@ function exportCSV() {
 // ── Export PDF ──
 function exportPDF() {
   const visibleRows = getExportRows();
-  const tabLabel    = currentTab === 'online' ? 'Online Sales' : 'Walk-in Sales';
+  const tabLabel    = TAB_LABEL[currentTab]
   const today       = new Date().toLocaleDateString('en-PH', {year:'numeric', month:'long', day:'numeric'});
   const fromVal     = document.getElementById('exportFrom').value || 'All';
   const toVal       = document.getElementById('exportTo').value   || 'All';

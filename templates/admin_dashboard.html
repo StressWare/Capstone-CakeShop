@@ -324,16 +324,6 @@
       <div class="dashboard-date" id="dashboard-date"></div>
     </div>
     <div class="header-actions">
-      {% if low_stock %}
-      <div class="low-stock-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          <line x1="12" y1="9" x2="12" y2="13"/>
-          <line x1="12" y1="17" x2="12.01" y2="17"/>
-        </svg>
-        {{ low_stock|length }} low stock item{{ 's' if low_stock|length > 1 else '' }}
-      </div>
-      {% endif %}
       <button class="btn-refresh"  id="btn-refresh">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="23 4 23 10 17 10"/>
@@ -483,54 +473,65 @@
             </div>
           </div>
         </div>
-      </div>
-      <div class="card mt-3">
-        <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <div>
-            <h6 class="text-muted mb-1">Total Sales Today</h6>
-            <div class="d-flex gap-3 small text-muted">
-              <span>Walk-in: <strong class="text-dark">₱{{ "{:,.0f}".format(pos_sales) }}</strong></span>
-              <span>Premade: <strong class="text-dark">₱{{ "{:,.0f}".format(pre_sales) }}</strong></span>
-              <span>Custom: <strong class="text-dark">₱{{ "{:,.0f}".format(cus_sales) }}</strong></span>
+                <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#facc15;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Pending Sales</h6>
+            </div>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pending_sales_total) }}</h2>
+              <p class="text-muted small mb-3">Not yet completed</p>
+              <div class="d-flex justify-content-between py-2"><span class="text-muted small">Customize cake orders pending</span><strong>{{ pending_sales_count }}</strong></div>
             </div>
           </div>
-          <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(pos_sales + pre_sales + cus_sales) }}</h2>
         </div>
-        <div class="card mt-3">
-        <div class="card mt-3">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-              <div>
-                <h6 class="text-muted mb-1">Remaining Balance - Customize Cake</h6>
-                <div class="d-flex gap-3 small text-muted">
-                  <span>Due today: <strong class="text-dark">₱{{ "{:,.0f}".format(cus_pending_today) }}</strong></span>
-                </div>
-              </div>
-              <div class="d-flex align-items-center gap-3">
-                <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_pending_total) }}</h2>
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#pendingBalanceList" id="pendingBalanceToggle" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;padding:0;">
-                  <span id="pendingBalanceChevron" style="transition: transform 0.2s;">▾</span>
-                </button>
-              </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#fb923c;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Delivery Fees Collected</h6>
             </div>
-            <div class="collapse mt-3" id="pendingBalanceList">
-              <div style="max-height: 250px; overflow-y: auto;">
-                {% if cus_pending_list %}
-                  {% for o in cus_pending_list %}
-                  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                    <div>
-                      <strong class="d-block">{{ o.customer }}</strong>
-                      <small class="text-muted">{{ o.cake[:30] }}{% if o.cake|length > 30 %}...{% endif %} — {{ o.delivery_date }}</small>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(delivery_earned) }}</h2>
+              <p class="text-muted small mb-3">Collected today</p>
+              <div class="d-flex justify-content-between py-2"><span class="text-muted small">Source</span><span class="badge bg-light text-dark">Premade &amp; Custom Cakes</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;"></span>
+                <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Remaining Balance</h6>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#pendingBalanceList" id="pendingBalanceToggle" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0;">
+                <span id="pendingBalanceChevron" style="transition: transform 0.2s;">▾</span>
+              </button>
+            </div>
+            <div class="card-body">
+              <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_pending_total) }}</h2>
+              <p class="text-muted small mb-3">Due today: ₱{{ "{:,.0f}".format(cus_pending_today) }}</p>
+              <div class="collapse" id="pendingBalanceList">
+                <div style="max-height: 220px; overflow-y: auto;">
+                  {% if cus_pending_list %}
+                    {% for o in cus_pending_list %}
+                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                      <div>
+                        <strong class="d-block small">{{ o.customer }}</strong>
+                        <small class="text-muted">{{ o.cake[:20] }}{% if o.cake|length > 20 %}...{% endif %} — {{ o.delivery_date }}</small>
+                      </div>
+                      <div class="text-end">
+                        {% if o.due_today %}<span class="badge bg-warning text-dark mb-1">DUE</span>{% endif %}
+                        <strong class="d-block small">₱{{ "{:,.0f}".format(o.balance) }}</strong>
+                      </div>
                     </div>
-                    <div class="text-end">
-                      {% if o.due_today %}<span class="badge bg-warning text-dark mb-1">DUE TODAY</span>{% endif %}
-                      <strong class="d-block">₱{{ "{:,.0f}".format(o.balance) }}</strong>
-                    </div>
-                  </div>
-                  {% endfor %}
-                {% else %}
-                  <div class="text-center py-3 text-muted">No pending balances</div>
-                {% endif %}
+                    {% endfor %}
+                  {% else %}
+                    <div class="text-center py-3 text-muted small">No pending balances</div>
+                  {% endif %}
+                </div>
               </div>
             </div>
           </div>
@@ -766,7 +767,7 @@ async function renderCalendar() {
       document.getElementById('cal-detail-body').innerHTML = '<p class="cal-loading">No active orders for this day.</p>';
     } else {
       document.getElementById('cal-detail-body').innerHTML = orders.map(o => `
-        // Fix:
+        
 <div class="cal-order-card ${o.rush ? 'rush' : ''}" data-order='${JSON.stringify(o).replace(/'/g, "&#39;")}'>
           <div class="cal-order-top">
             <span class="cal-order-name">${o.customer}</span>
@@ -774,9 +775,9 @@ async function renderCalendar() {
           </div>
           <div class="cal-order-item">${o.item}</div>
           <div class="cal-order-meta">
-            <span>🕐 ${o.time}</span>
+            <span>${o.time}</span>
             <span class="type-label ${o.order_type === 'premade' ? 'type-premade' : 'type-custom'}">${o.order_type === 'premade' ? 'Premade' : 'Custom'}</span>
-            ${o.rush ? '<span class="rush-label">⚡ RUSH</span>' : ''}
+            ${o.rush ? '<span class="rush-label">RUSH</span>' : ''}
           </div>
         </div>
       `).join('');
