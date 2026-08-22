@@ -1,8 +1,10 @@
-
 from flask import session, request
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import resend
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 import os
 import logging
 
@@ -19,8 +21,11 @@ limiter = Limiter(
     storage_uri="memory://"
 )
 
-# Resend
-resend.api_key = os.environ.get("RESEND_API_KEY")
+# Gmail SMTP
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+GMAIL_ADDRESS = os.environ.get("GMAIL_ADDRESS")       # e.g. yourshop@gmail.com
+GMAIL_APP_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD")  # 16-char App Password, NOT your login password
 
 LOGO_URL = "https://res.cloudinary.com/dnystscn8/image/upload/v1779012991/logo_fburga.png"
 
@@ -36,7 +41,7 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
             payment_note = f"Downpayment of <b>₱{float(downpayment_amount):,.2f}</b> received! Remaining balance of <b>₱{float(remaining_balance):,.2f}</b> is due upon delivery/pickup."
         else:
             payment_note = f"Payment of <b>₱{amount:,.2f}</b> received!"
-            
+
 
         html = f"""
 <!DOCTYPE html>
@@ -221,13 +226,21 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
 </html>
         """
 
-        response = resend.Emails.send({
-            "from": "onboarding@resend.dev",
-            "to": email,
-            "subject": f"Order Confirmed – Mrs. Brave's Cakes #{order_id}",
-            "html": html
-        })
-        logger.info(f"EMAIL SENT — {response}")
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"Order Confirmed – Mrs. Brave's Cakes #{order_id}"
+        msg["From"] = GMAIL_ADDRESS
+        msg["To"] = email
+        msg.attach(MIMEText(html, "html"))
 
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls(context=context)
+            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_ADDRESS, email, msg.as_string())
+
+        logger.info(f"EMAIL SENT — order {order_id} to {email}")
+
+    except smtplib.SMTPAuthenticationError as e:
+        logger.error(f"EMAIL AUTH ERROR — check GMAIL_ADDRESS/GMAIL_APP_PASSWORD: {e}")
     except Exception as e:
         logger.error(f"EMAIL ERROR — {e}")
