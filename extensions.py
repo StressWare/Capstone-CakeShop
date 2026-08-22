@@ -233,7 +233,7 @@ def send_order_confirmation(fname, email, order_id, amount, payment_method,
         msg.attach(MIMEText(html, "html"))
 
         context = ssl.create_default_context()
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
             server.starttls(context=context)
             server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
             server.sendmail(GMAIL_ADDRESS, email, msg.as_string())

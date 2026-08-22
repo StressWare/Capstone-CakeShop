@@ -12,6 +12,7 @@ from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations
 from firebase_admin import messaging
 import requests as http_requests
+import threading 
 from webauthn import (
     generate_registration_options,
     generate_authentication_options,
@@ -2045,19 +2046,23 @@ def finalize_order():
         user_doc = users.document(user_id).get()
         fname    = user_doc.to_dict().get("fname", "Customer")
         email    = user_doc.to_dict().get("email", "")
-        send_order_confirmation(
-            fname=fname,
-            email=email,
-            order_id=order_id,
-            amount=order_data.get("amount", 0),
-            payment_method=payment_method,
-            rush_fee=order_data.get("rush_fee", 0),
-            delivery_fee=order_data.get("delivery_fee", 0),
-            discount_amount=0,
-            downpayment_type=order_data.get("downpayment_type"),
-            downpayment_amount=order_data.get("downpayment_amount"),
-            remaining_balance=order_data.get("remaining_balance"),
-        )
+        threading.Thread(
+            target=send_order_confirmation,
+            kwargs=dict(
+                fname=fname,
+                email=email,
+                order_id=order_id,
+                amount=order_data.get("amount", 0),
+                payment_method=payment_method,
+                rush_fee=order_data.get("rush_fee", 0),
+                delivery_fee=order_data.get("delivery_fee", 0),
+                discount_amount=0,
+                downpayment_type=order_data.get("downpayment_type"),
+                downpayment_amount=order_data.get("downpayment_amount"),
+                remaining_balance=order_data.get("remaining_balance"),
+            ),
+            daemon=True,
+        ).start()
         for cv in claimed_vouchers:
             users.document(user_id).collection("vouchers").document(cv["voucher_id"]).update({
                 "used": True,
