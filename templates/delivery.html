@@ -7,17 +7,9 @@
   <link rel="icon" href="/static/img/logo.png" type="image/png">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-    <script nonce="{{ csp_nonce() }}">
+  <script nonce="{{ csp_nonce() }}">
     try {
-      firebase.initializeApp({
-        apiKey:            "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
-        authDomain:        "cakeshop-2faf4.firebaseapp.com",
-        projectId:         "cakeshop-2faf4",
-        storageBucket:     "cakeshop-2faf4.firebasestorage.app",
-        messagingSenderId: "470246706853",
-        appId:             "1:470246706853:web:339c4084715b0286b6474c",
-        measurementId:     "G-8PLLYZRD9Y"
-      });
+      firebase.initializeApp({{ firebase_config | tojson }});
     } catch (e) {
       console.error('Firebase init error:', e);
     }

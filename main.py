@@ -54,6 +54,20 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+@app.context_processor
+def inject_firebase_config():
+    return {
+        "firebase_config": {
+            "apiKey": os.getenv("FIREBASE_API_KEY"),
+            "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN"),
+            "projectId": os.getenv("FIREBASE_PROJECT_ID"),
+            "storageBucket": os.getenv("FIREBASE_STORAGE_BUCKET"),
+            "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID"),
+            "appId": os.getenv("FIREBASE_APP_ID"),
+            "measurementId": os.getenv("FIREBASE_MEASUREMENT_ID"),
+            "vapidKey": os.getenv("FIREBASE_VAPID_KEY"),
+        }
+    }
 # WebAuthn config
 RP_NAME   = "Mrs. Brave's Cakes"                 
 RP_ID     = os.environ["RP_ID"]
@@ -139,7 +153,7 @@ csp = {
     'frame-src': [
         "'self'",
         "www.google.com",       # reCAPTCHA iframe
-        "cakeshop-2faf4.firebaseapp.com",  # Firebase auth popup
+        os.getenv("FIREBASE_AUTH_DOMAIN"),
     ],
 
     'worker-src': [
@@ -4925,7 +4939,10 @@ def manifest_delivery():
  
 @app.route('/service-worker-admin.js')
 def service_worker_admin():
-    return app.send_static_file('javascript/service-worker-admin.js')
+    return app.response_class(
+        render_template('javascript/service-worker-admin.js'),
+        mimetype='application/javascript'
+)
  
 @app.route('/service-worker-delivery.js')
 def service_worker_delivery():

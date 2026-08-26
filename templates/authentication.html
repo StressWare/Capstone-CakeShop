@@ -15,141 +15,141 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     
-<style>
+    <style>
 
-/* ====== CUSTOM OFFCANVAS MENU ====== */
-.menu-btn {
-    font-size: 1.5rem;
-    background: none;
-    border: 2px solid #000000;
-    color: #d63384;
-    border-radius: 8px;
-    padding: 5px 15px;
-    cursor: pointer;
-    transition: background-color 0.4s ease, color 0.4s ease;
-}
+    /* ====== CUSTOM OFFCANVAS MENU ====== */
+    .menu-btn {
+        font-size: 1.5rem;
+        background: none;
+        border: 2px solid #000000;
+        color: #d63384;
+        border-radius: 8px;
+        padding: 5px 15px;
+        cursor: pointer;
+        transition: background-color 0.4s ease, color 0.4s ease;
+    }
 
-.menu-btn:hover {
-    background-color: #000000;
-    color: #fff;
-}
+    .menu-btn:hover {
+        background-color: #000000;
+        color: #fff;
+    }
 
-/* ====== CUSTOM OFFCANVAS MENU ====== */
-.custom-offcanvas {
-    position: fixed;
-    top: 0;
-    right: -270px;                   /* nakatago sa kanan */
-    width: 270px;
-    height: 100%;
-     background-color: #630031;
-    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-    transition: right 0.5s ease;
-    z-index: 1001;
-    padding: 30px 20px;
-    overflow-y: auto;
-}
+    /* ====== CUSTOM OFFCANVAS MENU ====== */
+    .custom-offcanvas {
+        position: fixed;
+        top: 0;
+        right: -270px;                   /* nakatago sa kanan */
+        width: 270px;
+        height: 100%;
+        background-color: #630031;
+        box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+        transition: right 0.5s ease;
+        z-index: 1001;
+        padding: 30px 20px;
+        overflow-y: auto;
+    }
 
-.custom-offcanvas.active {
-    right: 0;                        /* slide in mula sa kanan */
-}
+    .custom-offcanvas.active {
+        right: 0;                        /* slide in mula sa kanan */
+    }
 
-.offcanvas-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
-}
+    .offcanvas-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
+    }
 
-.offcanvas-header h5 {
-    color: #0b0b0b;
-    font-weight: 700;
-    font-size: 1.2rem;
-    margin: 0;
-}
+    .offcanvas-header h5 {
+        color: #0b0b0b;
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0;
+    }
 
-.offcanvas-body {
-    margin-top: 20px;
-    padding-top: 10px;
-}
+    .offcanvas-body {
+        margin-top: 20px;
+        padding-top: 10px;
+    }
 
-.offcanvas-body a {
-    display: block;
-    text-decoration: none;
-    color: #ffffff !important;      /* white text tulad ng admin */
-    font-weight: 400 !important;    /* hindi bold, same sa admin */
-    font-size: 1rem;
-    margin-bottom: 5px;
-    padding: 12px 15px;
-    border-radius: 8px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
+    .offcanvas-body a {
+        display: block;
+        text-decoration: none;
+        color: #ffffff !important;      /* white text tulad ng admin */
+        font-weight: 400 !important;    /* hindi bold, same sa admin */
+        font-size: 1rem;
+        margin-bottom: 5px;
+        padding: 12px 15px;
+        border-radius: 8px;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
 
-.offcanvas-body a:hover {
-    background-color: #d63384 !important;
-    color: #ffffff !important;
-}
+    .offcanvas-body a:hover {
+        background-color: #d63384 !important;
+        color: #ffffff !important;
+    }
 
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: #ffffff;              /* AYOS: black para makita */
-    line-height: 1;
-    font-weight: 700;
-}
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 1.8rem;
+        cursor: pointer;
+        color: #ffffff;              /* AYOS: black para makita */
+        line-height: 1;
+        font-weight: 700;
+    }
 
-.close-btn:hover {
-    color: #060003;           /* pink on hover */
-}
+    .close-btn:hover {
+        color: #060003;           /* pink on hover */
+    }
 
-/* ====== OVERLAY ====== */
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
+    /* ====== OVERLAY ====== */
+    .menu-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.4);
+        z-index: 1000;
+    }
 
-.menu-overlay.active {
-    display: block;
-}
-.pw-strength-wrapper {
-    margin-top: -8px;
-    margin-bottom: 10px;
-}
+    .menu-overlay.active {
+        display: block;
+    }
+    .pw-strength-wrapper {
+        margin-top: -8px;
+        margin-bottom: 10px;
+    }
 
-.pw-strength-bar {
-    height: 6px;
-    width: 100%;
-    background: rgba(255,255,255,0.15);
-    border-radius: 4px;
-    overflow: hidden;
-}
+    .pw-strength-bar {
+        height: 6px;
+        width: 100%;
+        background: rgba(255,255,255,0.15);
+        border-radius: 4px;
+        overflow: hidden;
+    }
 
-.pw-strength-fill {
-    height: 100%;
-    width: 0%;
-    border-radius: 4px;
-    transition: width 0.3s ease, background-color 0.3s ease;
-    background: #dc3545; /* default weak */
-}
+    .pw-strength-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 4px;
+        transition: width 0.3s ease, background-color 0.3s ease;
+        background: #dc3545; /* default weak */
+    }
 
-.pw-strength-label {
-    display: block;
-    margin-top: 4px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-}
+    .pw-strength-label {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
 
-</style>
+    </style>
 
 <body>
 <!-- NAVBAR -->
@@ -490,16 +490,7 @@ function glassAlert(options = {}) {
 /* ============================================================
    FIREBASE CONFIG
    ============================================================ */
-const firebaseConfig = {
-    apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
-    authDomain: "cakeshop-2faf4.firebaseapp.com",
-    projectId: "cakeshop-2faf4",
-    storageBucket: "cakeshop-2faf4.firebasestorage.app",
-    messagingSenderId: "470246706853",
-    appId: "1:470246706853:web:339c4084715b0286b6474c",
-    measurementId: "G-8PLLYZRD9Y"
-};
- 
+const firebaseConfig = {{ firebase_config | tojson }}; 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
  

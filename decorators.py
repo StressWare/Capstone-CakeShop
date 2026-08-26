@@ -65,7 +65,7 @@ def professor_required(f):
 def profile_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        # 🔑 LAZY IMPORT: Runs only when route is accessed, AFTER Firebase is initialized
+
         from db import users
         
         user_id = session.get('user_id')

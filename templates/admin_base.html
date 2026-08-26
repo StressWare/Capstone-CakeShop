@@ -147,18 +147,9 @@
 
     <script nonce="{{ csp_nonce() }}">
         try {
-            firebase.initializeApp({
-                apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
-                authDomain: "cakeshop-2faf4.firebaseapp.com",
-                projectId: "cakeshop-2faf4",
-                storageBucket: "cakeshop-2faf4.firebasestorage.app",
-                messagingSenderId: "470246706853",
-                appId: "1:470246706853:web:339c4084715b0286b6474c",
-                measurementId: "G-8PLLYZRD9Y"
-            });
-            console.log('Admin Firebase initialized');
-        } catch (error) {
-            console.error('Firebase initialization error:', error);
+        firebase.initializeApp({{ firebase_config | tojson }});
+        } catch (e) {
+        console.error('Firebase init error:', e);
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -445,7 +436,7 @@
             }
 
             const token = await messaging.getToken({
-                vapidKey: 'BIlhY4rDBY7ZcedYvAqLYStQQOC-_ySz1Daq3Dd4ZVgO4HJynJMCByWy0vsfDcebJKbxOxta9irjDD53jcc-ddg',
+                vapidKey: '{{ firebase_config.vapidKey }}',
                 serviceWorkerRegistration: swReg
             });
 

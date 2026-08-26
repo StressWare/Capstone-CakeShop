@@ -1,14 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-    apiKey: "AIzaSyAKe10I1uuRRm67YpdUu7ZYgIVHnlbLdKY",
-    authDomain: "cakeshop-2faf4.firebaseapp.com",
-    projectId: "cakeshop-2faf4",
-    storageBucket: "cakeshop-2faf4.firebasestorage.app",
-    messagingSenderId: "470246706853",
-    appId: "1:470246706853:web:339c4084715b0286b6474c"
-});
+firebase.initializeApp({{ firebase_config | tojson }});
 
 const messaging = firebase.messaging();
 
