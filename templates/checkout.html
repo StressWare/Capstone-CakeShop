@@ -12,12 +12,23 @@
 <div class="checkout-container">
 
   <div class="checkout-header text-white" style="position:relative;">
-    <a href="/cakes" id="backToCakesLink" style="position:absolute;left:0;top:50%;transform:translateY(-50%);
-        display:inline-flex;align-items:center;gap:6px;
-        color:rgba(255,255,255,0.7);font-size:13px;text-decoration:none;
-        transition:color 0.15s;">
-      ← Back to Cakes
-    </a>
+<style>
+  #backToCakesLink {
+    position: absolute; left: clamp(12px, 3vw, 24px); top: 50%;
+    transform: translateY(-50%); display: inline-flex; align-items: center;
+    gap: 6px; padding: 6px 14px; background-color: #fff0f3; color: #c2255c !important;
+    font-family: inherit; font-size: clamp(13px, 2vw, 14px); font-weight: 500;
+    text-decoration: none; border: 1px solid rgba(194, 37, 92, 0.15);
+    border-radius: 20px; transition: all 0.2s ease;
+  }
+  #backToCakesLink:hover {
+    background-color: #ffe0e6 !important;
+    border-color: rgba(194, 37, 92, 0.3) !important;
+    color: #c2255c !important; /* Forces text to stay dark pink and visible, overriding any global CSS */
+  }
+</style>
+
+<a href="/cakes" id="backToCakesLink">← Back to Cakes</a>
     <h1>Checkout</h1>
   </div>
   <form method="POST" action="/place-order">
@@ -851,35 +862,28 @@ async function recalcTotal() {
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    // 1. Back to Cakes Link Hover
-    const backLink = document.getElementById('backToCakesLink');
-    if (backLink) {
-        backLink.addEventListener('mouseover', function() { this.style.color = '#fff'; });
-        backLink.addEventListener('mouseout', function() { this.style.color = 'rgba(255,255,255,0.7)'; });
-    }
-
-    // 2. Delivery Options
+    // 1. Delivery Options (Removed conflicting JS hover for #backToCakesLink, handled purely by CSS now)
     document.querySelectorAll('.delivery-option').forEach(el => {
         el.addEventListener('click', function() {
             selectDelivery(this.dataset.delivery);
         });
     });
 
-    // 3. Payment Options
+    // 2. Payment Options
     document.querySelectorAll('.payment-method').forEach(el => {
         el.addEventListener('click', function() {
             selectPayment(this, this.dataset.payment);
         });
     });
 
-    // 4. Downpayment Options
+    // 3. Downpayment Options
     document.querySelectorAll('.downpayment-opt').forEach(el => {
         el.addEventListener('click', function() {
             selectDownpayment(this.dataset.downpayment);
         });
     });
 
-    // 5. Quantity Controls
+    // 4. Quantity Controls
     document.querySelectorAll('.qty-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             changeQty(parseInt(this.dataset.index), parseInt(this.dataset.delta));
