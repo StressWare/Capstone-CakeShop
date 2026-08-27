@@ -109,6 +109,8 @@
     font-weight: 700;
     margin: 0;
     color: white;
+    align-items: center;
+    justify-content: center;
   }
   .search-wrapper {
     display: flex;
@@ -229,7 +231,7 @@
     color: white;
     text-align: center;
     padding: 20px;
-  }
+    }
   #noSearchResults.empty-state i {
       color: white;
   }
@@ -242,8 +244,8 @@
 
 {% block content %}
 <header class="page-header">
-  <div class="container d-flex justify-content-between align-items-center">
-    <h1 class="page-title">Today's Available Cakes</h1>
+<div class="container d-flex justify-content-between align-items-center">
+  <h1 class="page-title">Today's Available Cakes</h1>
     
     <!-- Search wrapper -->
     <div class="search-wrapper">
@@ -373,18 +375,18 @@
       </div>
       {% endfor %}
     {% else %}
-      <div class="empty-state">
+    <div class="empty-state" style="grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; padding: 60px 20px;">
         <i class="fas fa-cake-candles fa-4x"></i>
         <h3>No Cakes Available</h3>
         <p>Check back soon for fresh cakes!</p>
-      </div>
+    </div>
     {% endif %}
   </div>
-  <div id="noSearchResults" class="empty-state" style="display: none;">
-  <i class="fas fa-search fa-4x"></i>
-  <h3>No Matching Search</h3>
-  <p>Try a different name or category.</p>
-</div>
+  <div id="noSearchResults" class="empty-state" style="grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; width: 100%; padding: 60px 20px;">
+      <i class="fas fa-search fa-4x"></i>
+      <h3>No Matching Search</h3>
+      <p>Try a different name or category.</p>
+  </div>
 </main>
 
 <!-- ================================================================ -->

@@ -192,7 +192,12 @@
   }
   @media (max-width: 576px) {
     .card-header h4 { font-size: 1.1rem; }
-    .table-responsive { font-size: 0.85rem; }
+  .table-responsive {
+    overflow: visible; 
+  }
+  @media (max-width: 992px) {
+    .table-responsive { overflow-x: auto; }
+  }
     .form-control, .form-select { font-size: 0.9rem; }
   }
   /* ── MOBILE CARD VIEW ── */
@@ -470,10 +475,10 @@
               </button>
               
               <div class="dropdown">
-                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-                  type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                  <i class="fas fa-ellipsis-v"></i>
-                </button>
+            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+              type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+              <i class="fas fa-ellipsis-v"></i>
+            </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                   <li>
                     <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
@@ -879,6 +884,12 @@ function exportPDF() {
 }
 
 // ── Init ──
+// ── Init dropdowns to escape table overflow clipping ──
+document.querySelectorAll('.dropdown-toggle').forEach(el => {
+  new bootstrap.Dropdown(el, {
+    popperConfig: { strategy: 'fixed' }
+  });
+});
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('searchInventory').addEventListener('keyup', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
   document.getElementById('statusFilterInventory').addEventListener('change', () => { currentInventoryPage = 1; updateInventoryDisplay(); });
