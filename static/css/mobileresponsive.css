@@ -4,27 +4,6 @@
     font-size: 16px !important;
   }
 
-  /* 2. ✅ FIXED: Navbar brand container */
-  .navbar-brand {
-    display: inline-flex !important;
-    align-items: center !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    min-height: 50px !important;
-  }
-
-  /* 3. ✅ FIXED: Navbar logo image - INCREASED SIZE */
-  .navbar-logo {
-    height: 130px !important;
-    max-height: 200px !important;
-    width: auto !important;
-    max-width: 200px !important;
-    object-fit: contain !important;
-    margin-top: 30px !important;
-    margin-bottom: 5px !important;
-    margin-left: 16px !important;
-  }
-
   /* 4. Chatbot safe width */
   .chatbot-window {
     width: 92vw !important;

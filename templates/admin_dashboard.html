@@ -288,6 +288,20 @@
     .card-body { padding: 0.75rem; }
     .d-flex.justify-content-between { flex-direction: column; align-items: flex-start !important; gap: 5px; }
     .section-header { flex-direction: column; align-items: flex-start; }
+    
+    /* Remaining Balance responsive fixes */
+    .card-body .d-flex.justify-content-between {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 4px;
+    }
+    .card-body .text-end {
+      text-align: left !important;
+      width: 100%;
+    }
+    .card-body .text-end .badge {
+      margin-bottom: 4px !important;
+    }
   }
   @media (max-width: 480px) {
     #status-overview .col-6 { width: 30%; }
@@ -473,7 +487,7 @@
             </div>
           </div>
         </div>
-                <div class="col-md-4">
+        <div class="col-md-4">
           <div class="card h-100">
             <div class="card-header bg-white d-flex align-items-center gap-2">
               <span style="width:10px;height:10px;border-radius:50%;background:#facc15;display:inline-block;"></span>
@@ -499,43 +513,40 @@
             </div>
           </div>
         </div>
+        <!-- ===== FIXED REMAINING BALANCE CARD ===== -->
         <div class="col-md-4">
           <div class="card h-100">
-            <div class="card-header bg-white d-flex align-items-center justify-content-between gap-2">
-              <div class="d-flex align-items-center gap-2">
-                <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;"></span>
-                <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Remaining Balance</h6>
-              </div>
-              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#pendingBalanceList" id="pendingBalanceToggle" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;padding:0;">
-                <span id="pendingBalanceChevron" style="transition: transform 0.2s;">▾</span>
-              </button>
+            <div class="card-header bg-white d-flex align-items-center gap-2">
+              <span style="width:10px;height:10px;border-radius:50%;background:#f87171;display:inline-block;"></span>
+              <h6 class="mb-0 text-muted text-uppercase" style="font-size:12px;letter-spacing:.04em;">Remaining Balance</h6>
             </div>
             <div class="card-body">
               <h2 class="fw-bold mb-0">₱{{ "{:,.0f}".format(cus_pending_total) }}</h2>
               <p class="text-muted small mb-3">Due today: ₱{{ "{:,.0f}".format(cus_pending_today) }}</p>
-              <div class="collapse" id="pendingBalanceList">
-                <div style="max-height: 220px; overflow-y: auto;">
-                  {% if cus_pending_list %}
-                    {% for o in cus_pending_list %}
-                    <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                      <div>
-                        <strong class="d-block small">{{ o.customer }}</strong>
-                        <small class="text-muted">{{ o.cake[:20] }}{% if o.cake|length > 20 %}...{% endif %} — {{ o.delivery_date }}</small>
-                      </div>
-                      <div class="text-end">
-                        {% if o.due_today %}<span class="badge bg-warning text-dark mb-1">DUE</span>{% endif %}
-                        <strong class="d-block small">₱{{ "{:,.0f}".format(o.balance) }}</strong>
-                      </div>
+              
+              <!-- Always visible pending balances list -->
+              <div style="max-height: 220px; overflow-y: auto;">
+                {% if cus_pending_list %}
+                  {% for o in cus_pending_list %}
+                  <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                    <div>
+                      <strong class="d-block small">{{ o.customer }}</strong>
+                      <small class="text-muted">{{ o.cake[:20] }}{% if o.cake|length > 20 %}...{% endif %} — {{ o.delivery_date }}</small>
                     </div>
-                    {% endfor %}
-                  {% else %}
-                    <div class="text-center py-3 text-muted small">No pending balances</div>
-                  {% endif %}
-                </div>
+                    <div class="text-end">
+                      {% if o.due_today %}<span class="badge bg-warning text-dark mb-1 d-block d-md-inline">DUE</span>{% endif %}
+                      <strong class="d-block small">₱{{ "{:,.0f}".format(o.balance) }}</strong>
+                    </div>
+                  </div>
+                  {% endfor %}
+                {% else %}
+                  <div class="text-center py-3 text-muted small">No pending balances</div>
+                {% endif %}
               </div>
             </div>
           </div>
         </div>
+        <!-- ===== END FIXED REMAINING BALANCE CARD ===== -->
       </div>
     </section>
   </div><!-- /view-dashboard -->
@@ -573,6 +584,7 @@
       </div>
     </div>
   </div><!-- /view-calendar -->
+  
   <div class="export-modal-overlay" id="dashExportOverlay"  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(107,26,58,0.18);padding:32px 28px 24px;width:100%;max-width:420px;position:relative;animation:modalIn 0.22s ease;">
     <button id="dashCloseExport" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:1.4rem;color:#aaa;cursor:pointer;" >×</button>

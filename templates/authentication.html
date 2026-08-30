@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Login / Sign Up - Mrs. Brave's Cakes</title>
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/authentication.css') }}" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">    
     <!-- SweetAlert2 CDN -->
@@ -17,109 +18,6 @@
     
     <style>
 
-    /* ====== CUSTOM OFFCANVAS MENU ====== */
-    .menu-btn {
-        font-size: 1.5rem;
-        background: none;
-        border: 2px solid #000000;
-        color: #d63384;
-        border-radius: 8px;
-        padding: 5px 15px;
-        cursor: pointer;
-        transition: background-color 0.4s ease, color 0.4s ease;
-    }
-
-    .menu-btn:hover {
-        background-color: #000000;
-        color: #fff;
-    }
-
-    /* ====== CUSTOM OFFCANVAS MENU ====== */
-    .custom-offcanvas {
-        position: fixed;
-        top: 0;
-        right: -270px;                   /* nakatago sa kanan */
-        width: 270px;
-        height: 100%;
-        background-color: #630031;
-        box-shadow: -4px 0 12px rgba(0,0,0,0.2);
-        transition: right 0.5s ease;
-        z-index: 1001;
-        padding: 30px 20px;
-        overflow-y: auto;
-    }
-
-    .custom-offcanvas.active {
-        right: 0;                        /* slide in mula sa kanan */
-    }
-
-    .offcanvas-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
-    }
-
-    .offcanvas-header h5 {
-        color: #0b0b0b;
-        font-weight: 700;
-        font-size: 1.2rem;
-        margin: 0;
-    }
-
-    .offcanvas-body {
-        margin-top: 20px;
-        padding-top: 10px;
-    }
-
-    .offcanvas-body a {
-        display: block;
-        text-decoration: none;
-        color: #ffffff !important;      /* white text tulad ng admin */
-        font-weight: 400 !important;    /* hindi bold, same sa admin */
-        font-size: 1rem;
-        margin-bottom: 5px;
-        padding: 12px 15px;
-        border-radius: 8px;
-        transition: background-color 0.3s ease, color 0.3s ease;
-    }
-
-    .offcanvas-body a:hover {
-        background-color: #d63384 !important;
-        color: #ffffff !important;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        font-size: 1.8rem;
-        cursor: pointer;
-        color: #ffffff;              /* AYOS: black para makita */
-        line-height: 1;
-        font-weight: 700;
-    }
-
-    .close-btn:hover {
-        color: #060003;           /* pink on hover */
-    }
-
-    /* ====== OVERLAY ====== */
-    .menu-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.4);
-        z-index: 1000;
-    }
-
-    .menu-overlay.active {
-        display: block;
-    }
     .pw-strength-wrapper {
         margin-top: -8px;
         margin-bottom: 10px;
@@ -153,19 +51,14 @@
 
 <body>
 <!-- NAVBAR -->
-<nav class="navbar fixed-top" style="min-height:80px; height:auto; overflow:visible; padding:10px; background-color:#000000;">
-    <div class="container-fluid" style="display:flex; justify-content:space-between; align-items:center;">
-
-        <a href="/">
-            <img src="{{ url_for('static', filename='img/mrs.brave.jpg') }}"
-                 alt="MRS. Brave's"
-                 style="height:160px; width:auto; object-fit:contain; display:block; margin-top:18px;">
+<nav class="navbar">
+    <div class="navbar-container">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='img/mrs-brave-logo.png') }}" alt="MRS. Brave's" class="navbar-logo">
         </a>
-
-        <button class="menu-btn" id="menuToggle">
-            ☰ Menu
-        </button>
-
+        <div class="navbar-actions">
+            <button class="menu-btn" id="menuToggle">☰ Menu</button>
+        </div>
     </div>
 </nav>
 
@@ -191,12 +84,11 @@
 </div>
 
     <!-- Spacer for navbar -->
-    <div style="height: 70px;"></div>
+    <div class="navbar-spacer"></div>
 
     <!-- FORM CONTAINER -->
     <div class="container">
-        <div style="height: 70px;"></div>
-        
+
         <div class="container auth-layout">
             <!-- LEFT SIDE: LOGO -->
             <div class="auth-left">

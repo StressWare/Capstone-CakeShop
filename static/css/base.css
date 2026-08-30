@@ -15,19 +15,29 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 }
 
 
-/* ====== NAVBAR ====== */
+/* ====== NAVBAR (glassmorphism) ====== */
+:root {
+    --brand-pink: #d63384;
+    --brand-pink-light: #ff4d88;
+    --nav-glass-1: rgba(10, 2, 6, 0.78);
+    --nav-glass-2: rgba(45, 8, 24, 0.62);
+    --nav-border: rgba(255, 154, 194, 0.18);
+}
+
 .navbar {
     position: fixed;
     top: 0;
     width: 100%;
-    height: 70px; /* keep navbar height */
-    background-color: #000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 999;
-    padding: 0 30px;
+    min-height: 76px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    padding: 10px 32px;
+    background: linear-gradient(120deg, var(--nav-glass-1), var(--nav-glass-2));
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border-bottom: 1px solid var(--nav-border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.04) inset;
+    z-index: 999;
 }
 
 .navbar-container {
@@ -35,63 +45,116 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    position: relative; /* for logo positioning */
 }
 
 .navbar-brand {
-    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
 }
 
 .navbar-logo {
-    height: 180px; /* BIG logo */
-    width: auto;   /* keep aspect ratio */
-    position: absolute;
-    top: 10%; /* vertically center relative to navbar */
-    transform: translateY(-50%);
-    padding-bottom: -16px;
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    filter: drop-shadow(0 2px 10px rgba(214,51,132,.5));
+    transition: transform .3s ease;
+}
+
+.navbar-brand:hover .navbar-logo {
+    transform: scale(1.04);
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+@media (max-width: 575px) {
+    .navbar { padding: 8px 16px; min-height: 64px; }
+    .navbar-logo { height: 30px; }
+    .navbar-actions { gap: 10px; }
+}
+
+.navbar-spacer {
+    margin-top: 76px;
+}
+
+@media (max-width: 575px) {
+    .navbar-spacer { margin-top: 64px; }
 }
 
 /* ====== NOTIFICATION BELL WRAPPER ====== */
 .notification-bell-wrapper {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.22);
+    backdrop-filter: blur(6px);
     position: relative;
     cursor: pointer;
+    transition: background .25s ease, border-color .25s ease, transform .2s ease;
     z-index: 1002; /* Must be higher than navbar z-index (999) */
 }
 
+.notification-bell-wrapper:hover {
+    background: rgba(214,51,132,0.22);
+    border-color: rgba(214,51,132,0.5);
+    transform: translateY(-1px);
+}
+
 .bell-icon {
-    font-size: 1.3rem;
-    color: #d63384;
+    font-size: 1.05rem;
+    color: #ff9ac2;
+}
+
+@media (max-width: 575px) {
+    .notification-bell-wrapper { width: 36px; height: 36px; }
 }
 
 .notification-badge {
     display: none;
     position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #dc3545;
+    top: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, var(--brand-pink-light), var(--brand-pink));
     color: white;
-    font-size: 0.65rem;
+    font-size: 0.62rem;
+    font-weight: 700;
     border-radius: 50%;
-    padding: 2px 6px;
-    min-width: 18px;
+    min-width: 17px;
+    height: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 2px rgba(15,3,9,.85);
     text-align: center;
-    line-height: 1.5; /* Vertically center the number */
+    line-height: 1;
 }
 
 /* ====== DROPDOWN DESKTOP (Default) ====== */
 .notification-dropdown {
     position: absolute;
-    top: 45px; /* Adjust based on your bell icon height */
+    top: 52px; /* Adjust based on your bell icon height */
     right: 0;
     width: 320px;
     max-height: 400px;
-    background: white;
+    background: linear-gradient(165deg, rgba(20, 5, 12, 0.92), rgba(48, 9, 25, 0.88));
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid var(--nav-border);
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     display: none; /* Toggled via JS */
     z-index: 1002;
     overflow-y: auto; /* Allows scrolling if many notifications */
-    border: 1px solid #f0f0f0;
+    color: #fff;
 }
 
 /* Dropdown Header Styling */
@@ -100,7 +163,7 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    background: #d63384;
+    background: linear-gradient(135deg, var(--brand-pink), var(--brand-pink-light));
     color: white;
     font-weight: 600;
     font-size: 0.85rem;
@@ -130,35 +193,37 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 .notif-body {
     padding: 20px;
     text-align: center;
-    color: #666;
+    color: rgba(255,255,255,0.65);
+}
+
+.dropdown-list {
+    max-height: 350px;
+    overflow-y: auto;
 }
 
 /* ====== 📱 MOBILE RESPONSIVE FIX ====== */
 @media (max-width: 768px) {
     .notification-dropdown {
-        /* CHANGE 1: Fixed position prevents it from being cut off by parent containers */
-        position: fixed !important; 
-        
-        /* CHANGE 2: Push it right below the navbar */
-        top: 70px !important; 
-        
-        /* CHANGE 3: Stretch it almost full width */
+        /* Fixed position prevents it from being cut off by parent containers */
+        position: fixed !important;
+        /* Push it right below the navbar */
+        top: 70px !important;
+        /* Stretch it almost full width */
         left: 10px !important;
         right: 10px !important;
-        width: auto !important; 
-        
-        /* CHANGE 4: Remove rounded corners at top for a cleaner mobile look */
-        border-radius: 0 0 12px 12px; 
+        width: auto !important;
+        /* Remove rounded corners at top for a cleaner mobile look */
+        border-radius: 0 0 12px 12px;
         max-width: 100%;
     }
 
-    /* Optional: Stack buttons vertically if screen is very narrow */
+    /* Stack buttons vertically if screen is very narrow */
     .notif-header {
         flex-direction: column;
         gap: 8px;
         align-items: flex-start;
     }
-    
+
     .notif-actions {
         width: 100%;
         justify-content: space-between;
@@ -167,36 +232,31 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 
 /* ====== MENU (RIGHT-SIDE SLIDE-IN) ====== */
 .menu-btn {
-    font-size: 1.5rem;
-    background: none;
-    border: 2px solid #000000;
-    color: #0c0006;
-    border-radius: 8px;
-    padding: 5px 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,154,194,.35);
+    color: #fff;
+    border-radius: 999px;
+    padding: 10px 20px;
+    backdrop-filter: blur(6px);
     cursor: pointer;
-    transition: background-color 0.4s ease, color 0.4s ease;
+    transition: all 0.25s ease;
 }
 
 .menu-btn:hover {
-    background-color: #d63384;
-    color: #fff;
+    background: linear-gradient(135deg, var(--brand-pink), var(--brand-pink-light));
+    border-color: transparent;
+    box-shadow: 0 6px 20px rgba(214,51,132,.4);
+    transform: translateY(-1px);
 }
 
-/* ====== CUSTOM OFFCANVAS MENU ====== */
-.menu-btn {
-    font-size: 1.5rem;
-    background: none;
-    border: 2px solid #000000;
-    color: #d63384;
-    border-radius: 8px;
-    padding: 5px 15px;
-    cursor: pointer;
-    transition: background-color 0.4s ease, color 0.4s ease;
-}
-
-.menu-btn:hover {
-    background-color: #000000;
-    color: #fff;
+@media (max-width: 575px) {
+    .menu-btn { padding: 9px 14px; font-size: 0.85rem; }
 }
 
 /* ====== CUSTOM OFFCANVAS MENU ====== */
@@ -206,8 +266,11 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     right: -270px;                   /* nakatago sa kanan */
     width: 270px;
     height: 100%;
-     background-color: #630031;
-    box-shadow: -4px 0 12px rgba(0,0,0,0.2);
+    background: linear-gradient(165deg, rgba(18, 4, 11, 0.92), rgba(48, 9, 25, 0.88));
+    backdrop-filter: blur(22px) saturate(160%);
+    -webkit-backdrop-filter: blur(22px) saturate(160%);
+    border-left: 1px solid var(--nav-border);
+    box-shadow: -12px 0 40px rgba(0,0,0,0.45);
     transition: right 0.5s ease;
     z-index: 1001;
     padding: 30px 20px;
@@ -224,11 +287,11 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     align-items: center;
     margin-bottom: 10px;
     padding-bottom: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.3);  /* ← dagdag ito */
+    border-bottom: 1px solid rgba(255,154,194,0.15);
 }
 
 .offcanvas-header h5 {
-    color: #0b0b0b;
+    color: #fff;
     font-weight: 700;
     font-size: 1.2rem;
     margin: 0;
@@ -242,17 +305,19 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 .offcanvas-body a {
     display: block;
     text-decoration: none;
-    color: #ffffff !important;      /* white text tulad ng admin */
-    font-weight: 400 !important;    /* hindi bold, same sa admin */
+    color: #ffffff !important;
+    font-weight: 400 !important;
     font-size: 1rem;
     margin-bottom: 5px;
     padding: 12px 15px;
     border-radius: 8px;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    border: 1px solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .offcanvas-body a:hover {
-    background-color: #d63384 !important;
+    background-color: rgba(214,51,132,0.18) !important;
+    border-color: rgba(255,154,194,0.3);
     color: #ffffff !important;
 }
 
@@ -261,28 +326,14 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     border: none;
     font-size: 1.8rem;
     cursor: pointer;
-    color: #e1113e;              /* AYOS: black para makita */
+    color: #fff;
     line-height: 1;
     font-weight: 700;
+    transition: color 0.2s ease;
 }
 
 .close-btn:hover {
-    color: #060003;           /* pink on hover */
-}
-
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
+    color: var(--brand-pink-light);
 }
 
 /* ====== OVERLAY ====== */
@@ -293,39 +344,8 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
-}
-
-/* ====== OVERLAY ====== */
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 1000;
-}
-
-.menu-overlay.active {
-    display: block;
-}
-
-/* ====== OVERLAY ====== */
-.menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
+    background: rgba(8, 2, 5, 0.5);
+    backdrop-filter: blur(3px);
     z-index: 1000;
 }
 

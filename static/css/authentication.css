@@ -17,30 +17,8 @@ body {
 
 /* NAVBAR STYLES */
 .navbar {
-    background-color: black;
     box-shadow: 0 4px 15px rgba(255, 133, 162, 0.2);
-    min-height: 70px;
-    max-height: 70px;
-    padding: 0 !important;
-    z-index: 1000;
 }
-
-.navbar-brand {
-    font-size: 1.8rem;
-    color: #fff !important;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-    padding-left: 20px;
-    letter-spacing: 0.5px;
-}
-
-.navbar-logo {
-    margin-top: 18px;
-    height: 200px;
-    width: 230px;
-    object-fit: contain;
-    display: block;
-}
-
 .container-fluid {
     padding: 0 30px;
     height: 70px;
@@ -51,7 +29,7 @@ body {
 /* FORM CONTAINER - Fixed for your nested structure */
 .form-container {
     margin-right: 15%;
-    margin-top: -3%;
+    margin-top: 7%;
     margin-bottom: 5%;
     width: 20%;
     background: rgba(236, 9, 107, 0.15); /* transparent pink */
@@ -241,7 +219,7 @@ button[type="submit"]:active {
 .auth-left .auth-logo {
     max-width: 300px;
     width: 100%;
-    margin-top: -100px;
+    margin-top: 50px;
     height: auto;
 }
 
@@ -310,63 +288,6 @@ button[type="submit"]:active {
     transform: scale(1.05);
 }
 
-/* RESPONSIVE STACKING */
-@media (max-width: 576px) {
-  .auth-layout {
-    flex-direction: column;
-    align-items: center;
-    padding: 0 16px;
-    margin-top: -120px
-  }
-
-.auth-left .auth-logo {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.auth-left {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  padding: 10px 0;
-  margin-bottom: -100px;
-}
-
-  .form-container {
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-    box-sizing: border-box;
-  }
-
-  .form {
-    width: 100%;
-  }
-
-  h2 {
-    font-size: 1.6rem;
-  }
-
-  input[type="email"],
-  input[type="text"],
-  input[type="password"] {
-    padding: 16px 20px;
-    font-size: 1rem;
-  }
-
-  button[type="submit"] {
-    padding: 18px;
-    font-size: 1.1rem;
-  }
-
-  body {
-    overflow-y: auto;
-  }
-}
 
 
 /* ANIMATIONS */
@@ -432,12 +353,20 @@ button[type="submit"]:active {
     }
   }
 
-@media (max-width: 640px) {
+
+  @media (max-width: 768px) {
     .auth-layout {
         flex-direction: column;
         align-items: center;
         padding: 0 16px;
-        margin-top: -120px;
+        margin-top: 40px;
+    }
+
+    .auth-left {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
     }
 
     .auth-left .auth-logo {
@@ -445,16 +374,7 @@ button[type="submit"]:active {
         height: 150px;
         border-radius: 50%;
         object-fit: cover;
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-
-    .auth-left {
-        display: flex;
-        justify-content: center;
-        width: 100%;
-        padding: 10px 0;
-        margin-bottom: -60px;
+        margin: 0;
     }
 
     .form-container {
@@ -464,18 +384,26 @@ button[type="submit"]:active {
         box-sizing: border-box;
     }
 
-    .form {
-        width: 100%;
-    }
-}
-.signup-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 12px;
-}
+    .form { width: 100%; }
 
-@media (max-width: 480px) {
-    .signup-grid {
-        grid-template-columns: 1fr;
+    h2 { font-size: 1.6rem; }
+
+    input[type="email"], input[type="text"], input[type="password"] {
+        padding: 16px 20px;
+        font-size: 1rem;
+    }
+
+    button[type="submit"] {
+        padding: 18px;
+        font-size: 1.1rem;
+    }
+
+    body { overflow-y: auto; }
+    .auth-left {
+    flex: 0 0 auto;   /* stop the leftover 300px height reservation */
+    }
+
+    .form-container {
+        flex: 0 0 auto;   /* same fix, in case it's set elsewhere */
     }
 }

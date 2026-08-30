@@ -38,42 +38,7 @@ h2 {
 }
 
 
-/* =====================================================
-   NAVBAR
-===================================================== */
-
-.navbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    height: 70px;
-    background-color: #000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    z-index: 999;
-    padding: 0 30px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.navbar-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-}
-
-    .navbar-brand {
-        display: flex;
-        align-items: center;
-    }
-
-        .navbar-logo {
-            margin-top: 15px;
-            height: 180px;
-            width: 230px;
-            object-fit: contain;
-        }
+/* NAVBAR: see base.css for shared styles */
 
 
 
@@ -1006,11 +971,6 @@ label[for="notes"] {
         padding: 0 10px;
     }
 
-    .navbar-logo {
-        height: 150px;
-        margin-left: -50px;
-    }
-
     .carousel-item {
         display: none;
         position: relative;
@@ -1136,11 +1096,6 @@ label[for="notes"] {
 
     .top-cakes-section .container {
         padding: 0;
-    }
-
-    .menu-btn {
-        font-size: 1.2rem;
-        padding: 5px 10px;
     }
 
     #orderNowBtn,

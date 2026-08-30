@@ -14,42 +14,196 @@
     background: #ffffff;
   }
 
-  /* ── Tabs + Total row ── */
+ /* ── Tabs + Total row ── */
+.tabs-revenue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.order-tabs-wrapper {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.order-tabs-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.order-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-width: max-content;
+}
+
+.order-tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  background: #f0f0f0;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.order-tab-btn.active {
+  background: #c71585;
+  color: white;
+}
+
+.tab-count {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+
+.order-tab-btn.active .tab-count {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ── Total display ── */
+.total-display {
+  background: #fff0f7;
+  border: 1.5px solid #c71585;
+  border-radius: 10px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.total-label { 
+  font-size: 0.82rem; 
+  color: #c71585; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+}
+
+.total-value { 
+  font-size: 1.3rem; 
+  font-weight: 700; 
+  color: #c71585; 
+}
+
+/* ── Search + date filter row ── */
+.search-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.search-filter-row .input-group {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+.date-filter-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.date-filter-btn {
+  padding: 6px 14px;
+  border: 1.5px solid #c71585;
+  border-radius: 8px;
+  background: transparent;
+  color: #c71585;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.date-filter-btn.active,
+.date-filter-btn:hover {
+  background: #c71585;
+  color: white;
+}
+
+/* ── Responsive fixes ── */
+@media (max-width: 768px) {
+  body, html { overflow-x: hidden; }
+  .container-fluid { 
+    padding-left: 10px !important; 
+    padding-right: 10px !important; 
+  }
+
   .tabs-revenue-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .order-tabs {
-    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     gap: 10px;
-    flex-wrap: nowrap;
   }
+
+  .order-tabs-wrapper {
+    width: 100%;
+  }
+
+  .order-tabs {
+    gap: 6px;
+  }
+
   .order-tab-btn {
-    padding: 8px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #f0f0f0;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
+    padding: 6px 12px;
+    font-size: 0.75rem;
   }
-  .order-tab-btn.active {
-    background: #c71585;
-    color: white;
+
+  .total-display {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 14px;
+    flex-wrap: wrap;
+    gap: 4px 10px;
   }
-  .tab-count {
-    background: rgba(0,0,0,0.1);
-    border-radius: 10px;
-    padding: 1px 6px;
-    margin-left: 5px;
+
+  .total-value {
+    font-size: 1.1rem;
   }
-  .order-tab-btn.active .tab-count {
-    background: rgba(255,255,255,0.2);
+
+  .total-label {
+    font-size: 0.7rem;
   }
+
+  /* Fix dropdown text cut off */
+  .form-select {
+    font-size: 0.85rem;
+    padding-right: 30px;
+  }
+
+  .row.mb-3 {
+    gap: 8px;
+  }
+
+  .row.mb-3 .col-md-6,
+  .row.mb-3 .col-md-3 {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .input-group,
+  .form-select {
+    width: 100%;
+    font-size: 0.85rem;
+  }
+
+  /* ... rest of mobile table styles ... */
+}
 
   /* ── Total display ── */
   .total-display {
@@ -420,26 +574,27 @@
   <div class="card shadow-sm">
     <div class="card-body">
 
-      <!-- TABS + TOTAL REVENUE (same row) -->
-      <div class="tabs-revenue-row">
+    <!-- TABS + TOTAL REVENUE (same row) - FIXED -->
+    <div class="tabs-revenue-row">
+      <div class="order-tabs-wrapper">
         <div class="order-tabs">
           <button class="order-tab-btn active" data-tab="online">
             Online Sales <span class="tab-count" id="count-online">{{ online_count }}</span>
           </button>
           <button class="order-tab-btn" data-tab="walkin">
-            Walk-in Sales <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
+            Walk-in <span class="tab-count" id="count-walkin">{{ walkin_count }}</span>
           </button>
           <button class="order-tab-btn" data-tab="pending">
-            Pending Sales <span class="tab-count" id="count-pending">{{ pending_count }}</span>
+            Pending <span class="tab-count" id="count-pending">{{ pending_count }}</span>
           </button>
         </div>
-        <div class="total-display">
-          <span class="total-label">Total Revenue</span>
-          <span class="total-value">₱<span id="totalRevenue">0.00</span></span>
-          <span class="total-label" id="totalCount"></span>
-        </div>
       </div>
-
+      <div class="total-display">
+        <span class="total-label">Total Revenue</span>
+        <span class="total-value">₱<span id="totalRevenue">0.00</span></span>
+        <span class="total-label" id="totalCount"></span>
+      </div>
+    </div>
       <!-- SEARCH + DATE FILTERS  -->
       <div class="row mb-3">
         <div class="col-md-6 mb-2">
