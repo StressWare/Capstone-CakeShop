@@ -175,7 +175,10 @@ limiter.init_app(app)
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
     if request.is_json:  #  covers all routes
-        return jsonify({"error": "Too many requests. Please slow down."}), 429
+        retry_after = getattr(e, 'retry_after', 60)
+        return jsonify({"error": "Too many requests. Please slow down.",
+                         "retry_after": retry_after,
+                         "description": str(e.description)}), 429
     retry_after = getattr(e, 'retry_after', 60)
     return render_template('429.html', description=e.description, retry_after=retry_after), 429
 
@@ -214,7 +217,11 @@ def method_not_allowed(e):
     return render_template('405.html'), 405
 @app.route('/429')
 def too_many_requests():
-    return render_template('429.html'), 429
+    retry_after = request.args.get('retry_after', 60, type=int)
+    description = request.args.get('description')
+    next_url = request.args.get('next') or '/'
+    return render_template('429.html', retry_after=retry_after,
+                            description=description, next_url=next_url), 429
 
 # ================================================================
 # PUBLIC ROUTES

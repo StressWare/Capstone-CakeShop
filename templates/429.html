@@ -187,8 +187,8 @@
     </div>
 
     <div class="btn-group">
-      <button id="retryBtn" class="btn" disabled onclick="window.location.reload()">⏳ Please Wait…</button>
-      <a href="/" class="btn btn-ghost">← Back to Home</a>
+      <button id="retryBtn" class="btn" disabled>⏳ Please Wait…</button>
+      <button type="button" id="goBackBtn" class="btn btn-ghost">← Go Back</button>
     </div>
     <div class="brand">Mrs. Brave's Cakes Iloilo</div>
   </div>
@@ -225,6 +225,19 @@
     }
 
     tick();
+
+    document.getElementById('goBackBtn').addEventListener('click', function () {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    });
+
+    const nextUrl = "{{ next_url | default('/') | e }}";
+    retryBtn.addEventListener('click', function () {
+      window.location.href = nextUrl;
+    });
   </script>
 </body>
 </html>

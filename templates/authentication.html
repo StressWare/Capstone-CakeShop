@@ -731,9 +731,15 @@ window.fetch = function(url, options = {}) {
     }
  
     return originalFetch(url, options).then(response => {
-        if (response.status === 429) {
-            window.location.href = '/429';
-        }
+    if (response.status === 429) {
+        response.clone().json().then(data => {
+            const params = new URLSearchParams({
+                retry_after: data.retry_after || 60,
+                next: window.location.href
+            });
+            window.location.href = '/429?' + params.toString();
+        }).catch(() => { window.location.href = '/429'; });
+    }
         return response;
     });
 };
