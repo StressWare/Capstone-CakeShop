@@ -1,9 +1,13 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort, make_response,send_file
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_talisman import Talisman
 from extensions import limiter, send_order_confirmation
 from flask_limiter.errors import RateLimitExceeded
 from datetime import datetime, timedelta, timezone
+
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
@@ -50,8 +54,7 @@ if os.environ.get("FLASK_ENV") == "development":
     from pyngrok import ngrok
 from werkzeug.middleware.proxy_fix import ProxyFix
 from paymongo import create_checkout_session, verify_payment, build_line_items
-from dotenv import load_dotenv
-load_dotenv()
+
 
 app = Flask(__name__)
 @app.context_processor
