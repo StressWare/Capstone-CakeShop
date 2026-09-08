@@ -593,7 +593,6 @@ function selectDelivery(type) {
         .catch(() => {});
     }, 600);
   });
-  
   // ── Validate lat/lng before submit for delivery orders ──
   document.querySelector('form').addEventListener('submit', function(e) {
     var deliveryType = document.getElementById('deliveryTypeInput').value;
@@ -602,7 +601,12 @@ function selectDelivery(type) {
       var lng = document.getElementById('lngInput').value;
       if (!lat || !lng) {
         e.preventDefault();
-        alert('Please select your delivery location on the map.');
+        glassAlert({
+          icon: 'warning',
+          title: 'Location Needed',
+          text: 'Please select your delivery location on the map.',
+          confirmButtonText: 'Got it',
+        });
         document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
         return;
       }

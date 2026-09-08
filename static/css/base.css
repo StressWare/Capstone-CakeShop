@@ -140,9 +140,9 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 
 /* ====== DROPDOWN DESKTOP (Default) ====== */
 .notification-dropdown {
-    position: absolute;
-    top: 52px; /* Adjust based on your bell icon height */
-    right: 0;
+    position: fixed;
+    top: 76px;      /* matches .navbar min-height */
+    right: 40px;    /* pulled in from the edge a bit more than nav padding */
     width: 320px;
     max-height: 400px;
     background: linear-gradient(165deg, rgba(20, 5, 12, 0.92), rgba(48, 9, 25, 0.88));
@@ -153,10 +153,9 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     display: none; /* Toggled via JS */
     z-index: 1002;
-    overflow-y: auto; /* Allows scrolling if many notifications */
+    overflow-y: auto;
     color: #fff;
 }
-
 /* Dropdown Header Styling */
 .notif-header {
     display: flex;
@@ -204,20 +203,14 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 /* ====== 📱 MOBILE RESPONSIVE FIX ====== */
 @media (max-width: 768px) {
     .notification-dropdown {
-        /* Fixed position prevents it from being cut off by parent containers */
-        position: fixed !important;
-        /* Push it right below the navbar */
-        top: 70px !important;
-        /* Stretch it almost full width */
-        left: 10px !important;
-        right: 10px !important;
-        width: auto !important;
-        /* Remove rounded corners at top for a cleaner mobile look */
+        top: 68px;      /* matches shrunken mobile navbar height */
+        left: 10px;
+        right: 16px;    /* small margin so it's not flush against the screen edge */
+        width: auto;
         border-radius: 0 0 12px 12px;
         max-width: 100%;
     }
 
-    /* Stack buttons vertically if screen is very narrow */
     .notif-header {
         flex-direction: column;
         gap: 8px;
