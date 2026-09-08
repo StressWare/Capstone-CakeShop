@@ -5,299 +5,565 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style nonce="{{ csp_nonce() }}">
+  /* ===== ROOT VARIABLES ===== */
   :root {
-    --pink:    #f472b6;
-    --pink-d:  #db2777;
-    --cream:   #fdf6f0;
-    --brown:   #7c3f1e;
-    --gold:    #d97706;
-    --border:  rgba(0,0,0,0.08);
+    --pink: #f472b6;
+    --pink-d: #db2777;
+    --cream: #fdf6f0;
+    --brown: #7c3f1e;
+    --gold: #d97706;
+    --border: rgba(0,0,0,0.08);
   }
 
-  body { 
+  /* ===== BODY & BACKGROUND ===== */
+  body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #0f0f0f, #2a0a1a, #ff4d88);
     background-attachment: fixed;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
   }
 
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 0.12; }
+    50% { opacity: 0.20; }
+  }
+
+  /* ===== MAIN SECTION ===== */
   .customize-section {
     max-width: 1100px;
     margin: 0 auto;
     padding: 24px 16px 48px;
-    overflow: visible; /* ✅ Add this */
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-    .page-title {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 28px;
-      font-weight: 600;
-      margin: 0 0 4px;
-      color: white;
-    }
+  .page-title {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: white;
+  }
+
   .page-sub {
     font-size: 13px;
     color: white;
     margin: 0 0 12px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.5); /* ✅ Adds depth */
+    opacity: 0.9;
   }
-    .layout {
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
 
-    /* --- FORM PANEL --- */
-    .form-panel {
-      flex: 1;
-      min-width: 0;
-      background: rgba(236, 9, 107, 0.15);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 167, 205, 0.3);
-      box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-      border-radius: 16px;
-      padding: 24px;
-      color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+  /* ===== LAYOUT ===== */
+  .layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    width: 100%;
+  }
 
-    .step-label {
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: white;
-      margin: 0 0 6px;
-    }
+  /* ===== FORM PANEL ===== */
+  .form-panel {
+    flex: 1;
+    min-width: 0;
+    background: rgba(236, 9, 107, 0.15);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 167, 205, 0.3);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    border-radius: 16px;
+    padding: 24px;
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-    .section-title {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 18px;
-      color: white;
-      margin: 0 0 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
+  .bg-decoration {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.18;
+    animation: pulse-glow 6s ease-in-out infinite;
+  }
 
-    .dropdowns-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin-bottom: 20px;
-      align-items: start;
-    }
+  .bg-cake-left {
+    top: 15%;
+    left: -60px;
+    width: 280px;
+    height: 280px;
+  }
 
-    .grid-col {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+  .bg-cake-right {
+    bottom: 5%;
+    right: -40px;
+    width: 240px;
+    height: 240px;
+  }
 
-    .field { margin-bottom: 0; }
-    .field > label {
-      display: block;
-      font-size: 12px;
-      font-weight: 500;
-      color: white;
-      margin-bottom: 5px;
-    }
+  .step-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: white;
+    margin: 0 0 6px;
+  }
 
-    select, textarea {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1px solid #e5d5c5;
-      border-radius: 8px;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 13px;
-      background: #fffcf9;
-      color: #3d2010;
-      box-sizing: border-box;
-      transition: border-color 0.2s;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a07060' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-    }
-    select:focus, textarea:focus {
-      outline: none;
-      border-color: var(--pink);
-    }
-    textarea {
-      background-image: none;
-      resize: vertical;
-      color: white;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.2);
-    }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: white;
+    margin: 0 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
 
-    .addons-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: white;
-      margin-bottom: 6px;
-      display: block;
-    }
+  /* ===== DROPDOWN GRID ===== */
+  .dropdowns-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+    align-items: start;
+    width: 100%;
+  }
 
-    .addon-grid {
-      display: grid !important;
-      grid-template-columns: repeat(4, 1fr) !important;
-      gap: 6px;
-      color: white;
-    }
+  .grid-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+  }
 
-    .addon-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border: 1px solid #e5d5c5;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      font-size: 12px;
-      color: white
-    }
-    .addon-item:hover { border-color: var(--pink); background: rgba(255,255,255,0.05); }
-    .addon-item input { margin: 0; accent-color: var(--pink-d); }
+  .field {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 0;
+  }
 
-    .below-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+  .field > label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    margin-bottom: 5px;
+  }
 
-    .custom-file-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      border: 1px dashed #d4a090;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--pink-d);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .custom-file-btn:hover { background: rgba(255,255,255,0.05); }
+  /* ===== CUSTOM SELECT ===== */
+  .custom-select-wrapper {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+  }
 
-    .rush-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: white;
-    }
-    .rush-row input { accent-color: var(--pink-d); }
+  .native-select {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+  }
 
-    .btn-checkout {
-      display: block;
-      width: 100%;
-      margin-top: 14px;
-      padding: 13px;
-      background: var(--pink-d);
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      text-align: center;
-      text-decoration: none;
-    }
-    .btn-checkout:hover { background: #be185d; }
-    .btn-checkout:active { transform: scale(0.98); }
+  .custom-select-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e5d5c5;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    background: #fffcf9;
+    color: #3d2010;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+    z-index: 1;
+  }
 
-    /* --- PREVIEW PANEL --- */
-    .preview-panel {
-      width: 360px;
-      min-width: 320px;
-      position: sticky;
-      top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
+  .custom-select-trigger:hover {
+    border-color: var(--pink);
+  }
 
-    .preview-card {
-      background: #fff;
-      border: 0.5px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
+  .custom-select-trigger.active {
+    border-color: var(--pink);
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    z-index: 10000;
+  }
 
-    .preview-header {
-      padding: 14px 18px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .preview-title {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      font-weight: 600;
-      font-size: 15px;
-      color: var(--brown);
-    }
-    .preview-hint {
-      font-size: 11px;
-      color: #c09080;
-    }
+  .custom-select-value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 
-    #cake-canvas {
-      display: block;
-      width: 100%;
-      height: 340px;
-    }
+  .custom-select-arrow {
+    width: 12px;
+    height: 12px;
+    color: #a07060;
+    transition: transform 0.3s;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
 
-    .preview-badges {
-      padding: 10px 16px 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+  .custom-select-trigger.active .custom-select-arrow {
+    transform: rotate(180deg);
+  }
+
+  .custom-select-options {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fffcf9;
+    border: 1px solid var(--pink);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 320px;
+    overflow-y: auto;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+
+  .custom-select-options.show {
+    display: block;
+  }
+
+  .custom-option {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+    color: #3d2010;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    gap: 10px;
+  }
+
+  .custom-option:last-child {
+    border-bottom: none;
+  }
+
+  .custom-option:hover {
+    background: rgba(244, 114, 182, 0.1);
+  }
+
+  .custom-option.selected {
+    background: rgba(244, 114, 182, 0.15);
+    font-weight: 500;
+  }
+
+  .option-svg {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  /* ===== TEXTAREA ===== */
+  textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #e5d5c5;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 13px;
+    background: rgba(255,255,255,0.07);
+    color: white;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    resize: vertical;
+    min-height: 50px;
+  }
+
+  textarea:focus {
+    outline: none;
+    border-color: var(--pink);
+  }
+
+  textarea::placeholder {
+    color: rgba(255,255,255,0.5);
+  }
+
+  /* ===== ADD-ONS ===== */
+  .addons-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .addon-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+  }
+
+  .addon-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 8px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 100%);
+    border: 1.5px solid rgba(255, 167, 205, 0.25);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: center;
+    min-height: 70px;
+    backdrop-filter: blur(8px);
+  }
+
+  .addon-item:hover {
+    border-color: rgba(244, 114, 182, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(219, 39, 119, 0.3);
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.15) 0%, rgba(219, 39, 119, 0.08) 100%);
+  }
+
+  .addon-item input[type="checkbox"] {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--pink-d);
+    cursor: pointer;
+    z-index: 2;
+    margin: 0;
+    opacity: 0.3;
+    transition: opacity 0.3s;
+  }
+
+  .addon-item:hover input[type="checkbox"],
+  .addon-item input[type="checkbox"]:checked {
+    opacity: 1;
+  }
+
+  .addon-item .addon-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: white;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .addon-item .addon-price {
+    font-size: 11px;
+    font-weight: 700;
+    color: #ff66b2;
+  }
+
+  .addon-item:has(input:checked) {
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.25) 0%, rgba(219, 39, 119, 0.15) 100%);
+    border-color: var(--pink);
+    box-shadow: 0 4px 12px rgba(219, 39, 119, 0.35);
+  }
+
+  /* ===== BELOW GRID ===== */
+  .below-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .custom-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1px dashed #d4a090;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--pink-d);
+    cursor: pointer;
+    transition: background 0.15s;
+    background: rgba(255,255,255,0.05);
+    white-space: nowrap;
+  }
+
+  .custom-file-btn:hover {
+    background: rgba(255,255,255,0.1);
+  }
+
+  .rush-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .rush-row input {
+    accent-color: var(--pink-d);
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn-checkout {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 13px;
+    background: var(--pink-d);
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .btn-checkout:hover {
+    background: #be185d;
+  }
+
+  .btn-checkout:active {
+    transform: scale(0.98);
+  }
+
+  .btn-checkout.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* ===== PREVIEW PANEL ===== */
+  .preview-panel {
+    width: 360px;
+    min-width: 320px;
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  .preview-card {
+    background: #fff;
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .preview-header {
+    padding: 14px 18px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .preview-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--brown);
+  }
+
+  .preview-hint {
+    font-size: 11px;
+    color: #c09080;
+  }
+
+  #cake-canvas {
+    display: block;
+    width: 100%;
+    height: 340px;
+  }
+
+  .preview-badges {
+    padding: 10px 16px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
   .preview-disclaimer {
     text-align: center;
-    color: #3f4041; /* Grey text */
+    color: #3f4041;
     font-size: 11px;
     font-style: italic;
     margin: 0;
-    padding: 12px 0 0; /* Pushes it slightly down from the header */
+    padding: 12px 0 0;
   }
-    .badge {
-      font-size: 11px;
-      padding: 3px 9px;
-      border-radius: 20px;
-      background: #fff0f5;
-      color: var(--pink-d);
-      border: 1px solid #fcc;
-      transition: all 0.2s;
-    }
 
-    .total-card {
-      background: #fff;
-      border: 0.5px solid var(--border);
-      border-radius: 16px;
-      padding: 16px 18px;
-    }
-    .total-card .total-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .total-card .total-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--brown);
-    }
-    .total-card .total-amount {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--pink-d);
-    }
-  /* ── Downpayment notice banner ── */
+  .badge {
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: #fff0f5;
+    color: var(--pink-d);
+    border: 1px solid #fcc;
+    transition: all 0.2s;
+  }
+
+  /* ===== TOTAL CARD ===== */
+  .total-card {
+    background: #fff;
+    border: 0.5px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 18px;
+  }
+
+  .total-card .total-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .total-card .total-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--brown);
+  }
+
+  .total-card .total-amount {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--pink-d);
+  }
+
+  /* ===== DOWNPAYMENT NOTICE ===== */
   .downpayment-notice {
     background: linear-gradient(135deg, rgba(214,51,132,0.18), rgba(160,32,94,0.12));
     border: 1px solid rgba(214,51,132,0.45);
@@ -305,9 +571,10 @@
     border-radius: 10px;
     padding: 14px 16px;
     margin-top: 18px;
-    color: white;
+    color: #333;
     font-size: 13px;
   }
+
   .downpayment-notice .notice-title {
     font-weight: 700;
     font-size: 14px;
@@ -317,6 +584,7 @@
     align-items: center;
     gap: 6px;
   }
+
   .downpayment-notice ul {
     margin: 6px 0 10px 16px;
     padding: 0;
@@ -324,6 +592,11 @@
     font-size: 12px;
     line-height: 1.8;
   }
+
+  .downpayment-notice p {
+    color: rgba(75, 71, 71, 0.75);
+  }
+
   .agree-row {
     display: flex;
     align-items: center;
@@ -331,6 +604,7 @@
     margin-top: 8px;
     cursor: pointer;
   }
+
   .agree-row input[type="checkbox"] {
     accent-color: #d63384;
     width: 16px;
@@ -338,216 +612,743 @@
     cursor: pointer;
     flex-shrink: 0;
   }
+
   .agree-row label {
     font-size: 12px;
     color: rgba(75, 71, 71, 0.75);
     cursor: pointer;
     margin: 0;
   }
-  .btn-checkout.locked {
-    opacity: 0.45;
-    cursor: not-allowed;
-    pointer-events: none;
+
+  /* ===== BUTTON CONTAINER ===== */
+  .button-container {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
   }
-    @media (max-width: 720px) {
-      .layout { flex-direction: column-reverse; }
-      .preview-panel { width: 100%; min-width: 0; position: static; }
-      #cake-canvas { height: 280px; }
+
+  .button-container .btn-checkout {
+    flex: 1;
+    margin-top: 0;
+    padding: 8px 13px;
+  }
+
+  /* ===== OTHERS INPUT WRAP ===== */
+  #othersInputWrap {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  #othersInputWrap input,
+  #othersInputWrap textarea {
+    background: rgba(255,255,255,0.08);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 6px;
+    padding: 6px 10px;
+    width: 100%;
+    font-size: 12px;
+    margin-bottom: 6px;
+    box-sizing: border-box;
+  }
+
+  #othersInputWrap input:focus,
+  #othersInputWrap textarea:focus {
+    border-color: var(--pink);
+    outline: none;
+  }
+
+  #othersPriceTag {
+    display: none;
+    font-size: 11px;
+    color: #ff66b2;
+    font-weight: 600;
+  }
+
+  /* ============================================ */
+  /* ===== RESPONSIVE DESIGN ===== */
+  /* ============================================ */
+
+  /* ===== TABLET & BELOW (768px) ===== */
+  @media (max-width: 768px) {
+    .layout {
+      flex-direction: column-reverse;
+      gap: 16px;
     }
 
-    @media (max-width: 520px) {
-      .dropdowns-grid { grid-template-columns: 1fr; }
-      .addon-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .preview-panel {
+      width: 100%;
+      min-width: 0;
+      position: static;
+      flex-shrink: 1;
     }
+
+    #cake-canvas {
+      height: 280px;
+    }
+
+    .bg-decoration {
+      display: none;
+    }
+
+    .form-panel {
+      padding: 16px;
+    }
+
+    .page-title {
+      font-size: 22px;
+    }
+
+    .dropdowns-grid {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .grid-col {
+      gap: 10px;
+    }
+
+    .addon-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 6px;
+    }
+
+    .addon-item {
+      min-height: 60px;
+      padding: 8px 6px;
+    }
+
+    .addon-item .addon-text {
+      font-size: 10px;
+    }
+
+    .addon-item .addon-price {
+      font-size: 10px;
+    }
+
+    /* File upload row */
+    .below-grid > div[style*="display:flex"] {
+      flex-wrap: wrap;
+      gap: 10px !important;
+    }
+
+    .rush-row {
+      margin-left: 0 !important;
+    }
+
+    .button-container {
+      flex-direction: column;
+    }
+
+    .button-container .btn-checkout {
+      padding: 12px 13px;
+    }
+
+    .downpayment-notice {
+      padding: 12px 14px;
+      font-size: 12px;
+    }
+
+    .total-card .total-amount {
+      font-size: 18px;
+    }
+
+    /* Footer fixes */
+    footer {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 30px 20px !important;
+      box-sizing: border-box;
+      overflow-x: hidden;
+    }
+
+    footer .container,
+    footer .footer-container {
+      width: 100% !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+    }
+
+    footer .footer-content,
+    footer .footer-grid,
+    footer [class*="col-"] {
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100% !important;
+      gap: 20px;
+    }
+
+    footer h3,
+    footer h4,
+    footer .footer-title {
+      font-size: 16px !important;
+      margin-bottom: 10px !important;
+    }
+
+    footer p,
+    footer a,
+    footer li {
+      font-size: 14px !important;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    footer .social-icons,
+    footer .social-links {
+      display: flex !important;
+      gap: 10px !important;
+      justify-content: flex-start !important;
+    }
+
+    footer .social-icons a,
+    footer .social-links a {
+      width: 36px !important;
+      height: 36px !important;
+    }
+
+    footer .contact-info,
+    footer .footer-contact {
+      width: 100% !important;
+    }
+
+    footer .contact-info p,
+    footer .footer-contact p {
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      margin-bottom: 8px !important;
+    }
+
+    footer .quick-links,
+    footer .footer-links {
+      width: 100% !important;
+    }
+
+    footer .quick-links ul,
+    footer .footer-links ul {
+      list-style: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    footer .quick-links li,
+    footer .footer-links li {
+      margin-bottom: 8px !important;
+    }
+
+    footer .footer-bottom,
+    footer .copyright {
+      text-align: center !important;
+      padding-top: 20px !important;
+      margin-top: 20px !important;
+      border-top: 1px solid rgba(255,255,255,0.1) !important;
+    }
+  }
+
+  /* ===== MOBILE (480px) ===== */
+  @media (max-width: 480px) {
+    .customize-section {
+      padding: 12px 8px 24px;
+    }
+
+    .form-panel {
+      padding: 12px;
+      border-radius: 12px;
+    }
+
+    .page-title {
+      font-size: 18px;
+    }
+
+    .page-sub {
+      font-size: 11px;
+    }
+
+    .addon-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 4px;
+    }
+
+    .addon-item {
+      min-height: 50px;
+      padding: 6px 4px;
+      border-radius: 8px;
+    }
+
+    .addon-item .addon-text {
+      font-size: 9px;
+    }
+
+    .addon-item .addon-price {
+      font-size: 9px;
+    }
+
+    .addon-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      top: 4px;
+      right: 4px;
+    }
+
+    .custom-select-trigger {
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .custom-option {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .option-svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    #cake-canvas {
+      height: 220px;
+    }
+
+    .total-card {
+      padding: 12px 14px;
+    }
+
+    .total-card .total-amount {
+      font-size: 16px;
+    }
+
+    .total-card .total-label {
+      font-size: 13px;
+    }
+
+    .downpayment-notice {
+      padding: 10px 12px;
+      font-size: 11px;
+    }
+
+    .downpayment-notice .notice-title {
+      font-size: 12px;
+    }
+
+    .btn-checkout {
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    .custom-file-btn {
+      font-size: 11px;
+      padding: 6px 10px;
+      white-space: normal;
+    }
+
+    .preview-header {
+      padding: 10px 14px 0;
+    }
+
+    .preview-title {
+      font-size: 13px;
+    }
+
+    .preview-badges {
+      padding: 8px 12px 10px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 7px;
+    }
+
+    .preview-disclaimer {
+      font-size: 9px;
+      padding: 8px 0 0;
+    }
+
+    .button-container {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .button-container .btn-checkout {
+      padding: 10px 13px;
+      font-size: 13px;
+    }
+
+    .rush-row {
+      font-size: 12px;
+    }
+
+    .agree-row label {
+      font-size: 11px;
+    }
+
+    .field > label {
+      font-size: 11px;
+    }
+
+    textarea {
+      font-size: 12px;
+      padding: 7px 10px;
+      min-height: 40px;
+    }
+
+    #othersInputWrap {
+      padding: 8px 10px;
+    }
+
+    #othersInputWrap input,
+    #othersInputWrap textarea {
+      font-size: 11px;
+      padding: 5px 8px;
+    }
+
+    #uploadedPreview {
+      flex-wrap: wrap;
+    }
+
+    #uploadedPreview img {
+      width: 40px !important;
+      height: 40px !important;
+    }
+
+    #uploadedFileName {
+      font-size: 11px !important;
+    }
+
+    footer {
+      padding: 20px 15px !important;
+    }
+
+    footer h3,
+    footer h4 {
+      font-size: 14px !important;
+    }
+
+    footer p,
+    footer a,
+    footer li {
+      font-size: 13px !important;
+    }
+  }
+
+  /* ===== VERY SMALL PHONES (360px) ===== */
+  @media (max-width: 360px) {
+    .addon-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 3px;
+    }
+
+    .addon-item {
+      min-height: 44px;
+      padding: 4px 3px;
+      border-radius: 6px;
+    }
+
+    .addon-item .addon-text {
+      font-size: 8px;
+    }
+
+    .addon-item .addon-price {
+      font-size: 8px;
+    }
+
+    .addon-item input[type="checkbox"] {
+      width: 12px;
+      height: 12px;
+      top: 3px;
+      right: 3px;
+    }
+
+    .custom-select-trigger {
+      font-size: 11px;
+      padding: 6px 8px;
+    }
+
+    .page-title {
+      font-size: 16px;
+    }
+
+    .form-panel {
+      padding: 10px;
+    }
+
+    #cake-canvas {
+      height: 180px;
+    }
+
+    .total-card {
+      padding: 10px 12px;
+    }
+
+    .total-card .total-amount {
+      font-size: 14px;
+    }
+  }
+
+  /* ===== CHAT BUTTON ===== */
+  .chat-button,
+  .chat-widget,
+  [class*="chat"] {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="customize-section">
   <div class="layout">
-    <!-- ===== FORM ===== -->
+    <!-- ===== FORM PANEL ===== -->
     <div class="form-panel">
-        <p class="page-title">Design Your Cake</p>
-        <p class="page-sub">Every selection updates your 3D preview in real time.</p>
+      <h1 class="page-title">Design Your Cake</h1>
+      <p class="page-sub">Every selection updates your 3D preview in real time.</p>
+
       <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.10); margin: 28px 0;">
-        <!-- FIX: added id="orderForm" so the submit button can reference it -->
+
+      <!-- ===== MAIN ORDER FORM ===== -->
       <form method="POST" action="/order" enctype="multipart/form-data" id="orderForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- ===== DROPDOWNS GRID ===== -->
         <div class="dropdowns-grid">
-          <!-- COL 1 -->
+          <!-- ===== LEFT COLUMN ===== -->
           <div class="grid-col">
+            <!-- Cake Flavor -->
             <div class="field">
               <label for="cakeType">Cake Flavor</label>
-              <select id="cakeType" name="cakeType" required>
-                <option value="" disabled selected>Select Cake Flavors</option>
-                <option value="chocolate|0">Chocolate</option>
-                <option value="vanilla|0">Vanilla</option>
-                <option value="redvelvet|0">Red Velvet</option>
-                <option value="ube|0">Ube</option>
-                <option value="strawberry|0">Strawberry</option>
-                <option value="mocha|0">Mocha</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="flavor">
+                <select id="cakeType" name="cakeType" class="native-select" required>
+                  <option value="" disabled selected>Select Cake Flavors</option>
+                  <option value="chocolate|0" data-color="#4a2c0a" data-frost="#7b4f2e">Chocolate</option>
+                  <option value="vanilla|0" data-color="#fff3c4" data-frost="#fde8a0">Vanilla</option>
+                  <option value="redvelvet|0" data-color="#8B0000" data-frost="#cc4444">Red Velvet</option>
+                  <option value="ube|0" data-color="#6a0dad" data-frost="#d4a0e8">Ube</option>
+                  <option value="strawberry|0" data-color="#ff6b81" data-frost="#ffb3bb">Strawberry</option>
+                  <option value="mocha|0" data-color="#5c3317" data-frost="#a0826d">Mocha</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Cake Flavors</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
+
+            <!-- Cake Shape -->
             <div class="field">
               <label for="cakeShape">Cake Shape</label>
-              <select id="cakeShape" name="cakeShape" required>
-                <option value="" disabled selected>Select Cake Shape</option>
-                <option value="circle">Circle (Round)</option>
-                <option value="rectangle">Rectangle (Sheet)</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="shape">
+                <select id="cakeShape" name="cakeShape" class="native-select" required>
+                  <option value="" disabled selected>Select Cake Shape</option>
+                  <option value="circle">Circle (Round)</option>
+                  <option value="rectangle">Rectangle (Sheet)</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Cake Shape</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
+
+            <!-- Cake Size -->
             <div class="field">
               <label for="cakeSize">Cake Size</label>
-              <select id="cakeSize" name="cakeSize" required>
-                <option value="" disabled selected>Select Cake Size</option>
-                <option value="6|{{ custom_prices.size['6'] }}">6 inches (₱{{ custom_prices.size['6'] | int }})</option>
-                <option value="8|{{ custom_prices.size['8'] }}">8 inches (₱{{ custom_prices.size['8'] | int }})</option>
-                <option value="10|{{ custom_prices.size['10'] }}">10 inches (₱{{ custom_prices.size['10'] | int }})</option>
-                <option value="12|{{ custom_prices.size['12'] }}">12 inches (₱{{ custom_prices.size['12'] | int }})</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="size">
+                <select id="cakeSize" name="cakeSize" class="native-select" required>
+                  <option value="" disabled selected>Select Cake Size</option>
+                  <option value="6|{{ custom_prices.size['6'] }}">6 inches (₱{{ custom_prices.size['6'] | int }})</option>
+                  <option value="8|{{ custom_prices.size['8'] }}">8 inches (₱{{ custom_prices.size['8'] | int }})</option>
+                  <option value="10|{{ custom_prices.size['10'] }}">10 inches (₱{{ custom_prices.size['10'] | int }})</option>
+                  <option value="12|{{ custom_prices.size['12'] }}">12 inches ({{ custom_prices.size['12'] | int }})</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Cake Size</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
+
+            <!-- Toppers -->
             <div class="field">
               <label for="toppers">Toppers</label>
-              <select id="toppers" name="toppers">
-                <option value="" disabled selected>Select Toppers</option>
-                <option value="0|{{ custom_prices.toppers['0'] }}">None</option>
-                <option value="1|{{ custom_prices.toppers['1'] }}">1 set (₱{{ custom_prices.toppers['1'] | int }})</option>
-                <option value="3|{{ custom_prices.toppers['3'] }}">Set of 3 (₱{{ custom_prices.toppers['3'] | int }})</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="toppers">
+                <select id="toppers" name="toppers" class="native-select">
+                  <option value="" disabled selected>Select Toppers</option>
+                  <option value="0|{{ custom_prices.toppers['0'] }}">None</option>
+                  <option value="1|{{ custom_prices.toppers['1'] }}">1 set (₱{{ custom_prices.toppers['1'] | int }})</option>
+                  <option value="3|{{ custom_prices.toppers['3'] }}">Set of 3 (₱{{ custom_prices.toppers['3'] | int }})</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Toppers</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
           </div>
 
-          <!-- COL 2 -->
+          <!-- ===== RIGHT COLUMN ===== -->
           <div class="grid-col">
+            <!-- Cake Type (Icing) -->
             <div class="field">
-              <label for="design">Cake Type </label>
-              <select id="design" name="design" required>
-                <option value="" disabled selected>Select Cake Type</option>
-                <option value="fondant|{{ custom_prices.icing.fondant }}">Fondant (₱{{ custom_prices.icing.fondant | int }})</option>
-                <option value="buttercream|{{ custom_prices.icing.buttercream }}">Soft Icing (₱{{ custom_prices.icing.buttercream | int }})</option>
-              </select>
+              <label for="design">Cake Type</label>
+              <div class="custom-select-wrapper" data-type="icing">
+                <select id="design" name="design" class="native-select" required>
+                  <option value="" disabled selected>Select Cake Type</option>
+                  <option value="fondant|{{ custom_prices.icing.fondant }}">Fondant ({{ custom_prices.icing.fondant | int }})</option>
+                  <option value="buttercream|{{ custom_prices.icing.buttercream }}">Soft Icing (₱{{ custom_prices.icing.buttercream | int }})</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Cake Type</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
+
+            <!-- Cake Layers -->
             <div class="field">
               <label for="layers">Cake Layers</label>
-              <select id="layers" name="layers" required>
-                <option value="" disabled selected>Select Cake Layers</option>
-                <option value="1|{{ custom_prices.layers['1'] }}">Single Layer (₱{{ custom_prices.layers['1'] | int }})</option>
-                <option value="2|{{ custom_prices.layers['2'] }}">Double Layer (₱{{ custom_prices.layers['2'] | int }})</option>
-                <option value="3|{{ custom_prices.layers['3'] }}">Triple Layer (₱{{ custom_prices.layers['3'] | int }})</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="layers">
+                <select id="layers" name="layers" class="native-select" required>
+                  <option value="" disabled selected>Select Cake Layers</option>
+                  <option value="1|{{ custom_prices.layers['1'] }}">Single Layer (₱{{ custom_prices.layers['1'] | int }})</option>
+                  <option value="2|{{ custom_prices.layers['2'] }}">Double Layer (₱{{ custom_prices.layers['2'] | int }})</option>
+                  <option value="3|{{ custom_prices.layers['3'] }}">Triple Layer (₱{{ custom_prices.layers['3'] | int }})</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Cake Layers</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
+
+            <!-- Candles -->
             <div class="field">
               <label for="candles">Candles</label>
-              <select id="candles" name="candles">
-                <option value="" disabled selected>Select Candles</option>
-                <option value="0">None</option>
-                <option value="1">1 candle</option>
-                <option value="3">3 candles</option>
-                <option value="5">5 candles</option>
-                <option value="7">7 candles</option>
-              </select>
+              <div class="custom-select-wrapper" data-type="candles">
+                <select id="candles" name="candles" class="native-select">
+                  <option value="" disabled selected>Select Candles</option>
+                  <option value="0">None</option>
+                  <option value="1">1 candle</option>
+                  <option value="3">3 candles</option>
+                  <option value="5">5 candles</option>
+                  <option value="7">7 candles</option>
+                </select>
+                <div class="custom-select-trigger">
+                  <span class="custom-select-value">Select Candles</span>
+                  <svg class="custom-select-arrow" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+                </div>
+                <div class="custom-select-options"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Add-ons -->
+        <!-- ===== ADD-ONS ===== -->
         <div class="field" style="margin-bottom: 20px;">
           <span class="addons-label">Add-ons</span>
           <div class="addon-grid">
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.filling }}" id="filling" name="filling">
-              Cake Filling (₱{{ custom_prices.addons.filling | int }})
+              <span class="addon-text">Cake Filling</span>
+              <span class="addon-price">₱{{ custom_prices.addons.filling | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.cupcake }}" id="cupcake" name="cupcake">
-              Cupcake Dozen (₱{{ custom_prices.addons.cupcake | int }})
+              <span class="addon-text">Cupcake Dozen</span>
+              <span class="addon-price">₱{{ custom_prices.addons.cupcake | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.ediblepaper }}" id="ediblepaper" name="ediblepaper">
-              Edible Paper (₱{{ custom_prices.addons.ediblepaper | int }})
+              <span class="addon-text">Edible Paper</span>
+              <span class="addon-price">₱{{ custom_prices.addons.ediblepaper | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.fondanttoppers }}" id="fondanttoppers" name="fondanttoppers">
-              Fondant Toppers (₱{{ custom_prices.addons.fondanttoppers | int }})
+              <span class="addon-text">Fondant Toppers</span>
+              <span class="addon-price">₱{{ custom_prices.addons.fondanttoppers | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.sprinkles }}" id="sprinkles" name="sprinkles">
-              Sprinkles (₱{{ custom_prices.addons.sprinkles | int }})
+              <span class="addon-text">Sprinkles</span>
+              <span class="addon-price">₱{{ custom_prices.addons.sprinkles | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.drip }}" id="drip" name="drip">
-              Choco Drip (₱{{ custom_prices.addons.drip | int }})
+              <span class="addon-text">Choco Drip</span>
+              <span class="addon-price">₱{{ custom_prices.addons.drip | int }}</span>
             </label>
             <label class="addon-item">
               <input type="checkbox" class="addons" value="{{ custom_prices.addons.flowers }}" id="flowers" name="flowers">
-              Sugar Flowers (₱{{ custom_prices.addons.flowers | int }})
+              <span class="addon-text">Sugar Flowers</span>
+              <span class="addon-price">{{ custom_prices.addons.flowers | int }}</span>
             </label>
-            <label class="addon-item" id="othersLabel">
+            <label class="addon-item">
               <input type="checkbox" id="others" name="others" class="addons" value="0">
-              Others
+              <span class="addon-text">Others</span>
+              <span class="addon-price">Custom</span>
             </label>
           </div>
-          <div id="othersInputWrap" style="display:none; margin-top:10px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <input type="text" id="othersDesc" name="others_desc" maxlength="200"
-                placeholder="Describe your custom add-on (e.g. gold leaf, edible glitter...)"
-                style="flex:1; padding:9px 12px; border:1px solid rgba(255,255,255,0.2);
-                border-radius:8px; font-size:13px; background:rgba(255,255,255,0.07);
-                color:white; box-sizing:border-box;">
-              <span id="othersPriceTag" style="display:none; background:rgba(255,255,255,0.1);
-                border:1px solid rgba(255,167,205,0.4); border-radius:8px; padding:9px 12px;
-                font-size:13px; color:#f9a8d4; white-space:nowrap;">
-                ₱<span id="othersPriceDisplay">0</span>
-              </span>
+
+          <!-- Others Input -->
+          <div id="othersInputWrap">
+            <textarea id="othersDesc" placeholder="Describe your custom add-on..." rows="1" style="margin-bottom:4px;"></textarea>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <input type="number" id="othersPrice" placeholder="Price (₱)" min="0" step="0.01" style="width:120px;">
+              <span id="othersPriceTag">+₱<span id="othersPriceDisplay">0</span></span>
+              <small style="color:rgba(255,255,255,0.4); font-size:10px;">Owner will set price</small>
             </div>
           </div>
         </div>
 
-        <!-- Below grid -->
+        <!-- ===== BELOW GRID ===== -->
         <div class="below-grid">
+          <!-- Special Instructions -->
           <div class="field">
             <label for="notes">Special Instructions</label>
             <textarea name="notes" id="notes" rows="2" placeholder="e.g., Allergy warning, no nuts..." maxlength="500"></textarea>
           </div>
-        <div style="display:flex; align-items:center; gap:14px;">
-            
-            <!-- Upload button OR thumbnail (toggles) -->
+
+          <!-- Image Upload + Rush Order -->
+          <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; width:100%;">
             <label for="image" id="uploadLabel" class="custom-file-btn" style="cursor:pointer; margin:0;">
-                <i class="bi bi-upload"></i> Upload Reference Image
+              <i class="bi bi-upload"></i> Upload Reference Image
             </label>
-
-            <!-- Thumbnail (hidden until image picked) -->
-            <div id="uploadedPreview" style="display:none; align-items:center; gap:10px;">
-                <label for="image" style="cursor:pointer; position:relative; display:block;">
-                    <img id="imagePreview" src="" alt="Preview"
-                        style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:2px solid #e75480; display:block;">
-                    <span id="imageHoverOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"></span>
-                </label>
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <span style="color:#e75480; font-size:13px; font-weight:500;">
-                        <i class="bi bi-check-circle-fill"></i> <span id="uploadedFileName">Image attached</span>
-                    </span>
-                    <span style="color:rgba(255,255,255,0.4); font-size:11px;">
-                        Click image to change · <span id="removeImageBtn" style="text-decoration:underline; cursor:pointer;">Remove</span>
-                    </span>
-                </div>
+            <div id="uploadedPreview" style="display:none; align-items:center; gap:10px; flex-wrap:wrap;">
+              <label for="image" style="cursor:pointer; position:relative; display:block;">
+                <img id="imagePreview" src="" alt="Preview" style="width:52px; height:52px; object-fit:cover; border-radius:8px; border:2px solid #e75480; display:block;">
+                <span id="imageHoverOverlay" style="position:absolute; inset:0; background:rgba(0,0,0,0); border-radius:8px; transition:background 0.2s;"></span>
+              </label>
+              <div style="display:flex; flex-direction:column; gap:2px;">
+                <span style="color:#e75480; font-size:13px; font-weight:500;"><i class="bi bi-check-circle-fill"></i> <span id="uploadedFileName">Image attached</span></span>
+                <span style="color:rgba(255,255,255,0.4); font-size:11px;">Click image to change · <span id="removeImageBtn" style="text-decoration:underline; cursor:pointer;">Remove</span></span>
+              </div>
             </div>
-
             <input type="file" name="image" id="image" accept="image/*" hidden>
-
-            <!-- Rush Order stays on same line -->
             <div class="rush-row" style="margin-left:auto;">
-                <input type="checkbox" name="rush" value="yes" id="rush">
-                <label for="rush">Rush Order</label>
+              <input type="checkbox" name="rush" value="yes" id="rush">
+              <label for="rush">Rush Order</label>
             </div>
-        </div>
-        <small style="font-size:11px; color:rgba(255,255,255,0.5);">Optional — max 2MB</small>
+          </div>
+          <small style="font-size:11px; color:rgba(255,255,255,0.5);">Optional — max 2MB</small>
         </div>
 
+        <!-- Hidden Fields -->
         <input type="hidden" name="order_item" id="orderItem">
         <input type="hidden" name="amount" id="orderAmount">
-        <input type="hidden" name="others_price" id="othersPrice" value="0">
+        <input type="hidden" name="others_price" id="othersPriceHidden" value="0">
       </form>
+
+      <!-- ===== CONSULTATION FORM ===== -->
       <form method="POST" action="/consultation" enctype="multipart/form-data" id="consultForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="cakeType" id="c_cakeType">
@@ -573,8 +1374,9 @@
       </form>
     </div>
 
-    <!-- ===== 3D PREVIEW + TOTAL ===== -->
+    <!-- ===== PREVIEW PANEL ===== -->
     <div class="preview-panel">
+      <!-- Preview Card -->
       <div class="preview-card">
         <div class="preview-header">
           <span class="preview-title">Live Preview</span>
@@ -583,374 +1385,474 @@
         <p class="preview-disclaimer">Note: 3D preview is for visualization only. Your actual cake may vary.</p>
         <canvas id="cake-canvas"></canvas>
         <div class="preview-badges" id="badges"></div>
+      </div>
+
+      <!-- Total Card -->
       <div class="total-card">
         <div class="total-row">
           <span class="total-label">Total</span>
           <span class="total-amount">₱<span id="totalPrice">0.00</span></span>
         </div>
-        <!-- ── Downpayment Notice ── -->
+
+        <!-- Downpayment Notice -->
         <div class="downpayment-notice">
-          <div class="notice-title">
-            <i class="bi bi-info-circle-fill"></i> Downpayment Required
-          </div>
-          <p style="margin:0 0 8px; color:rgba(75, 71, 71, 0.75); font-size:12px;">
-            Customize cake orders require at least <strong>1 day advance booking</strong> and an online downpayment. Choose your option on the next step:
-          </p>
+          <div class="notice-title"><i class="bi bi-info-circle-fill"></i> Downpayment Required</div>
+          <p style="margin:0 0 8px; font-size:12px;">Customize cake orders require at least <strong>1 day advance booking</strong> and an online downpayment. Choose your option on the next step:</p>
           <ul>
             <li>50% or 75% — balance paid on delivery/pickup</li>
             <li>Full payment — no balance remaining</li>
           </ul>
           <div class="agree-row">
             <input type="checkbox" id="downpaymentAgree">
-            <label for="downpaymentAgree">
-              I understand a downpayment is required to proceed
-            </label>
+            <label for="downpaymentAgree">I understand a downpayment is required to proceed</label>
           </div>
         </div>
+
+        <!-- Buttons -->
         {% if customer %}
-    <div style="display:flex; gap:10px; margin-top:14px; justify-content: space-between;">
-      <button type="button" class="btn-checkout locked"
-              id="consultBtn" 
-              style="flex:1; background: #f472b6; margin-top:0; padding: 8px 13px;">
-        Consult First
-      </button>
-      <button type="submit" class="btn-checkout locked"
-              id="proceedBtn"
-              style="flex:1; margin-top:0; padding: 8px 13px;">
-        Proceed to Checkout →
-      </button>
-    </div>
-      </div>
+        <div class="button-container">
+          <button type="button" class="btn-checkout locked" id="consultBtn" style="background: #f472b6;">Consult First</button>
+          <button type="submit" class="btn-checkout locked" id="proceedBtn">Proceed to Checkout →</button>
+        </div>
         {% else %}
-          <a href="/authentication" class="btn-checkout">Login to Order</a>
+        <a href="/authentication" class="btn-checkout">Login to Order</a>
         {% endif %}
       </div>
     </div>
-
   </div>
 </section>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- ===== SVG GENERATORS ===== -->
+<script nonce="{{ csp_nonce() }}">
+  const SVGGenerators = {
+    flavor: (opt) => {
+      const color = opt.dataset.color || '#fff3c4';
+      const frost = opt.dataset.frost || '#fde8a0';
+      return `<svg class="option-svg" viewBox="0 0 40 40">
+        <path d="M20 6 L8 16 L8 30 L20 36 L32 30 L32 16 Z" fill="${color}" stroke="#3d2010" stroke-width="1.2"/>
+        <path d="M8 16 L32 16" stroke="#3d2010" stroke-width="1"/>
+        <path d="M8 16 L8 30 L20 36 L20 22 Z" fill="${frost}" opacity="0.6"/>
+        <path d="M20 6 L20 36" stroke="rgba(255,255,255,0.4)" stroke-width="0.8"/>
+        <circle cx="15" cy="24" r="1.5" fill="rgba(255,255,255,0.5)"/>
+        <circle cx="25" cy="20" r="1.5" fill="rgba(255,255,255,0.5)"/>
+      </svg>`;
+    },
+
+    shape: (opt) => {
+      if (opt.value === 'circle') {
+        return `<svg class="option-svg" viewBox="0 0 40 40">
+          <ellipse cx="20" cy="30" rx="14" ry="5" fill="#e8d5c4" stroke="#3d2010" stroke-width="1.2"/>
+          <path d="M6 30 L6 18 C6 13 12 10 20 10 C28 10 34 13 34 18 L34 30" fill="#fdf6f0" stroke="#3d2010" stroke-width="1.2"/>
+          <ellipse cx="20" cy="18" rx="14" ry="5" fill="#fff0f5" stroke="#3d2010" stroke-width="1.2"/>
+          <path d="M10 18 Q15 14 20 18 Q25 14 30 18" fill="none" stroke="#db2777" stroke-width="1" opacity="0.6"/>
+        </svg>`;
+      } else {
+        return `<svg class="option-svg" viewBox="0 0 40 40">
+          <rect x="6" y="24" width="28" height="6" rx="1" fill="#e8d5c4" stroke="#3d2010" stroke-width="1.2"/>
+          <rect x="6" y="12" width="28" height="12" rx="1" fill="#fdf6f0" stroke="#3d2010" stroke-width="1.2"/>
+          <rect x="6" y="12" width="28" height="4" rx="1" fill="#fff0f5" stroke="#3d2010" stroke-width="1.2"/>
+          <path d="M10 16 L15 14 L20 16 L25 14 L30 16" fill="none" stroke="#db2777" stroke-width="1" opacity="0.6"/>
+        </svg>`;
+      }
+    },
+
+    size: (opt) => {
+      const sizeVal = parseInt(opt.value.split('|')[0]) || 6;
+      const scale = 0.6 + (sizeVal - 6) * 0.12;
+      const width = 12 + (sizeVal - 6) * 2;
+      return `<svg class="option-svg" viewBox="0 0 40 40">
+        <ellipse cx="20" cy="32" rx="${width * 0.7}" ry="4" fill="#e8d5c4" stroke="#3d2010" stroke-width="1"/>
+        <path d="M${20 - width * 0.6} 32 L${20 - width * 0.6} ${32 - 12 * scale} C${20 - width * 0.6} ${32 - 12 * scale - 3} ${20 + width * 0.6} ${32 - 12 * scale - 3} ${20 + width * 0.6} ${32 - 12 * scale} L${20 + width * 0.6} 32" fill="#fdf6f0" stroke="#3d2010" stroke-width="1"/>
+        <ellipse cx="20" cy="${32 - 12 * scale}" rx="${width * 0.6}" ry="3" fill="#fff0f5" stroke="#3d2010" stroke-width="1"/>
+        <text x="20" y="22" text-anchor="middle" font-size="7" font-weight="bold" fill="#db2777">${sizeVal}"</text>
+      </svg>`;
+    },
+
+    toppers: (opt) => {
+      const n = parseInt(opt.value.split('|')[0]) || 0;
+      let toppersSVG = '';
+      if (n >= 1) toppersSVG += `<path d="M20 14 L17 8 L20 10 L23 8 Z" fill="#f9a825" stroke="#3d2010" stroke-width="0.8"/>`;
+      if (n >= 3) {
+        toppersSVG += `<path d="M13 16 L10 10 L13 12 L16 10 Z" fill="#e91e63" stroke="#3d2010" stroke-width="0.8"/>`;
+        toppersSVG += `<path d="M27 16 L24 10 L27 12 L30 10 Z" fill="#1565c0" stroke="#3d2010" stroke-width="0.8"/>`;
+      }
+      return `<svg class="option-svg" viewBox="0 0 40 40">
+        <ellipse cx="20" cy="30" rx="12" ry="4" fill="#e8d5c4" stroke="#3d2010" stroke-width="1"/>
+        <path d="M8 30 L8 20 C8 16 13 14 20 14 C27 14 32 16 32 20 L32 30" fill="#fdf6f0" stroke="#3d2010" stroke-width="1"/>
+        <ellipse cx="20" cy="20" rx="12" ry="4" fill="#fff0f5" stroke="#3d2010" stroke-width="1"/>
+        ${toppersSVG}
+        ${n === 0 ? '<text x="20" y="24" text-anchor="middle" font-size="8" fill="#999">None</text>' : ''}
+      </svg>`;
+    },
+
+    icing: (opt) => {
+      const type = opt.value.split('|')[0];
+      if (type === 'fondant') {
+        return `<svg class="option-svg" viewBox="0 0 40 40">
+          <ellipse cx="20" cy="30" rx="12" ry="4" fill="#e8d5c4" stroke="#3d2010" stroke-width="1"/>
+          <path d="M8 30 L8 18 C8 14 13 12 20 12 C27 12 32 14 32 18 L32 30" fill="#fdf6f0" stroke="#3d2010" stroke-width="1"/>
+          <ellipse cx="20" cy="18" rx="12" ry="4" fill="#fff0f5" stroke="#3d2010" stroke-width="1"/>
+          <path d="M10 20 L30 20" stroke="#db2777" stroke-width="0.5" opacity="0.4"/>
+          <path d="M10 24 L30 24" stroke="#db2777" stroke-width="0.5" opacity="0.4"/>
+          <path d="M10 28 L30 28" stroke="#db2777" stroke-width="0.5" opacity="0.4"/>
+          <text x="20" y="38" text-anchor="middle" font-size="5" fill="#666">Smooth</text>
+        </svg>`;
+      } else {
+        return `<svg class="option-svg" viewBox="0 0 40 40">
+          <ellipse cx="20" cy="30" rx="12" ry="4" fill="#e8d5c4" stroke="#3d2010" stroke-width="1"/>
+          <path d="M8 30 L8 18 C8 14 13 12 20 12 C27 12 32 14 32 18 L32 30" fill="#fff8e1" stroke="#3d2010" stroke-width="1"/>
+          <ellipse cx="20" cy="18" rx="12" ry="4" fill="#ffecb3" stroke="#3d2010" stroke-width="1"/>
+          <path d="M10 18 Q13 15 16 18 Q19 15 22 18 Q25 15 28 18" fill="none" stroke="#d97706" stroke-width="1.2"/>
+          <path d="M10 22 Q13 19 16 22 Q19 19 22 22 Q25 19 28 22" fill="none" stroke="#d97706" stroke-width="1.2"/>
+          <path d="M10 26 Q13 23 16 26 Q19 23 22 26 Q25 23 28 26" fill="none" stroke="#d97706" stroke-width="1.2"/>
+          <text x="20" y="38" text-anchor="middle" font-size="5" fill="#666">Swirl</text>
+        </svg>`;
+      }
+    },
+
+    layers: (opt) => {
+      const n = parseInt(opt.value.split('|')[0]) || 1;
+      let layersSVG = '';
+      const colors = ['#fff0f5', '#ffe0ec', '#ffd0e3'];
+      const heights = [8, 10, 12];
+      const widths = [14, 11, 8];
+      const startY = 32;
+
+      for (let i = 0; i < n; i++) {
+        const y = startY - (i * 10);
+        const w = widths[i];
+        const h = heights[i];
+        layersSVG += `<ellipse cx="20" cy="${y}" rx="${w}" ry="3" fill="#e8d5c4" stroke="#3d2010" stroke-width="0.8"/>`;
+        layersSVG += `<path d="M${20-w} ${y} L${20-w} ${y-h} C${20-w} ${y-h-2} ${20+w} ${y-h-2} ${20+w} ${y-h} L${20+w} ${y}" fill="${colors[i]}" stroke="#3d2010" stroke-width="0.8"/>`;
+        layersSVG += `<ellipse cx="20" cy="${y-h}" rx="${w}" ry="3" fill="#fff0f5" stroke="#3d2010" stroke-width="0.8"/>`;
+      }
+
+      return `<svg class="option-svg" viewBox="0 0 40 40">
+        ${layersSVG}
+        <text x="20" y="6" text-anchor="middle" font-size="6" font-weight="bold" fill="#db2777">${n} Layer${n > 1 ? 's' : ''}</text>
+      </svg>`;
+    },
+
+    candles: (opt) => {
+      const n = parseInt(opt.value) || 0;
+      let candlesSVG = '';
+      const candleColors = ['#ff6699', '#66aaff', '#ffdd00', '#ff8844', '#bb66ff', '#44ccaa', '#ffffff'];
+
+      if (n === 1) {
+        candlesSVG += `<rect x="19" y="8" width="2" height="8" fill="#ff6699" stroke="#3d2010" stroke-width="0.5"/>`;
+        candlesSVG += `<path d="M20 8 Q22 4 20 2 Q18 4 20 8" fill="#ff6600"/>`;
+        candlesSVG += `<circle cx="20" cy="5" r="1" fill="#ffdd00"/>`;
+      } else if (n === 3) {
+        const positions = [14, 20, 26];
+        positions.forEach((x, i) => {
+          candlesSVG += `<rect x="${x-1}" y="10" width="2" height="7" fill="${candleColors[i]}" stroke="#3d2010" stroke-width="0.5"/>`;
+          candlesSVG += `<path d="M${x} 10 Q${x+1.5} 7 ${x} 5.5 Q${x-1.5} 7 ${x} 10" fill="#ff6600"/>`;
+          candlesSVG += `<circle cx="${x}" cy="7.5" r="0.8" fill="#ffdd00"/>`;
+        });
+      } else if (n === 5) {
+        const positions = [11, 15.5, 20, 24.5, 29];
+        positions.forEach((x, i) => {
+          candlesSVG += `<rect x="${x-1}" y="10" width="2" height="7" fill="${candleColors[i]}" stroke="#3d2010" stroke-width="0.5"/>`;
+          candlesSVG += `<path d="M${x} 10 Q${x+1.5} 7 ${x} 5.5 Q${x-1.5} 7 ${x} 10" fill="#ff6600"/>`;
+          candlesSVG += `<circle cx="${x}" cy="7.5" r="0.8" fill="#ffdd00"/>`;
+        });
+      } else if (n === 7) {
+        const positions = [9, 12.5, 16, 20, 24, 27.5, 31];
+        positions.forEach((x, i) => {
+          candlesSVG += `<rect x="${x-0.8}" y="10" width="1.6" height="7" fill="${candleColors[i % 7]}" stroke="#3d2010" stroke-width="0.4"/>`;
+          candlesSVG += `<path d="M${x} 10 Q${x+1.2} 7.5 ${x} 6 Q${x-1.2} 7.5 ${x} 10" fill="#ff6600"/>`;
+          candlesSVG += `<circle cx="${x}" cy="7.8" r="0.6" fill="#ffdd00"/>`;
+        });
+      }
+
+      return `<svg class="option-svg" viewBox="0 0 40 40">
+        <ellipse cx="20" cy="30" rx="12" ry="4" fill="#e8d5c4" stroke="#3d2010" stroke-width="1"/>
+        <path d="M8 30 L8 20 C8 16 13 14 20 14 C27 14 32 16 32 20 L32 30" fill="#fdf6f0" stroke="#3d2010" stroke-width="1"/>
+        <ellipse cx="20" cy="20" rx="12" ry="4" fill="#fff0f5" stroke="#3d2010" stroke-width="1"/>
+        ${candlesSVG}
+        ${n === 0 ? '<text x="20" y="24" text-anchor="middle" font-size="8" fill="#999">None</text>' : ''}
+      </svg>`;
+    }
+  };
+</script>
+
+<!-- ===== CUSTOM SELECT DROPDOWNS ===== -->
+<script nonce="{{ csp_nonce() }}">
+  document.addEventListener('DOMContentLoaded', function() {
+    const wrappers = document.querySelectorAll('.custom-select-wrapper');
+
+    wrappers.forEach(wrapper => {
+      const trigger = wrapper.querySelector('.custom-select-trigger');
+      const nativeSelect = wrapper.querySelector('.native-select');
+      const optionsContainer = wrapper.querySelector('.custom-select-options');
+      const valueDisplay = wrapper.querySelector('.custom-select-value');
+      const type = wrapper.dataset.type;
+
+      const options = Array.from(nativeSelect.options).slice(1);
+      options.forEach(opt => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'custom-option';
+        optionDiv.dataset.value = opt.value;
+
+        let svgHTML = '';
+        if (type && SVGGenerators[type]) {
+          svgHTML = SVGGenerators[type](opt);
+        }
+
+        optionDiv.innerHTML = `${svgHTML}<span>${opt.text}</span>`;
+
+        optionDiv.addEventListener('click', () => {
+          nativeSelect.value = opt.value;
+          valueDisplay.textContent = opt.text;
+          trigger.classList.remove('active');
+          optionsContainer.classList.remove('show');
+
+          wrapper.querySelectorAll('.custom-option').forEach(o => o.classList.remove('selected'));
+          optionDiv.classList.add('selected');
+
+          nativeSelect.dispatchEvent(new Event('change'));
+        });
+
+        optionsContainer.appendChild(optionDiv);
+      });
+
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        wrappers.forEach(w => {
+          w.querySelector('.custom-select-trigger').classList.remove('active');
+          w.querySelector('.custom-select-options').classList.remove('show');
+        });
+
+        trigger.classList.add('active');
+        optionsContainer.classList.add('show');
+      });
+    });
+
+    document.addEventListener('click', () => {
+      wrappers.forEach(w => {
+        w.querySelector('.custom-select-trigger').classList.remove('active');
+        w.querySelector('.custom-select-options').classList.remove('show');
+      });
+    });
+  });
+</script>
+
+<!-- ===== IMAGE UPLOAD FUNCTIONS ===== -->
 <script nonce="{{ csp_nonce() }}">
   function previewImage(input) {
     const file = input.files[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-        document.getElementById('imagePreview').src = e.target.result;
-        document.getElementById('uploadedFileName').textContent = file.name;
-        document.getElementById('uploadLabel').style.display = 'none';
-        document.getElementById('uploadedPreview').style.display = 'flex';
+      document.getElementById('imagePreview').src = e.target.result;
+      document.getElementById('uploadedFileName').textContent = file.name;
+      document.getElementById('uploadLabel').style.display = 'none';
+      document.getElementById('uploadedPreview').style.display = 'flex';
     };
     reader.readAsDataURL(file);
-}
+  }
 
-function clearImage() {
+  function clearImage() {
     document.getElementById('image').value = '';
     document.getElementById('imagePreview').src = '';
     document.getElementById('uploadedFileName').textContent = '';
     document.getElementById('uploadedPreview').style.display = 'none';
     document.getElementById('uploadLabel').style.display = 'inline-flex';
-}
+  }
+
+  function checkFileSize(input) {
+    if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
+      glassAlert({ icon: 'error', title: 'File Too Large', text: 'Maximum allowed size is 2MB.', confirmButtonText: 'OK' });
+      input.value = '';
+    }
+  }
 </script>
+
+<!-- ===== PRICE CALCULATION & ORDER DATA ===== -->
 <script nonce="{{ csp_nonce() }}">
-  /* =========================================================
-    PRICING HELPERS
-    ========================================================= */
   function getParts(selectId) {
     const el = document.getElementById(selectId);
-    if (!el) {
-      return { label: '', price: 0 };
-    }
-
+    if (!el) return { label: '', price: 0 };
     const val = el.value || '';
     const parts = val.split('|');
-
-    // Safely get label; selectedOptions[0] can be undefined
-    const selected = el.selectedOptions && el.selectedOptions[0]
-      ? el.selectedOptions[0]
-      : null;
+    const selected = el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0] : null;
     const label = selected ? selected.text : '';
-
     const price = parts.length > 1 ? parseFloat(parts[1]) || 0 : 0;
-
     return { label, price };
   }
 
   function calculateTotal() {
-    const design  = getParts('design').price;
-    const size    = getParts('cakeSize').price;
-    const layers  = getParts('layers').price;
+    const design = getParts('design').price;
+    const size = getParts('cakeSize').price;
+    const layers = getParts('layers').price;
     const toppers = getParts('toppers').price;
-    const rush    = document.getElementById('rush').checked ? 300 : 0;
-
+    const rush = document.getElementById('rush').checked ? 300 : 0;
     let addons = 0;
     document.querySelectorAll('.addons:checked').forEach(a => addons += parseFloat(a.value) || 0);
-
-    // add admin-set others price if present
-    const othersPrice = parseFloat(document.getElementById('othersPrice').value || 0);
+    const othersPrice = parseFloat(document.getElementById('othersPriceHidden').value || 0);
     addons += othersPrice;
-
     const total = design + size + layers + toppers + addons + rush;
     document.getElementById('totalPrice').innerText = total.toFixed(2);
     return total;
   }
 
-function updateOrderData() {
+  function updateOrderData() {
     const total = calculateTotal();
     document.getElementById('orderAmount').value = total.toFixed(2);
-
-    const cake    = document.getElementById('cakeType').selectedOptions[0].text;
-    const design  = getParts('design').label;
-    const size    = getParts('cakeSize').label;
-    const layers  = getParts('layers').label;
+    const cake = document.getElementById('cakeType').selectedOptions[0].text;
+    const design = getParts('design').label;
+    const size = getParts('cakeSize').label;
+    const layers = getParts('layers').label;
     const toppers = getParts('toppers').label;
-
     let addonsArr = [];
     document.querySelectorAll('.addons:checked').forEach(a => {
-        if (a.id === 'others') return; // handle separately
-        addonsArr.push(a.parentElement.innerText.trim());
+      if (a.id === 'others') return;
+      addonsArr.push(a.parentElement.innerText.trim());
     });
-
-    // Add others with its price in the format finalize_order expects
     const othersChecked = document.getElementById('others').checked;
-    const othersPrice   = parseFloat(document.getElementById('othersPrice').value || 0);
-    const othersDesc    = document.getElementById('othersDesc').value.trim();
-    if (othersChecked && othersDesc && othersPrice > 0) {
-        addonsArr.push(`${othersDesc} (₱${othersPrice})`);
-    }
-
+    const othersPrice = parseFloat(document.getElementById('othersPriceHidden').value || 0);
+    const othersDesc = document.getElementById('othersDesc').value.trim();
+    if (othersChecked && othersDesc && othersPrice > 0) addonsArr.push(`${othersDesc} (₱${othersPrice})`);
     let desc = `${cake}, ${size}, ${layers}, ${design}, Toppers: ${toppers}`;
     if (addonsArr.length) desc += `, Add-ons: ${addonsArr.join(', ')}`;
     document.getElementById('orderItem').value = desc;
-}
-
-  function checkFileSize(input) {
-    if (input.files[0] && input.files[0].size > 2 * 1024 * 1024) {
-      glassAlert({
-        icon: 'error',
-        title: 'File Too Large',
-        text: 'Maximum allowed size is 2MB.',
-        confirmButtonText: 'OK'
-      });
-      input.value = '';
-    }
   }
-// ── Downpayment agree checkbox — unlocks Proceed button ──
-  document.addEventListener('DOMContentLoaded', function() {
-    const agreeBox  = document.getElementById('downpaymentAgree');
-    const proceedBtn = document.getElementById('proceedBtn');
-    if (!agreeBox || !proceedBtn) return;
 
-    agreeBox.addEventListener('change', function() {
-    const locked = !this.checked;
-    proceedBtn.classList.toggle('locked', locked);
-      // consultBtn does NOT need the checkbox
-    });
-
-    // Unlock consultBtn immediately on DOM load — no checkbox needed
-    document.getElementById('consultBtn')?.classList.remove('locked');
-
-    // Safety: block form submit if checkbox not ticked
-    document.getElementById('orderForm').addEventListener('submit', function(e) {
-      if (agreeBox && !agreeBox.checked) {
-        e.preventDefault();
-        Swal.fire({
-          icon: 'warning',
-          title: 'Please Agree First',
-          text: 'You must acknowledge the downpayment requirement to proceed.',
-          confirmButtonColor: '#d63384'
-        });
-      }
-    });
-  });
-  /* =========================================================
-    BADGES
-    ========================================================= */
- function updateBadges() {
+  function updateBadges() {
     function safeLabel(selectId) {
       const el = document.getElementById(selectId);
       if (!el || !el.selectedOptions || !el.selectedOptions[0]) return '';
       return el.selectedOptions[0].text.split(' ')[0];
     }
-
-    const flavor  = safeLabel('cakeType');
-    const icing   = safeLabel('design');
-    const size    = safeLabel('cakeSize');
-    const layers  = safeLabel('layers');
+    const flavor = safeLabel('cakeType');
+    const icing = safeLabel('design');
+    const size = safeLabel('cakeSize');
+    const layers = safeLabel('layers');
     const candles = document.getElementById('candles')?.value || '0';
-
     let tags = [];
     if (flavor) tags.push(flavor);
-    if (icing)  tags.push(icing);
-    if (size)   tags.push(size);
+    if (icing) tags.push(icing);
+    if (size) tags.push(size);
     if (layers) tags.push(layers + ' layer');
-
     const candlesNum = parseInt(candles, 10) || 0;
-    if (candlesNum > 0) {
-      tags.push(candlesNum + ' candle' + (candlesNum > 1 ? 's' : ''));
-    }
+    if (candlesNum > 0) tags.push(candlesNum + ' candle' + (candlesNum > 1 ? 's' : ''));
     if (document.getElementById('sprinkles')?.checked) tags.push('Sprinkles');
-    if (document.getElementById('drip')?.checked)      tags.push('Choco drip');
-    if (document.getElementById('flowers')?.checked)   tags.push('Flowers');
-
+    if (document.getElementById('drip')?.checked) tags.push('Choco drip');
+    if (document.getElementById('flowers')?.checked) tags.push('Flowers');
     const badgesEl = document.getElementById('badges');
-    if (badgesEl) {
-      badgesEl.innerHTML = tags.map(t => `<span class="badge">${t}</span>`).join('');
-    }
+    if (badgesEl) badgesEl.innerHTML = tags.map(t => `<span class="badge">${t}</span>`).join('');
   }
+</script>
 
-  /* =========================================================
-    THREE.JS CAKE — ENHANCED (performance-safe)
-    ========================================================= */
-  window.addEventListener('load', function () {
-
+<!-- ===== THREE.JS 3D CAKE RENDERER ===== -->
+<script nonce="{{ csp_nonce() }}">
+  window.addEventListener('load', function() {
     const FLAVORS = {
-      chocolate:  { base: 0x4a2c0a, frost: 0x7b4f2e, frostTop: 0x8B5E3C },
-      vanilla:    { base: 0xfff3c4, frost: 0xfde8a0, frostTop: 0xFFECB3 },
-      redvelvet:  { base: 0x8B0000, frost: 0xcc4444, frostTop: 0xdd6666 },
-      ube:        { base: 0x6a0dad, frost: 0xd4a0e8, frostTop: 0xE0B0FF },
+      chocolate: { base: 0x4a2c0a, frost: 0x7b4f2e, frostTop: 0x8B5E3C },
+      vanilla: { base: 0xfff3c4, frost: 0xfde8a0, frostTop: 0xFFECB3 },
+      redvelvet: { base: 0x8B0000, frost: 0xcc4444, frostTop: 0xdd6666 },
+      ube: { base: 0x6a0dad, frost: 0xd4a0e8, frostTop: 0xE0B0FF },
       strawberry: { base: 0xff6b81, frost: 0xffb3bb, frostTop: 0xFFCDD2 },
-      mocha:      { base: 0x5c3317, frost: 0xa0826d, frostTop: 0xBCAAA4 },
+      mocha: { base: 0x5c3317, frost: 0xa0826d, frostTop: 0xBCAAA4 },
     };
 
     const canvas = document.getElementById('cake-canvas');
     const W = canvas.parentElement.clientWidth || 360;
     const H = 340;
-
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(W, H);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    const scene  = new THREE.Scene();
+    const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
     camera.position.set(0, 3.2, 7.5);
     camera.lookAt(0, 1.2, 0);
-
-    /* ── LIGHTS ── */
     scene.add(new THREE.AmbientLight(0xfff5ee, 0.7));
-
     const sun = new THREE.DirectionalLight(0xffffff, 0.85);
     sun.position.set(5, 10, 7);
     sun.castShadow = true;
-    sun.shadow.mapSize.width  = 512; // keep shadow map small = fast
+    sun.shadow.mapSize.width = 512;
     sun.shadow.mapSize.height = 512;
     scene.add(sun);
-
     const fill = new THREE.DirectionalLight(0xffe0cc, 0.25);
     fill.position.set(-4, 2, -4);
     scene.add(fill);
-
-    /* ONE shared candle point light — no shadow, very cheap */
     const candleLight = new THREE.PointLight(0xffaa44, 0, 3.5);
     scene.add(candleLight);
-
-    /* ── GROUPS ── */
     const group = new THREE.Group();
     scene.add(group);
-
-    /* ── GROUND SHADOW DISC (cheap fake AO) ── */
-    const shadowDisc = new THREE.Mesh(
-      new THREE.CircleGeometry(2.2, 36),
-      new THREE.MeshBasicMaterial({
-        color: 0x000000,
-        transparent: true,
-        opacity: 0.18,
-        depthWrite: false
-      })
-    );
+    const shadowDisc = new THREE.Mesh(new THREE.CircleGeometry(2.2, 36), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false }));
     shadowDisc.rotation.x = -Math.PI / 2;
     shadowDisc.position.y = -0.01;
     scene.add(shadowDisc);
-
-    /* ── DRAG ROTATION ── */
     let rotY = 0, dragging = false, lastX = 0, autoRotate = true;
-    canvas.addEventListener('mousedown',  e => { dragging = true; autoRotate = false; lastX = e.clientX; });
-    window.addEventListener('mouseup',    () => { 
-      dragging = false; 
-      setTimeout(() => { if(!dragging) autoRotate = true; }, 1000);
-    });
-    canvas.addEventListener('mousemove',  e => { if (dragging) { rotY += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
+    canvas.addEventListener('mousedown', e => { dragging = true; autoRotate = false; lastX = e.clientX; });
+    window.addEventListener('mouseup', () => { dragging = false; setTimeout(() => { if(!dragging) autoRotate = true; }, 1000); });
+    canvas.addEventListener('mousemove', e => { if (dragging) { rotY += (e.clientX - lastX) * 0.012; lastX = e.clientX; } });
     canvas.addEventListener('touchstart', e => { dragging = true; autoRotate = false; lastX = e.touches[0].clientX; }, { passive: true });
-    window.addEventListener('touchend',   () => { dragging = false; });
-    canvas.addEventListener('touchmove',  e => { if (dragging) { rotY += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
+    window.addEventListener('touchend', () => { dragging = false; });
+    canvas.addEventListener('touchmove', e => { if (dragging) { rotY += (e.touches[0].clientX - lastX) * 0.012; lastX = e.touches[0].clientX; } }, { passive: true });
 
     function hex(h) { return new THREE.Color(h); }
 
-    /* ── BUILD CAKE ── */
     function buildCake() {
       while (group.children.length) group.remove(group.children[0]);
 
-      const flavorKey    = document.getElementById('cakeType').value.split('|')[0];
-      const icingKey     = document.getElementById('design').value.split('|')[0];
-      const sizeIn       = parseInt(document.getElementById('cakeSize').value.split('|')[0]);
-      const numLayers    = parseInt(document.getElementById('layers').value.split('|')[0]);
-      const toppersN     = parseInt(document.getElementById('toppers').value.split('|')[0]);
-      const candlesN     = parseInt(document.getElementById('candles').value);
+      const flavorKey = document.getElementById('cakeType').value.split('|')[0];
+      const icingKey = document.getElementById('design').value.split('|')[0];
+      const sizeIn = parseInt(document.getElementById('cakeSize').value.split('|')[0]);
+      const numLayers = parseInt(document.getElementById('layers').value.split('|')[0]);
+      const toppersN = parseInt(document.getElementById('toppers').value.split('|')[0]);
+      const candlesN = parseInt(document.getElementById('candles').value);
       const hasSprinkles = document.getElementById('sprinkles').checked;
-      const hasDrip      = document.getElementById('drip').checked;
-      const hasFlowers   = document.getElementById('flowers').checked;
-      const shape        = document.getElementById('cakeShape').value;
+      const hasDrip = document.getElementById('drip').checked;
+      const hasFlowers = document.getElementById('flowers').checked;
+      const shape = document.getElementById('cakeShape').value;
 
-      const colors  = FLAVORS[flavorKey] || FLAVORS.vanilla;
-      const r       = 0.55 + (sizeIn - 6) * 0.07;
-      const layerH  = 0.72;
-      const frostH  = 0.13;
-      const rectW   = (r + 0.3) * 2;
-      const rectD   = (r - 0.1) * 2;
-
+      const colors = FLAVORS[flavorKey] || FLAVORS.vanilla;
+      const r = 0.55 + (sizeIn - 6) * 0.07;
+      const layerH = 0.72;
+      const frostH = 0.13;
+      const rectW = (r + 0.3) * 2;
+      const rectD = (r - 0.1) * 2;
       const SPRINKLE_COLS = [0xff4455, 0x44aaff, 0xffdd00, 0x44cc66, 0xff88ee];
-      const CANDLE_COLS   = [0xffffff, 0xff6699, 0x66aaff, 0xffdd00, 0xff8844, 0xbb66ff, 0x44ccaa];
-      const TOPPER_COLS   = [0xf9a825, 0xe91e63, 0x1565c0];
-
+      const CANDLE_COLS = [0xffffff, 0xff6699, 0x66aaff, 0xffdd00, 0xff8844, 0xbb66ff, 0x44ccaa];
+      const TOPPER_COLS = [0xf9a825, 0xe91e63, 0x1565c0];
       const shinyFrost = icingKey === 'fondant' ? 90 : 18;
 
-      /* Shared materials (re-used across layers = fewer draw calls) */
-      const cakeM     = new THREE.MeshPhongMaterial({ color: hex(colors.base), shininess: 20 });
-      const sideM     = new THREE.MeshPhongMaterial({ color: hex(colors.frost), shininess: shinyFrost });
-      /* MeshStandardMaterial only on the top frosting cap — where it matters visually */
-      const frostTopM = new THREE.MeshStandardMaterial({
-        color: hex(colors.frostTop),
-        roughness: icingKey === 'fondant' ? 0.2 : 0.55,
-        metalness: 0.0
-      });
+      const cakeM = new THREE.MeshPhongMaterial({ color: hex(colors.base), shininess: 20 });
+      const sideM = new THREE.MeshPhongMaterial({ color: hex(colors.frost), shininess: shinyFrost });
+      const frostTopM = new THREE.MeshStandardMaterial({ color: hex(colors.frostTop), roughness: icingKey === 'fondant' ? 0.2 : 0.55, metalness: 0.0 });
 
       let y = 0;
       for (let i = 0; i < numLayers; i++) {
-        const ri  = r  - i * 0.13;
-        const rw  = rectW - i * 0.18;
-        const rd  = rectD - i * 0.14;
+        const ri = r - i * 0.13;
+        const rw = rectW - i * 0.18;
+        const rd = rectD - i * 0.14;
 
         if (shape === 'circle') {
-          /* Body */
           const cake = new THREE.Mesh(new THREE.CylinderGeometry(ri, ri + 0.01, layerH, 40), cakeM);
           cake.position.y = y + layerH / 2;
           cake.castShadow = true;
           group.add(cake);
 
-          /* Side frosting */
           const side = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.018, ri + 0.018, layerH, 40, 1, true), sideM);
           side.position.y = y + layerH / 2;
           group.add(side);
 
-          /* Top frosting cap — MeshStandard for sheen */
           const frostTop = new THREE.Mesh(new THREE.CylinderGeometry(ri + 0.012, ri + 0.018, frostH, 40), frostTopM);
           frostTop.position.y = y + layerH + frostH / 2;
           group.add(frostTop);
 
-        
-
-          /* Sprinkles */
           if (hasSprinkles) {
             for (let s = 0; s < 24; s++) {
-              const sp = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
-                new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
-              );
+              const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5), new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) }));
               const ang = Math.random() * Math.PI * 2, rad = Math.random() * ri * 0.82;
               sp.position.set(Math.cos(ang) * rad, y + layerH + frostH + 0.015, Math.sin(ang) * rad);
               sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
@@ -958,11 +1860,10 @@ function updateOrderData() {
             }
           }
 
-          /* Choco drip */
           if (hasDrip && i === 0) {
             const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
             for (let d = 0; d < 12; d++) {
-              const ang  = (d / 12) * Math.PI * 2;
+              const ang = (d / 12) * Math.PI * 2;
               const dlen = 0.16 + Math.random() * 0.14;
               const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
               drip.position.set(Math.cos(ang) * (ri - 0.01), y + layerH - dlen / 2 + 0.06, Math.sin(ang) * (ri - 0.01));
@@ -970,37 +1871,27 @@ function updateOrderData() {
             }
           }
 
-          /* Sugar flowers */
           if (hasFlowers) {
             const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
             for (let f = 0; f < 5; f++) {
-              const ang  = (f / 5) * Math.PI * 2 + i * 0.5;
+              const ang = (f / 5) * Math.PI * 2 + i * 0.5;
               const frad = ri * 0.62;
-              const petal = new THREE.Mesh(
-                new THREE.CircleGeometry(0.09, 10),
-                new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
-              );
+              const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 10), new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
               petal.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.025, Math.sin(ang) * frad);
               petal.rotation.x = -Math.PI / 2;
               group.add(petal);
-              const centre = new THREE.Mesh(
-                new THREE.CircleGeometry(0.033, 10),
-                new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
-              );
+              const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 10), new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
               centre.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.03, Math.sin(ang) * frad);
               centre.rotation.x = -Math.PI / 2;
               group.add(centre);
             }
           }
-
         } else {
-          /* RECTANGLE */
           const cake = new THREE.Mesh(new THREE.BoxGeometry(rw, layerH, rd), cakeM);
           cake.position.y = y + layerH / 2;
           cake.castShadow = true;
           group.add(cake);
 
-          /* Side frosting panels */
           const sideThick = 0.035;
           [1, -1].forEach(sign => {
             const s = new THREE.Mesh(new THREE.BoxGeometry(rw + sideThick * 2, layerH, sideThick), sideM);
@@ -1013,36 +1904,25 @@ function updateOrderData() {
             group.add(s);
           });
 
-          /* Top frosting cap — MeshStandard */
           const frostTop = new THREE.Mesh(new THREE.BoxGeometry(rw + 0.04, frostH, rd + 0.04), frostTopM);
           frostTop.position.y = y + layerH + frostH / 2;
           group.add(frostTop);
 
-
-          /* Sprinkles */
           if (hasSprinkles) {
             for (let s = 0; s < 28; s++) {
-              const sp = new THREE.Mesh(
-                new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5),
-                new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) })
-              );
-              sp.position.set(
-                (Math.random() - 0.5) * rw * 0.85,
-                y + layerH + frostH + 0.015,
-                (Math.random() - 0.5) * rd * 0.85
-              );
+              const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5), new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) }));
+              sp.position.set((Math.random() - 0.5) * rw * 0.85, y + layerH + frostH + 0.015, (Math.random() - 0.5) * rd * 0.85);
               sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
               group.add(sp);
             }
           }
 
-          /* Choco drip */
           if (hasDrip && i === 0) {
             const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
             const edges = [];
-            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9,  rd / 2]);
+            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, rd / 2]);
             for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, -rd / 2]);
-            for (let e = 0; e < 5; e++) edges.push([ rw / 2, (Math.random() - 0.5) * rd * 0.9]);
+            for (let e = 0; e < 5; e++) edges.push([rw / 2, (Math.random() - 0.5) * rd * 0.9]);
             for (let e = 0; e < 5; e++) edges.push([-rw / 2, (Math.random() - 0.5) * rd * 0.9]);
             edges.forEach(([ex, ez]) => {
               const dlen = 0.14 + Math.random() * 0.14;
@@ -1052,100 +1932,62 @@ function updateOrderData() {
             });
           }
 
-          /* Sugar flowers */
           if (hasFlowers) {
             const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
             for (let f = 0; f < 6; f++) {
               const fx = (Math.random() - 0.5) * rw * 0.7;
               const fz = (Math.random() - 0.5) * rd * 0.7;
-              const petal = new THREE.Mesh(
-                new THREE.CircleGeometry(0.09, 10),
-                new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide })
-              );
+              const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 10), new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
               petal.position.set(fx, y + layerH + frostH + 0.025, fz);
               petal.rotation.x = -Math.PI / 2;
               group.add(petal);
-              const centre = new THREE.Mesh(
-                new THREE.CircleGeometry(0.033, 10),
-                new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide })
-              );
+              const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 10), new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
               centre.position.set(fx, y + layerH + frostH + 0.03, fz);
               centre.rotation.x = -Math.PI / 2;
               group.add(centre);
             }
           }
         }
-
         y += layerH + frostH;
       }
 
-      /* ── TOP AREA: plate, toppers, candles ── */
-      const topR = shape === 'circle'
-        ? r - (numLayers - 1) * 0.13
-        : (rectW - (numLayers - 1) * 0.18) / 2 * 0.75;
+      const topR = shape === 'circle' ? r - (numLayers - 1) * 0.13 : (rectW - (numLayers - 1) * 0.18) / 2 * 0.75;
       const topY = y;
-
-      /* CAKE PLATE / STAND */
       const plateR = shape === 'circle' ? r + 0.35 : Math.max(rectW, rectD) / 2 + 0.35;
 
-      /* Stand pillar */
-      const pillar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.22, 0.22, 24),
-        new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 })
-      );
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.22, 24), new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 80 }));
       pillar.position.y = -0.11;
       group.add(pillar);
 
-      /* Plate disc */
-      const plate = new THREE.Mesh(
-        new THREE.CylinderGeometry(plateR, plateR, 0.06, 40),
-        new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.05 })
-      );
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(plateR, plateR, 0.06, 40), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.15, metalness: 0.05 }));
       plate.position.y = 0.03;
       plate.receiveShadow = true;
       group.add(plate);
 
-
-
-      /* Toppers */
       if (toppersN > 0) {
         for (let t = 0; t < toppersN; t++) {
-          const ang  = (t / toppersN) * Math.PI * 2;
+          const ang = (t / toppersN) * Math.PI * 2;
           const trad = toppersN === 1 ? 0 : topR * 0.48;
-          const top  = new THREE.Mesh(
-            new THREE.ConeGeometry(0.1, 0.3, 8),
-            new THREE.MeshPhongMaterial({ color: hex(TOPPER_COLS[t % 3]), shininess: 60 })
-          );
+          const top = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.3, 8), new THREE.MeshPhongMaterial({ color: hex(TOPPER_COLS[t % 3]), shininess: 60 }));
           top.position.set(Math.cos(ang) * trad, topY + 0.15, Math.sin(ang) * trad);
           group.add(top);
         }
       }
 
-      /* Candles + update shared point light */
       if (candlesN > 0) {
         const candleR = candlesN === 1 ? 0 : topR * 0.58;
         let avgX = 0, avgZ = 0;
-
         for (let c = 0; c < candlesN; c++) {
           const ang = (c / candlesN) * Math.PI * 2;
-          const cx  = Math.cos(ang) * candleR;
-          const cz  = Math.sin(ang) * candleR;
+          const cx = Math.cos(ang) * candleR;
+          const cz = Math.sin(ang) * candleR;
           avgX += cx; avgZ += cz;
-
-          const candle = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.04, 0.04, 0.38, 9),
-            new THREE.MeshPhongMaterial({ color: hex(CANDLE_COLS[c % CANDLE_COLS.length]) })
-          );
+          const candle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.38, 9), new THREE.MeshPhongMaterial({ color: hex(CANDLE_COLS[c % CANDLE_COLS.length]) }));
           candle.position.set(cx, topY + 0.19, cz);
           group.add(candle);
-
-          const wick = new THREE.Mesh(
-            new THREE.CylinderGeometry(0.005, 0.005, 0.07, 5),
-            new THREE.MeshBasicMaterial({ color: 0x1a1a1a })
-          );
+          const wick = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.07, 5), new THREE.MeshBasicMaterial({ color: 0x1a1a1a }));
           wick.position.set(cx, topY + 0.415, cz);
           group.add(wick);
-
           const flameGeo = new THREE.SphereGeometry(0.052, 7, 7);
           flameGeo.scale(0.55, 1.5, 0.55);
           const flame = new THREE.Mesh(flameGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
@@ -1153,69 +1995,49 @@ function updateOrderData() {
           flame.userData = { isFlame: true, baseY: topY + 0.495, ox: cx, oz: cz };
           group.add(flame);
         }
-
-        /* Position shared candle light at average candle position, lifted to flame height */
-        candleLight.position.set(
-          avgX / candlesN,
-          topY + 0.55,
-          avgZ / candlesN
-        );
+        candleLight.position.set(avgX / candlesN, topY + 0.55, avgZ / candlesN);
         candleLight.intensity = Math.min(candlesN * 0.35, 1.2);
       } else {
         candleLight.intensity = 0;
       }
 
-      const totalH = topY;
-      
-      /* ✅ FIXED ANCHOR: Plate stays in place, cake grows upwards */
-      /* We set a fixed position so the plate never slides off-screen */
-      group.position.y = -0.65; 
-
-      /* Camera looks higher for taller cakes so the top doesn't get cut off */
+      group.position.y = -0.65;
       camera.lookAt(0, 1.0 + (numLayers - 1) * 0.3, 0);
-
-      /* Scale shadow disc to match cake plate */
       shadowDisc.scale.setScalar(plateR / 2.2 * 1.1);
       shadowDisc.position.y = group.position.y - 0.28;
     }
 
-    /* ── ANIMATION LOOP ── */
     let t = 0;
     (function animate() {
       requestAnimationFrame(animate);
       t += 0.04;
       if (autoRotate) rotY += 0.007;
       group.rotation.y = rotY;
-
       group.children.forEach(obj => {
         if (obj.userData.isFlame) {
           obj.position.y = obj.userData.baseY + Math.sin(t * 5 + obj.userData.ox * 12) * 0.012;
-          obj.scale.x    = 0.55 + Math.sin(t * 6) * 0.05;
+          obj.scale.x = 0.55 + Math.sin(t * 6) * 0.05;
         }
       });
-
-      /* Gentle candle light flicker — cheap: just tweak intensity */
       if (candleLight.intensity > 0) {
         candleLight.intensity += (Math.random() - 0.5) * 0.04;
-        candleLight.intensity  = Math.max(0.1, Math.min(candleLight.intensity, 1.4));
+        candleLight.intensity = Math.max(0.1, Math.min(candleLight.intensity, 1.4));
       }
-
       renderer.render(scene, camera);
     })();
 
-    /* ── CHANGE HANDLERS ── */
     function onAnyChange() {
       calculateTotal();
       buildCake();
       updateBadges();
     }
 
-    ['cakeType','cakeShape','design','cakeSize','layers','toppers','candles'].forEach(id =>
+    ['cakeType', 'cakeShape', 'design', 'cakeSize', 'layers', 'toppers', 'candles'].forEach(id =>
       document.getElementById(id).addEventListener('change', onAnyChange)
     );
     document.getElementById('rush').addEventListener('change', onAnyChange);
     document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
-    ['sprinkles','drip','flowers'].forEach(id =>
+    ['sprinkles', 'drip', 'flowers'].forEach(id =>
       document.getElementById(id).addEventListener('change', onAnyChange)
     );
 
@@ -1229,186 +2051,92 @@ function updateOrderData() {
       camera.aspect = w / 340;
       camera.updateProjectionMatrix();
     });
-    window.buildCake    = buildCake;
+
+    window.buildCake = buildCake;
     window.updateBadges = updateBadges;
-  }); // end load
+  });
 </script>
+
+<!-- ===== CONSULTATION & EVENT HANDLERS ===== -->
 <script nonce="{{ csp_nonce() }}">
- function submitConsultation() {
-  const orderForm = document.getElementById('orderForm');
-  document.getElementById('c_othersDesc').value = document.getElementById('othersDesc').value;
-  if (!orderForm.checkValidity()) {
-    orderForm.reportValidity(); // Shows native browser error tooltips
-    return; 
-  }
-  updateOrderData();
-  glassAlert({
-    icon: 'question',
-    title: 'Send for Consultation?',
-    html: `Your cake design will be sent to the owner.<br>They'll reach out via chat to discuss details.`,
-    showCancelButton: true,
-    confirmButtonText: 'Yes, Consult First',
-    cancelButtonText: 'Go Back',
-  }).then((result) => {
-    if (!result.isConfirmed) return;
-    // copy fields
-    document.getElementById('c_cakeType').value = document.getElementById('cakeType').value;
-    document.getElementById('c_cakeShape').value = document.getElementById('cakeShape').value;
-    document.getElementById('c_cakeSize').value = document.getElementById('cakeSize').value;
-    document.getElementById('c_design').value = document.getElementById('design').value;
-    document.getElementById('c_layers').value = document.getElementById('layers').value;
-    document.getElementById('c_toppers').value = document.getElementById('toppers').value;
-    document.getElementById('c_candles').value = document.getElementById('candles').value;
-    document.getElementById('c_filling').value = document.getElementById('filling').checked ? document.getElementById('filling').value : '';
-    document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
-    document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
-    document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
-    document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
-    document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
-    document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
-    document.getElementById('c_notes').value = document.getElementById('notes').value;
-    document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
-    document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
-    document.getElementById('c_rush').value = document.getElementById('rush').checked ? 'yes' : '';
-    const imageFile = document.getElementById('image').files[0];
-    if (imageFile) {
-      const dt = new DataTransfer();
-      dt.items.add(imageFile);
-      document.getElementById('c_image').files = dt.files;
-    }
-    document.getElementById('consultForm').submit();
-  });
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const prefill = {{ prefill | tojson if prefill else 'null' }};
-  if (!prefill) return;
-
-  function selectByPrefix(selectId, value) {
-    const el = document.getElementById(selectId);
-    if (!el || !value) return;
-    const targetCode = String(value).split('|')[0];  // handles "2" or "2|2300"
-
-    for (const opt of el.options) {
-      if (!opt.value) continue;                     // skip placeholder
-      const [code] = opt.value.split('|');
-      if (code === targetCode) {
-        el.value = opt.value;
-        return;
-      }
-    }
-  }
-
-  // Dropdowns
-  if (prefill.cakeType)  selectByPrefix('cakeType',  prefill.cakeType);
-  if (prefill.cakeShape) document.getElementById('cakeShape').value = prefill.cakeShape;
-  if (prefill.cakeSize)  selectByPrefix('cakeSize',  prefill.cakeSize);
-  if (prefill.design)    selectByPrefix('design',    prefill.design);
-  if (prefill.layers)    selectByPrefix('layers',    prefill.layers);
-  if (prefill.toppers)   selectByPrefix('toppers',   prefill.toppers);
-  if (prefill.candles)   document.getElementById('candles').value   = prefill.candles;
-  if (prefill.notes)     document.getElementById('notes').value     = prefill.notes;
-  if (prefill.rush) document.getElementById('rush').checked = true;
-  if (prefill.others_desc) {
-    document.getElementById('others').checked = true;
-    document.getElementById('othersInputWrap').style.display = 'block';
-    document.getElementById('othersDesc').value = prefill.others_desc;
-    document.getElementById('othersPrice').value = prefill.others_price || 0;
-    if (prefill.others_price && prefill.others_price > 0) {
-      document.getElementById('othersPriceDisplay').textContent = prefill.others_price.toLocaleString();
-      document.getElementById('othersPriceTag').style.display = 'inline-block';
-      document.getElementById('othersDesc').readOnly = true; // can't edit after admin set price
-    }
-  }
-  // ✅ Add-on checkboxes
-  ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers'].forEach(id => {
-    if (prefill[id]) {
-      const el = document.getElementById(id);
-      if (el) el.checked = true;
-    }
-  });
-
-  // ✅ Inspo image — show as reference banner (can't re-attach file)
-  if (prefill.inspo_image) {
-    const uploadArea = document.querySelector('.below-grid');
-    if (uploadArea) {
-      const banner = document.createElement('div');
-      banner.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,167,205,0.3);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.7);';
-      banner.innerHTML = `
-        <img src="${prefill.inspo_image}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e75480;">
-        <span>📎 Reference image from consultation (re-upload below if you want to update it)</span>
-      `;
-      uploadArea.prepend(banner);
-    }
-  }
-
-  // ✅ Trigger recalculation so price + 3D preview reflect prefilled values
-  calculateTotal();
-  if (typeof buildCake === 'function') buildCake();
-  if (typeof updateBadges === 'function') updateBadges();
-
-  // Hide consult button, inject token
-  document.getElementById('consultBtn')?.style.setProperty('display', 'none');
-  const tokenInput = document.createElement('input');
-  tokenInput.type  = 'hidden';
-  tokenInput.name  = 'consult_token';
-  tokenInput.value = '{{ consult_token or "" }}';
-  document.getElementById('orderForm').appendChild(tokenInput);
-});
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Image Hover Overlay
-    const overlay = document.getElementById('imageHoverOverlay');
-    if (overlay) {
-        overlay.addEventListener('mouseover', function() { this.style.background = 'rgba(0,0,0,0.35)'; });
-        overlay.addEventListener('mouseout', function() { this.style.background = 'rgba(0,0,0,0)'; });
-    }
-
-    // 2. Remove Image Button
-    const removeBtn = document.getElementById('removeImageBtn');
-    if (removeBtn) removeBtn.addEventListener('click', clearImage);
-
-    // 3. Consultation Button
-    const consultBtn = document.getElementById('consultBtn');
-    if (consultBtn) consultBtn.addEventListener('click', submitConsultation);
-    // 4. File Input Change
-    const imageInput = document.getElementById('image');
-    if (imageInput) {
-        imageInput.addEventListener('change', function() {
-            checkFileSize(this);
-            previewImage(this);
-        });
-    }
-    document.getElementById('others').addEventListener('change', function() {
-      document.getElementById('othersInputWrap').style.display = this.checked ? 'block' : 'none';
-      if (!this.checked) document.getElementById('othersDesc').value = '';
+  function submitConsultation() {
+    const orderForm = document.getElementById('orderForm');
+    document.getElementById('c_othersDesc').value = document.getElementById('othersDesc').value;
+    if (!orderForm.checkValidity()) { orderForm.reportValidity(); return; }
+    updateOrderData();
+    glassAlert({
+      icon: 'question',
+      title: 'Send for Consultation?',
+      html: 'Your cake design will be sent to the owner.<br>They\'ll reach out via chat to discuss details.',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Consult First',
+      cancelButtonText: 'Go Back',
+    }).then((result) => {
+      if (!result.isConfirmed) return;
+      document.getElementById('c_cakeType').value = document.getElementById('cakeType').value;
+      document.getElementById('c_cakeShape').value = document.getElementById('cakeShape').value;
+      document.getElementById('c_cakeSize').value = document.getElementById('cakeSize').value;
+      document.getElementById('c_design').value = document.getElementById('design').value;
+      document.getElementById('c_layers').value = document.getElementById('layers').value;
+      document.getElementById('c_toppers').value = document.getElementById('toppers').value;
+      document.getElementById('c_candles').value = document.getElementById('candles').value;
+      document.getElementById('c_filling').value = document.getElementById('filling').checked ? document.getElementById('filling').value : '';
+      document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
+      document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
+      document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
+      document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
+      document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
+      document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
+      document.getElementById('c_notes').value = document.getElementById('notes').value;
+      document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
+      document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
+      document.getElementById('c_rush').value = document.getElementById('rush').checked ? 'yes' : '';
+      const imageFile = document.getElementById('image').files[0];
+      if (imageFile) { const dt = new DataTransfer(); dt.items.add(imageFile); document.getElementById('c_image').files = dt.files; }
+      document.getElementById('consultForm').submit();
     });
-    // 5. Proceed Button Click
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // ===== DOWNPAYMENT AGREEMENT =====
+    const agreeBox = document.getElementById('downpaymentAgree');
     const proceedBtn = document.getElementById('proceedBtn');
+    const consultBtn = document.getElementById('consultBtn');
+
+    if (agreeBox && proceedBtn) {
+      agreeBox.addEventListener('change', function() {
+        const locked = !this.checked;
+        proceedBtn.classList.toggle('locked', locked);
+      });
+    }
+
+    // ===== CONSULT BUTTON =====
+    if (consultBtn) {
+      consultBtn.addEventListener('click', submitConsultation);
+      consultBtn.classList.remove('locked');
+    }
+
+    // ===== PROCEED BUTTON =====
     if (proceedBtn) {
       proceedBtn.addEventListener('click', function(e) {
         const orderForm = document.getElementById('orderForm');
+        if (!orderForm.checkValidity()) { orderForm.reportValidity(); return; }
 
-        
-        if (!orderForm.checkValidity()) {
-          orderForm.reportValidity();  
-          return;                       
-        }
-
-        const othersPrice = parseFloat(document.getElementById('othersPrice').value || 0);
+        const othersPrice = parseFloat(document.getElementById('othersPriceHidden').value || 0);
         if (document.getElementById('others').checked && othersPrice === 0) {
           e.preventDefault();
           glassAlert({
             icon: 'info',
             title: 'Custom Add-on Detected',
-            html: `Your <strong>"Others"</strong> add-on needs a price set by the owner.<br>Please use <strong>Consult First</strong> so we can price it for you.`,
+            html: 'Your <strong>"Others"</strong> add-on needs a price set by the owner.<br>Please use <strong>Consult First</strong> so we can price it for you.',
             confirmButtonText: 'Got it',
             confirmButtonColor: '#db2777',
           });
           return;
         }
-        e.preventDefault();
 
-        Swal.fire({
+        e.preventDefault();
+        glassAlert({
           icon: 'warning',
           title: 'Order is Final',
           html: 'Once your customized cake order is placed and payment is made, it <b>cannot be cancelled or refunded</b>.<br>Please review your cake details carefully before proceeding.',
@@ -1423,9 +2151,117 @@ document.addEventListener('DOMContentLoaded', function() {
             updateOrderData();
             orderForm.submit();
           }
-        });   
+        });
       });
     }
-});
+
+    // ===== OTHERS ADD-ON =====
+    document.getElementById('others').addEventListener('change', function() {
+      document.getElementById('othersInputWrap').style.display = this.checked ? 'block' : 'none';
+      if (!this.checked) {
+        document.getElementById('othersDesc').value = '';
+        document.getElementById('othersPrice').value = '';
+        document.getElementById('othersPriceHidden').value = '0';
+        document.getElementById('othersPriceTag').style.display = 'none';
+      }
+    });
+
+    document.getElementById('othersPrice').addEventListener('input', function() {
+      const val = parseFloat(this.value) || 0;
+      document.getElementById('othersPriceHidden').value = val;
+      document.getElementById('othersPriceDisplay').textContent = val.toLocaleString();
+      document.getElementById('othersPriceTag').style.display = val > 0 ? 'inline-block' : 'none';
+      calculateTotal();
+      updateBadges();
+    });
+
+    document.getElementById('othersDesc').addEventListener('input', function() {
+      if (this.value.trim() && parseFloat(document.getElementById('othersPrice').value || 0) > 0) {
+        document.getElementById('othersPriceTag').style.display = 'inline-block';
+      }
+    });
+
+    // ===== IMAGE UPLOAD =====
+    const imageInput = document.getElementById('image');
+    if (imageInput) {
+      imageInput.addEventListener('change', function() {
+        checkFileSize(this);
+        previewImage(this);
+      });
+    }
+
+    const removeBtn = document.getElementById('removeImageBtn');
+    if (removeBtn) removeBtn.addEventListener('click', clearImage);
+
+    const overlay = document.getElementById('imageHoverOverlay');
+    if (overlay) {
+      overlay.addEventListener('mouseover', function() { this.style.background = 'rgba(0,0,0,0.35)'; });
+      overlay.addEventListener('mouseout', function() { this.style.background = 'rgba(0,0,0,0)'; });
+    }
+
+    // ===== PREFILL DATA =====
+    const prefill = {{ prefill | tojson if prefill else 'null' }};
+    if (!prefill) return;
+
+    function selectByPrefix(selectId, value) {
+      const el = document.getElementById(selectId);
+      if (!el || !value) return;
+      const targetCode = String(value).split('|')[0];
+      for (const opt of el.options) {
+        if (!opt.value) continue;
+        const [code] = opt.value.split('|');
+        if (code === targetCode) { el.value = opt.value; return; }
+      }
+    }
+
+    if (prefill.cakeType) selectByPrefix('cakeType', prefill.cakeType);
+    if (prefill.cakeShape) document.getElementById('cakeShape').value = prefill.cakeShape;
+    if (prefill.cakeSize) selectByPrefix('cakeSize', prefill.cakeSize);
+    if (prefill.design) selectByPrefix('design', prefill.design);
+    if (prefill.layers) selectByPrefix('layers', prefill.layers);
+    if (prefill.toppers) selectByPrefix('toppers', prefill.toppers);
+    if (prefill.candles) document.getElementById('candles').value = prefill.candles;
+    if (prefill.notes) document.getElementById('notes').value = prefill.notes;
+    if (prefill.rush) document.getElementById('rush').checked = true;
+
+    if (prefill.others_desc) {
+      document.getElementById('others').checked = true;
+      document.getElementById('othersInputWrap').style.display = 'block';
+      document.getElementById('othersDesc').value = prefill.others_desc;
+      document.getElementById('othersPrice').value = prefill.others_price || 0;
+      if (prefill.others_price && prefill.others_price > 0) {
+        document.getElementById('othersPriceHidden').value = prefill.others_price;
+        document.getElementById('othersPriceDisplay').textContent = prefill.others_price.toLocaleString();
+        document.getElementById('othersPriceTag').style.display = 'inline-block';
+        document.getElementById('othersDesc').readOnly = true;
+      }
+    }
+
+    ['filling', 'cupcake', 'ediblepaper', 'fondanttoppers', 'sprinkles', 'drip', 'flowers'].forEach(id => {
+      if (prefill[id]) { const el = document.getElementById(id); if (el) el.checked = true; }
+    });
+
+    if (prefill.inspo_image) {
+      const uploadArea = document.querySelector('.below-grid');
+      if (uploadArea) {
+        const banner = document.createElement('div');
+        banner.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,167,205,0.3);border-radius:8px;font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:10px;flex-wrap:wrap;';
+        banner.innerHTML = `<img src="${prefill.inspo_image}" style="width:44px;height:44px;object-fit:cover;border-radius:6px;border:1px solid #e75480;flex-shrink:0;"><span>📎 Reference image from consultation (re-upload below if you want to update it)</span>`;
+        uploadArea.prepend(banner);
+      }
+    }
+
+    calculateTotal();
+    if (typeof buildCake === 'function') buildCake();
+    if (typeof updateBadges === 'function') updateBadges();
+
+    if (consultBtn) consultBtn.style.setProperty('display', '');
+
+    const tokenInput = document.createElement('input');
+    tokenInput.type = 'hidden';
+    tokenInput.name = 'consult_token';
+    tokenInput.value = '{{ consult_token or "" }}';
+    document.getElementById('orderForm').appendChild(tokenInput);
+  });
 </script>
 {% endblock %}
