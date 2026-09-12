@@ -3,16 +3,46 @@
 
 {% block extra_css %}
 <style nonce="{{ csp_nonce() }}">
+  /* ══════════════════════════════════════════════════════
+     PAGE-LEVEL LAYOUT FIX — full page, no cut-off
+     ══════════════════════════════════════════════════════ */
+  html, body {
+    height: 100%;
+    min-height: 100%;
+  }
+
+  #layoutSidenav,
+  #layoutSidenav_content,
+  #content-wrapper,
+  .content-wrapper,
+  .main-content,
+  .main-panel,
+  .page-wrapper,
+  #page-wrapper,
+  #wrapper {
+    min-height: 100vh;
+    height: auto;
+  }
+
+  #layoutSidenav_content {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  #layoutSidenav_content > footer,
+  .main-content > footer,
+  footer.footer {
+    margin-top: auto;
+  }
+
+  /* ══════════════════════════════════════════════════════
+     TABLE STYLES (Desktop & Mobile Horizontal Scroll)
+     ══════════════════════════════════════════════════════ */
   .table-pink th {
     background-color: #c71585;
     color: white;
-  }
-
-  .date-time {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: normal;
+    white-space: nowrap;
   }
 
   .star-display { color: #ffc107; font-size: 0.9rem; }
@@ -49,93 +79,94 @@
   }
 
   .container-fluid.mt-4.mb-0.px-4 {
-    margin-bottom: 0 !important;
-    padding-bottom: 0 !important;
+    padding-bottom: 30px !important;
   }
 
-  #layoutSidenav_content, #content-wrapper, .content-wrapper,
-  .main-content, .main-panel, .page-wrapper, #page-wrapper, #wrapper {
-    padding-bottom: 0 !important;
-    min-height: 0 !important;
-  }
-
+  /* ✅ HORIZONTAL SCROLL WRAPPER */
   .table-responsive {
-    min-height: 0 !important;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
   }
 
+  /* ✅ FORCE TABLE TO KEEP ITS SHAPE ON MOBILE */
   #reviewsTable {
-    table-layout: fixed;
     width: 100%;
+    min-width: 800px; /* Prevents squishing, forces scroll */
+    table-layout: auto;
   }
 
   #reviewsTable thead th,
   #reviewsTable tbody td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
     vertical-align: middle;
+    padding: 0.75rem;
   }
 
-  /* Column widths */
-  #reviewsTable th:nth-child(1),
-  #reviewsTable td:nth-child(1) { width: 150px; }
+  /* Class to hide rows via JS (prevents inline style conflicts) */
+  .row-hidden {
+    display: none !important;
+  }
 
-  #reviewsTable th:nth-child(2),
-  #reviewsTable td:nth-child(2) { width: 160px; }
+  /* ══════════════════════════════════════════════════════
+   EMPTY STATE
+   ══════════════════════════════════════════════════════ */
+  .empty-state-row {
+    display: table-row !important;
+  }
 
-  #reviewsTable th:nth-child(3),
-  #reviewsTable td:nth-child(3) { width: 120px; }
+  .empty-state-cell {
+    display: table-cell !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    text-align: center;
+  }
 
-  #reviewsTable th:nth-child(4),
-  #reviewsTable td:nth-child(4) { width: 120px; overflow: visible; white-space: normal; }
+  .empty-state {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 60px 20px;
+    width: 100%;
+    min-height: 220px;
+    margin: 0 auto;
+  }
 
-  #reviewsTable th:nth-child(5),
-  #reviewsTable td:nth-child(5) { width: 150px; }
+  .empty-state .empty-icon {
+    color: #6c757d;
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+    line-height: 1;
+  }
 
-  #reviewsTable th:nth-child(6),
-  #reviewsTable td:nth-child(6) { width: 70px; }
+  .empty-state .empty-text {
+    color: #6c757d;
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0;
+  }
 
-  #reviewsTable th:nth-child(7),
-  #reviewsTable td:nth-child(7) { width: 70px; }
-
-  /* ════════ TABLET ════════ */
-  @media (max-width: 991px) {
+  /* ═══════ RESPONSIVE ADJUSTMENTS (Filters & Spacing) ═══════ */
+  @media (max-width: 767px) {
     .container-fluid.mt-4.mb-0.px-4 {
       padding-left: 12px !important;
       padding-right: 12px !important;
       margin-top: 16px !important;
     }
 
-    .row.mb-3 > .col-md-6 { width: 100%; }
-    .row.mb-3 > .col-md-3 { width: 50%; }
-
-    #reviewsTable thead th,
-    #reviewsTable tbody td { font-size: 0.78rem; }
-
-    #reviewsPagination { justify-content: center !important; }
-  }
-
-  /* ════════ MOBILE ════════ */
-  @media (max-width: 575px) {
-    #reviewsTable tbody td {
-    gap: 8px;
-  }
-    .container-fluid.mt-4.mb-0.px-4 {
-      padding-left: 8px !important;
-      padding-right: 8px !important;
-      margin-top: 50px !important;
-    }
-
     .card-header.card-header-custom {
       flex-direction: column !important;
       align-items: flex-start !important;
-      gap: 6px;
+      gap: 8px;
       padding: 12px 14px;
     }
 
-    .card-header.card-header-custom h4 { font-size: 1rem; }
-    .card-body { padding: 12px 10px !important; }
+    .card-body { padding: 12px !important; }
 
     .row.mb-3 > .col-md-6,
     .row.mb-3 > .col-md-3 {
@@ -143,76 +174,10 @@
       margin-bottom: 8px;
     }
 
-    /* Card layout */
-    #reviewsTable thead { display: none; }
-
-    #reviewsTable tbody tr {
-      display: block;
-      border: 1px solid #e8e8e8;
-      border-radius: 10px;
-      margin-bottom: 12px;
-      padding: 12px 14px;
-      background: #fff;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
-    }
-
-    #reviewsTable tbody td {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 0;
-      border: none;
-      font-size: 0.82rem;
-      border-bottom: 1px solid #f5f5f5;
-      white-space: normal;
-      width: auto;
-      overflow: visible;
-    }
-
-    #reviewsTable tbody td:last-child {
-      border-bottom: none;
-    }
-    #reviewsTable thead th,
-    #reviewsTable tbody td {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      width: 100% !important;
-    }
-    #reviewsTable tbody td::before {
-      content: attr(data-label);
-      font-weight: 700;
-      color: #c71585;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      flex-shrink: 0;
-        min-width: 80px; 
-      margin-right: 8px;
-    }
-    #reviewsTable tbody td > *,
-    #reviewsTable tbody td > form {
-      margin-left: auto;
-      text-align: right;
-    }
-  
-
-    .review-comment {
-      max-width: 180px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
     #reviewsPagination {
       justify-content: center !important;
       flex-wrap: wrap;
-      gap: 2px;
-    }
-
-    .pagination .page-link {
-      font-size: 0.75rem;
-      padding: 5px 9px;
+      gap: 4px;
     }
   }
 </style>
@@ -258,7 +223,7 @@
 
       <!-- TABLE -->
       <div class="table-responsive">
-        <table class="table table-hover align-middle" id="reviewsTable">
+        <table class="table table-hover align-middle mb-0" id="reviewsTable">
           <thead class="table-pink">
             <tr>
               <th>Date</th>
@@ -276,32 +241,32 @@
             <tr data-visibility="{{ 'visible' if r.is_visible else 'hidden' }}"
                 data-rating="{{ r.rating }}">
 
-              <!-- ✅ FIXED DATE + TIME -->
-              <td data-label="Date">
+              <td>
                 <small>{{ r.created_at.strftime('%b %d, %Y') if r.created_at else 'N/A' }}</small>
-                <small class="text-muted ms-2">{{ r.created_at.strftime('%I:%M %p') if r.created_at else '' }}</small>
+                <br>
+                <small class="text-muted">{{ r.created_at.strftime('%I:%M %p') if r.created_at else '' }}</small>
               </td>
 
-              <td data-label="Cake"><strong>{{ r.cake_name }}</strong></td>
-              <td data-label="Reviewer">{{ r.reviewer_name }}</td>
+              <td><strong>{{ r.cake_name }}</strong></td>
+              <td>{{ r.reviewer_name }}</td>
 
-              <td data-label="Rating">
+              <td>
                 <span class="star-display">
                   {% for i in range(r.rating) %}⭐{% endfor %}
                 </span>
-                <small class="text-muted">({{ r.rating }}/5)</small>
+                <small class="text-muted d-block">({{ r.rating }}/5)</small>
               </td>
 
-             <td data-label="Comment">
-              <span class="review-comment" 
-                title="{{ r.comment }}"
-                onmouseover="this.style.maxWidth='none'; this.style.whiteSpace='normal';"
-                onmouseout="this.style.maxWidth='200px'; this.style.whiteSpace='nowrap';">
-                {{ r.comment or '—' }}
-              </span>
-            </td>
+              <td>
+                <span class="review-comment"
+                  title="{{ r.comment }}"
+                  onmouseover="this.style.maxWidth='none'; this.style.whiteSpace='normal';"
+                  onmouseout="this.style.maxWidth='200px'; this.style.whiteSpace='nowrap';">
+                  {{ r.comment or '—' }}
+                </span>
+              </td>
 
-              <td data-label="Status">
+              <td>
                 {% if r.is_visible %}
                   <span class="badge badge-visible">Visible</span>
                 {% else %}
@@ -309,8 +274,8 @@
                 {% endif %}
               </td>
 
-              <td data-label="Action">
-                <form method="POST" action="/admin/review/toggle/{{ r.id }}">
+              <td>
+                <form method="POST" action="/admin/review/toggle/{{ r.id }}" class="d-inline">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                   {% if r.is_visible %}
                     <button type="submit" class="btn btn-sm btn-outline-secondary">
@@ -326,10 +291,13 @@
 
             </tr>
             {% else %}
-            <tr>
-              <td colspan="7" class="text-center text-muted py-5">
-                <i class="fas fa-star fa-3x mb-3 d-block"></i>
-                No reviews yet
+            <!-- EMPTY STATE -->
+            <tr class="empty-state-row">
+              <td colspan="7" class="empty-state-cell">
+                <div class="empty-state">
+                  <i class="fas fa-star empty-icon"></i>
+                  <p class="empty-text">No reviews yet</p>
+                </div>
               </td>
             </tr>
             {% endfor %}
@@ -356,30 +324,93 @@
   }
 })();
 
-/* ── Fix 2: No empty space below page ── */
+/* ── Fix 2: Make page fill full height ── */
 document.addEventListener('DOMContentLoaded', function() {
   document.body.style.height = 'auto';
-  document.body.style.minHeight = '0';
-  var mc = document.querySelector('.main-content');
-  if (mc) {
-    mc.style.paddingBottom = '0';
-    mc.style.minHeight = '0';
-  }
-});
+  document.body.style.minHeight = '100vh';
 
-/* ── Fix 3: Bootstrap modal padding ── */
-document.addEventListener('show.bs.modal', function() {
-  requestAnimationFrame(function() {
-    document.body.style.paddingRight = '0px';
-    document.body.style.overflow = 'hidden';
+  var wrappers = [
+    document.querySelector('.main-content'),
+    document.querySelector('#layoutSidenav_content'),
+    document.querySelector('#content-wrapper'),
+    document.querySelector('.content-wrapper')
+  ];
+
+  wrappers.forEach(function(el) {
+    if (el) {
+      el.style.minHeight = '100vh';
+      el.style.height = 'auto';
+      el.style.paddingBottom = '0';
+    }
   });
 });
-document.addEventListener('hidden.bs.modal', function() {
-  document.body.style.paddingRight = '';
-  document.body.style.overflow = '';
-});
 
-/* ── Original JS ── */
+/* ── Pagination Helper Function ── */
+function updatePaginationButtons(paginationId, currentPage, totalPages, onPageChange) {
+  var pagination = document.getElementById(paginationId);
+  if (!pagination) return;
+  
+  pagination.innerHTML = '';
+  
+  if (totalPages <= 1) return;
+  
+  // Previous button
+  var prevLi = document.createElement('li');
+  prevLi.className = 'page-item' + (currentPage === 1 ? ' disabled' : '');
+  var prevLink = document.createElement('a');
+  prevLink.className = 'page-link';
+  prevLink.href = '#';
+  prevLink.textContent = 'Previous';
+  prevLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  });
+  prevLi.appendChild(prevLink);
+  pagination.appendChild(prevLi);
+  
+  // Page numbers
+  for (var i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+      var li = document.createElement('li');
+      li.className = 'page-item' + (i === currentPage ? ' active' : '');
+      var link = document.createElement('a');
+      link.className = 'page-link';
+      link.href = '#';
+      link.textContent = i;
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        var page = parseInt(this.textContent);
+        onPageChange(page);
+      });
+      li.appendChild(link);
+      pagination.appendChild(li);
+    } else if (i === currentPage - 2 || i === currentPage + 2) {
+      var ellipsis = document.createElement('li');
+      ellipsis.className = 'page-item disabled';
+      var span = document.createElement('span');
+      span.className = 'page-link';
+      span.textContent = '...';
+      ellipsis.appendChild(span);
+      pagination.appendChild(ellipsis);
+    }
+  }
+  
+  // Next button
+  var nextLi = document.createElement('li');
+  nextLi.className = 'page-item' + (currentPage === totalPages ? ' disabled' : '');
+  var nextLink = document.createElement('a');
+  nextLink.className = 'page-link';
+  nextLink.href = '#';
+  nextLink.textContent = 'Next';
+  nextLink.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
+  });
+  nextLi.appendChild(nextLink);
+  pagination.appendChild(nextLi);
+}
+
+/* ── Original JS (Fixed for Responsive Compatibility) ── */
 var currentPage = 1;
 var itemsPerPage = 10;
 
@@ -391,6 +422,8 @@ function updateDisplay() {
   var visibleRows = [];
 
   allRows.forEach(function(row) {
+    if (row.classList.contains('empty-state-row')) return;
+
     var text = row.textContent.toLowerCase();
     var visibility = row.getAttribute('data-visibility');
     var rating = row.getAttribute('data-rating');
@@ -405,10 +438,28 @@ function updateDisplay() {
   var totalPages = Math.ceil(visibleRows.length / itemsPerPage);
   var start = (currentPage - 1) * itemsPerPage;
 
-  allRows.forEach(row => row.style.display = 'none');
-  visibleRows.forEach(function(row, i) {
-    if (i >= start && i < start + itemsPerPage) row.style.display = '';
+  // ✅ FIX: Use classList instead of inline styles to prevent breaking mobile layout
+  allRows.forEach(row => {
+    if (!row.classList.contains('empty-state-row')) {
+      row.classList.add('row-hidden');
+    }
   });
+
+  visibleRows.forEach(function(row, i) {
+    if (i >= start && i < start + itemsPerPage) {
+      row.classList.remove('row-hidden');
+    }
+  });
+
+  // ✅ Show/hide empty state
+  var emptyRow = document.querySelector('.empty-state-row');
+  if (emptyRow) {
+    if (visibleRows.length === 0) {
+      emptyRow.classList.remove('row-hidden');
+    } else {
+      emptyRow.classList.add('row-hidden');
+    }
+  }
 
   updatePaginationButtons('reviewsPagination', currentPage, totalPages, function(page) {
     currentPage = page;
