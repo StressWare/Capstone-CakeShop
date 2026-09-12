@@ -118,108 +118,130 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     .notification-bell-wrapper { width: 36px; height: 36px; }
 }
 
+/* ══════════════════════════════════════════════════════
+   NOTIFICATION BADGE — Responsive (positioned down)
+   ══════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════
+   NOTIFICATION BADGE
+   ══════════════════════════════════════════════════════ */
+
 .notification-badge {
-    display: none;
     position: absolute;
     top: -4px;
-    right: -4px;
-    background: linear-gradient(135deg, var(--brand-pink-light), var(--brand-pink));
-    color: white;
-    font-size: 0.62rem;
-    font-weight: 700;
+    right: -6px;
+
+    /* Perfect circle */
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin: 0;
+
+    /* Styling */
+    background-color: #d63384;
+    color: #ffffff;
     border-radius: 50%;
-    min-width: 17px;
-    height: 17px;
-    display: flex;
+    border: 2px solid #3a2a35;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: sans-serif;
+
+    /* Center the number */
+    display: flex !important;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 0 2px rgba(15,3,9,.85);
-    text-align: center;
     line-height: 1;
-}
-
-/* ====== DROPDOWN DESKTOP (Default) ====== */
-.notification-dropdown {
-    position: fixed;
-    top: 76px;      /* matches .navbar min-height */
-    right: 40px;    /* pulled in from the edge a bit more than nav padding */
-    width: 320px;
-    max-height: 400px;
-    background: linear-gradient(165deg, rgba(20, 5, 12, 0.92), rgba(48, 9, 25, 0.88));
-    backdrop-filter: blur(20px) saturate(160%);
-    -webkit-backdrop-filter: blur(20px) saturate(160%);
-    border: 1px solid var(--nav-border);
-    border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    display: none; /* Toggled via JS */
-    z-index: 1002;
-    overflow-y: auto;
-    color: #fff;
-}
-/* Dropdown Header Styling */
-.notif-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, var(--brand-pink), var(--brand-pink-light));
-    color: white;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border-radius: 12px 12px 0 0;
-}
-
-.notif-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.notif-actions button {
-    background: rgba(255,255,255,0.2);
-    border: none;
-    color: white;
-    font-size: 0.7rem;
-    cursor: pointer;
-    padding: 3px 8px;
-    border-radius: 15px;
-    white-space: nowrap;
-}
-
-.notif-actions button:hover {
-    background: rgba(255,255,255,0.4);
-}
-
-.notif-body {
-    padding: 20px;
     text-align: center;
-    color: rgba(255,255,255,0.65);
+    box-sizing: border-box;
+
+    /* Desktop: perfect as-is (number nudged slightly up) */
+    padding-bottom: 2px;
+
+    /* Above the bell */
+    z-index: 10;
+    pointer-events: none;
 }
 
-.dropdown-list {
-    max-height: 350px;
-    overflow-y: auto;
-}
 
-/* ====== 📱 MOBILE RESPONSIVE FIX ====== */
+/* ══════════════════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   ══════════════════════════════════════════════════════ */
+
+/* ── Tablets (max-width: 768px) ── */
 @media (max-width: 768px) {
-    .notification-dropdown {
-        top: 68px;      /* matches shrunken mobile navbar height */
-        left: 10px;
-        right: 16px;    /* small margin so it's not flush against the screen edge */
-        width: auto;
-        border-radius: 0 0 12px 12px;
-        max-width: 100%;
-    }
+    .notification-badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        top: -3px;
+        right: -5px;
+        border-width: 2px;
 
-    .notif-header {
-        flex-direction: column;
-        gap: 8px;
-        align-items: flex-start;
+        /* 👇 Number moves DOWN: reduce bottom padding, add top padding */
+        padding-bottom: 0;
+        padding-top: 1px;
     }
+}
 
-    .notif-actions {
-        width: 100%;
-        justify-content: space-between;
+/* ── Standard phones (max-width: 576px) ── */
+@media (max-width: 576px) {
+    .notification-badge {
+        width: 17px;
+        height: 17px;
+        font-size: 9.5px;
+        top: -2px;
+        right: -4px;
+
+        /* 👇 Number moves DOWN more */
+        padding-bottom: 0;
+        padding-top: 1px;
+    }
+}
+
+/* ── Small phones (max-width: 400px) ── */
+@media (max-width: 400px) {
+    .notification-badge {
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+        top: -1px;
+        right: -4px;
+        border-width: 1.5px;
+
+        /* 👇 Number moves DOWN */
+        padding-bottom: 0;
+        padding-top: 1.5px;
+    }
+}
+
+/* ── Very small phones (max-width: 340px) ── */
+@media (max-width: 340px) {
+    .notification-badge {
+        width: 14px;
+        height: 14px;
+        font-size: 8px;
+        top: 0px;
+        right: -3px;
+        border-width: 1.5px;
+
+        /* 👇 Number moves DOWN */
+        padding-bottom: 0;
+        padding-top: 1.5px;
+    }
+}
+
+/* ── Large screens (min-width: 1400px) ── */
+@media (min-width: 1400px) {
+    .notification-badge {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+        top: -5px;
+        right: -7px;
+
+        /* Desktop large: keep centered */
+        padding-bottom: 2px;
+        padding-top: 0;
     }
 }
 
