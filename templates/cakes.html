@@ -336,29 +336,31 @@
                        <span class="stock" style="background:#d63384 !important; color:white !important; padding:1px 8px !important; border-radius:8px !important; font-weight:600 !important; display:inline-block !important;">{{ cake.quantity }} left</span>
               </div>
               <!-- Add to Cart MUNA (nasa taas) -->
-                <form method="POST" action="/cart/add">
-                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-                    <input type="hidden" name="cake_name" value="{{ cake.name }}">
-                    <input type="hidden" name="price"     value="{{ cake.price }}">
-                    <input type="hidden" name="quantity"  id="cart-qty-{{ cake.id }}" value="1">
-                    <button type="submit" class="btn order-btn w-100 mb-2"
-                            style="background:#fff; color:#d63384; border:2px solid #d63384;">
-                        <i class="fas fa-cart-plus"></i> Add to Cart
-                    </button>
-                </form>
+              <!-- Order Now SA TAAS (Moved Up) -->
+<form method="POST" action="/order/cake" class="order-form mb-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+    <input type="hidden" name="cake_name" value="{{ cake.name }}">
+    <input type="hidden" name="price"     value="{{ cake.price }}">
+    <input type="hidden" name="quantity"  id="order-qty-{{ cake.id }}" value="1">
+    <input type="hidden" name="image" value="{{ cake.image }}">
+    <button type="submit" class="btn order-btn w-100">
+        <i class="fas fa-bolt"></i> Order Now
+    </button>
+</form>
 
-                <!-- Order Now SA BABA -->
-                <form method="POST" action="/order/cake" class="order-form">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="cake_id"   value="{{ cake.id }}">
-                    <input type="hidden" name="cake_name" value="{{ cake.name }}">
-                    <input type="hidden" name="price"     value="{{ cake.price }}">
-                    <input type="hidden" name="quantity"  id="order-qty-{{ cake.id }}" value="1">
-                    <input type="hidden" name="image" value="{{ cake.image }}">
-                    <button type="submit" class="btn order-btn w-100">
-                        <i class="fas fa-bolt"></i> Order Now
-                    </button>
+<!-- Add to Cart SA BABA (Moved Down) -->
+<form method="POST" action="/cart/add">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="cake_id"   value="{{ cake.id }}">
+    <input type="hidden" name="cake_name" value="{{ cake.name }}">
+    <input type="hidden" name="price"     value="{{ cake.price }}">
+    <input type="hidden" name="quantity"  id="cart-qty-{{ cake.id }}" value="1">
+    <button type="submit" class="btn order-btn w-100"
+            style="background:#fff; color:#d63384; border:2px solid #d63384;">
+        <i class="fas fa-cart-plus"></i> Add to Cart
+    </button>
+</form>
                 </form>
             {% else %}
               <button class="btn w-100" disabled

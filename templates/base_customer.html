@@ -111,7 +111,8 @@
   <!-- OFFCANVAS MENU -->
   <div class="custom-offcanvas" id="offcanvasMenu">
     <div class="offcanvas-header">
-      <button class="close-btn" id="menuClose">&#9776;</button>
+      <!-- FIXED: Added type="button" and a unique class to prevent conflicts with other close buttons -->
+      <button type="button" class="close-btn menu-close-btn" id="menuClose">&#9776;</button>
   </div>
   <div class="offcanvas-body">
     <a href="/">Home</a>
@@ -276,7 +277,8 @@
 <script nonce="{{ csp_nonce() }}">
   const menuBtn    = document.getElementById("menuToggle");
   const offcanvas  = document.getElementById("offcanvasMenu");
-  const menuClose  = document.getElementById("menuClose");
+  // FIXED: Changed selector to target the specific menu button instead of a generic class
+  const menuClose  = document.querySelector(".menu-close-btn");
   const overlay    = document.getElementById("menuOverlay");
 
   function openMenu() {

@@ -1,6 +1,6 @@
 // Notifications System
 let unsubscribeNotifications = null;
-let isFirstLoad = true;  // ← ADD THIS
+let isFirstLoad = true;
 
 function initNotifications() {
     const userIdElement = document.querySelector('[data-user-id]');
@@ -21,7 +21,6 @@ function initNotifications() {
             .orderBy("created_at", "desc")
             .limit(20)
             .onSnapshot((snapshot) => {
-                // Get ALL notifications from the snapshot
                 const allNotifications = [];
                 let unreadCount = 0;
                 
@@ -32,7 +31,6 @@ function initNotifications() {
                     allNotifications.push(notif);
                 });
                 
-                // Show toast for newly added notifications only
                 if (!isFirstLoad) {
                     snapshot.docChanges().forEach((change) => {
                         if (change.type === 'added') {
@@ -78,16 +76,16 @@ function renderNotifications(notifications) {
         const timeAgo = getTimeAgo(notif.created_at?.toDate());
         const unreadStyle = !notif.is_read ? 'background: #fff0f5; border-left: 3px solid #d63384;' : '';
         
+        // ✅ FIXED: Removed inline onclick. Added data attributes instead.
         html += `
             <div style="padding: 10px 14px; border-bottom: 1px solid #f5f5f5; position: relative; ${unreadStyle}">
-                <div style="cursor: pointer; padding-right: 24px;"
-                    onclick="handleNotificationClick('${notif.id}', '${notif.order_id || ''}')">
+                <div class="notif-content" data-notif-id="${notif.id}" data-order-id="${notif.order_id || ''}" style="cursor: pointer; padding-right: 24px;">
                     <div style="font-weight: 600; font-size: 0.85rem; color: #333; margin-bottom: 3px;">${escapeHtml(notif.title)}</div>
                     <div style="color: #666; font-size: 0.75rem; margin-bottom: 3px;">${escapeHtml(notif.message)}</div>
                     <div style="font-size: 0.7rem; color: #999;">${timeAgo}</div>
                 </div>
-                <button onclick="event.stopPropagation(); deleteNotification('${notif.id}')"
-                        style="position: absolute; top: 8px; right: 10px; background: none; border: none; color: #ccc; font-size: 0.85rem; cursor: pointer; line-height: 1; padding: 2px 4px; border-radius: 4px;"
+                <button class="notif-delete-btn" data-notif-id="${notif.id}"
+                        style="position: absolute; top: 8px; right: 10px; background: none; border: none; color: #ccc; font-size: 0.85rem; cursor: pointer; line-height: 1; padding: 4px 6px; border-radius: 4px; z-index: 10;"
                         onmouseover="this.style.color='#d63384'; this.style.background='#fff0f5';"
                         onmouseout="this.style.color='#ccc'; this.style.background='none';"
                         title="Delete notification">✕</button>
@@ -264,10 +262,49 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Close dropdown when clicking outside
     document.addEventListener('click', function(e) {
-        if (dropdown && !dropdown.contains(e.target) && !bellWrapper.contains(e.target)) {
-            dropdown.style.display = 'none';
+        if (!dropdown || !bellWrapper) return;
+        
+        if (dropdown.contains(e.target) || bellWrapper.contains(e.target)) {
+            return;
         }
+        
+        if (e.target.closest('#menuToggle') || e.target.closest('#menuClose')) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        
+        dropdown.style.display = 'none';
     });
+    
+    // ✅ NEW FIX: Event delegation for individual notification delete buttons
+    const notificationList = document.getElementById('notificationList');
+    if (notificationList) {
+        notificationList.addEventListener('click', function(e) {
+            // Handle DELETE button click
+            const deleteBtn = e.target.closest('.notif-delete-btn');
+            if (deleteBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+                const notifId = deleteBtn.getAttribute('data-notif-id');
+                if (notifId) {
+                    deleteNotification(notifId);
+                }
+                return;
+            }
+
+            // Handle notification CONTENT click (mark as read + navigate)
+            const content = e.target.closest('.notif-content');
+            if (content) {
+                e.preventDefault();
+                e.stopPropagation();
+                const notifId = content.getAttribute('data-notif-id');
+                const orderId = content.getAttribute('data-order-id');
+                if (notifId) {
+                    handleNotificationClick(notifId, orderId);
+                }
+            }
+        });
+    }
     
     // Mark all read button
     const markAllBtn = document.getElementById('markAllReadBtn');

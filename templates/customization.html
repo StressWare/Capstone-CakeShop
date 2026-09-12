@@ -1097,6 +1097,18 @@
     right: 20px !important;
     z-index: 9999 !important;
   }
+
+  .money-note {
+    font-size: 12px;
+    color: #888;
+    margin-top: 15px;
+}
+
+.money-note i {
+    color: #d63384;
+    margin-right: 4px;
+    font-size: 13px;
+}
 </style>
 {% endblock %}
 
@@ -1306,6 +1318,10 @@
               <input type="number" id="othersPrice" placeholder="Price (₱)" min="0" step="0.01" style="width:120px;">
               <span id="othersPriceTag">+₱<span id="othersPriceDisplay">0</span></span>
               <small style="color:rgba(255,255,255,0.4); font-size:10px;">Owner will set price</small>
+          <p class="money-note">
+              <i class="bi bi-exclamation-circle-fill"></i>
+              If money cake, please input the amount. If not, please disregard.
+          </p>
             </div>
           </div>
         </div>
@@ -1411,7 +1427,7 @@
         <!-- Buttons -->
         {% if customer %}
         <div class="button-container">
-          <button type="button" class="btn-checkout locked" id="consultBtn" style="background: #f472b6;">Consult First</button>
+          <button type="button" class="btn-checkout locked" id="consultBtn">Consult First</button>
           <button type="submit" class="btn-checkout locked" id="proceedBtn">Proceed to Checkout →</button>
         </div>
         {% else %}

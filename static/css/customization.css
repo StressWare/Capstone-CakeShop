@@ -277,6 +277,8 @@ textarea:focus {
     max-width: 600px;
 }
 
+#consultBtn { background: #f472b6; color: white; border: none; transition: background 0.2s ease; } #consultBtn:hover { background: #ec4899; }
+
 /* =========================================================
    RESPONSIVE
 ========================================================= */
