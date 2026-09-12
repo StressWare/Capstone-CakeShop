@@ -558,7 +558,176 @@
     max-height: 300px !important;
   }
 }
-  </style>
+</style>
+<style nonce="{{csp_nonce}}">
+  /* ============ SCROLL SEQUENCE SECTION ============ */
+
+.scroll-wrapper {
+  position: relative;
+  height: 400vh;
+  background: transparent;
+}
+
+.scroll-pin {
+  position: sticky;
+  top: var(--nav-h, 0px);
+  height: calc(100vh - var(--nav-h, 0px));
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+#cakeCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Darken bottom of frame so caption text stays legible */
+.scroll-pin::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.scroll-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translate(-50%, 12px);
+  text-align: center;
+  width: 90%;
+  max-width: 620px;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.scroll-caption.is-active {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.scroll-caption .eyebrow {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #ff8fb3;
+  margin-bottom: 6px;
+}
+
+.scroll-caption h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+
+/* Progress indicator */
+.scroll-progress-rail {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 140px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  z-index: 3;
+  overflow: hidden;
+}
+.scroll-progress-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(to top, #d63384, #ff8fb3);
+  border-radius: 3px;
+}
+
+.scroll-hint {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.75);
+  font-size: 0.8rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 3;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.scroll-hint i {
+  animation: bounceDown 1.6s ease-in-out infinite;
+}
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* Preloader */
+.frame-preloader {
+  position: absolute;
+  inset: 0;
+  background: #0f0f0f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  transition: opacity 0.4s ease;
+}
+.frame-preloader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.frame-preloader-bar {
+  width: 200px;
+  height: 3px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.frame-preloader-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #d63384, #ff8fb3);
+  transition: width 0.15s ease;
+}
+.frame-preloader-text {
+  color: rgba(255,255,255,0.6);
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+.frame-preloader-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(214,51,132,0.2);
+  border-top-color: #d63384;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -579,6 +748,52 @@
   </div>
 </section>
 
+<section class="scroll-wrapper" id="scrollWrapper">
+  <div class="scroll-pin">
+
+    <div class="frame-preloader" id="framePreloader">
+      <div class="frame-preloader-spinner"></div>
+      <div class="frame-preloader-bar">
+        <div class="frame-preloader-fill" id="preloaderFill"></div>
+      </div>
+      <div class="frame-preloader-text" id="preloaderText">Loading 0%</div>
+    </div>
+
+    <canvas id="cakeCanvas"></canvas>
+
+    <div class="scroll-hint" id="scrollHint">
+      <span>Scroll</span>
+      <i class="fas fa-chevron-down"></i>
+    </div>
+
+    <div class="scroll-progress-rail">
+      <div class="scroll-progress-fill" id="progressFill"></div>
+    </div>
+
+    <!-- Chapter captions — edit text/timing to match your footage -->
+    <div class="scroll-caption" data-start="0"    data-end="0.18" id="cap1">
+      <span class="eyebrow">Chapter 01</span>
+      <h2>It starts with the batter</h2>
+    </div>
+    <div class="scroll-caption" data-start="0.18" data-end="0.40" id="cap2">
+      <span class="eyebrow">Chapter 02</span>
+      <h2>Baked low and slow</h2>
+    </div>
+    <div class="scroll-caption" data-start="0.40" data-end="0.62" id="cap3">
+      <span class="eyebrow">Chapter 03</span>
+      <h2>Layered and filled by hand</h2>
+    </div>
+    <div class="scroll-caption" data-start="0.62" data-end="0.84" id="cap4">
+      <span class="eyebrow">Chapter 04</span>
+      <h2>The final touches</h2>
+    </div>
+    <div class="scroll-caption" data-start="0.84" data-end="1.01" id="cap5">
+      <span class="eyebrow">Chapter 05</span>
+      <h2>Ready for your celebration</h2>
+    </div>
+
+  </div>
+</section>
 <!-- Categories -->
 <section class="categories-section">
 <h2 class="headings" style="margin-top: -25px; margin-bottom: 50px; text-align: center; font-weight: 600;">Our Categories</h2>
@@ -1211,5 +1426,168 @@ document.querySelectorAll('.home-order-form').forEach(form => {
         checkShopOpen(() => this.submit());
     });
 });
+
+(function () {
+  const TOTAL_FRAMES = 240;
+  // Path is relative to this HTML file. Put the frame-XXX.webp files in a
+  // "cake-sequence" folder sitting right next to this HTML file, or change
+  // this to an absolute path / CDN URL.
+  const FRAME_PATH = (i) => "/static/img/cake-sequence1/ezgif-frame-" + String(i).padStart(3, '0') + ".webp";
+
+  const wrapper = document.getElementById('scrollWrapper');
+  const canvas = document.getElementById('cakeCanvas');
+  const ctx = canvas.getContext('2d');
+  const preloader = document.getElementById('framePreloader');
+  const preloaderFill = document.getElementById('preloaderFill');
+  const preloaderText = document.getElementById('preloaderText');
+  const progressFill = document.getElementById('progressFill');
+  const scrollHint = document.getElementById('scrollHint');
+  const captions = Array.from(document.querySelectorAll('.scroll-caption'));
+
+  const images = new Array(TOTAL_FRAMES);
+  let loadedCount = 0;
+  let lastDrawnIndex = -1;
+  let isReady = false;
+  let ticking = false;
+
+  function syncNavHeight() {
+  const nav = document.querySelector('.demo-navbar');
+  const h = nav ? nav.getBoundingClientRect().height : 0;
+  document.documentElement.style.setProperty('--nav-h', h + 'px');
+}
+
+  // ---------- Canvas sizing (retina-aware) ----------
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(rect.width * dpr);
+    canvas.height = Math.round(rect.height * dpr);
+    if (lastDrawnIndex >= 0 && images[lastDrawnIndex] && images[lastDrawnIndex].complete) {
+      drawFrame(images[lastDrawnIndex]);
+    }
+  }
+
+  // ---------- Draw one frame, "cover" fit (crop to fill) ----------
+function drawFrame(img) {
+  const cw = canvas.width, ch = canvas.height;
+  if (!cw || !ch || !img || !img.naturalWidth) return;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  const canvasRatio = cw / ch;
+  const imgRatio = iw / ih;
+  let sx, sy, sw, sh;
+  if (imgRatio > canvasRatio) {
+    sh = ih; sw = ih * canvasRatio; sx = (iw - sw) / 2; sy = 0;
+  } else {
+    sw = iw; sh = iw / canvasRatio; sx = 0; sy = (ih - sh) / 2;
+  }
+  ctx.clearRect(0, 0, cw, ch);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, cw, ch);
+}
+
+  // ---------- Preload all frames ----------
+function preload() {
+  // Load frame 1 first and block only on that — this is what the user sees
+  // the instant the page opens, so nothing else should hold it up.
+  const firstImg = new Image();
+  firstImg.decoding = 'async';
+  firstImg.onload = firstImg.onerror = () => {
+    images[0] = firstImg;
+    isReady = true;
+    preloader.classList.add('hidden');
+    resizeCanvas();
+    drawFrame(firstImg);
+    lastDrawnIndex = 0;
+    onScroll();
+    loadRemainingFrames();
+  };
+  firstImg.src = FRAME_PATH(1);
+}
+
+function loadRemainingFrames() {
+  for (let i = 2; i <= TOTAL_FRAMES; i++) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = img.onerror = () => {
+      loadedCount++;
+    };
+    img.src = FRAME_PATH(i);
+    images[i - 1] = img;
+  }
+}
+
+  function onFrameSettled() {
+    loadedCount++;
+    const pct = Math.round((loadedCount / TOTAL_FRAMES) * 100);
+    preloaderFill.style.width = pct + '%';
+    preloaderText.textContent = 'Loading ' + pct + '%';
+    if (loadedCount >= TOTAL_FRAMES) {
+      isReady = true;
+      preloader.classList.add('hidden');
+      resizeCanvas();
+      drawFrame(images[0]);
+      lastDrawnIndex = 0;
+      onScroll();
+    }
+  }
+
+  // ---------- Scroll -> frame mapping ----------
+  function onScroll() {
+    if (!isReady) return;
+
+    const rect = wrapper.getBoundingClientRect();
+    const wrapperHeight = wrapper.offsetHeight;
+    const viewportH = window.innerHeight;
+    const maxScroll = wrapperHeight - viewportH;
+
+    let progress = maxScroll > 0 ? (-rect.top) / maxScroll : 0;
+    progress = Math.max(0, Math.min(1, progress));
+
+    if (progress > 0.01 && scrollHint) {
+      scrollHint.style.opacity = '0';
+    } else if (scrollHint) {
+      scrollHint.style.opacity = '1';
+    }
+
+const pingPongProgress = progress <= 0.5
+  ? progress * 2        // first half: 0 → 1 (forward through frames)
+  : (1 - progress) * 2; // second half: 1 → 0 (backward through frames)
+
+const idx = Math.round(pingPongProgress * (TOTAL_FRAMES - 1));
+    if (idx !== lastDrawnIndex && images[idx] && images[idx].complete) {
+      drawFrame(images[idx]);
+      lastDrawnIndex = idx;
+    }
+
+    progressFill.style.height = (progress * 100) + '%';
+
+    captions.forEach((cap) => {
+      const start = parseFloat(cap.dataset.start);
+      const end = parseFloat(cap.dataset.end);
+      const active = progress >= start && progress < end;
+      cap.classList.toggle('is-active', active);
+    });
+
+    ticking = false;
+  }
+
+  function requestTick() {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(onScroll);
+    }
+  }
+
+  window.addEventListener('scroll', requestTick, { passive: true });
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    requestTick();
+  });
+
+syncNavHeight();
+resizeCanvas();
+preload();
+
+window.addEventListener('resize', syncNavHeight);
+})();
   </script>
 {% endblock %}

@@ -8,3 +8,4 @@ set-admin.py
 wipe_orders.py
 seed_custom_prices.py
 locustfile.py
+clear_orders.py

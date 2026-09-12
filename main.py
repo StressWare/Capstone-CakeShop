@@ -191,6 +191,8 @@ def add_common_headers(response):
     response.headers['ngrok-skip-browser-warning'] = 'true'
     # allow Google auth popups
     response.headers['Cross-Origin-Opener-Policy'] = 'same-origin-allow-popups'
+    if request.path.startswith('/static/img/cakeimageframes/'):
+        response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     return response
 
 # POS/PROF MONITORING BLUEPRINT REGISTRATION
