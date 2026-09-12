@@ -373,8 +373,8 @@ body::after {
 /* Cake column - on the left */
 .loyalty-cake-col {
   flex: 0 0 auto;
-  width: 200px;  /* Base size - adjust as needed */
-  max-width: 35%; /* Responsive limit */
+  width: 120px;  /* Reduced base size to prevent overflow */
+  max-width: 30%; /* Responsive limit */
   margin-top: 15px;
 }
 
@@ -400,6 +400,7 @@ body::after {
 .loyalty-stamps-col {
   flex: 1;
   min-width: 0; /* Prevents overflow on small screens */
+  width: 100%;
 }
 
 /* Tablet portrait (768-991px) */
@@ -413,7 +414,7 @@ body::after {
 /* Large phones / small tablets (600-767px) */
 @media (max-width: 767px) {
   .loyalty-cake-col {
-    width: 100px;
+    width: 80px;
     max-width: 100%;
   }
 }
@@ -421,7 +422,7 @@ body::after {
 /* Phones (400-599px) */
 @media (max-width: 599px) {
   .loyalty-cake-col {
-    width: 100px;
+    width: 70px;
     max-width: 100%;
   }
 }
@@ -429,7 +430,7 @@ body::after {
 /* Tiny phones (< 400px) */
 @media (max-width: 399px) {
   .loyalty-cake-col {
-    width: 80px;
+    width: 60px;
     max-width: 100%;
   }
 }
@@ -439,7 +440,7 @@ body::after {
 /* ===== CIRCLE STAMPS ===== */
 .loyalty-stamp-cell {
   aspect-ratio: 1;
-  width: 100px;
+  width: 100%; /* CHANGED: Was 100px. Let grid control width */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1137,7 +1138,7 @@ h2 { color: #1a0a10; }
 }
 
 .loyalty-stamp-cell {
-  width: 100% !important;
+  width: 100% !important; /* CHANGED: Was 100px. Let grid control width */
   max-width: 100%;
   aspect-ratio: 1;
   min-width: 0;
@@ -1396,7 +1397,7 @@ body {
   }
 
   .loyalty-stamp-cell {
-    width: 100% !important;
+    width: 100% !important; /* CHANGED: Was 80px. Let grid control width */
     aspect-ratio: 1;
     min-width: 0;
     font-size: 11px;
@@ -1562,7 +1563,7 @@ body {
 
   /* Loyalty stamp cells */
   .loyalty-stamp-cell {
-    width: 80px;
+    width: 100% !important; /* CHANGED: Was 80px. Let grid control width */
   }
 }
 
@@ -1667,7 +1668,7 @@ body {
   }
 
   .loyalty-stamp-cell {
-    width: 100% !important;
+    width: 100% !important; /* CHANGED: Was 64px. Let grid control width */
     aspect-ratio: 1;
     min-width: 0;
   }
@@ -1784,7 +1785,7 @@ body {
 
   /* Stamp cells */
   .loyalty-stamp-cell {
-    width: 64px;
+    width: 100% !important; /* CHANGED: Was 64px. Let grid control width */
   }
 
   .stamp-milestone-label {
@@ -1939,7 +1940,7 @@ body {
   }
 
   .loyalty-stamp-cell {
-    width: 100% !important;
+    width: 100% !important; /* CHANGED: Was 52px. Let grid control width */
     aspect-ratio: 1;
     min-width: 0;
   }
@@ -2058,7 +2059,7 @@ body {
 
   /* Stamp cells */
   .loyalty-stamp-cell {
-    width: 52px;
+    width: 100% !important; /* CHANGED: Was 52px. Let grid control width */
   }
 
   /* Loyalty voucher items */
