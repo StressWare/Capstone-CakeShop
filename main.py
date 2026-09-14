@@ -11,7 +11,8 @@ from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
-                     handle_loyalty_stamp,safe_float, send_new_order_fcm)
+                     handle_loyalty_stamp,safe_float, send_new_order_fcm,
+                     is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM)
 from decorators import login_required, admin_required, profile_required
 from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations
 from firebase_admin import messaging
@@ -1425,10 +1426,10 @@ def place_order():
     if consult_token:
         token_ref = pending_consultations.document(consult_token)
         token_doc = token_ref.get()
-        # ✅ carry image from consultation, no re-upload needed
+        # carry image from consultation, no re-upload needed
         inspo_image = token_doc.to_dict().get('consultation_data', {}).get('inspo_image') if token_doc.exists else None
     else:
-        # ✅ normal flow
+        # normal flow
         file = request.files.get('image')
         if file and file.filename:
             inspo_image = save_uploaded_image(file, 'order')
@@ -1440,7 +1441,7 @@ def place_order():
 
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
-    min_date     = (datetime.now(PH_TZ) + timedelta(days=1)).strftime("%Y-%m-%d")
+    min_date     = (datetime.now(PH_TZ) + timedelta(days=3)).strftime("%Y-%m-%d")
 
     # ── Recompute amount from Firestore ──
     try:
@@ -1627,7 +1628,10 @@ def order_cake():
         customer        = customer,
         active_vouchers = active_vouchers,
     )
- 
+
+@app.route("/service-area")
+def service_area():
+    return jsonify({"municipalities": sorted(ALLOWED_MUNICIPALITIES_NORM)}) 
 # ---------------- PLACE ORDER (FINALIZE OF BOTH PREMADE  OR  CUSTOM) ----------------
 @app.route("/place-order", methods=["POST"])
 @profile_required
@@ -1683,17 +1687,7 @@ def finalize_order():
     if delivery_type == "Delivery" and len(address) > 300:
         flash("Address too long. Max 300 characters.", "danger")
         return redirect(url_for("customer_dashboard"))
-    
-        # ── Service area validation (Delivery only) ──
-    ALLOWED_PLACES = [
-        'iloilo city',
-        'pavia',
-        'oton',
-        'leganes',
-        'san miguel',
-        'santa barbara',
-        'cabatuan',
-    ]
+
 
     def is_within_service_area(lat, lng):
         if lat is None or lng is None:
@@ -1707,11 +1701,7 @@ def finalize_order():
             )
             resp.raise_for_status()
             addr = resp.json().get("address", {})
-            place = (
-                addr.get("city") or addr.get("town") or
-                addr.get("municipality") or addr.get("village") or ""
-            ).lower()
-            return any(allowed in place for allowed in ALLOWED_PLACES)
+            return is_place_in_service_area(addr)
         except Exception:
             app.logger.warning("[geofence] Nominatim check failed, rejecting order")
             return False  # fail closed — don't silently allow orders outside area

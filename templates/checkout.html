@@ -410,15 +410,29 @@
 
   // ── Service area allow-list ──
   // Add/remove municipality names here as the owner expands or restricts coverage.
-  const ALLOWED_PLACES = [
-    'iloilo city',
-    'pavia',
-    'oton',
-    'leganes',
-    'san miguel',
-    'santa barbara',
-    'cabatuan',
-  ];
+  let ALLOWED_MUNICIPALITIES = [];
+  let ALLOWED_PROVINCES = [];
+  fetch('/service-area')
+    .then(r => r.json())
+    .then(data => {
+      ALLOWED_MUNICIPALITIES = data.municipalities || [];
+      ALLOWED_PROVINCES = data.provinces || [];
+    })
+    .catch(() => { /* fail open on the client is fine — server still enforces on submit */ });
+ 
+  // Mirrors normalize_place_name() in main.py: PH OSM data frequently
+  // abbreviates "Santa"/"Santo" as "Sta."/"Sto." (e.g. Nominatim returns
+  // "Sta. Barbara" for Santa Barbara), so without this an allow-list entry
+  // like "santa barbara" silently fails to match a correct location.
+  function normalizePlaceName(name) {
+    if (!name) return '';
+    return name.toLowerCase().trim()
+      .replace(/\bsta\.?\b/g, 'santa')
+      .replace(/\bsto\.?\b/g, 'santo')
+      .replace(/[.,]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
 
   function isAllowedLocation(nominatimAddress) {
     if (!nominatimAddress) return false;
