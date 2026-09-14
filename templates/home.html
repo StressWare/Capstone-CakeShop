@@ -1432,7 +1432,7 @@ document.querySelectorAll('.home-order-form').forEach(form => {
   // Path is relative to this HTML file. Put the frame-XXX.webp files in a
   // "cake-sequence" folder sitting right next to this HTML file, or change
   // this to an absolute path / CDN URL.
-  const FRAME_PATH = (i) => "/static/img/cake-sequence1/ezgif-frame-" + String(i).padStart(3, '0') + ".webp";
+  const FRAME_PATH = (i) => `https://res.cloudinary.com/dnystscn8/image/upload/cake_shop/cake-sequence1/ezgif-frame-${String(i).padStart(3, '0')}.webp`;
 
   const wrapper = document.getElementById('scrollWrapper');
   const canvas = document.getElementById('cakeCanvas');
