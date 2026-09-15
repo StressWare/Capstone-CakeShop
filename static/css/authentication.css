@@ -15,10 +15,6 @@ body {
     background-attachment: fixed;
 }
 
-/* NAVBAR STYLES */
-.navbar {
-    box-shadow: 0 4px 15px rgba(255, 133, 162, 0.2);
-}
 .container-fluid {
     padding: 0 30px;
     height: 70px;
@@ -286,6 +282,80 @@ button[type="submit"]:active {
 .footer-right a:hover {
     opacity: 0.8;
     transform: scale(1.05);
+}
+
+
+/* AUTH OPTIONS BAR (Google / Fingerprint / Sign Up) */
+.auth-options-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.auth-option-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+    margin: 0; /* overrides old .toggle-msg margin */
+}
+
+.auth-option-btn:hover {
+    background: rgba(214, 51, 132, 0.18);
+    border-color: rgba(214, 51, 132, 0.5);
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+
+.auth-option-btn i {
+    font-size: 1.05rem;
+}
+
+/* Secondary (Sign Up Here) reads as an action, not an auth provider */
+.auth-option-secondary {
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+}
+
+.auth-option-secondary strong {
+    color: #ff8fc2;
+    font-weight: 700;
+}
+
+/* Divider like the GitHub "or" line */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    margin: 4px 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.auth-divider span {
+    padding: 0 12px;
 }
 
 

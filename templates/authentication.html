@@ -109,19 +109,22 @@
                         <a href="/forgot-password" class="toggle-btn">Forgot Password?</a>
                     </p>
 
-                    <p class="toggle-msg">
-                        Don't have an account? 
-                        <span class="toggle-btn"  id="showSignupBtn">Sign Up Here</span>
-                    </p>
-                    
-                    <p class="toggle-msg">
-                     <span class="toggle-btn google-signin-btn" style="text-align: center; margin-top: 10px;"><i class="fab fa-google"></i> Sign in with Google</span>
-                    </p>
-                    <p class="toggle-msg" id="fingerprint-login-wrapper" style="display:none;">
-                        <span class="toggle-btn" id="device-signin-btn">
-                            <i class="fa-solid fa-fingerprint"></i> Sign in with fingerprint
+                    <div class="auth-options-bar">
+                        <span class="auth-option-btn google-signin-btn">
+                            <i class="fab fa-google"></i> Sign in with Google
                         </span>
-                    </p>
+                        <span class="auth-option-btn" id="fingerprint-login-wrapper" style="display:none;">
+                            <span id="device-signin-btn" style="display:contents;">
+                                <i class="fa-solid fa-fingerprint"></i> Sign in with Fingerprint
+                            </span>
+                        </span>
+
+                        <div class="auth-divider"><span>or</span></div>
+
+                        <span class="auth-option-btn auth-option-secondary" id="showSignupBtn">
+                            Don't have an account? <strong>Sign Up Here</strong>
+                        </span>
+                    </div>
                     
                 </form>
 
@@ -162,13 +165,17 @@
                         </label>
                     </div>
                     <button type="submit">Sign Up</button>
-                    <p class="toggle-msg">
-                        Already have an account? 
-                        <span class="toggle-btn" id="showLoginBtn">Login Here</span>
-                    </p>
-                    <p class="toggle-msg">
-                         <span class="toggle-btn google-signin-btn"><i class="fab fa-google"></i> Sign in with Google</span>
-                    </p>
+                    <div class="auth-options-bar">
+                        <span class="auth-option-btn google-signin-btn">
+                            <i class="fab fa-google"></i> Sign in with Google
+                        </span>
+
+                        <div class="auth-divider"><span>or</span></div>
+
+                        <span class="auth-option-btn auth-option-secondary" id="showLoginBtn">
+                            Already have an account? <strong>Login Here</strong>
+                        </span>
+                    </div>
                 </form>
 
             </div>
@@ -731,15 +738,9 @@ window.fetch = function(url, options = {}) {
     }
  
     return originalFetch(url, options).then(response => {
-    if (response.status === 429) {
-        response.clone().json().then(data => {
-            const params = new URLSearchParams({
-                retry_after: data.retry_after || 60,
-                next: window.location.href
-            });
-            window.location.href = '/429?' + params.toString();
-        }).catch(() => { window.location.href = '/429'; });
-    }
+        if (response.status === 429) {
+            window.location.href = '/429';
+        }
         return response;
     });
 };
@@ -759,7 +760,7 @@ window.fetch = function(url, options = {}) {
  
         if (data.registered) {
             // Show the fingerprint login button
-            document.getElementById('fingerprint-login-wrapper').style.display = 'block';
+            document.getElementById('fingerprint-login-wrapper').style.display = 'flex';
         }
     } catch (e) {
         console.log('WebAuthn init check failed silently:', e);
