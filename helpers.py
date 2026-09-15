@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from google import genai
 from firebase_admin import messaging as fcm_messaging
 from firebase_admin import firestore as admin_fs
+import  re
 import logging
 load_dotenv()
 
@@ -684,3 +685,38 @@ def send_new_order_fcm(db_ref, order_id, customer_name, order_type, rush=False):
 
     except Exception as e:
         logger.exception(f'[FCM NEW ORDER] Error: {e}')
+        
+#delivery places  allowed
+SERVICE_AREA_MUNICIPALITIES = [
+    'iloilo city',
+    'iloilo',
+    'pavia',
+    'oton',
+    'leganes',
+    'san miguel',
+    'santa barbara',
+    'cabatuan',
+    'dumangas',
+    'pototan',
+    'zarraga',
+    'tigbauan',
+    'barotac nuevo',
+]
+def normalize_place_name(name):
+    if not name:
+        return ""
+    name = name.lower().strip()
+    name = re.sub(r'\bsta\.?\b', 'santa', name)
+    name = re.sub(r'\bsto\.?\b', 'santo', name)
+    name = re.sub(r'[.,]', '', name)
+    name = re.sub(r'\s+', ' ', name).strip()
+    return name
+
+ALLOWED_MUNICIPALITIES_NORM = {normalize_place_name(p) for p in SERVICE_AREA_MUNICIPALITIES}
+
+def is_place_in_service_area(addr):
+    place = normalize_place_name(
+        addr.get("city") or addr.get("town") or
+        addr.get("municipality") or addr.get("village") or ""
+    )
+    return any(allowed in place for allowed in ALLOWED_MUNICIPALITIES_NORM)
