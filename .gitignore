@@ -9,3 +9,4 @@ wipe_orders.py
 seed_custom_prices.py
 locustfile.py
 clear_orders.py
+seed_test_data.py
