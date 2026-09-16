@@ -12,9 +12,10 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
                      handle_loyalty_stamp,safe_float, send_new_order_fcm,
-                     is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM)
+                     is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM,
+                     is_shop_open_now)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts, get_custom_prices, get_loyalty_gifts, get_locked_dates_cached, get_completed_cancelled_orders, invalidate_cache, get_converted_consultations, get_all_orders_cached
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations,get_shop_hours_cached, get_all_orders_cached,get_all_reviews_admin
 from firebase_admin import messaging
 import requests as http_requests
 import threading 
@@ -49,7 +50,7 @@ import qrcode
 import io
 import firebase
 import requests
-from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs,settings_ref
 from firebase_admin import auth, firestore, messaging
 if os.environ.get("FLASK_ENV") == "development":
     from pyngrok import ngrok
@@ -1531,6 +1532,10 @@ def order_cake():
     if info and info.get('lock_premade'):
         flash("Orders are unavailable today.", "danger")
         return redirect(url_for("cakes_page"))
+    shop_open, shop_closed_reason = is_shop_open_now()
+    if not shop_open:
+        flash(shop_closed_reason or "Shop is currently closed.", "danger")
+        return redirect(url_for("cakes_page"))
     customer_doc = users.document(user_id).get()
     customer     = customer_doc.to_dict() if customer_doc.exists else {}
     selected_json = request.form.get('selected_items', '[]')
@@ -1728,6 +1733,14 @@ def finalize_order():
         if order_type == 'custom' and info.get('lock_custom'):
             flash("Orders are unavailable today.", "danger")
             return redirect(url_for("customer_dashboard"))
+
+    # Shop hours check — premade only; custom orders are 3-day advance and unaffected
+    if order_type == "premade":
+        shop_open, shop_closed_reason = is_shop_open_now()
+        if not shop_open:
+            flash(shop_closed_reason or "Shop is currently closed.", "danger")
+            return redirect(url_for("customer_dashboard"))
+
     if order_type == "premade":
         delivery_datetime = datetime.now(PH_TZ)
     else:
@@ -3409,6 +3422,61 @@ def unlock_date(date):
     invalidate_cache("locked_dates")
     return jsonify({"success": True})
 
+# ---------------- CUSTOMER/PUBLIC SHOP STATUS ----------------
+@app.route("/shop-status")
+@limiter.exempt
+def shop_status():
+    is_open, reason = is_shop_open_now()
+    hours = get_shop_hours_cached()
+    return jsonify({
+        "is_open":         is_open,
+        "reason":          reason,
+        "open_time":       hours.get("open_time"),
+        "close_time":      hours.get("close_time"),
+        "manual_override": hours.get("manual_override"),
+    })
+
+# ---------------- ADMIN GET SHOP HOURS ----------------
+@app.route("/admin/shop-hours")
+@admin_required
+@limiter.exempt
+def get_shop_hours():
+    hours = get_shop_hours_cached()
+    is_open, reason = is_shop_open_now()
+    return jsonify({**hours, "is_open": is_open, "reason": reason})
+
+# ---------------- ADMIN UPDATE SHOP HOURS ----------------
+@app.route("/admin/shop-hours", methods=["POST"])
+@admin_required
+@limiter.exempt
+def update_shop_hours():
+    data         = request.get_json(silent=True) or {}
+    open_time    = data.get("open_time", "").strip()
+    close_time   = data.get("close_time", "").strip()
+    override     = data.get("manual_override")            # None | "closed" | "open"
+    override_reason = data.get("override_reason", "").strip()
+
+    time_re = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
+    if not time_re.match(open_time) or not time_re.match(close_time):
+        return jsonify({"error": "open_time and close_time must be in HH:MM (24h) format"}), 400
+
+    if override not in (None, "closed", "open"):
+        return jsonify({"error": "manual_override must be null, 'closed', or 'open'"}), 400
+
+    if override == "closed" and not override_reason:
+        override_reason = "Shop is temporarily closed."
+
+    settings_ref.document("shop_hours").set({
+        "open_time":       open_time,
+        "close_time":      close_time,
+        "manual_override": override,
+        "override_reason": override_reason,
+        "updated_by":      session.get("user", {}).get("uid"),
+        "updated_at":       datetime.now(PH_TZ),
+    })
+    invalidate_cache("shop_hours")
+    log_admin_action("Updated shop hours", f"{open_time}-{close_time}, override={override}", category="settings")
+    return jsonify({"success": True})
 # ---------------- UPDATE ORDER STATUS ----------------
 @app.route("/order/status/<order_id>", methods=["POST"])
 @admin_required

@@ -133,6 +133,18 @@ def get_locked_dates_cached():
         }
     return _fetch_or_cache("locked_dates", fetch)
 
+def get_shop_hours_cached():
+    def fetch():
+        from db import settings_ref
+        doc = settings_ref.document("shop_hours").get()
+        data = doc.to_dict() if doc.exists else {}
+        return {
+            "open_time":        data.get("open_time", "10:00"),
+            "close_time":       data.get("close_time", "23:00"),
+            "manual_override":  data.get("manual_override"),   # None | "closed" | "open"
+            "override_reason":  data.get("override_reason", ""),
+        }
+    return _fetch_or_cache("shop_hours", fetch)
 
 def get_completed_cancelled_orders():
     def fetch():

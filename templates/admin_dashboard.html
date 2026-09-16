@@ -555,6 +555,39 @@
   <!-- CALENDAR VIEW                                         -->
   <!-- ===================================================== -->
   <div id="view-calendar">
+    <div id="shop-hours-panel" style="background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+      <div style="display:flex;align-items:center;gap:10px;min-width:150px;">
+        <span id="shop-status-dot" style="width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block;"></span>
+        <span id="shop-status-label" style="font-weight:600;font-size:14px;color:#374151;">Loading…</span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:12px;color:#6b7280;">Open</label>
+        <input type="time" id="shop-open-time" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:12px;color:#6b7280;">Close</label>
+        <input type="time" id="shop-close-time" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;">
+        <label style="font-size:12px;color:#6b7280;">Override</label>
+        <select id="shop-override" style="padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+          <option value="">Follow Schedule</option>
+          <option value="closed">Force Closed</option>
+          <option value="open">Force Open</option>
+        </select>
+      </div>
+
+      <input type="text" id="shop-override-reason" placeholder="Reason (shown to customers, optional)"
+        style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;display:none;">
+
+      <button id="shop-hours-save" style="padding:8px 16px;border-radius:8px;border:none;background:#6B1A3A;color:#fff;font-size:13px;font-weight:600;cursor:pointer;">
+        Save
+      </button>
+      <span style="font-size:11px;color:#9ca3af;">Applies to premade cake orders only. Custom orders are unaffected.</span>
+    </div>
+
     <div class="cal-wrapper">
       <div>
         <div class="cal-nav">
@@ -678,8 +711,73 @@ async function switchView(view) {
   document.getElementById('view-calendar').style.display  = view === 'calendar'  ? 'block' : 'none';
   document.getElementById('tab-dashboard').classList.toggle('active', view === 'dashboard');
   document.getElementById('tab-calendar').classList.toggle('active', view === 'calendar');
-  if (view === 'calendar') await renderCalendar();
+  if (view === 'calendar') {
+    await renderCalendar();
+    await loadShopHours();
+  }
 }
+
+// ── Shop Hours & Status ────────────────────────────────────────────────
+async function loadShopHours() {
+  try {
+    const res  = await fetch('/admin/shop-hours');
+    const data = await res.json();
+
+    document.getElementById('shop-open-time').value      = data.open_time  || '10:00';
+    document.getElementById('shop-close-time').value     = data.close_time || '23:00';
+    document.getElementById('shop-override').value        = data.manual_override || '';
+    document.getElementById('shop-override-reason').value = data.override_reason || '';
+    document.getElementById('shop-override-reason').style.display =
+      data.manual_override === 'closed' ? 'block' : 'none';
+
+    const dot   = document.getElementById('shop-status-dot');
+    const label = document.getElementById('shop-status-label');
+    if (data.is_open) {
+      dot.style.background = '#16a34a';
+      label.textContent = 'Open now';
+    } else {
+      dot.style.background = '#dc2626';
+      label.textContent = data.reason || 'Closed now';
+    }
+  } catch (e) {
+    document.getElementById('shop-status-label').textContent = 'Status unavailable';
+  }
+}
+
+document.getElementById('shop-override').addEventListener('change', function() {
+  document.getElementById('shop-override-reason').style.display =
+    this.value === 'closed' ? 'block' : 'none';
+});
+
+document.getElementById('shop-hours-save').addEventListener('click', async function() {
+  const open_time       = document.getElementById('shop-open-time').value;
+  const close_time      = document.getElementById('shop-close-time').value;
+  const manual_override = document.getElementById('shop-override').value || null;
+  const override_reason = document.getElementById('shop-override-reason').value.trim();
+
+  if (!open_time || !close_time) {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'warning',
+      title: 'Set both open and close time.', showConfirmButton: false, timer: 2500, timerProgressBar: true });
+    return;
+  }
+
+  const res = await fetch('/admin/shop-hours', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ open_time, close_time, manual_override, override_reason })
+  });
+  const result = await res.json();
+
+  if (!res.ok) {
+    Swal.fire({ toast: true, position: 'top-end', icon: 'error',
+      title: result.error || 'Failed to save.', showConfirmButton: false, timer: 3000, timerProgressBar: true });
+    return;
+  }
+
+  Swal.fire({ toast: true, position: 'top-end', icon: 'success',
+    title: 'Shop hours updated', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+  await loadShopHours();
+});
 
 // ── Calendar state ─────────────────────────────────────────────────────
 const now = new Date();

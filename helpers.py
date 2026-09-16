@@ -720,3 +720,41 @@ def is_place_in_service_area(addr):
         addr.get("municipality") or addr.get("village") or ""
     )
     return any(allowed in place for allowed in ALLOWED_MUNICIPALITIES_NORM)
+
+#shop open/close
+def _format_12h(t):
+    """'23:00' -> '11:00 PM', '09:30' -> '9:30 AM'"""
+    try:
+        h, m = map(int, t.split(":"))
+        suffix = "AM" if h < 12 else "PM"
+        h12 = h % 12
+        if h12 == 0:
+            h12 = 12
+        return f"{h12}:{m:02d} {suffix}"
+    except Exception:
+        return t
+
+def is_shop_open_now():
+    from utils import get_shop_hours_cached
+
+    hours = get_shop_hours_cached()
+    override = hours.get("manual_override")
+
+    if override == "closed":
+        return False, hours.get("override_reason") or "Shop is currently closed."
+    if override == "open":
+        return True, None
+
+    now_str = datetime.now(PH_TZ).strftime("%H:%M")
+    open_t  = hours.get("open_time", "10:00")
+    close_t = hours.get("close_time", "23:00")
+
+    if open_t <= close_t:
+        is_open = open_t <= now_str < close_t
+    else:
+        # overnight window, e.g. 22:00 -> 02:00
+        is_open = now_str >= open_t or now_str < close_t
+
+    if is_open:
+        return True, None
+    return False, f"Shop is closed right now. We'll be open for premade orders again at {_format_12h(open_t)}."

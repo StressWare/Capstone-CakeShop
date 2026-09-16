@@ -334,6 +334,27 @@ if (menuBtn && offcanvas && menuClose) {
       proceedFn(); // fail open
     }
   }
+        // Daily shop hours / manual override — premade orders only
+      if (orderType === 'premade') {
+        const hoursRes  = await fetch('/shop-status');
+        const hoursData = await hoursRes.json();
+
+        if (!hoursData.is_open) {
+          glassAlert({
+            icon: 'info',
+            title: '🔒 Shop Closed',
+            text: hoursData.reason || 'Shop is currently closed.',
+            confirmButtonText: 'Got it'
+          });
+          return;
+        }
+      }
+
+      proceedFn(); // not locked, proceed
+    } catch (e) {
+      proceedFn(); // fail open
+    }
+  }
 </script>
 <script nonce="{{ csp_nonce() }}">
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
@@ -559,6 +580,51 @@ window.fetch = function(url, options = {}) {
 {% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ── PREMADE ORDER: SHOP-HOURS GUARD (no full page reload when closed) ── -->
+<script nonce="{{ csp_nonce() }}">
+document.addEventListener('submit', async function (e) {
+  const form = e.target;
+  if (!form.classList || !form.classList.contains('order-form')) return;
+  if (form.dataset.shopChecked === '1') return; // already verified, let it through
+
+  e.preventDefault();
+
+  const btn = form.querySelector('button[type="submit"]');
+  const originalHtml = btn ? btn.innerHTML : null;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  }
+
+  try {
+    const res  = await fetch('/shop-status');
+    const data = await res.json();
+
+    if (!data.is_open) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Shop Closed',
+        text: data.reason || 'Shop is currently closed.',
+        confirmButtonColor: '#6B1A3A'
+      });
+      return; // no navigation, no reload
+    }
+
+    form.dataset.shopChecked = '1';
+    form.submit(); // native submit, bypasses this listener
+  } catch (err) {
+    form.dataset.shopChecked = '1';
+    form.submit();
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+    }
+  }
+});
+</script>
+
 {% block extra_js %}{% endblock %}
 
 </body>
