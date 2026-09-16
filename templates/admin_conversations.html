@@ -130,40 +130,39 @@
         color: #8a8d91;
         flex-shrink: 0;
         margin-left: 4px;
+        margin-right: 26px;   /* ← space so it doesn't sit under the ✕ */
+        align-self: center;
     }
     
-    /* 🗑️ DELETE BUTTON */
+    /*  DELETE BUTTON */
     .conv-delete-btn {
         position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 24px;
-        height: 24px;
+        top: 50%;
+        right: 10px;
+        transform: translateY(-50%);
+        width: 18px;
+        height: 18px;
         border-radius: 50%;
         background: #ff4757;
         color: white;
         border: none;
-        font-size: 12px;
+        font-size: 10px;
         font-weight: bold;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        opacity: 0;
+        opacity: 0.7;
         transition: all 0.2s;
         z-index: 5;
         box-shadow: 0 2px 4px rgba(255,71,87,0.3);
     }
-    
-    .customer-item:hover .conv-delete-btn {
-        opacity: 1;
-    }
-    
+
     .conv-delete-btn:hover {
+        opacity: 1;
         background: #c0392b;
-        transform: scale(1.1);
+        transform: translateY(-50%) scale(1.15);
     }
-    
     /* ===== RIGHT PANEL - CHAT AREA ===== */
     .chat-area {
         flex: 1;
@@ -503,6 +502,12 @@
         margin: 0;
         font-size: 0.9rem;
     }
+
+    /* Space between Delete and Cancel in the alert */
+    .glass-alert .glass-alert-actions,
+    .swal2-actions {
+        gap: 12px !important;
+    }
     
     /* ===== SCROLLBAR ===== */
     .conversation-list::-webkit-scrollbar,
@@ -625,12 +630,6 @@
             font-size: 0.85rem;
         }
         
-        .conv-delete-btn {
-            width: 26px;
-            height: 26px;
-            font-size: 12px;
-            opacity: 0.7;
-        }
         
         .customer-item .conv-delete-btn {
             opacity: 0.7;
@@ -705,6 +704,7 @@
         
         .customer-item .conv-time {
             font-size: 0.6rem;
+
         }
     }
 
@@ -759,6 +759,7 @@
         border-radius: 8px;    /* ← SMALLER RADIUS ON VERY SMALL SCREENS */
         margin: 0 4px;
     }
+
     
     .conversation-list .search-wrapper {
         border-top-left-radius: 8px;
@@ -1018,7 +1019,7 @@
                             text: 'This cannot be undone.',
                             icon: 'warning',
                             showCancelButton: true,
-                            confirmButtonText: 'Yes, delete it!',
+                            confirmButtonText: 'Delete it!',
                             cancelButtonText: 'Cancel',
                         }).then((result) => {
                             if (result.isConfirmed) {

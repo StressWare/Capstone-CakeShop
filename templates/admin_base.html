@@ -60,6 +60,17 @@
         z-index: 1100;
         display: none;
         }
+        .sidebar-toggle-btn {
+        cursor: grab;
+        touch-action: none;
+        user-select: none;
+    }
+
+    .sidebar-toggle-btn.dragging {
+        cursor: grabbing;
+        opacity: 0.85;
+        transition: none;
+    }
 
         /* ===== TABLET ===== */
         @media (max-width: 992px) {
@@ -118,20 +129,14 @@
                 right: 15px;
             }
             }
+            /* Toggle button: right side for tablet + mobile, left alone on desktop */
+            @media (max-width: 992px) {
+                .sidebar-toggle-btn {
+                    left: auto;
+                    right: 15px;
+                }
+            }
                 
-
-
-
-
-
-
-
-
-
-
-
-
-
             /* ===== SMALL MOBILE ===== */
             @media (max-width: 480px) {
             .sidebar {
@@ -322,14 +327,107 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Toggle JS -->
+    <!-- Toggle + Drag JS -->
     <script nonce="{{ csp_nonce() }}">
-    document.getElementById('sidebarToggleBtn')?.addEventListener('click', toggleSidebar);
-    document.getElementById('sidebarOverlay')?.addEventListener('click', toggleSidebar);
-    function toggleSidebar() {
-        console.log("Sidebar clicked");
-        document.querySelector('.sidebar').classList.toggle('active');
-        document.querySelector('.sidebar-overlay').classList.toggle('active');
-    }
+    (function() {
+        const btn = document.getElementById('sidebarToggleBtn');
+        const overlay = document.getElementById('sidebarOverlay');
+        const sidebar = document.querySelector('.sidebar');
+        if (!btn || !overlay || !sidebar) return;
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        overlay.addEventListener('click', toggleSidebar);
+
+        let isDragging = false, hasMoved = false;
+        let startX, startY, startLeft, startTop;
+
+        function clampPosition(left, top) {
+            const maxLeft = window.innerWidth - btn.offsetWidth - 4;
+            const maxTop = window.innerHeight - btn.offsetHeight - 4;
+            return {
+                left: Math.max(4, Math.min(left, maxLeft)),
+                top: Math.max(4, Math.min(top, maxTop))
+            };
+        }
+
+        // Restore last dragged position, clamped to the current viewport
+        try {
+            const saved = JSON.parse(localStorage.getItem('adminMenuBtnPos_v2') || 'null');
+            if (saved) {
+                const pos = clampPosition(saved.left, saved.top);
+                btn.style.left = pos.left + 'px';
+                btn.style.top = pos.top + 'px';
+                btn.style.right = 'auto';
+            }
+        } catch (e) {}
+
+        const getPointer = (e) => e.touches ? e.touches[0] : e;
+
+        function dragStart(e) {
+            isDragging = true;
+            hasMoved = false;
+            btn.classList.add('dragging');
+            const p = getPointer(e);
+            const rect = btn.getBoundingClientRect();
+            startX = p.clientX; startY = p.clientY;
+            startLeft = rect.left; startTop = rect.top;
+            document.addEventListener('mousemove', dragMove);
+            document.addEventListener('touchmove', dragMove, { passive: false });
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchend', dragEnd);
+        }
+
+        function dragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            const p = getPointer(e);
+            const dx = p.clientX - startX, dy = p.clientY - startY;
+            if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+            const pos = clampPosition(startLeft + dx, startTop + dy);
+            btn.style.left = pos.left + 'px';
+            btn.style.top = pos.top + 'px';
+            btn.style.right = 'auto';
+        }
+
+        function dragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+            btn.classList.remove('dragging');
+            document.removeEventListener('mousemove', dragMove);
+            document.removeEventListener('touchmove', dragMove);
+            document.removeEventListener('mouseup', dragEnd);
+            document.removeEventListener('touchend', dragEnd);
+            if (hasMoved) {
+                try {
+                    localStorage.setItem('adminMenuBtnPos', JSON.stringify({
+                        left: parseFloat(btn.style.left),
+                        top: parseFloat(btn.style.top)
+                    }));
+                } catch (e) {}
+            }
+        }
+
+        btn.addEventListener('mousedown', dragStart);
+        btn.addEventListener('touchstart', dragStart, { passive: true });
+
+        // A tap still opens/closes the sidebar; a drag doesn't
+        btn.addEventListener('click', function() {
+            if (hasMoved) { hasMoved = false; return; }
+            toggleSidebar();
+        });
+
+        // Re-clamp on rotate/resize so it can't get stuck off-screen
+        window.addEventListener('resize', function() {
+            if (!btn.style.left) return;
+            const rect = btn.getBoundingClientRect();
+            const pos = clampPosition(rect.left, rect.top);
+            btn.style.left = pos.left + 'px';
+            btn.style.top = pos.top + 'px';
+        });
+    })();
     </script>
 
     <!-- Existing JS (UNCHANGED) -->
