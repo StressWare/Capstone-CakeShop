@@ -2,7 +2,10 @@
 import threading
 import time
 import firebase 
+from firebase_admin import firestore
+from datetime import datetime
 from db import cakes, reviews, orders, custom_cake_price, loyalty_gifts
+from helpers import PH_TZ
 
 # After
 _cache = {}
@@ -106,6 +109,16 @@ def get_order_counts():
         return counts
     return _fetch_or_cache("order_counts", fetch)
 
+def get_all_orders_cached():
+    def fetch():
+        result = []
+        for doc in orders.stream():
+            d = doc.to_dict()
+            d["id"] = doc.id
+            result.append(d)
+        return result
+    return _fetch_or_cache("all_orders", fetch)
+
 
 def get_locked_dates_cached():
     def fetch():
@@ -149,6 +162,17 @@ def get_converted_consultations():
         ):
             d = doc.to_dict()
             d["conversation_id"] = doc.id
+            lu = d.get("last_updated")
+            if isinstance(lu, datetime):
+                d["last_updated"] = lu.astimezone(PH_TZ) if lu.tzinfo else lu
             result.append(d)
         return result
     return _fetch_or_cache("converted_consultations", fetch)
+
+def get_all_reviews_admin():
+    def fetch():
+        return [
+            {**doc.to_dict(), "id": doc.id}
+            for doc in reviews.order_by("created_at", direction=firestore.Query.DESCENDING).stream()
+        ]
+    return _fetch_or_cache("all_reviews_admin", fetch)

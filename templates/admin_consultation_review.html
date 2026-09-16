@@ -96,13 +96,10 @@
         <label style="font-size:12px; color:#888; display:block; margin-bottom:8px;">Add-ons</label>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
           {% set addons = [
-            ('filling',        'Cake Filling',     100),
-            ('cupcake',        'Cupcake Dozen',    700),
-            ('ediblepaper',    'Edible Paper',     250),
-            ('fondanttoppers', 'Fondant Toppers',  450),
-            ('sprinkles',      'Sprinkles',        100),
-            ('drip',           'Choco Drip',       200),
-            ('flowers',        'Sugar Flowers',    300),
+            ('filling',        'Cake Filling',     custom_prices.addons.filling),
+            ('cupcake',        'Cupcake Dozen',    custom_prices.addons.cupcake),
+            ('ediblepaper',    'Edible Paper',     custom_prices.addons.ediblepaper),
+            ('fondanttoppers', 'Fondant Toppers',  custom_prices.addons.fondanttoppers),
           ] %}
           {% for key, label, price in addons %}
           <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; padding:7px 10px; border:1px solid #e5d5c5; border-radius:8px;">
@@ -113,7 +110,8 @@
           </label>
           {% endfor %}
           {% if cd.get('others_desc') %}
-          <label style="display:flex; align-items:center; gap:8px; font-size:13px; padding:7px 10px; border:1px solid #f472b6; border-radius:8px; grid-column: span 2; background:#fff0f5;">
+          <div style="grid-column: span 2;">
+          <label style="display:flex; align-items:center; gap:8px; font-size:13px; padding:7px 10px; border:1px solid #f472b6; border-radius:8px 8px 0 0; background:#fff0f5;">
             <span style="color:#888; white-space:nowrap;">Others:</span>
             <input type="text" name="others_desc" value="{{ cd.get('others_desc', '') }}" maxlength="200"
               style="flex:1; border:none; outline:none; font-size:13px; background:transparent; color:#1a1a1a;">
@@ -123,6 +121,12 @@
               style="width:90px; border:none; border-bottom:1px solid #db2777; outline:none; font-size:13px;
               font-weight:600; color:#db2777; background:transparent; text-align:right;">
           </label>
+          {% if cd.get('others_price') %}
+          <div style="font-size:11px; color:#a07060; padding:4px 10px; border:1px solid #f472b6; border-top:none; border-radius:0 0 8px 8px; background:#fff8fb;">
+            Customer requested: ₱{{ '{:,.0f}'.format(cd.get('others_price', 0)) }} - review and adjust before approving.
+          </div>
+          {% endif %}
+          </div>
         {% endif %}
         </div>
       </div>

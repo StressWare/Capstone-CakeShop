@@ -241,7 +241,11 @@
                 </div>
               </div>
             </div>
-            <div class="modal-footer" style="border-top:1px solid #f0f0f0; padding:14px 24px;">
+            <div class="modal-footer" style="border-top:1px solid #f0f0f0; padding:14px 24px; display:flex; justify-content:space-between; align-items:center;">
+              <a href="{{ url_for('admin_conversations') }}?conv_id={{ c.conversation_id }}" target="_blank" rel="noopener"
+                style="background:#db2777; color:#fff; border:none; border-radius:8px; padding:6px 14px; font-size:13px; font-weight:500; text-decoration:none;">
+                💬 Message Customer
+              </a>
               <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">✕ Close</button>
             </div>
           </div>

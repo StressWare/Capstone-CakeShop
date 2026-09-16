@@ -846,7 +846,18 @@ document.addEventListener('hidden.bs.modal', function() {
    const pageLoadTime = new Date(); 
   // ── State ──
   let db = null;
-  let allOrders = [];
+  let allOrders = [];         // kept in sync for other functions that still read it (showDetails, etc.)
+  let liveOrders = [];        // top LIVE_LIMIT orders, kept live via onSnapshot
+  let moreOrders = [];        // older orders, lazy-loaded on demand (not live)
+  let lastVisibleDoc = null;  // cursor to continue Mode-1 pagination from
+  let hasMoreOrders = true;
+  let isLoadingMore = false;
+  const LIVE_LIMIT = 30;
+
+  let statusOrders = [];      // Mode-2: results for the selected status filter
+  let statusLastVisible = null;
+  let statusHasMore = true;
+
   let currentTab = 'all';
   let currentPage = 1;
   const ordersPerPage = 6;
@@ -874,6 +885,7 @@ document.addEventListener('hidden.bs.modal', function() {
 
       setupFilters();
       listenToOrders();
+      updateTabCounts();
       document.getElementById('ordersTableBody').addEventListener('click', function(e) {
         const viewBtn = e.target.closest('.btn-outline-info');
         if (viewBtn) {
@@ -900,67 +912,43 @@ document.addEventListener('hidden.bs.modal', function() {
     if (unsubscribe) unsubscribe();
 
     unsubscribe = db.collection('orders')
-      .where('status', 'in', [
-      'New',
-      'Accepted',
-      'Pending',
-      'Downpayment Paid',
-      'Fully Paid',
-      'Ready',
-      'Out for Delivery',
-      'Delivered',
-      'Completed',
-      'Cancelled'
-      ])
       .orderBy('created_at', 'desc')
-      .limit(200)
+      .limit(LIVE_LIMIT)
       .onSnapshot(snapshot => {
 
-        snapshot.docChanges().forEach(change => {
-          const data = change.doc.data();
-          const id = change.doc.id;
-          const order = { ...data, id };
+        liveOrders = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
 
-          if (change.type === 'added') {
-              const alreadyExists = allOrders.some(o => o.id === id);
-              allOrders.unshift(order);
-              if (!isFirstLoad && !alreadyExists) {
-                  const orderCreatedAt = toDate(data.created_at);
-                  if (!orderCreatedAt || orderCreatedAt <= pageLoadTime) return; // 👈 add this
-                  
-                  setTimeout(() => {
-                      const row = document.querySelector(`tr[data-id="${id}"]`);
-                      if (row) row.classList.add('row-new-flash');
-                  }, 100);
+        // only (re)set the pagination cursor if we haven't already paged deeper
+        if (moreOrders.length === 0) {
+          lastVisibleDoc = snapshot.docs[snapshot.docs.length - 1] || null;
+          hasMoreOrders = snapshot.docs.length === LIVE_LIMIT;
+        }
 
-                  if (typeof window.handleNewOrderNotification === 'function') {
-                      window.handleNewOrderNotification({
-                          customerName: data.customer?.name || 'Customer',
-                          orderType:    data.order_type     || 'custom',
-                          rush:         data.rush           || false,
-                          orderId:      id
-                      });
-                  }
-              }
-          }
+        if (!isFirstLoad) {
+          snapshot.docChanges().forEach(change => {
+            if (change.type !== 'added') return;
+            const data = change.doc.data();
+            const id = change.doc.id;
+            const orderCreatedAt = toDate(data.created_at);
+            if (!orderCreatedAt || orderCreatedAt <= pageLoadTime) return;
 
-          if (change.type === 'modified') {
-              const idx = allOrders.findIndex(o => o.id === id);
-              if (idx !== -1) allOrders[idx] = order;
-          }
+            setTimeout(() => {
+              const row = document.querySelector(`tr[data-id="${id}"]`);
+              if (row) row.classList.add('row-new-flash');
+            }, 100);
 
-          if (change.type === 'removed') {
-              allOrders = allOrders.filter(o => o.id !== id);
-          }
-      });
+            if (typeof window.handleNewOrderNotification === 'function') {
+              window.handleNewOrderNotification({
+                customerName: data.customer?.name || 'Customer',
+                orderType:    data.order_type     || 'custom',
+                rush:         data.rush           || false,
+                orderId:      id
+              });
+            }
+          });
+        }
 
         isFirstLoad = false;
-        currentPage = 1;
-        allOrders.sort((a, b) => {
-            const dateA = toDate(a.created_at);
-            const dateB = toDate(b.created_at);
-            return dateB - dateA;
-        });
         renderTable();
 
       }, err => {
@@ -972,15 +960,63 @@ document.addEventListener('hidden.bs.modal', function() {
       });
   }
 
+  // ── Mode 1: lazy-load older orders beyond the live window ──
+  async function loadMoreOrders() {
+    if (isLoadingMore || !hasMoreOrders || !lastVisibleDoc) return;
+    isLoadingMore = true;
+    try {
+      const snap = await db.collection('orders')
+        .orderBy('created_at', 'desc')
+        .startAfter(lastVisibleDoc)
+        .limit(ordersPerPage)
+        .get();
+      const newDocs = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      moreOrders = moreOrders.concat(newDocs);
+      lastVisibleDoc = snap.docs[snap.docs.length - 1] || lastVisibleDoc;
+      hasMoreOrders = newDocs.length === ordersPerPage;
+    } catch (e) {
+      console.error('Error loading more orders:', e);
+    } finally {
+      isLoadingMore = false;
+      renderTable();
+    }
+  }
+
+  // ── Mode 2: server-side paginated query for a selected status ──
+  async function fetchStatusPage(page) {
+    const selectedStatus = document.getElementById('statusFilter').value;
+    if (!selectedStatus) return;
+
+    while (statusOrders.length < page * ordersPerPage && statusHasMore) {
+      let q = db.collection('orders')
+        .where('status', '==', selectedStatus)
+        .orderBy('created_at', 'desc')
+        .limit(ordersPerPage);
+      if (statusLastVisible) q = q.startAfter(statusLastVisible);
+
+      const snap = await q.get();
+      const docs = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+      if (docs.length === 0) { statusHasMore = false; break; }
+
+      statusOrders = statusOrders.concat(docs);
+      statusLastVisible = snap.docs[snap.docs.length - 1] || statusLastVisible;
+      statusHasMore = docs.length === ordersPerPage;
+    }
+
+    currentPage = page;
+    renderTable();
+  }
+
   // ── Render Table ──
   function renderTable() {
     const search = document.getElementById('searchOrders').value.toLowerCase();
-    const statusFilter = document.getElementById('statusFilter').value;
+    const statusFilterVal = document.getElementById('statusFilter').value;
     const rushFilter = document.getElementById('rushFilter').value;
+    const isStatusMode = !!statusFilterVal;
 
-    // ✅ Pick the right source
-    let source = allOrders;
-    let filtered = source.filter(o => {
+    const source = isStatusMode ? statusOrders : [...liveOrders, ...moreOrders];
+    allOrders = source;
+    const filtered = source.filter(o => {
       const matchTab = currentTab === 'all' ||
         (currentTab === 'custom' && o.order_type === 'custom') ||
         (currentTab === 'premade' && o.order_type === 'premade');
@@ -991,18 +1027,15 @@ document.addEventListener('hidden.bs.modal', function() {
       ].join(' ').toLowerCase();
       const matchSearch = searchText.includes(search);
 
-      const matchStatus = !statusFilter || o.status === statusFilter;
       const matchRush = !rushFilter ||
         (rushFilter === 'yes' && o.rush) ||
         (rushFilter === 'no' && !o.rush);
 
-      return matchTab && matchSearch && matchStatus && matchRush;
+      return matchTab && matchSearch && matchRush;
     });
 
-    updateTabCounts();
-
-    const totalPages = Math.ceil(filtered.length / ordersPerPage);
-    if (currentPage > totalPages) currentPage = 1;
+    const loadedPages = Math.max(Math.ceil(filtered.length / ordersPerPage), 1);
+    if (currentPage > loadedPages) currentPage = loadedPages;
     const start = (currentPage - 1) * ordersPerPage;
     const pageOrders = filtered.slice(start, start + ordersPerPage);
 
@@ -1018,9 +1051,22 @@ document.addEventListener('hidden.bs.modal', function() {
       tbody.innerHTML = pageOrders.map(o => renderRow(o)).join('');
     }
 
+    const hasMore = isStatusMode ? statusHasMore : hasMoreOrders;
+    const totalPages = loadedPages + (hasMore ? 1 : 0);
+
     updatePaginationButtons('ordersPagination', currentPage, totalPages, page => {
-      currentPage = page;
-      renderTable();
+      const needsMoreData = page > loadedPages;
+      if (needsMoreData) {
+        if (isStatusMode) {
+          fetchStatusPage(page);
+        } else {
+          currentPage = page;
+          loadMoreOrders();
+        }
+      } else {
+        currentPage = page;
+        renderTable();
+      }
     });
   }
 
@@ -1630,17 +1676,18 @@ footer.innerHTML = `
   };
 
   // ── Tab counts ──
-  function updateTabCounts() {
-    const counts = { all: 0, custom: 0, premade: 0 };
-    allOrders.forEach(o => {
-      counts.all++;
-      if (o.order_type === 'custom') counts.custom++;
-      if (o.order_type === 'premade') counts.premade++;
-    });
-    document.getElementById('count-all').textContent = counts.all;
-    document.getElementById('count-custom').textContent = counts.custom;
-    document.getElementById('count-premade').textContent = counts.premade;
+async function updateTabCounts() {
+  try {
+    const res = await fetch('/admin/orders/counts');
+    if (!res.ok) throw new Error('Bad response');
+    const data = await res.json();
+    document.getElementById('count-all').textContent = data.all;
+    document.getElementById('count-custom').textContent = data.custom;
+    document.getElementById('count-premade').textContent = data.premade;
+  } catch (e) {
+    console.error('Error fetching tab counts:', e);
   }
+}
 
   // ── Tab switch ──
   window.switchOrderTab = function(tab, btn) {
@@ -1654,7 +1701,18 @@ footer.innerHTML = `
   // ── Filters ──
   function setupFilters() {
     document.getElementById('searchOrders').addEventListener('keyup', () => { currentPage = 1; renderTable(); });
-    document.getElementById('statusFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      statusOrders = [];
+      statusLastVisible = null;
+      statusHasMore = true;
+      currentPage = 1;
+      const selectedStatus = document.getElementById('statusFilter').value;
+      if (selectedStatus) {
+        fetchStatusPage(1);
+      } else {
+        renderTable();
+      }
+    });
     document.getElementById('rushFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
   }
 

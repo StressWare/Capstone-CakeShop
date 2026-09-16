@@ -1290,21 +1290,6 @@
               <span class="addon-price">₱{{ custom_prices.addons.fondanttoppers | int }}</span>
             </label>
             <label class="addon-item">
-              <input type="checkbox" class="addons" value="{{ custom_prices.addons.sprinkles }}" id="sprinkles" name="sprinkles">
-              <span class="addon-text">Sprinkles</span>
-              <span class="addon-price">₱{{ custom_prices.addons.sprinkles | int }}</span>
-            </label>
-            <label class="addon-item">
-              <input type="checkbox" class="addons" value="{{ custom_prices.addons.drip }}" id="drip" name="drip">
-              <span class="addon-text">Choco Drip</span>
-              <span class="addon-price">₱{{ custom_prices.addons.drip | int }}</span>
-            </label>
-            <label class="addon-item">
-              <input type="checkbox" class="addons" value="{{ custom_prices.addons.flowers }}" id="flowers" name="flowers">
-              <span class="addon-text">Sugar Flowers</span>
-              <span class="addon-price">{{ custom_prices.addons.flowers | int }}</span>
-            </label>
-            <label class="addon-item">
               <input type="checkbox" id="others" name="others" class="addons" value="0">
               <span class="addon-text">Others</span>
               <span class="addon-price">Custom</span>
@@ -1314,7 +1299,7 @@
           <!-- Others Input -->
           <div id="othersInputWrap">
             <textarea id="othersDesc" placeholder="Describe your custom add-on..." rows="1" style="margin-bottom:4px;"></textarea>
-            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div id="othersPriceRow" style="display:none; gap:8px; align-items:center; flex-wrap:wrap;">
               <input type="number" id="othersPrice" placeholder="Price (₱)" min="0" step="0.01" style="width:120px;">
               <span id="othersPriceTag">+₱<span id="othersPriceDisplay">0</span></span>
               <small style="color:rgba(255,255,255,0.4); font-size:10px;">Owner will set price</small>
@@ -1378,10 +1363,8 @@
         <input type="hidden" name="cupcake" id="c_cupcake">
         <input type="hidden" name="ediblepaper" id="c_ediblepaper">
         <input type="hidden" name="fondanttoppers" id="c_fondanttoppers">
-        <input type="hidden" name="sprinkles" id="c_sprinkles">
-        <input type="hidden" name="drip" id="c_drip">
-        <input type="hidden" name="flowers" id="c_flowers">
         <input type="hidden" name="others_desc" id="c_othersDesc">
+        <input type="hidden" name="others_price" id="c_othersPrice">
         <input type="hidden" name="notes" id="c_notes">
         <input type="hidden" name="order_item" id="c_orderItem">
         <input type="hidden" name="amount" id="c_amount">
@@ -1413,7 +1396,7 @@
         <!-- Downpayment Notice -->
         <div class="downpayment-notice">
           <div class="notice-title"><i class="bi bi-info-circle-fill"></i> Downpayment Required</div>
-          <p style="margin:0 0 8px; font-size:12px;">Customize cake orders require at least <strong>1 day advance booking</strong> and an online downpayment. Choose your option on the next step:</p>
+          <p style="margin:0 0 8px; font-size:12px;">Customize cake orders require at least <strong>3 day advance booking</strong> and an online downpayment. Choose your option on the next step:</p>
           <ul>
             <li>50% or 75% — balance paid on delivery/pickup</li>
             <li>Full payment — no balance remaining</li>
@@ -1757,9 +1740,6 @@
     if (layers) tags.push(layers + ' layer');
     const candlesNum = parseInt(candles, 10) || 0;
     if (candlesNum > 0) tags.push(candlesNum + ' candle' + (candlesNum > 1 ? 's' : ''));
-    if (document.getElementById('sprinkles')?.checked) tags.push('Sprinkles');
-    if (document.getElementById('drip')?.checked) tags.push('Choco drip');
-    if (document.getElementById('flowers')?.checked) tags.push('Flowers');
     const badgesEl = document.getElementById('badges');
     if (badgesEl) badgesEl.innerHTML = tags.map(t => `<span class="badge">${t}</span>`).join('');
   }
@@ -1826,9 +1806,6 @@
       const numLayers = parseInt(document.getElementById('layers').value.split('|')[0]);
       const toppersN = parseInt(document.getElementById('toppers').value.split('|')[0]);
       const candlesN = parseInt(document.getElementById('candles').value);
-      const hasSprinkles = document.getElementById('sprinkles').checked;
-      const hasDrip = document.getElementById('drip').checked;
-      const hasFlowers = document.getElementById('flowers').checked;
       const shape = document.getElementById('cakeShape').value;
 
       const colors = FLAVORS[flavorKey] || FLAVORS.vanilla;
@@ -1866,42 +1843,7 @@
           frostTop.position.y = y + layerH + frostH / 2;
           group.add(frostTop);
 
-          if (hasSprinkles) {
-            for (let s = 0; s < 24; s++) {
-              const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5), new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) }));
-              const ang = Math.random() * Math.PI * 2, rad = Math.random() * ri * 0.82;
-              sp.position.set(Math.cos(ang) * rad, y + layerH + frostH + 0.015, Math.sin(ang) * rad);
-              sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
-              group.add(sp);
-            }
-          }
-
-          if (hasDrip && i === 0) {
-            const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
-            for (let d = 0; d < 12; d++) {
-              const ang = (d / 12) * Math.PI * 2;
-              const dlen = 0.16 + Math.random() * 0.14;
-              const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
-              drip.position.set(Math.cos(ang) * (ri - 0.01), y + layerH - dlen / 2 + 0.06, Math.sin(ang) * (ri - 0.01));
-              group.add(drip);
-            }
-          }
-
-          if (hasFlowers) {
-            const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
-            for (let f = 0; f < 5; f++) {
-              const ang = (f / 5) * Math.PI * 2 + i * 0.5;
-              const frad = ri * 0.62;
-              const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 10), new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
-              petal.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.025, Math.sin(ang) * frad);
-              petal.rotation.x = -Math.PI / 2;
-              group.add(petal);
-              const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 10), new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
-              centre.position.set(Math.cos(ang) * frad, y + layerH + frostH + 0.03, Math.sin(ang) * frad);
-              centre.rotation.x = -Math.PI / 2;
-              group.add(centre);
-            }
-          }
+          
         } else {
           const cake = new THREE.Mesh(new THREE.BoxGeometry(rw, layerH, rd), cakeM);
           cake.position.y = y + layerH / 2;
@@ -1923,46 +1865,6 @@
           const frostTop = new THREE.Mesh(new THREE.BoxGeometry(rw + 0.04, frostH, rd + 0.04), frostTopM);
           frostTop.position.y = y + layerH + frostH / 2;
           group.add(frostTop);
-
-          if (hasSprinkles) {
-            for (let s = 0; s < 28; s++) {
-              const sp = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.07, 5), new THREE.MeshPhongMaterial({ color: hex(SPRINKLE_COLS[s % 5]) }));
-              sp.position.set((Math.random() - 0.5) * rw * 0.85, y + layerH + frostH + 0.015, (Math.random() - 0.5) * rd * 0.85);
-              sp.rotation.set(Math.random() * 0.5, Math.random() * Math.PI * 2, Math.random() * 0.5);
-              group.add(sp);
-            }
-          }
-
-          if (hasDrip && i === 0) {
-            const dripM = new THREE.MeshPhongMaterial({ color: 0x3d1a05, shininess: 90 });
-            const edges = [];
-            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, rd / 2]);
-            for (let e = 0; e < 7; e++) edges.push([(Math.random() - 0.5) * rw * 0.9, -rd / 2]);
-            for (let e = 0; e < 5; e++) edges.push([rw / 2, (Math.random() - 0.5) * rd * 0.9]);
-            for (let e = 0; e < 5; e++) edges.push([-rw / 2, (Math.random() - 0.5) * rd * 0.9]);
-            edges.forEach(([ex, ez]) => {
-              const dlen = 0.14 + Math.random() * 0.14;
-              const drip = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.016, dlen, 7), dripM);
-              drip.position.set(ex, y + layerH - dlen / 2 + 0.06, ez);
-              group.add(drip);
-            });
-          }
-
-          if (hasFlowers) {
-            const FCOLS = [0xff88aa, 0xffbbcc, 0xff6699, 0xffaabb];
-            for (let f = 0; f < 6; f++) {
-              const fx = (Math.random() - 0.5) * rw * 0.7;
-              const fz = (Math.random() - 0.5) * rd * 0.7;
-              const petal = new THREE.Mesh(new THREE.CircleGeometry(0.09, 10), new THREE.MeshPhongMaterial({ color: hex(FCOLS[f % 4]), side: THREE.DoubleSide }));
-              petal.position.set(fx, y + layerH + frostH + 0.025, fz);
-              petal.rotation.x = -Math.PI / 2;
-              group.add(petal);
-              const centre = new THREE.Mesh(new THREE.CircleGeometry(0.033, 10), new THREE.MeshPhongMaterial({ color: 0xffe066, side: THREE.DoubleSide }));
-              centre.position.set(fx, y + layerH + frostH + 0.03, fz);
-              centre.rotation.x = -Math.PI / 2;
-              group.add(centre);
-            }
-          }
         }
         y += layerH + frostH;
       }
@@ -2053,9 +1955,6 @@
     );
     document.getElementById('rush').addEventListener('change', onAnyChange);
     document.querySelectorAll('.addons').forEach(el => el.addEventListener('change', onAnyChange));
-    ['sprinkles', 'drip', 'flowers'].forEach(id =>
-      document.getElementById(id).addEventListener('change', onAnyChange)
-    );
 
     buildCake();
     calculateTotal();
@@ -2078,6 +1977,7 @@
   function submitConsultation() {
     const orderForm = document.getElementById('orderForm');
     document.getElementById('c_othersDesc').value = document.getElementById('othersDesc').value;
+    document.getElementById('c_othersPrice').value = document.getElementById('othersPriceHidden').value;
     if (!orderForm.checkValidity()) { orderForm.reportValidity(); return; }
     updateOrderData();
     glassAlert({
@@ -2100,9 +2000,6 @@
       document.getElementById('c_cupcake').value = document.getElementById('cupcake').checked ? document.getElementById('cupcake').value : '';
       document.getElementById('c_ediblepaper').value = document.getElementById('ediblepaper').checked ? document.getElementById('ediblepaper').value : '';
       document.getElementById('c_fondanttoppers').value = document.getElementById('fondanttoppers').checked ? document.getElementById('fondanttoppers').value : '';
-      document.getElementById('c_sprinkles').value = document.getElementById('sprinkles').checked ? document.getElementById('sprinkles').value : '';
-      document.getElementById('c_drip').value = document.getElementById('drip').checked ? document.getElementById('drip').value : '';
-      document.getElementById('c_flowers').value = document.getElementById('flowers').checked ? document.getElementById('flowers').value : '';
       document.getElementById('c_notes').value = document.getElementById('notes').value;
       document.getElementById('c_orderItem').value = document.getElementById('orderItem').value;
       document.getElementById('c_amount').value = document.getElementById('orderAmount').value;
@@ -2119,12 +2016,16 @@
     const proceedBtn = document.getElementById('proceedBtn');
     const consultBtn = document.getElementById('consultBtn');
 
-    if (agreeBox && proceedBtn) {
-      agreeBox.addEventListener('change', function() {
-        const locked = !this.checked;
-        proceedBtn.classList.toggle('locked', locked);
-      });
+    function updateProceedLock() {
+      if (!proceedBtn) return;
+      const agreed = agreeBox ? agreeBox.checked : true;
+      proceedBtn.classList.toggle('locked', !agreed);
     }
+
+    if (agreeBox && proceedBtn) {
+      agreeBox.addEventListener('change', updateProceedLock);
+    }
+    updateProceedLock();
 
     // ===== CONSULT BUTTON =====
     if (consultBtn) {
@@ -2138,8 +2039,7 @@
         const orderForm = document.getElementById('orderForm');
         if (!orderForm.checkValidity()) { orderForm.reportValidity(); return; }
 
-        const othersPrice = parseFloat(document.getElementById('othersPriceHidden').value || 0);
-        if (document.getElementById('others').checked && othersPrice === 0) {
+        if (document.getElementById('others').checked) {
           e.preventDefault();
           glassAlert({
             icon: 'info',
@@ -2192,9 +2092,18 @@
     });
 
     document.getElementById('othersDesc').addEventListener('input', function() {
-      if (this.value.trim() && parseFloat(document.getElementById('othersPrice').value || 0) > 0) {
+      const isMoneyCake = this.value.toLowerCase().includes('money cake');
+      document.getElementById('othersPriceRow').style.display = isMoneyCake ? 'flex' : 'none';
+      if (!isMoneyCake) {
+        document.getElementById('othersPrice').value = '';
+        document.getElementById('othersPriceHidden').value = '0';
+        document.getElementById('othersPriceTag').style.display = 'none';
+        calculateTotal();
+        updateBadges();
+      } else if (this.value.trim() && parseFloat(document.getElementById('othersPrice').value || 0) > 0) {
         document.getElementById('othersPriceTag').style.display = 'inline-block';
       }
+      updateProceedLock();
     });
 
     // ===== IMAGE UPLOAD =====
@@ -2243,7 +2152,9 @@
     if (prefill.others_desc) {
       document.getElementById('others').checked = true;
       document.getElementById('othersInputWrap').style.display = 'block';
+      document.getElementById('othersPriceRow').style.display = 'flex';
       document.getElementById('othersDesc').value = prefill.others_desc;
+      document.getElementById('othersInputWrap').style.display = 'block';
       document.getElementById('othersPrice').value = prefill.others_price || 0;
       if (prefill.others_price && prefill.others_price > 0) {
         document.getElementById('othersPriceHidden').value = prefill.others_price;
@@ -2253,7 +2164,7 @@
       }
     }
 
-    ['filling', 'cupcake', 'ediblepaper', 'fondanttoppers', 'sprinkles', 'drip', 'flowers'].forEach(id => {
+      ['filling', 'cupcake', 'ediblepaper', 'fondanttoppers'].forEach(id => {
       if (prefill[id]) { const el = document.getElementById(id); if (el) el.checked = true; }
     });
 

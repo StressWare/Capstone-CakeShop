@@ -874,6 +874,8 @@
     let adminDb = null;
     let activeUserId = null;
     let activeConvoId = null;
+    let activeCustomerName = null;
+    let activeEmail = null;
     let messagesUnsubscribe = null;
     let isSwitching = false;
     let isChatOpen = false;
@@ -902,6 +904,7 @@
             cacheDOM();
             setupEvents();
             listenConversationList();
+            openConversationFromQuery();
             console.log('✅ Admin Chat Initialized');
         } catch (err) {
             console.error('❌ Firebase Init Failed:', err);
@@ -1098,6 +1101,8 @@
         
         activeUserId = item.dataset.userid;
         activeConvoId = item.dataset.convoid;
+        activeCustomerName = item.dataset.customername;
+        activeEmail = item.dataset.email;
         
         const initial = item.dataset.customername?.[0]?.toUpperCase() || '?';
         
@@ -1111,6 +1116,25 @@
         if (dom.sendReplyBtn) dom.sendReplyBtn.disabled = false;
         
         loadMessages(activeUserId, activeConvoId);
+    }
+
+    // ===== DEEP LINK: open a specific conversation from id =====
+    function openConversationFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const targetConvoId = params.get('conv_id');
+        if (!targetConvoId) return;
+
+        let attempts = 0;
+        const tryOpen = setInterval(() => {
+            attempts++;
+            const item = document.querySelector(`[data-convoid="${targetConvoId}"]`);
+            if (item) {
+                clearInterval(tryOpen);
+                switchConversation(item);
+            } else if (attempts > 20) {
+                clearInterval(tryOpen); // give up after ~10s if it never loads
+            }
+        }, 500);
     }
 
     // ===== LOAD MESSAGES =====
@@ -1252,23 +1276,54 @@
         const input = dom.replyInput;
         const btn = dom.sendReplyBtn;
         const msg = input.value.trim();
-        
+
         if (!msg || !activeUserId) return;
-        
+
         input.disabled = true;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-        
+
+        const now = firebase.firestore.Timestamp.now();
+
         try {
-            const res = await fetch('/admin/reply-message', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ user_id: activeUserId, conversation_id: activeConvoId, message: msg })
+            const convRef = adminDb.collection('users').doc(activeUserId)
+                .collection('conversations').doc(activeConvoId);
+            const convSnap = await convRef.get();
+            const wasEscalated = convSnap.exists && convSnap.data().escalated;
+
+            const batch = adminDb.batch();
+            batch.set(convRef.collection('messages').doc(), {
+                text: msg, sender: 'admin', timestamp: now, created_at: now
             });
-            const data = await res.json();
-            if (!data.success) showToast('Send failed: ' + data.error, 'error');
-        } catch(e) {
-            showToast('Network error', 'error');
+            batch.set(convRef, {
+                last_updated: now,
+                ...(wasEscalated ? {} : { escalated: true, escalated_at: now, escalated_by: 'admin' })
+            }, { merge: true });
+            batch.set(adminDb.collection('conversations').doc(activeConvoId), {
+                user_id: activeUserId,
+                conversation_id: activeConvoId,
+                customer_name: activeCustomerName || 'Customer',
+                email: activeEmail || '',
+                last_message: msg.slice(0, 50),
+                last_updated: now,
+                escalated: true,
+                unread: false
+            }, { merge: true });
+            await batch.commit();
+
+        } catch (e) {
+            console.warn('Direct write failed, falling back to server route:', e);
+            try {
+                const res = await fetch('/admin/reply-message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ user_id: activeUserId, conversation_id: activeConvoId, message: msg })
+                });
+                const data = await res.json();
+                if (!data.success) showToast('Send failed: ' + data.error, 'error');
+            } catch (e2) {
+                showToast('Network error', 'error');
+            }
         } finally {
             input.value = '';
             input.disabled = false;

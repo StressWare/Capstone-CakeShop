@@ -14,7 +14,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      handle_loyalty_stamp,safe_float, send_new_order_fcm,
                      is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM)
 from decorators import login_required, admin_required, profile_required
-from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations
+from utils import get_all_cakes, get_all_reviews, get_order_counts, get_custom_prices, get_loyalty_gifts, get_locked_dates_cached, get_completed_cancelled_orders, invalidate_cache, get_converted_consultations, get_all_orders_cached
 from firebase_admin import messaging
 import requests as http_requests
 import threading 
@@ -232,6 +232,9 @@ def too_many_requests():
 # ================================================================
 # PUBLIC ROUTES
 # ================================================================
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "OK"}), 200
 # ---------------- HOME PAGE ----------------
 @app.route("/")
 def home_page():
@@ -1364,7 +1367,7 @@ def add_review():
     
     # Save review
     reviews.add(review_data)
-    invalidate_cache("all_reviews")
+    invalidate_cache("all_reviews", "all_reviews_admin")
     # Mark order as reviewed in top-level orders collection
     order_ref.update({"reviewed": True})  # ← Now updates top-level orders
     
@@ -1463,7 +1466,7 @@ def place_order():
         amount += float(layers_prices.get(layers_key, 0))
         amount += float(toppers_prices.get(toppers_key, 0))
 
-        for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
+        for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
             if request.form.get(addon_key):
                 amount += float(addon_prices.get(addon_key, 0))
         others_price = float(request.form.get('others_price', 0) or 0)
@@ -1510,9 +1513,9 @@ def place_order():
         cake_cupcake        = request.form.get('cupcake', ''),
         cake_ediblepaper    = request.form.get('ediblepaper', ''),
         cake_fondanttoppers = request.form.get('fondanttoppers', ''),
-        cake_sprinkles      = request.form.get('sprinkles', ''),
-        cake_drip           = request.form.get('drip', ''),
-        cake_flowers        = request.form.get('flowers', ''),
+        cake_others         = request.form.get('others', ''),
+        cake_others_price   = request.form.get('others_price', ''),
+        cake_others_desc    = request.form.get('others_desc', ''),
     )
 
 # ---------------- PREMADE ORDER ----------------
@@ -1884,7 +1887,7 @@ def finalize_order():
                 amount += float(layers_prices.get(layers_key, 0))
                 amount += float(toppers_prices.get(toppers_key, 0))
 
-                for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers", "sprinkles", "drip", "flowers"]:
+                for addon_key in ["filling", "cupcake", "ediblepaper", "fondanttoppers"]:
                     if request.form.get(addon_key):
                         amount += float(addon_prices.get(addon_key, 0))
                 others_price = float(request.form.get('others_price', 0) or 0)
@@ -2197,7 +2200,7 @@ def cancel_order(order_id):
         "cancelled_by": "customer",
         "cancelled_at": datetime.now(PH_TZ),
     })
-
+    invalidate_cache("all_cakes", "order_counts", "completed_cancelled_orders")
     flash("Order cancelled successfully.", "info")
     return redirect(url_for("customer_dashboard"))
 # ================================================================
@@ -2474,34 +2477,39 @@ def admin_page():
     # ---- Low Stock ----
     low_stock = [doc.to_dict() for doc in inventory.where("quantity", "<", 10).stream()]
 
-    # ---- All Orders ----
-    all_orders = []
-    for order_doc in orders.order_by("created_at", direction="DESCENDING").limit(200).stream():
-        order = order_doc.to_dict()
-        order["id"] = order_doc.id
-        order = convert_timestamps(order)
-        all_orders.append(order)
+    # ---- Status Counters: 8 aggregation reads, flat cost forever, no index needed ----
+    total_new       = orders.where("status", "==", "New").count().get()[0][0].value
+    total_accepted  = orders.where("status", "==", "Accepted").count().get()[0][0].value
+    total_pending   = orders.where("status", "==", "Pending").count().get()[0][0].value
+    total_ready     = orders.where("status", "==", "Ready").count().get()[0][0].value
+    total_out       = orders.where("status", "==", "Out for Delivery").count().get()[0][0].value
+    total_completed = orders.where("status", "==", "Completed").count().get()[0][0].value
+    total_cancelled = orders.where("status", "==", "Cancelled").count().get()[0][0].value
+    total_rush      = orders.where("rush", "==", True).count().get()[0][0].value
 
-    # ---- Status Counters ----
-    total_new = total_accepted = total_pending = total_ready = 0
-    total_out = total_completed = total_cancelled = total_rush = 0
-
-    # ---- Today's Deliveries ----
-    today_date = datetime.now(PH_TZ).date()
+    # ---- Today's Deliveries: bounded by daily volume, not total orders. No index needed — single-field range ----
+    today_date  = datetime.now(PH_TZ).date()
     today_start = datetime.combine(today_date, datetime.min.time()).replace(tzinfo=PH_TZ)
     today_end   = datetime.combine(today_date, datetime.max.time()).replace(tzinfo=PH_TZ)
     today_count = 0
     today_deliveries = []
 
-    # ---- Daily Report: Online Premade & Custom ----
-    pre_sales = pre_txn = pre_cash = pre_ewallet = 0
-    cus_sales = cus_txn = cus_cash = cus_ewallet = 0
-    delivery_earned = 0
-    pre_items = {}
+    for order_doc in orders.where("delivery_date", ">=", today_start).where("delivery_date", "<=", today_end).stream():
+        order = convert_timestamps(order_doc.to_dict())
+        status = order.get("status", "")
+        if status in ("Completed", "Cancelled"):
+            continue
+        today_count += 1
+        today_deliveries.append({
+            "time":     order["delivery_date"].strftime("%I:%M %p"),
+            "customer": order.get("customer", {}).get("name", "N/A"),
+            "cake":     order.get("item", "N/A"),
+            "status":   status,
+            "rush":     order.get("rush", False)
+        })
+    today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
-    def is_today(ts):
-        return isinstance(ts, datetime) and today_start <= ts <= today_end
-
+    # ---- Helpers ----
     def fix_dt(dt):
         if isinstance(dt, str):
             try:
@@ -2516,80 +2524,83 @@ def admin_page():
             return dt
         return None
 
+    def is_today(ts):
+        return isinstance(ts, datetime) and today_start <= ts <= today_end
+
     def classify_payment_online(method):
         return "cash" if method and "cash" in method.lower() else "ewallet"
 
     def classify_payment_walkin(method):
         return "cash" if method and method.lower() == "cash" else "ewallet"
 
-    for order in all_orders:
-        status = order.get("status", "")
+    # ---- Daily Report: Online Premade & Custom — bounded by total COMPLETED orders, single-field filter, no index ----
+    pre_sales = pre_txn = pre_cash = pre_ewallet = 0
+    cus_sales = cus_txn = cus_cash = cus_ewallet = 0
+    delivery_earned = 0
+    pre_items = {}
 
-        if status == "New":                total_new += 1
-        elif status == "Accepted":         total_accepted += 1
-        elif status == "Pending":          total_pending += 1
-        elif status == "Ready":            total_ready += 1
-        elif status == "Out for Delivery": total_out += 1
-        elif status == "Completed":        total_completed += 1
-        elif status == "Cancelled":        total_cancelled += 1
-        if order.get("rush"):              total_rush += 1
-
-        delivery_date = order.get("delivery_date")
-        if isinstance(delivery_date, datetime) and delivery_date.date() == today_date and status not in ["Completed", "Cancelled"]:
-            today_count += 1
-            today_deliveries.append({
-                    "time":     delivery_date.strftime("%I:%M %p"),
-                    "customer": order.get("customer", {}).get("name", "N/A"),
-                    "cake":     order.get("item", "N/A"),
-                    "status":   status,
-                    "rush":     order.get("rush", False)
-                })
-
-        if status != "Completed":
-            continue
+    for order_doc in orders.where("status", "==", "Completed").stream():
+        order = order_doc.to_dict()
         completed_at = fix_dt(order.get("completed_at")) or fix_dt(order.get("created_at"))
         if not is_today(completed_at):
             continue
 
         otype = order.get("order_type", "")
-        amt   = order.get("amount", 0) or 0
         delivery_fee = order.get("delivery_fee", 0) or 0
-        amt   = amt - delivery_fee
+        amt   = (order.get("amount", 0) or 0) - delivery_fee
         pm    = classify_payment_online(order.get("payment_method"))
 
         if otype == "premade":
             delivery_earned += delivery_fee
-            pre_sales += amt
-            pre_txn   += 1
+            pre_sales += amt; pre_txn += 1
             if pm == "cash": pre_cash += amt
-            else:            pre_ewallet += amt
+            else: pre_ewallet += amt
             for item in order.get("selected_items", []):
                 name = item.get("cake_name", "")
-                if name:
-                    pre_items[name] = pre_items.get(name, 0) + 1
-
+                if name: pre_items[name] = pre_items.get(name, 0) + 1
         elif otype == "custom":
             delivery_earned += delivery_fee
-            cus_sales += amt
-            cus_txn   += 1
+            cus_sales += amt; cus_txn += 1
             if pm == "cash": cus_cash += amt
-            else:            cus_ewallet += amt
+            else: cus_ewallet += amt
 
     pre_top = max(pre_items, key=pre_items.get) if pre_items else "—"
-    # Pending Sales — dp/full payment collected on custom orders not yet Completed
+
+    # ---- Pending Sales + Customer Pending Balances: ONE query over custom orders, two computations ----
     pending_sales_total = 0
     pending_sales_count = 0
-    for order in all_orders:
-        if order.get("order_type", "") != "custom":
-            continue
-        if order.get("status") == "Completed":
-            continue
-        dp_amt = order.get("downpayment_amount", 0) or 0
-        if dp_amt > 0:
-            pending_sales_total += dp_amt
-            pending_sales_count += 1
+    cus_pending_total = 0
+    cus_pending_today = 0
+    cus_pending_list = []
 
-    today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
+    for order_doc in orders.where("order_type", "==", "custom").stream():
+        order = order_doc.to_dict()
+
+        # Pending Sales — dp/full payment collected on custom orders not yet Completed
+        if order.get("status") != "Completed":
+            dp_amt = order.get("downpayment_amount", 0) or 0
+            if dp_amt > 0:
+                pending_sales_total += dp_amt
+                pending_sales_count += 1
+
+        # Customer Pending Balances
+        bal = order.get("remaining_balance", 0) or 0
+        if bal <= 0:
+            continue
+        delivery_date = convert_timestamps(order).get("delivery_date")
+        is_due_today = isinstance(delivery_date, datetime) and delivery_date.date() == today_date
+        cus_pending_total += bal
+        if is_due_today:
+            cus_pending_today += bal
+        cus_pending_list.append({
+            "customer": order.get("customer", {}).get("name", "N/A"),
+            "cake": order.get("item", "N/A"),
+            "delivery_date": delivery_date.strftime("%b %d, %Y") if isinstance(delivery_date, datetime) else "N/A",
+            "balance": bal,
+            "due_today": is_due_today,
+        })
+
+    cus_pending_list.sort(key=lambda x: not x["due_today"])
 
     # ---- Daily Report: POS / Walk-in ----
     pos_sales = pos_txn = pos_cash = pos_ewallet = 0
@@ -2621,30 +2632,7 @@ def admin_page():
                 pos_items[name] = pos_items.get(name, 0) + 1
 
     pos_top = max(pos_items, key=pos_items.get) if pos_items else "—"
-    
-    cus_pending_total = 0
-    cus_pending_today = 0
-    cus_pending_list = []
-    for order in all_orders:
-        if order.get("order_type", "") != "custom":
-            continue
-        bal = order.get("remaining_balance", 0) or 0
-        if bal <= 0:
-            continue
-        cus_pending_total += bal
-        delivery_date = order.get("delivery_date")
-        is_due_today = isinstance(delivery_date, datetime) and delivery_date.date() == today_date
-        if is_due_today:
-            cus_pending_today += bal
-        cus_pending_list.append({
-            "customer": order.get("customer", {}).get("name", "N/A"),
-            "cake": order.get("item", "N/A"),
-            "delivery_date": delivery_date.strftime("%b %d, %Y") if isinstance(delivery_date, datetime) else "N/A",
-            "balance": bal,
-            "due_today": is_due_today,
-        })
-    cus_pending_list.sort(key=lambda x: not x["due_today"])
-        
+
     return render_template("admin_dashboard.html",
         # Status overview
         low_stock=low_stock,
@@ -2803,6 +2791,22 @@ def admin_orders():
     # onSnapshot in the frontend handles everything
     return render_template("admin_orders.html")
 
+@app.route("/admin/orders/counts")
+@admin_required
+def admin_order_counts():
+    try:
+        all_count = orders.count().get()[0][0].value
+        custom_count = orders.where("order_type", "==", "custom").count().get()[0][0].value
+        premade_count = orders.where("order_type", "==", "premade").count().get()[0][0].value
+        return jsonify({
+            "all": all_count,
+            "custom": custom_count,
+            "premade": premade_count
+        }), 200
+    except Exception:
+        app.logger.exception("Error in admin_order_counts")
+        return jsonify({"error": "Internal server error"}), 500
+
 @app.route("//order-map/<order_id>")
 @admin_required
 def order_map(order_id):
@@ -2889,8 +2893,7 @@ def admin_sales():
             return dt
         return None
 
-    for doc in orders.stream():
-        order = doc.to_dict()
+    for order in get_all_orders_cached():
         order_type = order.get("order_type", "")
         item = order.get("item", "N/A")
         payment_method = order.get("payment_method")
@@ -3022,8 +3025,7 @@ def admin_analytics():
             alltime_data[key]["expenses"] += cost
 
     # ── Fetch orders (single loop) ──
-    for order_doc in orders.stream():
-        order      = order_doc.to_dict()
+    for order in get_all_orders_cached():
         status     = order.get("status", "")
         amount     = float(order.get("amount", 0)) - float(order.get("delivery_fee", 0) or 0)
         order_type = order.get("order_type", "")
@@ -3237,10 +3239,8 @@ def admin_users():
 @admin_required
 def admin_reviews():
     all_reviews = []
-    for doc in reviews.order_by("created_at", direction="DESCENDING").stream():
-        r = doc.to_dict()
-        r["id"] = doc.id
- 
+    for r in get_all_reviews_admin():
+        r = dict(r)  # avoid mutating the cached list in place
         created_at = r.get("created_at")
         if isinstance(created_at, datetime):
             if created_at.tzinfo is None:
@@ -3248,9 +3248,7 @@ def admin_reviews():
             else:
                 created_at = created_at.astimezone(PH_TZ)
         r["created_at"] = created_at
- 
         all_reviews.append(r)
- 
     return render_template("admin_reviews.html", reviews=all_reviews)
 # ---------------- ADMIN LOGS PAGE----------------
 @app.route("/admin/logs")
@@ -3286,6 +3284,9 @@ def admin_consultations():
         if d.get('status') == 'converted':
             continue  # skip converted here, handled by cache
         d['conversation_id'] = doc.id
+        lu = d.get('last_updated')
+        if isinstance(lu, datetime):
+            d['last_updated'] = lu.astimezone(PH_TZ) if lu.tzinfo else lu.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
         consultations.append(d)
 
     # Converted — from cache
@@ -3324,7 +3325,7 @@ def mark_balance_collected(order_id):
             "remaining_balance": 0,
             "balance_collected_at": datetime.now(PH_TZ)
         })
-
+        invalidate_cache("completed_cancelled_orders")
         log_admin_action(
             action   = "Marked balance as collected",
             target   = f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
@@ -3446,6 +3447,9 @@ def update_order_status(order_id):
                 update_data["cancelled_by"]        = "admin"
                 update_data["cancelled_at"]        = datetime.now(PH_TZ)
             order_ref.update(update_data)
+            invalidate_cache("order_counts", "completed_cancelled_orders")
+            if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
+                invalidate_cache("all_cakes")
             # CREATE NOTIFICATION
             status_messages = {
                 "Accepted": "has been accepted",
@@ -3507,6 +3511,7 @@ def edit_order( order_id):
             "notes": notes,
             "delivery_date": delivery_datetime
         })
+        invalidate_cache("completed_cancelled_orders")
         log_admin_action(
             action="Edited order details",
             target=f"Order #{order_id} — {item}",
@@ -3867,6 +3872,7 @@ def toggle_review(review_id):
  
     current = review_doc.to_dict().get("is_visible", True)
     review_ref.update({"is_visible": not current})
+    invalidate_cache("all_reviews", "all_reviews_admin")
     review_data = review_doc.to_dict()
     log_admin_action(
         action="Hid review" if current else "Made review visible",
@@ -3995,7 +4001,7 @@ def paymongo_webhook():
         except Exception:
             app.logger.warning(f"order_count increment failed for user {order_data.get('user_id')}, non-critical")
 
-        invalidate_cache("order_counts")
+        invalidate_cache("order_counts", "all_cakes")
         try:
             send_new_order_fcm(
                 db_ref=db,
@@ -4104,7 +4110,7 @@ def payment_success():
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
     users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
-    invalidate_cache("order_counts")
+    invalidate_cache("order_counts", "all_cakes")
     try:
         send_new_order_fcm(
             db_ref=db,
@@ -4554,68 +4560,7 @@ def delete_conversation():
 @app.route('/admin/conversations')
 @admin_required
 def admin_conversations():
-    try:
-        all_convos = []
-        
-        for user_doc in users.stream():
-            user_data = user_doc.to_dict()
-            if not user_data:
-                continue
-            
-            # Get all conversations for this user
-            conversations_ref = users.document(user_doc.id).collection("conversations").stream()
-            
-            for convo_doc in conversations_ref:
-                try:
-                    # Get conversation data FIRST
-                    convo_data = convo_doc.to_dict()  # define conv_data here
-                    
-                    # Get messages
-                    msgs = list(
-                        users.document(user_doc.id)
-                        .collection("conversations")
-                        .document(convo_doc.id)
-                        .collection("messages")
-                        .order_by("timestamp")
-                        .stream()
-                    )
-                    
-                    if not msgs:
-                        continue
-                    
-                    last = msgs[-1].to_dict()
-                    last_msg = last.get("text", "")[:50] if last.get("text") else "No message"
-                    ts = last.get("timestamp")
-                    
-                    if isinstance(ts, datetime):
-                        if ts.tzinfo is None:
-                            ts = ts.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-                        else:
-                            ts = ts.astimezone(PH_TZ)
-                    
-                    all_convos.append({
-                        "user_id": user_doc.id,
-                        "convo_id": convo_doc.id,
-                        "customer_name": user_data.get("fname") or user_data.get("username", "Customer"),
-                        "email": user_data.get("email", "No email"),
-                        "last_message": last_msg,
-                        "last_time": ts.strftime("%b %d %I:%M %p") if ts else "No messages",
-                        "last_time_dt": ts or None, 
-                        "escalated": convo_data.get('escalated', False)  # Now convo_data exists
-                    })
-                    
-                except Exception:
-                    app.logger.exception(f"Error processing conversation {convo_doc.id}")
-                    continue
-        
-        all_convos.sort(key=lambda x: x["last_time_dt"] or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
-        
-        return render_template("admin_conversations.html", conversations=all_convos)
-        
-    except Exception:
-        app.logger.exception("Error in admin_conversations")
-        flash("Error loading conversations", "danger")
-        return render_template("admin_conversations.html", conversations=[])
+    return render_template("admin_conversations.html")
 # ================================================================
 # CUSTOMIZED CAKE CONSULTATION ROUTES
 # ================================================================
@@ -4651,6 +4596,8 @@ def consultation():
         for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
             if request.form.get(addon_key):
                 amount += float(prices['addons'].get(addon_key, 0))
+        others_price = float(request.form.get('others_price', 0) or 0)
+        amount += others_price
         if request.form.get('rush') == 'yes':
             amount += 300
     except Exception:
@@ -4689,12 +4636,9 @@ def consultation():
         'cupcake':        request.form.get('cupcake', ''),
         'ediblepaper':    request.form.get('ediblepaper', ''),
         'fondanttoppers': request.form.get('fondanttoppers', ''),
-        'sprinkles':      request.form.get('sprinkles', ''),
-        'drip':           request.form.get('drip', ''),
-        'flowers':        request.form.get('flowers', ''),
         'rush': request.form.get('rush', ''),
         'others_desc': request.form.get('others_desc', '')[:200],
-        'others_price': 0,
+        'others_price': others_price,
     }
 
     conv_ref = users.document(user_id).collection('conversations').document(conv_id)
@@ -4755,6 +4699,7 @@ def consultation_to_order():
         conv_id     = conv_id,
         cd          = cd,
         customer_name = data.get('customer_name', '') or '',
+        custom_prices = get_custom_prices(),
     )
     
 @app.route('/admin/consultation-confirm', methods=['POST'])
@@ -4783,7 +4728,7 @@ def consultation_confirm():
     amount += float(prices['size'].get(size_key, 0))
     amount += float(prices['layers'].get(layers_key, 0))
     amount += float(prices['toppers'].get(toppers_key, 0))
-    for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']:
+    for addon_key in ['filling','cupcake','ediblepaper','fondanttoppers']:
         if request.form.get(addon_key):
             amount += float(prices['addons'].get(addon_key, 0))
     others_price = float(request.form.get('others_price', 0) or 0)
@@ -4804,9 +4749,6 @@ def consultation_confirm():
         'cupcake':        request.form.get('cupcake', ''),
         'ediblepaper':    request.form.get('ediblepaper', ''),
         'fondanttoppers': request.form.get('fondanttoppers', ''),
-        'sprinkles':      request.form.get('sprinkles', ''),
-        'drip':           request.form.get('drip', ''),
-        'flowers':        request.form.get('flowers', ''),
         'others_desc':  request.form.get('others_desc', old_cd.get('others_desc', ''))[:200],
         'others_price': others_price,
         'amount':         round(amount, 2),
@@ -4818,9 +4760,9 @@ def consultation_confirm():
             f"{request.form.get('design','').split('|')[0].title()} icing, "
             f"Toppers: {toppers_key}" + (
                 ', Add-ons: ' + ', '.join([
-                    k for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']
+                    k for k in ['filling','cupcake','ediblepaper','fondanttoppers']
                     if request.form.get(k)
-                ]) if any(request.form.get(k) for k in ['filling','cupcake','ediblepaper','fondanttoppers','sprinkles','drip','flowers']) else ''
+                ]) if any(request.form.get(k) for k in ['filling','cupcake','ediblepaper','fondanttoppers']) else ''
                 ) + (
                     f', Others: {request.form.get("others_desc", "")}' if request.form.get('others_desc') else ''
             )
