@@ -2552,11 +2552,10 @@ def admin_page():
     delivery_earned = 0
     pre_items = {}
 
-    for order_doc in orders.where("status", "==", "Completed").stream():
+    for order_doc in orders.where("status", "==", "Completed") \
+                        .where("completed_at", ">=", today_start) \
+                        .where("completed_at", "<=", today_end).stream():
         order = order_doc.to_dict()
-        completed_at = fix_dt(order.get("completed_at")) or fix_dt(order.get("created_at"))
-        if not is_today(completed_at):
-            continue
 
         otype = order.get("order_type", "")
         delivery_fee = order.get("delivery_fee", 0) or 0
