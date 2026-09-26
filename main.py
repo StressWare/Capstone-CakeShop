@@ -885,7 +885,7 @@ def delete_account():
                     'lng': None
                 }
             })
-
+        invalidate_cache("all_orders")
         # Delete Firestore user document
         users.document(user_id).delete()
 
@@ -2062,7 +2062,7 @@ def finalize_order():
         doc_ref  = orders.add(order_data)
         order_id = doc_ref[1].id
         users.document(user_id).update({"order_count": firestore.Increment(1)})
-        invalidate_cache("order_counts", "all_cakes")  # cache reset
+        invalidate_cache("order_counts", "all_cakes", "all_orders")# cache reset
         try:
             send_new_order_fcm(
                 db_ref=db,
@@ -2213,7 +2213,7 @@ def cancel_order(order_id):
         "cancelled_by": "customer",
         "cancelled_at": datetime.now(PH_TZ),
     })
-    invalidate_cache("all_cakes", "order_counts", "completed_cancelled_orders")
+    invalidate_cache("all_cakes", "order_counts", "completed_cancelled_orders", "all_orders")
     flash("Order cancelled successfully.", "info")
     return redirect(url_for("customer_dashboard"))
 # ================================================================
@@ -2283,7 +2283,7 @@ def notify_delivery(token):
             "delivered_at": firestore.SERVER_TIMESTAMP,
             "notify_sent": True
         })
-
+        invalidate_cache("all_orders")
         # Send one message per token
         success_count = 0
         failed_uids = []
@@ -3337,7 +3337,7 @@ def mark_balance_collected(order_id):
             "remaining_balance": 0,
             "balance_collected_at": datetime.now(PH_TZ)
         })
-        invalidate_cache("completed_cancelled_orders")
+        invalidate_cache("completed_cancelled_orders", "all_orders")
         log_admin_action(
             action   = "Marked balance as collected",
             target   = f"Order #{order_id} — {order_data.get('customer', {}).get('name', 'Customer')}",
@@ -3514,7 +3514,7 @@ def update_order_status(order_id):
                 update_data["cancelled_by"]        = "admin"
                 update_data["cancelled_at"]        = datetime.now(PH_TZ)
             order_ref.update(update_data)
-            invalidate_cache("order_counts", "completed_cancelled_orders")
+            invalidate_cache("order_counts", "completed_cancelled_orders", "all_orders")
             if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
                 invalidate_cache("all_cakes")
             # CREATE NOTIFICATION
@@ -3578,7 +3578,7 @@ def edit_order( order_id):
             "notes": notes,
             "delivery_date": delivery_datetime
         })
-        invalidate_cache("completed_cancelled_orders")
+        invalidate_cache("completed_cancelled_orders", "all_orders")
         log_admin_action(
             action="Edited order details",
             target=f"Order #{order_id} — {item}",
@@ -4063,6 +4063,7 @@ def paymongo_webhook():
         # Save to orders collection
         doc_ref  = orders.add(order_data)        
         order_id = doc_ref[1].id
+        invalidate_cache("all_orders")
         try:
             users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
         except Exception:
@@ -4177,7 +4178,7 @@ def payment_success():
     doc_ref = orders.add(order_data)
     order_id = doc_ref[1].id
     users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
-    invalidate_cache("order_counts", "all_cakes")
+    invalidate_cache("order_counts", "all_cakes", "all_orders")
     try:
         send_new_order_fcm(
             db_ref=db,
