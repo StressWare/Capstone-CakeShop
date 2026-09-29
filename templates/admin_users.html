@@ -96,6 +96,19 @@
       margin-bottom: 0 !important;
     }
 
+        /* Pagination: wrap + center + tighter buttons so Previous/Next never clip */
+    #usersPagination {
+      flex-wrap: wrap;
+      justify-content: center !important;
+      gap: 4px;
+    }
+    #usersPagination .page-item .page-link {
+      margin-left: 0;
+      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
+      border-radius: 8px;
+    }
+
     /* Footer cleanup */
     footer, .footer, #footer, .bottom-nav, [class*="footer"] {
       margin-top: 0 !important;

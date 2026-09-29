@@ -118,6 +118,10 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
     .notification-bell-wrapper { width: 36px; height: 36px; }
 }
 
+.cart-link {
+    text-decoration: none;
+}
+
 /* ══════════════════════════════════════════════════════
    NOTIFICATION BADGE — Responsive (positioned down)
    ══════════════════════════════════════════════════════ */
