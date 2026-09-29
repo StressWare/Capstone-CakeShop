@@ -73,6 +73,17 @@ def inject_firebase_config():
             "vapidKey": os.getenv("FIREBASE_VAPID_KEY"),
         }
     }
+@app.context_processor
+def inject_cart_count():
+    user_id = session.get("user_id")
+    if not user_id:
+        return {"cart_count": 0}
+    try:
+        cart_ref = users.document(user_id).collection("cart")
+        return {"cart_count": len(list(cart_ref.stream()))}
+    except Exception:
+        return {"cart_count": 0}
+    
 # WebAuthn config
 RP_NAME   = "Mrs. Brave's Cakes"                 
 RP_ID     = os.environ["RP_ID"]
