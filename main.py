@@ -1242,7 +1242,7 @@ def voucher_redeem_confirm(token):
     success, reason = _redeem(transaction, voucher_ref)
 
     if success:
-        flash("Voucher marked as used ✅", "success")
+        flash("Voucher marked as used.", "success")
     elif reason == "already_used":
         flash("This voucher was already redeemed.", "warning")
     else:
@@ -1372,7 +1372,7 @@ def add_review():
     # Mark order as reviewed in top-level orders collection
     order_ref.update({"reviewed": True})  # ← Now updates top-level orders
     
-    flash("Review submitted! Thank you 🎂", "success")
+    flash("Review submitted! Thank you ", "success")
     return redirect(url_for("customer_dashboard"))
 # ---------------- RECEIPT PAGE ----------------
 @app.route("/order/receipt/<order_id>")
@@ -1497,7 +1497,7 @@ def place_order():
     return render_template('checkout.html',
         order_type     = 'custom',
         order_item     = request.form.get('order_item'),
-        amount         = amount,          # ← server computed
+        amount         = amount,          # server computed
         notes          = request.form.get('notes', ''),
         rush           = request.form.get('rush', ''),
         inspo_image    = inspo_image,
@@ -1565,8 +1565,8 @@ def order_cake():
 
             cake_data  = cake_doc.to_dict()
             real_price = float(cake_data.get('price', 0))
-            max_qty    = int(cake_data.get('quantity', 0))  # ← stock
-            quantity   = min(quantity, max_qty)             # ← cap
+            max_qty    = int(cake_data.get('quantity', 0))  # stock
+            quantity   = min(quantity, max_qty)             # cap
 
             if quantity < 1:
                 flash(f"{cake_data.get('name', 'A cake')} is out of stock.", "danger")
@@ -1578,7 +1578,7 @@ def order_cake():
             i['cake_name'] = cake_data.get('name', i.get('cake_name', ''))
             i['image_url'] = cake_data.get('image', i.get('image_url', None))
             i['category']  = cake_data.get('category', '')
-            i['max_qty']   = max_qty                        # ← for frontend cap
+            i['max_qty']   = max_qty                        #  for frontend cap
 
         amount = sum(i['subtotal'] for i in selected_items)
 
@@ -1734,7 +1734,7 @@ def finalize_order():
             flash("Orders are unavailable today.", "danger")
             return redirect(url_for("customer_dashboard"))
 
-    # Shop hours check — premade only; custom orders are 3-day advance and unaffected
+    # Shop hours check — premade only custom orders are 3-day advance and unaffected
     if order_type == "premade":
         shop_open, shop_closed_reason = is_shop_open_now()
         if not shop_open:
@@ -1951,7 +1951,7 @@ def finalize_order():
     if delivery_type == "Delivery":
         amount = round(amount + DELIVERY_FEE, 2)
 
-    # ── Base order data ──
+    # Base order data
     order_data = {
         "user_id":        user_id,
         "delivery_date":  delivery_datetime,
@@ -1989,7 +1989,7 @@ def finalize_order():
         },
         "created_at": now
     }
-    # ── Compute final downpayment/balance amounts for custom orders ──
+    # Compute final downpayment/balance amounts for custom orders
     if order_type == "custom" and downpayment_type:
         if downpayment_type == "50":
             dp_amt  = round(amount * 0.50, 2)
@@ -2124,7 +2124,7 @@ def finalize_order():
     success_url = f"{base_url}/payment/success"
     cancel_url  = f"{base_url}/payment/failed"
     checkout = create_checkout_session(
-        amount            = int(charge_amount * 100),  # ← downpayment or full
+        amount            = int(charge_amount * 100),  # downpayment or full
         order_description = f"Ms. Brave Cake Shop - {item_names[:100]}",
         line_items        = line_items,
         success_url       = success_url,
@@ -2258,7 +2258,7 @@ def notify_delivery(token):
         if order.get("status") == "Completed":
             return {"error": "Order already completed"}, 400
 
-        # ✅ NEW: prevent duplicate notify
+        # prevent duplicate notify
         if order.get("notify_sent"):
             return {"error": "Already notified"}, 400
 
@@ -2293,7 +2293,7 @@ def notify_delivery(token):
                 msg = messaging.Message(
                     token=tok,
                     notification=messaging.Notification(
-                        title="🛵 Order Delivered!",
+                        title="Order Delivered!",
                         body=f"{customer_name}'s order has been delivered. Tap to mark as completed."
                     ),
                     data={"order_id": order_id, "type": "delivery_complete"},
@@ -2369,7 +2369,7 @@ def cakes_page():
             "created_at":    created_at
         })
 
-    # Sort reviews by created_at descending (was done by Firestore before)
+    # Sort reviews by created_at descending
     for cid in cake_reviews:
         cake_reviews[cid].sort(key=lambda x: x["created_at"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
@@ -2522,7 +2522,7 @@ def admin_page():
         })
     today_deliveries.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
 
-    # ---- Helpers ----
+    # Helpers
     def fix_dt(dt):
         if isinstance(dt, str):
             try:
@@ -2546,7 +2546,7 @@ def admin_page():
     def classify_payment_walkin(method):
         return "cash" if method and method.lower() == "cash" else "ewallet"
 
-    # ---- Daily Report: Online Premade & Custom — bounded by total COMPLETED orders, single-field filter, no index ----
+    #Daily Report: Online Premade & Custom — bounded by total COMPLETED orders, single-field filter, no index 
     pre_sales = pre_txn = pre_cash = pre_ewallet = 0
     cus_sales = cus_txn = cus_cash = cus_ewallet = 0
     delivery_earned = 0
@@ -2578,7 +2578,7 @@ def admin_page():
 
     pre_top = max(pre_items, key=pre_items.get) if pre_items else "—"
 
-    # ---- Pending Sales + Customer Pending Balances: ONE query over custom orders, two computations ----
+    # Pending Sales + Customer Pending Balances: ONE query over custom orders, two computations
     pending_sales_total = 0
     pending_sales_count = 0
     cus_pending_total = 0
@@ -2614,7 +2614,7 @@ def admin_page():
 
     cus_pending_list.sort(key=lambda x: not x["due_today"])
 
-    # ---- Daily Report: POS / Walk-in ----
+    # Daily Report: POS / Walk-in
     pos_sales = pos_txn = pos_cash = pos_ewallet = 0
     pos_items = {}
 
@@ -2691,13 +2691,11 @@ def calendar_orders():
     """
     Returns orders whose delivery_date matches the requested date or month.
     Excludes Cancelled and Completed orders.
-    Query param: ?date=YYYY-MM-DD  → returns order list for that day
-    Query param: ?month=YYYY-MM    → returns badge counts + dot info per day
     """
     date_str  = request.args.get("date")
     month_str = request.args.get("month")
  
-    # ── Per-day detail ──────────────────────────────────────────────
+    # Per-day detail
     if date_str:
         try:
             target = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -2741,7 +2739,7 @@ def calendar_orders():
         result.sort(key=lambda x: datetime.strptime(x["time"], "%I:%M %p"))
         return jsonify({"orders": result})
  
-    # ── Month overview ───────────────────────────────────────────────
+    # Month overview
     elif month_str:
         try:
             month_start = datetime.strptime(month_str + "-01", "%Y-%m-%d").date()
@@ -4164,7 +4162,7 @@ def payment_success():
 
     order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
     order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
-    # ── Set correct payment status based on downpayment type ──
+    # Set correct payment status based on downpayment type
     dp_type = order_data.get("downpayment_type")
     if dp_type and dp_type != "full":
         order_data["payment_status"] = "Downpayment Paid"
@@ -4263,27 +4261,91 @@ def payment_failed():
 # ================================================================
 # CHATBOT ROUTES
 # ================================================================
+# ---------------- CHAT INPUT VALIDATION ----------------
+CONV_ID_RE = re.compile(r'^conv_[A-Za-z0-9_]{1,64}$')
+ORDER_ID_RE = re.compile(r'^[A-Za-z0-9]{1,64}$')
+MAX_CHAT_MESSAGE_LEN = 1000
+SAFE_CHAT_IMAGE_PREFIXES = (
+    'https://res.cloudinary.com/',
+    'https://firebasestorage.googleapis.com/',
+)
+
+def sanitize_order_context(ctx):
+    """Return a whitelisted, size-limited copy of a client-supplied order_context, or None."""
+    if not isinstance(ctx, dict) or not ctx:
+        return None
+
+    def _text(key, limit):
+        v = ctx.get(key)
+        return v.strip()[:limit] if isinstance(v, str) else ''
+
+    try:
+        amount = round(float(ctx.get('amount') or 0), 2)
+    except (TypeError, ValueError):
+        amount = 0.0
+    if not (0 <= amount < 10_000_000):  # also rejects NaN / inf
+        amount = 0.0
+
+    order_id = ctx.get('order_id')
+    image = ctx.get('item_image')
+    order_type = ctx.get('order_type')
+
+    return {
+        'order_id':     order_id if isinstance(order_id, str) and ORDER_ID_RE.match(order_id) else '',
+        'item_label':   _text('item_label', 120),
+        'item_details': _text('item_details', 300),
+        'item_image':   image if isinstance(image, str) and len(image) <= 500
+                              and image.startswith(SAFE_CHAT_IMAGE_PREFIXES) else None,
+        'order_type':   order_type if order_type in ('custom', 'premade') else 'premade',
+        'amount':       amount,
+        'status':       _text('status', 40),
+    }
+
 # ---------------- CUSTOMER SEND MESSAGE ----------------
 @app.route('/send-message', methods=['POST'])
 @limiter.limit("20 per minute")
 def send_message():
     try:
-        data = request.get_json()
-        user_id = data.get('user_id')
-        message = data.get('message', '').strip()
-        conversation_id = data.get('conversation_id')
-        is_escalation = data.get('is_escalation', False)
-        order_context = data.get('order_context')  # ← NEW
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': 'Invalid request'}), 400
 
+        raw_message = data.get('message', '')
+        if not isinstance(raw_message, str):
+            return jsonify({'success': False, 'error': 'Invalid request'}), 400
+        message = raw_message.strip()
         if not message:
             return jsonify({'success': False, 'error': 'Missing data'}), 400
+        if len(message) > MAX_CHAT_MESSAGE_LEN:
+            return jsonify({'success': False, 'error': 'Message too long'}), 400
 
-        # Guest user — just return bot reply, skip Firestore
-        if not user_id or user_id == 'guest':
+        conversation_id = data.get('conversation_id')
+        is_escalation = data.get('is_escalation', False) is True
+        order_context = sanitize_order_context(data.get('order_context'))
+
+        #Identity comes from the server-side session, never from the request body
+        client_user_id = data.get('user_id')          # untrusted
+        session_user_id = session.get('user_id')
+
+        #Guest: explicit guest, or no session and no account claimed- bot reply only
+        if client_user_id == 'guest' or (not client_user_id and not session_user_id):
             bot_response = get_faq_response(message)
             return jsonify({'success': True, 'reply': bot_response})
 
-        if not conversation_id:
+        #Client claims an account but there is no valid session
+        if not session_user_id:
+            return jsonify({'success': False, 'error': 'Please log in again.'}), 401
+
+        #Client claims a different account than the one in the session
+        if client_user_id and client_user_id != session_user_id:
+            app.logger.warning(
+                f"send_message user_id mismatch: session={session_user_id} body={client_user_id}"
+            )
+            return jsonify({'success': False, 'error': 'Session mismatch. Please refresh the page.'}), 403
+
+        user_id = session_user_id
+
+        if not isinstance(conversation_id, str) or not CONV_ID_RE.match(conversation_id):
             return jsonify({'success': False, 'error': 'Missing data'}), 400
 
         now = datetime.now(PH_TZ)
@@ -4309,7 +4371,7 @@ def send_message():
             })
             is_escalated = True
 
-        # ← NEW: auto-escalate if customer sends with order_context
+        # auto-escalate if customer sends with order_context
         if order_context and not is_escalated:
             conv_ref.update({
                 'escalated': True,
@@ -4323,12 +4385,20 @@ def send_message():
 
         # Only save to Firestore if escalated
         if is_escalated:
+            # Never overwrite another customer admin-inbox entry
+            inbox_doc = conversations.document(conversation_id).get()
+            if inbox_doc.exists and (inbox_doc.to_dict() or {}).get('user_id') != user_id:
+                app.logger.warning(
+                    f"send_message inbox ownership conflict: conv={conversation_id} user={user_id}"
+                )
+                return jsonify({'success': False, 'error': 'Conversation not found'}), 403
+
             messages_ref.add({
                 "text": message,
                 "sender": "customer",
                 "timestamp": now,
                 "created_at": now,
-                "order_context": order_context  # ← NEW
+                "order_context": order_context
             })
 
             conv_ref.update({'last_updated': now})
@@ -4347,7 +4417,7 @@ def send_message():
 
             if is_escalation:
                 messages_ref.add({
-                    "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
+                    "text": "You're now connected with the shop owner. They'll respond shortly.",
                     "sender": "bot",
                     "timestamp": now + timedelta(seconds=1),
                     "created_at": now + timedelta(seconds=1)
@@ -4355,7 +4425,7 @@ def send_message():
 
             return jsonify({'success': True, 'escalated': is_escalated})
 
-        # Not escalated — just return bot reply directly, nothing saved
+        # Not escalated return bot reply directly, nothing saved
         if is_escalation:
             conv_ref.update({
                 'escalated': True,
@@ -4367,10 +4437,10 @@ def send_message():
                 "sender": "customer",
                 "timestamp": now,
                 "created_at": now,
-                "order_context": order_context  # ← NEW
+                "order_context": order_context
             })
             messages_ref.add({
-                "text": "✅ You're now connected with the shop owner. They'll respond shortly.",
+                "text": "You're now connected with the shop owner. They'll respond shortly.",
                 "sender": "bot",
                 "timestamp": now + timedelta(seconds=1),
                 "created_at": now + timedelta(seconds=1)
@@ -4383,7 +4453,6 @@ def send_message():
     except Exception:
         app.logger.exception("Error in send_message")
         return jsonify({'success': False, 'error': 'Internal server error'}), 500
-    
 # ---------------- ADMIN START CONVERSATION VIA ORDER ----------------
 @app.route('/admin/initiate-conversation', methods=['POST'])
 @admin_required
@@ -4457,7 +4526,7 @@ def admin_initiate_conversation():
         # Write notification for customer (triggers notification.js onSnapshot)
         notifications.add({
             'user_id': user_id,
-            'title': '💬 Message from Mrs. Brave\'s',
+            'title': 'Message from Mrs. Brave\'s',
             'message': message[:80],
             'is_read': False,
             'created_at': now,
@@ -4723,7 +4792,7 @@ def consultation():
 
     # Bot message
     conv_ref.collection('messages').add({
-        'text':       f'📋 Consultation request sent! Design: {order_item}. Estimated price: ₱{amount:,.2f}. The owner will reply shortly.',
+        'text':       f'Consultation request sent! Design: {order_item}. Estimated price: ₱{amount:,.2f}. The owner will reply shortly.',
         'sender':     'bot',
         'timestamp':  now,
         'created_at': now,
@@ -4875,14 +4944,14 @@ def consultation_confirm():
 
     # Send chat message to customer
     conv_ref.collection('messages').add({
-        'text':       f"✅ Your consultation has been approved! Please complete your order here: {complete_link}",
+        'text':       f"Your consultation has been approved! Please complete your order here: {complete_link}",
         'sender':     'admin',
         'timestamp':  now,
         'created_at': now,
     })
     conv_ref.update({'last_updated': now})
     conversations.document(conv_id).update({
-        'last_message': '✅ Consultation approved — order link sent',
+        'last_message': 'Consultation approved - order link sent',
         'last_updated': now,
         'unread':       True,
     })
