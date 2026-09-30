@@ -1193,6 +1193,11 @@
     }
 
     // ===== APPEND MESSAGE =====
+    function escapeHtml(value) {
+        return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }  
+
     function appendMessage(sender, text, time, orderContext) {
         if (!dom.chatMessages) return;
         
@@ -1203,8 +1208,8 @@
 
         let orderHtml = '';
         if (orderContext) {
-            const itemLabel = orderContext.item_label || 'Order';
-            const itemDetails = orderContext.item_details || '';
+            const itemLabel = escapeHtml(orderContext.item_label || 'Order');
+            const itemDetails = escapeHtml(orderContext.item_details || '');
             const amount = parseFloat(orderContext.amount || 0).toFixed(2);
             
             orderHtml = `
