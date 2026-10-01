@@ -574,229 +574,335 @@
 {% endblock %}
 
 {% block content %}
-<!-- NEW ORDER NOTIFICATION BANNER -->
-<div id="newOrderBanner">
-    <div class="banner-inner">
-        <div class="banner-left">
-            <div class="banner-pulse"></div>
-            <div class="banner-text">
-                <span id="bannerTitle">🎂 New Order!</span>
-                <span id="bannerRushBadge" class="banner-rush" style="display:none;">RUSH</span>
-                <span id="bannerCount" class="banner-count" style="display:none;">1</span>
-                <br>
-                <small id="bannerSubtitle">A new order has arrived</small>
-            </div>
-        </div>
-        <div class="banner-actions">
-            <button class="banner-btn-view" id="btnBannerView">View Orders</button>
-            <button class="banner-btn-dismiss" id="btnBannerDismiss">✕ Dismiss</button>
-        </div>
-    </div>
-</div>
-<div class="container-fluid mt-4 mb-0 px-4">
-  <div class="card shadow-sm">
-    <div class="card-header card-header-custom">
-      <h4 class="mb-0">Order Management</h4>
-    </div>
-    <div class="card-body">
-
-      <!-- TABS -->
-      <div class="order-tabs">
-        <button class="order-tab-btn active" id="tab-all">
-          All <span class="tab-count" id="count-all">0</span>
-        </button>
-        <button class="order-tab-btn" id="tab-custom">
-          Online - Customized <span class="tab-count" id="count-custom">0</span>
-        </button>
-        <button class="order-tab-btn" id="tab-premade">
-          Online - Premade <span class="tab-count" id="count-premade">0</span>
-        </button>
-      </div>
-
-      <!-- FILTERS -->
-      <div class="row mb-3">
-        <div class="col-md-6 mb-2">
-          <div class="input-group">
-            <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
-            <input type="text" class="form-control" placeholder="Search orders, customers, contact..." id="searchOrders">
+  <!-- NEW ORDER NOTIFICATION BANNER -->
+  <div id="newOrderBanner">
+      <div class="banner-inner">
+          <div class="banner-left">
+              <div class="banner-pulse"></div>
+              <div class="banner-text">
+                  <span id="bannerTitle">🎂 New Order!</span>
+                  <span id="bannerRushBadge" class="banner-rush" style="display:none;">RUSH</span>
+                  <span id="bannerCount" class="banner-count" style="display:none;">1</span>
+                  <br>
+                  <small id="bannerSubtitle">A new order has arrived</small>
+              </div>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="row g-2">
-            <div class="col-md-6">
-              <select class="form-select" id="statusFilter">
-                <option value="">All Status</option>
-                <option value="New">New</option>
-                <option value="Accepted">Accepted</option>
-                <option value="Pending">Pending</option>
-                <option value="Downpayment Paid">Downpayment Paid</option>
-                <option value="Fully Paid">Fully Paid</option>
-                <option value="Ready">Ready</option>
-                <option value="Out for Delivery">Out for Delivery</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <select class="form-select" id="rushFilter">
-                <option value="">All Orders</option>
-                <option value="yes">Rush</option>
-                <option value="no">Non-Rush</option>
-              </select>
-            </div>
+          <div class="banner-actions">
+              <button class="banner-btn-view" id="btnBannerView">View Orders</button>
+              <button class="banner-btn-dismiss" id="btnBannerDismiss">✕ Dismiss</button>
           </div>
-        </div>
       </div>
-
-      <!-- TABLE -->
-      <div class="table-responsive">
-        <table class="table table-hover align-middle" id="ordersTable">
-          <thead class="table-dark">
-            <tr>
-              <th>Date Ordered</th>
-              <th>Type</th>
-              <th>Customer</th>
-              <th>Order Item</th>
-              <th>Delivery Date</th>
-              <th>Status</th>
-              <th>Payment</th>
-              <th>Details</th>
-              <th>Update Status</th>
-            </tr>
-          </thead>
-          <tbody id="ordersTableBody">
-            <tr>
-              <td colspan="9" class="table-loading">
-                <div class="spinner-border text-pink" style="color: var(--pink-primary);"></div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div id="emptyTabMsg" style="display:none;" class="text-center text-muted py-5">
-        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-        <span id="emptyTabText">No orders found</span>
-      </div>
-
-      <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="ordersPagination"></ul></nav>
-    </div>
   </div>
-</div>
-
-<!-- SINGLE DETAILS MODAL -->
-<div class="modal fade" id="orderDetailsModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header bg-primary text-white" id="detailsModalHeader">
-        <h5 class="modal-title" id="detailsModalTitle">Order Details</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body" id="detailsModalBody">
-        <!-- JS fills this -->
-      </div>
-      <div class="modal-footer" id="detailsModalFooter">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-          <i class="fas fa-times me-2"></i>Close
+  <div class="container-fluid mt-4 mb-0 px-4">
+    <div class="card shadow-sm">
+      <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Order Management</h4>
+        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
+          <i class="fas fa-plus me-1"></i>Add Manual Order
         </button>
+      </div>
+      <div class="card-body">
+
+        <!-- TABS -->
+        <div class="order-tabs">
+          <button class="order-tab-btn active" id="tab-all">
+            All <span class="tab-count" id="count-all">0</span>
+          </button>
+          <button class="order-tab-btn" id="tab-custom">
+            Online - Customized <span class="tab-count" id="count-custom">0</span>
+          </button>
+          <button class="order-tab-btn" id="tab-premade">
+            Online - Premade <span class="tab-count" id="count-premade">0</span>
+          </button>
+          <button class="order-tab-btn" id="tab-manual">
+            Manually Added <span class="tab-count" id="count-manual">0</span>
+          </button>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="row mb-3">
+          <div class="col-md-6 mb-2">
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="fas fa-search"></i></span>
+              <input type="text" class="form-control" placeholder="Search orders, customers, contact..." id="searchOrders">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <select class="form-select" id="statusFilter">
+                  <option value="">All Status</option>
+                  <option value="New">New</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Downpayment Paid">Downpayment Paid</option>
+                  <option value="Fully Paid">Fully Paid</option>
+                  <option value="Ready">Ready</option>
+                  <option value="Out for Delivery">Out for Delivery</option>
+                  <option value="Delivered">Delivered</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <select class="form-select" id="rushFilter">
+                  <option value="">All Orders</option>
+                  <option value="yes">Rush</option>
+                  <option value="no">Non-Rush</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="table-responsive">
+          <table class="table table-hover align-middle" id="ordersTable">
+            <thead class="table-dark">
+              <tr>
+                <th>Date Ordered</th>
+                <th>Type</th>
+                <th>Customer</th>
+                <th>Order Item</th>
+                <th>Delivery Date</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Details</th>
+                <th>Update Status</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr>
+                <td colspan="9" class="table-loading">
+                  <div class="spinner-border text-pink" style="color: var(--pink-primary);"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div id="emptyTabMsg" style="display:none;" class="text-center text-muted py-5">
+          <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+          <span id="emptyTabText">No orders found</span>
+        </div>
+
+        <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="ordersPagination"></ul></nav>
       </div>
     </div>
   </div>
-</div>
 
-<!-- SINGLE EDIT MODAL -->
-<div class="modal fade" id="editOrderModal" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <form method="POST" id="editOrderForm">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Order</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  <!-- SINGLE DETAILS MODAL -->
+  <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white" id="detailsModalHeader">
+          <h5 class="modal-title" id="detailsModalTitle">Order Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="detailsModalBody">
+          <!-- JS fills this -->
+        </div>
+        <div class="modal-footer" id="detailsModalFooter">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SINGLE EDIT MODAL -->
+  <div class="modal fade" id="editOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <form method="POST" id="editOrderForm">
+          <div class="modal-header">
+            <h5 class="modal-title">Edit Order</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <label>Cake Type</label>
+            <select id="editCakeType" name="cake_type" class="form-select edit-cake-type">
+              <option value="800">Chocolate (₱800)</option>
+              <option value="850">Vanilla (₱850)</option>
+              <option value="900">Red Velvet (₱900)</option>
+            </select>
+            <label class="mt-3">Design</label>
+            <select id="editDesign" name="design" class="form-select edit-design">
+              <option value="0">Simple (₱0)</option>
+              <option value="300">Themed (₱300)</option>
+              <option value="500">Luxury (₱500)</option>
+            </select>
+            <label class="mt-3">Cake Size</label>
+            <select id="editSize" name="cake_size" class="form-select edit-size">
+              <option value="0">6 inches (₱0)</option>
+              <option value="200">8 inches (+₱200)</option>
+              <option value="400">10 inches (+₱400)</option>
+              <option value="600">12 inches (+₱600)</option>
+            </select>
+            <label class="mt-3">Layers</label>
+            <select id="editLayers" name="layers" class="form-select edit-layers">
+              <option value="0">Single Layer (₱0)</option>
+              <option value="300">Double Layer (+₱300)</option>
+              <option value="600">Triple Layer (+₱600)</option>
+            </select>
+            <label class="mt-3">Toppings</label>
+            <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles"><label class="form-check-label" for="editSprinkles">Sprinkles (₱100)</label></div>
+            <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits"><label class="form-check-label" for="editFruits">Fruits (₱150)</label></div>
+            <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip"><label class="form-check-label" for="editChocoDrip">Chocolate Drip (₱200)</label></div>
+            <label for="editNotes" class="mt-3">Special Instructions</label>
+            <textarea name="notes" id="editNotes" class="form-control" rows="2"></textarea>
+            <label for="editDeliveryDate" class="mt-3">Delivery Date</label>
+            <input type="date" name="delivery_date" id="editDeliveryDate" class="form-control" required>
+            <label for="editDeliveryTime" class="mt-3">Delivery Time</label>
+            <input type="time" name="delivery_time" id="editDeliveryTime" class="form-control" required>
+            <div class="price-box mt-3">New Total: ₱<span id="editTotalPrice">0</span></div>
+            <input type="hidden" name="order_item" id="editOrderItem">
+            <input type="hidden" name="amount" id="editAmount">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-save me-2"></i>Save
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL ORDER MODAL (Messenger / off-site, custom) -->
+  <div class="modal fade" id="manualOrderModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <form id="manualOrderForm" autocomplete="off">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="idempotency_key" id="moKey">
+          <input type="hidden" name="order_id" id="moOrderId">
+          <div class="modal-header">
+             <h5 class="modal-title" style="color:#212529;"><i class="fas fa-comment-dots me-2"></i><span id="moTitleText">Add Manual Order</span></h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" style="max-height: calc(100vh - 210px); overflow-y: auto;">
+            <div class="row g-3">
+              <div class="col-md-6"><label class="form-label">Customer name *</label>
+                <input type="text" name="customer_name" class="form-control" maxlength="100" required></div>
+              <div class="col-md-6"><label class="form-label">Contact # *</label>
+                <input type="text" name="contact" class="form-control" placeholder="09XXXXXXXXX" required></div>
+
+              <div class="col-md-6"><label class="form-label">Order date (when they ordered) *</label>
+                <input type="datetime-local" name="order_date" id="moOrderDate" class="form-control" required></div>
+              <div class="col-md-3"><label class="form-label">Pickup/Delivery date *</label>
+                <input type="date" name="delivery_date" class="form-control" required></div>
+              <div class="col-md-3"><label class="form-label">Time *</label>
+                <input type="time" name="delivery_time" class="form-control" required></div>
+
+              <div class="col-12"><label class="form-label d-block">Fulfillment *</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="delivery_type" id="moPickup" value="Pickup" checked>
+                  <label class="form-check-label" for="moPickup">Pickup</label></div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="delivery_type" id="moDelivery" value="Delivery">
+                  <label class="form-check-label" for="moDelivery">Delivery</label></div>
+              </div>
+              <div class="col-12 d-none" id="moDeliveryFields">
+                <div class="row g-3">
+                  <div class="col-md-8"><label class="form-label">Delivery address *</label>
+                    <input type="text" name="address" id="moAddress" class="form-control" maxlength="300"></div>
+                  <div class="col-md-4"><label class="form-label">Delivery fee (₱)</label>
+                    <input type="number" name="delivery_fee" class="form-control" min="0" step="0.01" value="0"></div>
+                </div>
+              </div>
+
+              <div class="col-12"><label class="form-label">Cake description *</label>
+                <input type="text" name="item" class="form-control" maxlength="300"
+                      placeholder="e.g. 2-tier christening cake, strawberry" required></div>
+              <div class="col-md-4"><label class="form-label">Occasion</label>
+                <input type="text" name="occasion" class="form-control" maxlength="100"></div>
+              <div class="col-md-5"><label class="form-label">Celebrant / dedication</label>
+                <input type="text" name="celebrant" class="form-control" maxlength="100"></div>
+              <div class="col-md-3"><label class="form-label">Age</label>
+                <input type="number" name="age" class="form-control" min="0" max="150"></div>
+              <div class="col-12"><label class="form-label">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" maxlength="500"></textarea></div>
+              <div class="col-12"><label class="form-label">Reference photo (max 2MB)</label>
+                <input type="file" name="image" class="form-control" accept="image/*"></div>
+
+              <div class="col-md-4"><label class="form-label">Cake price (₱) *</label>
+                <input type="number" name="cake_total" class="form-control" min="1" step="0.01" required></div>
+              <div class="col-md-4"><label class="form-label">Payment method *</label>
+                <select name="payment_method" class="form-select">
+                  <option>Cash</option><option>GCash</option><option>Bank Transfer</option><option>Other</option>
+                </select></div>
+              <div class="col-md-4"><label class="form-label">Order status *</label>
+                <select name="status" class="form-select">
+                  <option>New</option><option>Accepted</option><option>Pending</option>
+                  <option>Ready</option><option>Out for Delivery</option>
+                  <option selected>Completed</option>
+                </select></div>
+
+              <div class="col-12"><label class="form-label d-block">Payment *</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="payment_type" id="moPayFull" value="full" checked>
+                  <label class="form-check-label" for="moPayFull">Fully paid</label></div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="payment_type" id="moPay50" value="50">
+                  <label class="form-check-label" for="moPay50">50% downpayment</label></div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="payment_type" id="moPay75" value="75">
+                  <label class="form-check-label" for="moPay75">75% downpayment</label></div>
+              </div>
+              <div class="col-12">
+                <div class="p-2 rounded" style="background:#fde8f1;">
+                  Total: <strong id="moTotal">₱0.00</strong> ·
+                  Paid: <strong id="moPaid">₱0.00</strong> ·
+                  Balance: <strong id="moBalance">₱0.00</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Save Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGE CUSTOMER MODAL -->
+  <div class="modal fade" id="messageCustomerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header" style="background: var(--pink-gradient);">
+          <h5 class="modal-title text-white">
+            <i class="fas fa-comment-dots me-2"></i>
+            Message <span id="msgCustomerName"></span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <label>Cake Type</label>
-          <select id="editCakeType" name="cake_type" class="form-select edit-cake-type">
-            <option value="800">Chocolate (₱800)</option>
-            <option value="850">Vanilla (₱850)</option>
-            <option value="900">Red Velvet (₱900)</option>
-          </select>
-          <label class="mt-3">Design</label>
-          <select id="editDesign" name="design" class="form-select edit-design">
-            <option value="0">Simple (₱0)</option>
-            <option value="300">Themed (₱300)</option>
-            <option value="500">Luxury (₱500)</option>
-          </select>
-          <label class="mt-3">Cake Size</label>
-          <select id="editSize" name="cake_size" class="form-select edit-size">
-            <option value="0">6 inches (₱0)</option>
-            <option value="200">8 inches (+₱200)</option>
-            <option value="400">10 inches (+₱400)</option>
-            <option value="600">12 inches (+₱600)</option>
-          </select>
-          <label class="mt-3">Layers</label>
-          <select id="editLayers" name="layers" class="form-select edit-layers">
-            <option value="0">Single Layer (₱0)</option>
-            <option value="300">Double Layer (+₱300)</option>
-            <option value="600">Triple Layer (+₱600)</option>
-          </select>
-          <label class="mt-3">Toppings</label>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="100" id="editSprinkles"><label class="form-check-label" for="editSprinkles">Sprinkles (₱100)</label></div>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="150" id="editFruits"><label class="form-check-label" for="editFruits">Fruits (₱150)</label></div>
-          <div class="form-check"><input type="checkbox" class="form-check-input edit-topping" value="200" id="editChocoDrip"><label class="form-check-label" for="editChocoDrip">Chocolate Drip (₱200)</label></div>
-          <label for="editNotes" class="mt-3">Special Instructions</label>
-          <textarea name="notes" id="editNotes" class="form-control" rows="2"></textarea>
-          <label for="editDeliveryDate" class="mt-3">Delivery Date</label>
-          <input type="date" name="delivery_date" id="editDeliveryDate" class="form-control" required>
-          <label for="editDeliveryTime" class="mt-3">Delivery Time</label>
-          <input type="time" name="delivery_time" id="editDeliveryTime" class="form-control" required>
-          <div class="price-box mt-3">New Total: ₱<span id="editTotalPrice">0</span></div>
-          <input type="hidden" name="order_item" id="editOrderItem">
-          <input type="hidden" name="amount" id="editAmount">
+          <div id="msgOrderCard" style="display:none;"></div>
+          <p style="font-size:0.85rem; color:#888; margin-bottom:12px;">
+            This message will appear in the customer's chat widget and trigger a notification.
+          </p>
+          <textarea id="adminMessageInput" class="form-control" rows="4" 
+                    placeholder="Type your message to the customer..."
+                    maxlength="500" style="resize:none;"></textarea>
+          <div style="text-align:right; font-size:0.75rem; color:#aaa; margin-top:4px;">
+            <span id="msgCharCount">0</span>/500
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-warning">
-            <i class="fas fa-save me-2"></i>Save
+          <button type="button" class="btn btn-primary" id="sendMessageBtn"
+                  style="background: var(--pink-gradient); border:none;">
+            <i class="fas fa-paper-plane me-2"></i>Send Message
           </button>
         </div>
-      </form>
-    </div>
-  </div>
-</div>
-<!-- MESSAGE CUSTOMER MODAL -->
-<div class="modal fade" id="messageCustomerModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header" style="background: var(--pink-gradient);">
-        <h5 class="modal-title text-white">
-          <i class="fas fa-comment-dots me-2"></i>
-          Message <span id="msgCustomerName"></span>
-        </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <div id="msgOrderCard" style="display:none;"></div>
-        <p style="font-size:0.85rem; color:#888; margin-bottom:12px;">
-          This message will appear in the customer's chat widget and trigger a notification.
-        </p>
-        <textarea id="adminMessageInput" class="form-control" rows="4" 
-                  placeholder="Type your message to the customer..."
-                  maxlength="500" style="resize:none;"></textarea>
-        <div style="text-align:right; font-size:0.75rem; color:#aaa; margin-top:4px;">
-          <span id="msgCharCount">0</span>/500
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="sendMessageBtn"
-                style="background: var(--pink-gradient); border:none;">
-          <i class="fas fa-paper-plane me-2"></i>Send Message
-        </button>
       </div>
     </div>
   </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -847,6 +953,7 @@ document.addEventListener('hidden.bs.modal', function() {
   // ── State ──
   let db = null;
   let allOrders = [];         // kept in sync for other functions that still read it (showDetails, etc.)
+  let deepLinkedOrder = null;
   let liveOrders = [];        // top LIVE_LIMIT orders, kept live via onSnapshot
   let moreOrders = [];        // older orders, lazy-loaded on demand (not live)
   let lastVisibleDoc = null;  // cursor to continue Mode-1 pagination from
@@ -854,6 +961,8 @@ document.addEventListener('hidden.bs.modal', function() {
   let isLoadingMore = false;
   const LIVE_LIMIT = 30;
 
+    let manualOrders = [];      // Manual tab: all Messenger orders, kept live
+  let manualUnsub = null;
   let statusOrders = [];      // Mode-2: results for the selected status filter
   let statusLastVisible = null;
   let statusHasMore = true;
@@ -886,6 +995,7 @@ document.addEventListener('hidden.bs.modal', function() {
       setupFilters();
       listenToOrders();
       updateTabCounts();
+      openOrderFromQuery();
       document.getElementById('ordersTableBody').addEventListener('click', function(e) {
         const viewBtn = e.target.closest('.btn-outline-info');
         if (viewBtn) {
@@ -928,6 +1038,7 @@ document.addEventListener('hidden.bs.modal', function() {
           snapshot.docChanges().forEach(change => {
             if (change.type !== 'added') return;
             const data = change.doc.data();
+            if (data.order_source === 'messenger') return;   // manual entry, no popup
             const id = change.doc.id;
             const orderCreatedAt = toDate(data.created_at);
             if (!orderCreatedAt || orderCreatedAt <= pageLoadTime) return;
@@ -1012,14 +1123,19 @@ document.addEventListener('hidden.bs.modal', function() {
     const search = document.getElementById('searchOrders').value.toLowerCase();
     const statusFilterVal = document.getElementById('statusFilter').value;
     const rushFilter = document.getElementById('rushFilter').value;
-    const isStatusMode = !!statusFilterVal;
+    const isManualTab = currentTab === 'manual';
+    const isStatusMode = !!statusFilterVal && !isManualTab;
 
-    const source = isStatusMode ? statusOrders : [...liveOrders, ...moreOrders];
+    const source = isManualTab
+      ? manualOrders
+      : (isStatusMode ? statusOrders : [...liveOrders, ...moreOrders]);
     allOrders = source;
     const filtered = source.filter(o => {
+      const isManual = o.order_source === 'messenger';
       const matchTab = currentTab === 'all' ||
-        (currentTab === 'custom' && o.order_type === 'custom') ||
-        (currentTab === 'premade' && o.order_type === 'premade');
+        (currentTab === 'custom' && o.order_type === 'custom' && !isManual) ||
+        (currentTab === 'premade' && o.order_type === 'premade') ||
+        (currentTab === 'manual' && isManual);
 
       const searchText = [
         o.customer?.name, o.customer?.contact, o.item,
@@ -1031,7 +1147,8 @@ document.addEventListener('hidden.bs.modal', function() {
         (rushFilter === 'yes' && o.rush) ||
         (rushFilter === 'no' && !o.rush);
 
-      return matchTab && matchSearch && matchRush;
+      const matchStatus = !isManualTab || !statusFilterVal || o.status === statusFilterVal;
+      return matchTab && matchSearch && matchRush && matchStatus;
     });
 
     const loadedPages = Math.max(Math.ceil(filtered.length / ordersPerPage), 1);
@@ -1044,14 +1161,14 @@ document.addEventListener('hidden.bs.modal', function() {
     if (filtered.length === 0) {
       tbody.innerHTML = '';
       document.getElementById('emptyTabMsg').style.display = 'block';
-      const labels = { all: 'No orders yet', custom: 'No customized orders found', premade: 'No premade orders found' };
+      const labels = { all: 'No orders yet', custom: 'No customized orders found', premade: 'No premade orders found', manual: 'No manually added orders found' };
       document.getElementById('emptyTabText').textContent = labels[currentTab] || 'No orders found';
     } else {
       document.getElementById('emptyTabMsg').style.display = 'none';
       tbody.innerHTML = pageOrders.map(o => renderRow(o)).join('');
     }
 
-    const hasMore = isStatusMode ? statusHasMore : hasMoreOrders;
+    const hasMore = isManualTab ? false : (isStatusMode ? statusHasMore : hasMoreOrders);
     const totalPages = loadedPages + (hasMore ? 1 : 0);
 
     updatePaginationButtons('ordersPagination', currentPage, totalPages, page => {
@@ -1087,6 +1204,7 @@ document.addEventListener('hidden.bs.modal', function() {
     const customerCell = `
       <strong>${esc(o.customer?.name || '')}</strong>
       ${o.rush ? '<span class="badge bg-danger ms-1">RUSH</span>' : ''}
+      ${o.order_source === 'messenger' ? '<span class="badge bg-primary ms-1">MNL</span>' : ''}
       <br><small class="text-muted">${esc(o.customer?.contact || '')}</small>`;
 
     const itemCell = `<span class="text-truncate d-inline-block" 
@@ -1103,8 +1221,8 @@ document.addEventListener('hidden.bs.modal', function() {
     const statusBadge = getStatusBadge(o.status);
 
     const paymentStatusMap = {
-      'Paid':             '<span class="badge bg-success">✅ Fully Paid</span>',
-      'Fully Paid':       '<span class="badge bg-success">✅ Fully Paid</span>',
+      'Paid':             '<span class="badge bg-success">Fully Paid</span>',
+      'Fully Paid':       '<span class="badge bg-success">Fully Paid</span>',
       'Downpayment Paid': '<span class="badge bg-info text-dark">Downpayment Paid</span>',
       'Pending':          '<span class="badge bg-warning text-dark">Pending</span>',
     };
@@ -1149,8 +1267,7 @@ document.addEventListener('hidden.bs.modal', function() {
   function getUpdateCell(o) {
     if (o.status === 'Completed' || o.status === 'Cancelled') {
       const badgeClass = o.status === 'Completed' ? 'bg-success' : 'bg-danger';
-      const icon = o.status === 'Completed' ? '✅' : '❌';
-      return `<span class="badge ${badgeClass} p-2">${icon} ${o.status}</span>`;
+      return `<span class="badge ${badgeClass} p-2">${o.status}</span>`;
     }
 
     const options = {
@@ -1158,8 +1275,8 @@ document.addEventListener('hidden.bs.modal', function() {
       'Accepted':         ['Accepted', 'Pending', 'Cancelled'],
       'Pending':          ['Pending', 'Ready', 'Cancelled'],
       'Ready': o.delivery_type === 'Pickup' 
-        ? ['Ready', 'Completed', 'Cancelled']        // ✅ If PICKUP
-        : ['Ready', 'Out for Delivery', 'Cancelled'], // ✅ If NOT PICKUP (Delivery)
+        ? ['Ready', 'Completed', 'Cancelled']        // If PICKUP
+        : ['Ready', 'Out for Delivery', 'Cancelled'], // If NOT PICKUP (Delivery)
       'Out for Delivery': ['Out for Delivery', 'Completed', 'Cancelled'],
       'Delivered':        ['Delivered', 'Completed', 'Cancelled'], 
     };
@@ -1323,7 +1440,8 @@ document.addEventListener('hidden.bs.modal', function() {
   };
   // ── Show Details Modal ──
   window.showDetails = function(orderId) {
-    const o = allOrders.find(x => x.id === orderId);
+    const o = allOrders.find(x => x.id === orderId)
+       || (deepLinkedOrder && deepLinkedOrder.id === orderId ? deepLinkedOrder : null);
     if (!o) return;
 
     const header = document.getElementById('detailsModalHeader');
@@ -1400,7 +1518,7 @@ body.innerHTML = `
           <span class="text-muted">Status</span>
           <div style="text-align:right;">
             ${o.payment_status === 'Paid' || o.payment_status === 'Fully Paid'
-              ? `<span class="badge bg-success">✅ Fully Paid</span>
+              ? `<span class="badge bg-success"> Fully Paid</span>
                 ${o.payment_id && o.payment_method !== 'Cash on Delivery'
                   ? `<small style="display:block; font-size:0.72rem; color:#888; margin-top:3px; font-family:monospace; word-break:break-all;">Ref: ${o.payment_id}</small>`
                   : ''}`
@@ -1483,7 +1601,7 @@ body.innerHTML = `
           </a>
         </div>` : ''}
       </div>
-            <!-- Box 2: Order Details -->
+      <!-- Box 2: Order Details -->
       <div style="border:1px solid #f5c2dc; border-radius:8px; padding:14px;">
         <div style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:#aaa; font-weight:600; margin-bottom:10px;">
           <i class="fas fa-clipboard-list me-1"></i> Order Details
@@ -1496,7 +1614,7 @@ body.innerHTML = `
         </div>
         ${deliveryDate ? `
         <div class="d-flex justify-content-between align-items-center py-1" style="border-bottom:1px solid #fce8f3; font-size:0.88rem;">
-          <span class="text-muted">Delivery Date</span><span>${formatDateFull(deliveryDate)}</span>
+          <span class="text-muted">Delivery Date</span><span>${formatDateOnly(deliveryDate)}</span>
         </div>` : ''}
         <div class="d-flex justify-content-between align-items-center py-1" style="font-size:0.88rem;">
           <span class="text-muted">Delivery Type</span>
@@ -1531,7 +1649,10 @@ body.innerHTML = `
   </div>
 `;
 footer.innerHTML = `
-  ${o.order_type === 'custom' && !['Completed','Cancelled'].includes(o.status)
+  ${o.order_source === 'messenger' && o.status !== 'Cancelled'
+    ? `<button type="button" class="btn btn-warning" data-action="edit-manual" data-id="${o.id}"><i class="fas fa-edit me-2"></i>Edit</button>`
+    : ''}
+  ${o.order_type === 'custom' && o.order_source !== 'messenger' && !['Completed','Cancelled'].includes(o.status)
     ? `<button type="button" class="btn btn-warning" data-action="edit" data-id="${o.id}"><i class="fas fa-edit me-2"></i>Edit</button>`
     : ''}
   ${o.order_type === 'custom' && o.payment_status === 'Downpayment Paid'
@@ -1545,13 +1666,13 @@ footer.innerHTML = `
          <i class="fas fa-external-link-alt me-1"></i> View on PayMongo
        </a>`
     : ''}
-  <button type="button" class="btn btn-outline-secondary" 
+  ${o.user_id === 'manual' ? '' : `<button type="button" class="btn btn-outline-secondary" 
           data-action="message"
           data-user-id="${o.user_id || ''}"
           data-name="${esc(o.customer?.name || '')}"
           data-id="${o.id}">
     <i class="fas fa-comment-dots me-2"></i>Message Customer
-  </button>
+  </button>`}
   <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-2"></i>Close</button>`;
     new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
   };
@@ -1564,12 +1685,25 @@ footer.innerHTML = `
       bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal')).hide();
       showEdit(id);
     }
+    if (action === 'edit-manual') {
+      bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal')).hide();
+      editManualOrder(id);
+    }
     if (action === 'balance') markBalanceCollected(id);
     if (action === 'message') openMessageModal(btn.dataset.userId, btn.dataset.name, id);
   });
+
+
+  window.editManualOrder = function(orderId) {
+    const o = allOrders.find(x => x.id === orderId) || (deepLinkedOrder && deepLinkedOrder.id === orderId ? deepLinkedOrder : null);
+    if (!o) return;
+    window.__editManual = o;
+    new bootstrap.Modal(document.getElementById('manualOrderModal')).show();
+  };
+
   // ── Show Edit Modal ──
   window.showEdit = function(orderId) {
-    const o = allOrders.find(x => x.id === orderId);
+    const o = allOrders.find(x => x.id === orderId) || (deepLinkedOrder && deepLinkedOrder.id === orderId ? deepLinkedOrder : null);
     if (!o) return;
 
     document.getElementById('editOrderForm').action = `/order/edit/${o.id}`;
@@ -1643,6 +1777,7 @@ footer.innerHTML = `
     document.getElementById('tab-all').addEventListener('click', function() { window.switchOrderTab('all', this); });
     document.getElementById('tab-custom').addEventListener('click', function() { window.switchOrderTab('custom', this); });
     document.getElementById('tab-premade').addEventListener('click', function() { window.switchOrderTab('premade', this); });
+        document.getElementById('tab-manual').addEventListener('click', function() { window.switchOrderTab('manual', this); });
     document.getElementById('btnBannerView').addEventListener('click', window.bannerViewOrders);
     document.getElementById('btnBannerDismiss').addEventListener('click', window.bannerDismiss);
     document.getElementById('sendMessageBtn').addEventListener('click', window.sendMessageToCustomer);
@@ -1684,15 +1819,33 @@ async function updateTabCounts() {
     document.getElementById('count-all').textContent = data.all;
     document.getElementById('count-custom').textContent = data.custom;
     document.getElementById('count-premade').textContent = data.premade;
+    document.getElementById('count-manual').textContent = data.manual;
   } catch (e) {
     console.error('Error fetching tab counts:', e);
   }
 }
 
+  // ── Manual tab: query all Messenger orders server-side, live ──
+  function listenToManualOrders() {
+    if (manualUnsub) return;
+    manualUnsub = db.collection('orders')
+      .where('order_source', '==', 'messenger')
+      .orderBy('created_at', 'desc')
+      .limit(100)
+      .onSnapshot(snap => {
+        manualOrders = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        if (currentTab === 'manual') renderTable();
+      }, err => console.error('Manual orders listener error:', err));
+  }
+  function stopManualOrders() {
+    if (manualUnsub) { manualUnsub(); manualUnsub = null; }
+  }
+
   // ── Tab switch ──
   window.switchOrderTab = function(tab, btn) {
     currentTab = tab;
     currentPage = 1;
+    if (tab === 'manual') listenToManualOrders(); else stopManualOrders();
     document.querySelectorAll('.order-tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderTable();
@@ -1736,6 +1889,20 @@ async function updateTabCounts() {
     });
   };
 
+  async function openOrderFromQuery() {
+    const id = new URLSearchParams(window.location.search).get('open');
+    if (!id || !/^[^/]{1,150}$/.test(id)) return;          // validate
+    history.replaceState(null, '', window.location.pathname); // refresh won't reopen
+    try {
+      const snap = await db.collection('orders').doc(id).get();
+      if (!snap.exists) return;
+      deepLinkedOrder = { ...snap.data(), id: snap.id };
+      window.showDetails(snap.id);
+    } catch (err) {
+      console.error('Deep-link open failed:', err);
+    }
+  }
+
   // ── Helpers ──
   function toDate(val) {
     if (!val) return null;
@@ -1757,7 +1924,15 @@ async function updateTabCounts() {
     return d.toLocaleDateString('en-PH', { month: 'long', day: '2-digit', year: 'numeric' })
       + ' - ' + formatTime(d);
   }
-
+  function formatDateOnly(value) {
+    const d = value instanceof Date ? value : new Date(value);
+    if (isNaN(d.getTime())) return 'N/A';
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  }
   function esc(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
@@ -2055,6 +2230,108 @@ window.sendMessageToCustomer = async function() {
         hideBanner();
     };
 
+})();
+</script>
+
+
+<script nonce="{{ csp_nonce() }}">
+(function () {
+  const form = document.getElementById('manualOrderForm');
+  if (!form) return;
+  const modalEl = document.getElementById('manualOrderModal');
+  const peso = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  function nowLocalInput() {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  }
+
+  function refresh() {
+    const del = form.querySelector('input[name="delivery_type"]:checked').value === 'Delivery';
+    document.getElementById('moDeliveryFields').classList.toggle('d-none', !del);
+    document.getElementById('moAddress').required = del;
+
+    const cake  = parseFloat(form.elements.cake_total.value) || 0;
+    const fee   = del ? (parseFloat(form.elements.delivery_fee.value) || 0) : 0;
+    const total = cake + fee;
+    const pt    = form.querySelector('input[name="payment_type"]:checked').value;
+    const paid  = Math.round(total * (pt === 'full' ? 1 : parseInt(pt, 10) / 100) * 100) / 100;
+    document.getElementById('moTotal').textContent   = peso(total);
+    document.getElementById('moPaid').textContent    = peso(paid);
+    document.getElementById('moBalance').textContent = peso(total - paid);
+  }
+
+  function fillManualForm(o) {
+    const c = o.customer || {}, e = form.elements;
+    const dt = v => v && v.toDate ? v.toDate() : (v ? new Date(v) : null);
+    const local = d => { const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString(); };
+    const isDel = o.delivery_type === 'Delivery';
+
+    e.customer_name.value = c.name || '';
+    e.contact.value       = c.contact || '';
+    if (dt(o.created_at))    e.order_date.value = local(dt(o.created_at)).slice(0, 16);
+    if (dt(o.delivery_date)) {
+      e.delivery_date.value = local(dt(o.delivery_date)).slice(0, 10);
+      e.delivery_time.value = local(dt(o.delivery_date)).slice(11, 16);
+    }
+    form.querySelector(`input[name="delivery_type"][value="${isDel ? 'Delivery' : 'Pickup'}"]`).checked = true;
+    e.address.value       = isDel ? (c.address || '') : '';
+    e.delivery_fee.value  = isDel ? (o.delivery_fee || 0) : 0;
+    e.item.value          = o.item || '';
+    e.occasion.value      = c.occasion || '';
+    e.celebrant.value     = c.celebrant || '';
+    e.age.value           = c.age || '';
+    e.notes.value         = o.notes || '';
+    e.cake_total.value    = ((o.amount || 0) - (isDel ? (o.delivery_fee || 0) : 0)).toFixed(2);
+    e.payment_method.value = o.payment_method || 'Cash';
+    e.status.value        = o.status;
+    form.querySelector(`input[name="payment_type"][value="${o.downpayment_type || 'full'}"]`).checked = true;
+  }
+
+  form.addEventListener('input',  refresh);
+  form.addEventListener('change', refresh);
+
+  // fresh form + fresh idempotency key each time the modal opens
+  modalEl.addEventListener('show.bs.modal', () => {
+    form.reset();
+    const od = document.getElementById('moOrderDate');
+    od.value = nowLocalInput();
+    od.max   = nowLocalInput();
+    document.getElementById('moKey').value = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2))) + '-manual';
+
+    // ── NEW: edit mode vs add mode ──
+    const eo = window.__editManual;     // set by editManualOrder() when you click Edit
+    document.getElementById('moOrderId').value = eo ? eo.id : '';
+    document.getElementById('moTitleText').textContent = eo ? 'Edit Manual Order' : 'Add Manual Order';
+    if (eo) fillManualForm(eo);         // fill the form with the saved order
+    window.__editManual = null;         // so the next "Add" opens blank
+
+    refresh();                          // recalculate Total / Paid / Balance last
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    try {
+      const res    = await fetch('/admin/orders/manual', { method: 'POST', body: new FormData(form) });
+      const result = await res.json();
+      glassToast({
+        icon: result.success ? 'success' : 'error',
+        title: result.message,
+        showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
+      });
+      if (result.success) bootstrap.Modal.getInstance(modalEl).hide();
+    } catch (err) {
+      glassToast({ icon: 'error', title: 'Network error. Please try again.', showConfirmButton: false, timer: 3000 });
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
 })();
 </script>
 {% endblock %}

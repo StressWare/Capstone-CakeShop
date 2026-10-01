@@ -39,15 +39,24 @@
         <div class="item-name">{{ item.cake_name }}</div>
         <div class="item-price">
           ₱{{ "%.2f"|format(item.price) }}
-          {% if item.quantity | default(1) > 1 %}
-            <span class="item-count" style="font-size:0.8rem;">
-              × {{ item.quantity }} = ₱{{ "%.2f"|format(item.price * item.quantity) }}
-            </span>
-          {% endif %}
+          <span class="item-count line-total" style="font-size:0.8rem;{% if (item.quantity|default(1)) <= 1 %}display:none;{% endif %}">
+            × <span class="q">{{ item.quantity|default(1) }}</span> = ₱<span class="t">{{ "%.2f"|format(item.price * (item.quantity|default(1))) }}</span>
+          </span>
         </div>
-      <div class="item-qty">
-        Qty: {{ item.quantity | default(1) }}
-      </div>      </div>
+      <div class="item-qty d-flex align-items-center gap-2">
+        <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="dec">
+          <button type="submit" class="btn-remove" style="padding:0 10px;">−</button>
+        </form>
+        <span class="qty-num">{{ item.quantity | default(1) }}</span>
+        <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="inc">
+          <button type="submit" class="btn-remove" style="padding:0 10px;">+</button>
+        </form>
+      </div>      
+    </div>
       <form method="POST" action="/cart/remove/{{ item.cake_id }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit" class="btn-remove">
@@ -141,6 +150,41 @@
       }
 
       checkoutBtn.addEventListener('click', submitCheckout);
+            document.querySelectorAll('form[action^="/cart/update/"]').forEach(form => {
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = form.querySelector('button');
+          btn.disabled = true;
+          try {
+            const res = await fetch(form.getAttribute('action'), {
+              method: 'POST',
+              body: new FormData(form),
+              credentials: 'same-origin'
+            });
+            if (res.redirected) { window.location.href = res.url; return; }
+            const data = await res.json().catch(() => null);
+            if (!data) {
+              glassToast({ icon: 'error', title: 'Error ' + res.status, showConfirmButton: false, timer: 3000 });
+              return;
+            }
+            if (!data.success) {
+              glassToast({ icon: 'warning', title: data.message, showConfirmButton: false, timer: 2500 });
+              return;
+            }
+            const row  = form.closest('.cart-item-row');
+            const cb   = row.querySelector('.item-cb');
+            const line = row.querySelector('.line-total');
+            row.querySelector('.qty-num').textContent = data.quantity;
+            cb.dataset.qty = data.quantity;
+            line.style.display = data.quantity > 1 ? '' : 'none';
+            line.querySelector('.q').textContent = data.quantity;
+            line.querySelector('.t').textContent = (parseFloat(cb.dataset.price) * data.quantity).toFixed(2);
+            update();   // recompute the Selected Total
+          } finally {
+            btn.disabled = false;
+          }
+        });
+      });
   }
 </script>
 

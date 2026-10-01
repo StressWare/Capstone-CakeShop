@@ -308,54 +308,52 @@ if (menuBtn && offcanvas && menuClose) {
 </script> 
 <script nonce="{{ csp_nonce() }}">
 // ── Shared shop-open check (used by home, cakes, cart) ──
-  async function checkShopOpen(proceedFn, orderType = 'premade') {
-    try {
-      const res  = await fetch('/locked-date-today');
-      const data = await res.json();
+async function checkShopOpen(proceedFn, orderType = 'premade') {
+  let blocked = false;
+  try {
+    // 1) Locked date (per order type)
+    const res  = await fetch('/locked-date-today');
+    const data = await res.json();
 
-      if (data.locked) {
-        const isBlocked =
-          (orderType === 'premade' && data.lock_premade) ||
-          (orderType === 'custom'  && data.lock_custom);
+    if (data.locked) {
+      const isBlocked =
+        (orderType === 'premade' && data.lock_premade) ||
+        (orderType === 'custom'  && data.lock_custom);
 
-        if (isBlocked) {
-          glassAlert({
-            icon: 'info',
-            title: '🔒 Orders Unavailable Today',
-            text: data.reason,
-            confirmButtonText: 'Got it',
-            footer: 'Please try ordering on another day.'
-          });
-          return;
-        }
+      if (isBlocked) {
+        glassAlert({
+          icon: 'info',
+          title: '🔒 Orders Unavailable Today',
+          text: data.reason,
+          confirmButtonText: 'Got it',
+          footer: 'Please try ordering on another day.'
+        });
+        blocked = true;
       }
-      proceedFn(); // ← not locked for this type, proceed
-    } catch (e) {
-      proceedFn(); // fail open
     }
-  }
-        // Daily shop hours / manual override — premade orders only
-      if (orderType === 'premade') {
-        const hoursRes  = await fetch('/shop-status');
-        const hoursData = await hoursRes.json();
 
-        if (!hoursData.is_open) {
-          glassAlert({
-            icon: 'info',
-            title: '🔒 Shop Closed',
-            text: hoursData.reason || 'Shop is currently closed.',
-            confirmButtonText: 'Got it'
-          });
-          return;
-        }
+    // 2) Daily shop hours / manual override (premade orders only)
+    if (!blocked && orderType === 'premade') {
+      const hoursRes  = await fetch('/shop-status');
+      const hoursData = await hoursRes.json();
+
+      if (!hoursData.is_open) {
+        glassAlert({
+          icon: 'info',
+          title: '🔒 Shop Closed',
+          text: hoursData.reason || 'Shop is currently closed.',
+          confirmButtonText: 'Got it'
+        });
+        blocked = true;
       }
-
-      proceedFn(); // not locked, proceed
-    } catch (e) {
-      proceedFn(); // fail open
     }
+  } catch (e) {
+    // fail open: a network hiccup shouldn't block a customer
   }
+  if (!blocked) proceedFn();
+}
 </script>
+
 <script nonce="{{ csp_nonce() }}">
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
   async function handleLogout() {
@@ -370,6 +368,37 @@ if (menuBtn && offcanvas && menuClose) {
       window.location.reload();
     }
   });
+</script>
+
+<script nonce="{{ csp_nonce() }}">
+document.addEventListener('submit', async (e) => {
+  const form = e.target;
+  if (!form.matches('form[action="/cart/add"]')) return;
+  e.preventDefault();
+
+  const btn = form.querySelector('button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch('/cart/add', {
+      method: 'POST',
+      body: new FormData(form),
+      credentials: 'same-origin'
+    });
+    if (res.redirected) { window.location.href = res.url; return; }
+    const data = await res.json().catch(() => null);
+    glassToast({
+      icon: data && data.success ? 'success' : 'error',
+      title: data ? data.message : 'Error ' + res.status,
+      showConfirmButton: false,
+      timer: 3000,
+      timerProgressBar: true
+    });
+  } catch (err) {
+    glassToast({ icon: 'error', title: 'Could not add to cart.', showConfirmButton: false, timer: 3000 });
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+});
 </script>
 
 <script nonce="{{ csp_nonce() }}">
