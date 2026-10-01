@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 PAYMONGO_SECRET_KEY = os.getenv('PAYMONGO_SECRET_KEY')
 PAYMONGO_BASE_URL   = 'https://api.paymongo.com/v1'
 
+def to_centavos(value):
+    """Convert a peso amount to integer centavos using rounding (int() would truncate, e.g. 62.35 -> 6234)."""
+    return int(round(float(value) * 100))
+
 def get_auth_header():
     # Base64 encode secret key for PayMongo API auth
     encoded = base64.b64encode(f"{PAYMONGO_SECRET_KEY}:".encode()).decode()
@@ -57,6 +61,8 @@ def create_checkout_session(amount, order_description, line_items, success_url, 
             }
         else:
             logger.error(f"PayMongo checkout error: {data}")
+            logger.error(f"PayMongo checkout error: {data}")
+            logger.error(f"PayMongo request that failed: {payload}")
             return None
 
     except Exception as e:
@@ -92,11 +98,15 @@ def verify_payment(session_id):
         payment_status = ""
         payment_method = "Unknown"
         reference      = None
+        amount         = None
+        currency       = None
         
         if isinstance(payments, list) and payments:
             payment_status = payments[0].get("attributes", {}).get("status", "")
             payment_method = payments[0].get("attributes", {}).get("source", {}).get("type", "Unknown")
             reference      = payments[0].get("id", None)
+            amount         = payments[0].get("attributes", {}).get("amount")
+            currency       = payments[0].get("attributes", {}).get("currency")
 
         # ── Must be BOTH succeeded AND paid ──
         is_paid = pi_status == "succeeded" and payment_status == "paid"
@@ -104,7 +114,9 @@ def verify_payment(session_id):
         return {
             "paid":           is_paid,
             "payment_method": payment_method,
-            "reference":      reference
+            "reference":      reference,
+            "amount":         amount,      # centavos actually paid
+            "currency":       currency
         }
 
     except Exception as e:
@@ -131,7 +143,7 @@ def build_line_items(order_type, selected_items, amount,
         for item in selected_items:
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(float(item["price"]) * 100),
+                "amount":   to_centavos(item["price"]),
                 "name":     item["cake_name"],
                 "quantity": int(item.get("quantity", 1))
             })
@@ -139,18 +151,18 @@ def build_line_items(order_type, selected_items, amount,
         if delivery_fee > 0:
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(delivery_fee * 100),
+                "amount":   to_centavos(delivery_fee),
                 "name":     "Delivery Fee",
                 "quantity": 1
             })
 
-        # ── Apply voucher discount as a negative line item ──
+        # Apply voucher discount as a negative line item
         # PayMongo doesn't support discounts natively, so we add a discount line.
         # Amount must be positive in the dict but we label it clearly.
         if discount_amount > 0:
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(discount_amount * 100),
+                "amount":   to_centavos(discount_amount),
                 "name":     "Voucher Discount",
                 "quantity": 1,
                 # PayMongo requires amount > 0; the negative effect is
@@ -167,7 +179,7 @@ def build_line_items(order_type, selected_items, amount,
 
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(charge * 100),
+                "amount":   to_centavos(charge),
                 "name":     f"Custom Cake Order — {pct_label} Downpayment",
                 "quantity": 1,
                 
@@ -177,7 +189,7 @@ def build_line_items(order_type, selected_items, amount,
             charge = float(downpayment_amount or amount)
             line_items.append({
                 "currency": "PHP",
-                "amount":   int(charge * 100),
+                "amount":   to_centavos(charge),
                 "name":     "Custom Cake Order — Full Payment",
                 "quantity": 1,
             })

@@ -2333,7 +2333,7 @@ def notify_delivery(token):
 
     except Exception as e:
         app.logger.exception(f"[FCM] Notify error: {e}")
-        return {"error": str(e)}, 500
+        return {"error": "Internal server error"}, 500
 
 # ================================================================
 # CAKES ROUTES
@@ -2448,37 +2448,72 @@ def add_to_cart():
     user_id   = session.get("user_id")
     cake_id   = request.form.get("cake_id")
     cake_name = request.form.get("cake_name")
-    quantity  = int(request.form.get("quantity", 1))
     image     = request.form.get("image")
 
-    # ── Fetch real price from Firestore ──
+    try:
+        quantity = int(request.form.get("quantity", 1))
+    except (TypeError, ValueError):
+        quantity = 0
+    if not cake_id or quantity < 1:
+        return jsonify(success=False, message="Invalid request."), 400
+
     cake_doc = cakes.document(cake_id).get()
     if not cake_doc.exists:
-        flash("Cake not found.", "danger")
-        return redirect(url_for("cakes_page"))
+        return jsonify(success=False, message="Cake not found."), 404
 
-    cake_data  = cake_doc.to_dict()
-    image      = image or cake_data.get("image")
+    cake_data = cake_doc.to_dict()
+    image     = image or cake_data.get("image")
+    name      = cake_data.get("name", cake_name)
 
     cart_ref = users.document(user_id).collection("cart").document(cake_id)
     cart_doc = cart_ref.get()
 
+    # Stock check
+    available = int(cake_data.get("quantity", 0))
+    in_cart   = cart_doc.to_dict().get("quantity", 0) if cart_doc.exists else 0
+    if in_cart + quantity > available:
+        return jsonify(success=False, message=f"Only {available} in stock ({in_cart} already in your cart)."), 400
+
     if cart_doc.exists:
-        existing_qty = cart_doc.to_dict().get("quantity", 1)
-        new_qty      = existing_qty + quantity
+        new_qty = in_cart + quantity
         cart_ref.update({"quantity": new_qty})
-        flash(f"{cake_data.get('name', cake_name)} quantity updated to {new_qty} in cart! 🛒", "success")
+        msg = f"{name} quantity updated to {new_qty} in cart! 🛒"
     else:
         cart_ref.set({
             "cake_id":   cake_id,
-            "cake_name": cake_data.get("name", cake_name),
+            "cake_name": name,
             "quantity":  quantity,
             "image":     image,
             "added_at":  firestore.SERVER_TIMESTAMP
         })
-        flash(f"{cake_data.get('name', cake_name)} added to cart! 🛒", "success")
+        msg = f"{name} added to cart! 🛒"
 
-    return redirect(url_for("cakes_page"))
+    return jsonify(success=True, message=msg), 200
+
+# ---------------- UPDATE CART QTY ----------------
+@app.route("/cart/update/<cake_id>", methods=["POST"])
+@profile_required
+@login_required
+def update_cart_qty(cake_id):
+    user_id  = session.get("user_id")
+    delta    = 1 if request.form.get("action") == "inc" else -1
+    cart_ref = users.document(user_id).collection("cart").document(cake_id)
+    cart_doc = cart_ref.get()
+    if not cart_doc.exists:
+        return jsonify(success=False, message="Item not in cart."), 404
+
+    current = cart_doc.to_dict().get("quantity", 1)
+    new_qty = current + delta
+    if new_qty < 1:
+        return jsonify(success=False, message="Use Remove to delete this item."), 400
+
+    cake_doc  = cakes.document(cake_id).get()
+    available = int(cake_doc.to_dict().get("quantity", 0)) if cake_doc.exists else 0
+    if new_qty > available:
+        return jsonify(success=False, message=f"Only {available} in stock."), 400
+
+    cart_ref.update({"quantity": new_qty})
+    return jsonify(success=True, quantity=new_qty), 200
 # ---------------- REMOVE FROM CART ----------------
 @app.route("/cart/remove/<cake_id>", methods=["POST"])
 @profile_required
@@ -2525,6 +2560,7 @@ def admin_page():
             continue
         today_count += 1
         today_deliveries.append({
+            "id":       order_doc.id,
             "time":     order["delivery_date"].strftime("%I:%M %p"),
             "customer": order.get("customer", {}).get("name", "N/A"),
             "cake":     order.get("item", "N/A"),
@@ -2725,7 +2761,8 @@ def calendar_orders():
                 .stream()
             )
         except Exception as e:
-            return jsonify({"error": f"Firestore query failed: {str(e)}"}), 500
+            app.logger.exception("Firestore query failed in calendar_orders")
+            return jsonify({"error": "Query failed. Please try again."}), 500
  
         result = []
         for order_doc in day_docs:
@@ -2774,7 +2811,8 @@ def calendar_orders():
                 .stream()
             )
         except Exception as e:
-            return jsonify({"error": f"Firestore query failed: {str(e)}"}), 500
+            app.logger.exception("Firestore query failed in calendar_orders")
+            return jsonify({"error": "Query failed. Please try again."}), 500
  
         # Per day: { "YYYY-MM-DD": { premade: n, custom: n, rush: bool } }
         days = {}
@@ -2819,10 +2857,12 @@ def admin_order_counts():
         all_count = orders.count().get()[0][0].value
         custom_count = orders.where("order_type", "==", "custom").count().get()[0][0].value
         premade_count = orders.where("order_type", "==", "premade").count().get()[0][0].value
+        manual_count = orders.where("order_source", "==", "messenger").count().get()[0][0].value
         return jsonify({
             "all": all_count,
-            "custom": custom_count,
-            "premade": premade_count
+            "custom": custom_count - manual_count,   # manual orders are also order_type=custom
+            "premade": premade_count,
+            "manual": manual_count
         }), 200
     except Exception:
         app.logger.exception("Error in admin_order_counts")
@@ -3370,7 +3410,8 @@ def mark_balance_collected(order_id):
 
     except Exception as e:
         app.logger.exception("Error in mark_balance_collected")
-        return jsonify({"success": False, "message": str(e)})
+        return jsonify({"success": False, "message": "Something went wrong. Please try again."})
+    
 # ---------------- CUSTOMER ORDER RESTRICTION----------------
 @app.route("/locked-date-today")
 @limiter.exempt
@@ -3539,7 +3580,9 @@ def update_order_status(order_id):
             message = status_messages.get(new_status, f"is now {new_status}")
             notify_user_id = order_data.get("user_id")
             print(f"DEBUG user_id value: '{notify_user_id}'")
-            notifications.add({
+            if notify_user_id and notify_user_id != "manual":
+              notifications.add({
+                "user_id": notify_user_id,
                 "user_id": notify_user_id,
                 "order_id": order_id,
                 "title": f"Order {new_status}",
@@ -3558,8 +3601,215 @@ def update_order_status(order_id):
     
         return jsonify({"success": True, "message": f"Order status updated to {new_status}"})
     except Exception as e:
-        print(f"ERROR in update_order_status: {e}")            # ← catch silent crashes
-        return jsonify({"success": False, "message": str(e)})
+        app.logger.exception("Error in update_order_status")
+        return jsonify({"success": False, "message": "Something went wrong. Please try again."})
+    
+# ---------------- MANUAL ORDER (Messenger / off-site, custom cakes) ----------------
+@app.route("/admin/orders/manual", methods=["POST"])
+@admin_required
+@limiter.limit("20 per minute")
+def admin_manual_order():
+    import math
+    f   = request.form
+    now = datetime.now(PH_TZ)
+    edit_id = (f.get("order_id") or "").strip()   # set only when editing
+    
+
+    def parse_money(name, lo, hi):
+        """float, or None if missing / not a number / out of range."""
+        try:
+            val = float((f.get(name) or "").strip())
+        except ValueError:
+            return None
+        if not math.isfinite(val) or val < lo or val > hi:
+            return None
+        return round(val, 2)
+
+    def parse_dt(raw, fmt):
+        """tz-aware datetime, or None if invalid."""
+        try:
+            return datetime.strptime((raw or "").strip(), fmt).replace(tzinfo=PH_TZ)
+        except ValueError:
+            return None
+
+    def error(msg):
+        return jsonify({"success": False, "message": msg}), 400
+
+    try:
+        # ── Idempotency (double-click / retry safe) ──
+        key = (f.get("idempotency_key") or "").strip()
+        existing = None
+        if edit_id:
+            snap = orders.document(edit_id).get()
+            existing = snap.to_dict() if snap.exists else None
+            if not existing or existing.get("order_source") != "messenger":
+                return error("Manual order not found.")    # can't edit online orders through here
+        else:
+            if not (16 <= len(key) <= 100):
+                return error("Invalid request.")
+            dup = next(orders.where("idempotency_key", "==", key).limit(1).stream(), None)
+            if dup:
+                return jsonify({"success": True, "message": "Order already recorded.", "order_id": dup.id})
+
+        # ── Customer ──
+        name      = (f.get("customer_name") or "").strip()
+        contact   = (f.get("contact") or "").strip().replace(" ", "")
+        occasion  = (f.get("occasion") or "").strip()
+        celebrant = (f.get("celebrant") or "").strip()
+        age       = (f.get("age") or "").strip()
+        notes     = (f.get("notes") or "").strip()
+
+        if not name or len(name) > 100:
+            return error("Invalid customer name.")
+        if not re.match(r'^(\+63|0)[0-9]{9,10}$', contact):
+            return error("Invalid contact number.")
+        if len(occasion) > 100:
+            return error("Occasion too long.")
+        if len(celebrant) > 100:
+            return error("Celebrant/dedication too long.")
+        if age and not age.isdigit():
+            return error("Invalid age.")
+        if len(notes) > 500:
+            return error("Notes too long (max 500).")
+
+        # ── Cake / dates ──
+        item_name = (f.get("item") or "").strip()
+        if not item_name or len(item_name) > 300:
+            return error("Cake description is required (max 300).")
+
+        created_at = parse_dt(f.get("order_date"), "%Y-%m-%dT%H:%M")
+        if not created_at:
+            return error("Invalid order date.")
+        if created_at > now + timedelta(minutes=5):
+            return error("Order date can't be in the future.")
+
+        delivery_dt = parse_dt(
+            f"{f.get('delivery_date', '')} {f.get('delivery_time', '')}", "%Y-%m-%d %H:%M"
+        )
+        if not delivery_dt:
+            return error("Invalid pickup/delivery date or time.")
+
+        # ── Delivery ──
+        delivery_type = f.get("delivery_type")
+        if delivery_type not in ("Delivery", "Pickup"):
+            return error("Choose Delivery or Pickup.")
+
+        if delivery_type == "Delivery":
+            address = (f.get("address") or "").strip()
+            if not address or len(address) > 300:
+                return error("Delivery address is required (max 300).")
+            if (f.get("delivery_fee") or "").strip():
+                delivery_fee = parse_money("delivery_fee", 0, 10000)
+                if delivery_fee is None:
+                    return error("Invalid delivery fee.")
+            else:
+                delivery_fee = 0.0
+        else:
+            address, delivery_fee = "Pick Up at Shop", 0.0
+
+        # ── Money / payment ──
+        cake_total = parse_money("cake_total", 1, 1000000)
+        if cake_total is None:
+            return error("Invalid cake price.")
+        amount = round(cake_total + delivery_fee, 2)   # cake + delivery, same as online orders
+
+        PAY = {"full": ("Fully Paid", 1.0), "50": ("Downpayment Paid", 0.5), "75": ("Downpayment Paid", 0.75)}
+        pay_type = f.get("payment_type")
+        if pay_type not in PAY:
+            return error("Choose a payment option.")
+        payment_status, ratio = PAY[pay_type]
+        dp_amt  = round(amount * ratio, 2)
+        balance = round(amount - dp_amt, 2)
+
+        payment_method = f.get("payment_method")
+        if payment_method not in ("Cash", "GCash", "Bank Transfer", "Other"):
+            return error("Invalid payment method.")
+
+        status = f.get("status")
+        if status not in ("New", "Accepted", "Pending", "Ready", "Out for Delivery", "Completed"):
+            return error("Invalid order status.")
+
+        # ── Image upload LAST, after all validation passes ──
+        inspo_image = None
+        file = request.files.get("image")
+        if file and file.filename:
+            inspo_image = save_uploaded_image(file, "order")
+            if inspo_image is None:
+                return error("Image too large or invalid! Max 2MB.")
+            
+        if edit_id:
+            upd = {
+                "delivery_date": delivery_dt, "item": item_name,
+                "custom_components": [{"name": item_name, "price": cake_total}],
+                "amount": amount, "status": status, "notes": notes,
+                "payment_method": payment_method, "payment_status": payment_status,
+                "delivery_type": delivery_type, "delivery_fee": delivery_fee,
+                "downpayment_type": pay_type, "downpayment_amount": dp_amt,
+                "remaining_balance": balance, "created_at": created_at,
+                "customer": {**(existing.get("customer") or {}),
+                             "name": name, "contact": contact, "address": address,
+                             "occasion": occasion, "celebrant": celebrant, "age": age},
+                # sales only count Completed orders dated by completed_at
+                "completed_at": min(delivery_dt, now) if status == "Completed" else firestore.DELETE_FIELD,
+            }
+            if inspo_image:                      # no new photo = keep the old one
+                upd["inspo_image"] = inspo_image
+            orders.document(edit_id).update(upd)
+            invalidate_cache("order_counts", "completed_cancelled_orders", "all_orders")
+            log_admin_action(action="Edited manual (Messenger) order",
+                             target=f"Order #{edit_id} — {name}", category="order")
+            return jsonify({"success": True, "message": "Manual order updated.", "order_id": edit_id})
+
+        order_data = {
+            "user_id":        "manual",            # no customer account
+            "order_source":   "messenger",
+            "created_by":     session.get("user_id"),
+            "order_type":     "custom",
+            "delivery_date":  delivery_dt,
+            "item":           item_name,
+            "selected_items": [],
+            "custom_components": [{"name": item_name, "price": cake_total}],
+            "amount":         amount,
+            "status":         status,
+            "rush":           False,
+            "rush_fee":       0.0,
+            "notes":          notes,
+            "delivery_instructions": "",
+            "payment_method": payment_method,
+            "payment_status": payment_status,
+            "payment_id":     None,
+            "delivery_type":  delivery_type,
+            "delivery_fee":   delivery_fee,
+            "inspo_image":    inspo_image,
+            "delivery_token": secrets.token_urlsafe(32),
+            "idempotency_key": key,
+            "downpayment_type":   pay_type,
+            "downpayment_amount": dp_amt,
+            "remaining_balance":  balance,
+            "claimed_vouchers": [],
+            "customer": {
+                "name": name, "contact": contact, "address": address,
+                "occasion": occasion, "celebrant": celebrant, "age": age,
+                "lat": None, "lng": None,
+            },
+            "created_at": created_at,
+        }
+        if status == "Completed":
+            # real completion date: the pickup/delivery time, but never in the future
+            order_data["completed_at"] = min(delivery_dt, now)
+
+        order_id = orders.add(order_data)[1].id
+        invalidate_cache("order_counts", "completed_cancelled_orders", "all_orders")
+        log_admin_action(
+            action="Created manual (Messenger) order",
+            target=f"Order #{order_id} — {name}",
+            category="order"
+        )
+        return jsonify({"success": True, "message": "Manual order added.", "order_id": order_id})
+
+    except Exception:
+        app.logger.exception("Error in admin_manual_order")
+        return jsonify({"success": False, "message": "Something went wrong. Please try again."}), 500
 
 @app.route("/admin/orders/history")
 @admin_required
@@ -3570,34 +3820,23 @@ def admin_orders_history():
 # ---------------- EDIT ORDER ----------------
 @app.route("/order/edit/<order_id>", methods=["POST"])
 @admin_required
-def edit_order( order_id):
-    item   = request.form.get("order_item")
-    amount = float(request.form.get("amount"))
-    notes  = request.form.get("notes", "")
-
-    date_str = request.form.get("delivery_date")
-    time_str = request.form.get("delivery_time")
-    delivery_datetime = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-    delivery_datetime = delivery_datetime.replace(tzinfo=PH_TZ)
-
+def edit_order(order_id):
+    import math
     try:
-        orders.document(order_id).update({  # ← CHANGED
-            "item": item,
-            "amount": amount,
-            "notes": notes,
-            "delivery_date": delivery_datetime
-        })
-        invalidate_cache("completed_cancelled_orders", "all_orders")
-        log_admin_action(
-            action="Edited order details",
-            target=f"Order #{order_id} — {item}",
-            category="order"
-        )
-        return jsonify({"success": True, "message": "Order updated successfully!"})
-    except Exception:
-        app.logger.exception("Error updating order")
-        return jsonify({"success": False, "message": "Failed to update order. Please try again."}), 500
+        item   = (request.form.get("order_item") or "").strip()
+        notes  = (request.form.get("notes") or "").strip()
+        amount = float(request.form.get("amount") or "")
+        if not item or len(item) > 500 or len(notes) > 1000:
+            return jsonify({"success": False, "message": "Invalid item or notes."}), 400
+        if not math.isfinite(amount) or amount <= 0:
+            return jsonify({"success": False, "message": "Invalid amount."}), 400
 
+        delivery_datetime = datetime.strptime(
+            f"{request.form.get('delivery_date')} {request.form.get('delivery_time')}",
+            "%Y-%m-%d %H:%M"
+        ).replace(tzinfo=PH_TZ)
+    except (ValueError, TypeError):
+        return jsonify({"success": False, "message": "Invalid amount or date."}), 400
 
 # ---------------- ADD INVENTORY ----------------
 @app.route("/inventory/add", methods=["POST"])
@@ -3957,9 +4196,92 @@ def toggle_review(review_id):
     )
     flash("Review visibility updated!", "success")
     return redirect(url_for("admin_reviews"))
+
+
 # ================================================================
 # PAYMENT ROUTES
 # ================================================================
+# ---------------- PAYMENT AMOUNT VERIFICATION ----------------
+PAYMENT_AMOUNT_TOLERANCE_CENTAVOS = 1  # absorbs a possible 1-centavo rounding difference
+
+def expected_charge_centavos(order_data):
+    """Amount (in centavos) PayMongo should have charged, computed from server-side order data."""
+    charge = order_data.get("downpayment_amount") or order_data.get("amount", 0)
+    return int(round(float(charge) * 100))
+
+def payment_matches_order(order_data, actual_centavos, currency=None):
+    """True only if the amount PayMongo reports matches the server-side expected charge."""
+    if currency and str(currency).upper() != "PHP":
+        return False
+    try:
+        actual = int(actual_centavos)
+        expected = expected_charge_centavos(order_data)
+    except (TypeError, ValueError):
+        return False
+    return abs(actual - expected) <= PAYMENT_AMOUNT_TOLERANCE_CENTAVOS
+
+def deduct_stock_for_items(items):
+    """Atomically deduct stock for premade order items (all-or-nothing).
+
+    Raises ValueError("NOEXIST:<cake_id>") or ValueError("OVERSTOCK:<name>:<available>")
+    and changes nothing if any item cannot be fulfilled.
+    """
+    wanted = {}
+    for item in items:
+        cake_id = item.get("cake_id")
+        if not cake_id:
+            raise ValueError(f"NOEXIST:{cake_id}")
+        wanted[cake_id] = wanted.get(cake_id, 0) + int(item.get("quantity", 1))
+
+    @firestore.transactional
+    def _deduct(transaction, wanted_items):
+        refs, new_quantities = [], []
+        # Phase 1: all reads first
+        for cake_id, qty_ordered in wanted_items.items():
+            cake_ref = cakes.document(cake_id)
+            snap = cake_ref.get(transaction=transaction)
+            if not snap.exists:
+                raise ValueError(f"NOEXIST:{cake_id}")
+            cake_data = snap.to_dict()
+            current_qty = int(cake_data.get("quantity", 0))
+            if qty_ordered > current_qty:
+                raise ValueError(f"OVERSTOCK:{cake_data.get('name', 'A cake')}:{current_qty}")
+            refs.append(cake_ref)
+            new_quantities.append(current_qty - qty_ordered)
+        # Phase 2: all writes after
+        for cake_ref, new_qty in zip(refs, new_quantities):
+            transaction.update(cake_ref, {"quantity": new_qty, "status": new_qty > 0})
+
+    _deduct(db.transaction(), wanted)
+
+def flag_pending_for_review(pending_ref, reason):
+    """Mark a paid-but-unfulfilled pending order so it is easy to find in Firestore. Never raises."""
+    try:
+        pending_ref.update({
+            "needs_review": True,
+            "review_reason": reason,
+            "review_flagged_at": datetime.now(PH_TZ),
+        })
+    except Exception:
+        app.logger.warning("Could not flag pending order for review, non-critical")
+        
+@firestore.transactional
+def _claim(transaction, ref):
+    snap = ref.get(transaction=transaction)
+    if not snap.exists:
+        return None
+    data = snap.to_dict()
+    claimed_at = data.get("claimed_at")
+    # Someone else claimed it in the last 60s -> they're handling it
+    if claimed_at and (datetime.now(PH_TZ) - claimed_at) < timedelta(seconds=60):
+        return None
+    transaction.update(ref, {"claimed_at": firestore.SERVER_TIMESTAMP})
+    return data
+
+def claim_pending(pending_ref):
+    """Returns pending data if this caller won the claim, else None."""
+    return _claim(db.transaction(), pending_ref)
+
 # ---------------- PAYMENT WEBHOOK ----------------
 @app.route("/paymongo/webhook", methods=["POST"])
 @csrf.exempt
@@ -3967,31 +4289,35 @@ def paymongo_webhook():
     raw_body = request.get_data()
     signature_header = request.headers.get("Paymongo-Signature", "")
 
+    # Fail closed: never process a payment webhook without a configured signing secret
+    if not PAYMONGO_WEBHOOK_SECRET:
+        app.logger.error("PAYMONGO_WEBHOOK_SECRET is not configured; rejecting PayMongo webhook")
+        return jsonify({"status": "webhook not configured"}), 503
+
     # Verify signature
-    if PAYMONGO_WEBHOOK_SECRET:
-        try:
-            parts = dict(p.split("=", 1) for p in signature_header.split(","))
-            timestamp = parts.get("t", "")
-            # use "te" for test mode, "li" for live mode
-            sig_field = "li" if is_production else "te"     
-            received_sig = parts.get(sig_field, "")
+    try:
+        parts = dict(p.split("=", 1) for p in signature_header.split(","))
+        timestamp = parts.get("t", "")
+        # use "te" for test mode, "li" for live mode
+        sig_field = "li" if is_production else "te"
+        received_sig = parts.get(sig_field, "")
 
-            # Build the string to sign: timestamp + "." + raw_body
-            signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
+        # Build the string to sign: timestamp + "." + raw_body
+        signed_payload = f"{timestamp}.{raw_body.decode('utf-8')}"
 
-            expected = hmac.new(
-                PAYMONGO_WEBHOOK_SECRET.encode(),
-                signed_payload.encode(),
-                hashlib.sha256
-            ).hexdigest()
+        expected = hmac.new(
+            PAYMONGO_WEBHOOK_SECRET.encode(),
+            signed_payload.encode(),
+            hashlib.sha256
+        ).hexdigest()
 
-            if not hmac.compare_digest(expected, received_sig):
-                app.logger.warning("Invalid PayMongo webhook signature")
-                return jsonify({"status": "invalid signature"}), 400
+        if not hmac.compare_digest(expected, received_sig):
+            app.logger.warning("Invalid PayMongo webhook signature")
+            return jsonify({"status": "invalid signature"}), 400
 
-        except Exception as e:
-            app.logger.warning(f"Webhook signature verification error: {e}")
-            return jsonify({"status": "signature error"}), 400
+    except Exception as e:
+        app.logger.warning(f"Webhook signature verification error: {e}")
+        return jsonify({"status": "signature error"}), 400
     payload = request.get_json(force=True)
 
     event_type = payload.get("data", {}).get("attributes", {}).get("type")
@@ -4023,6 +4349,17 @@ def paymongo_webhook():
         if payments:
             payment_method = payments[0].get("attributes", {}).get("source", {}).get("type", "Unknown").upper()
             payment_id = payments[0].get("id")
+
+        # Verify the paid amount BEFORE touching stock or creating the order (fail closed)
+        pay_attrs = payments[0].get("attributes", {}) if payments else {}
+        if not payment_matches_order(order_data, pay_attrs.get("amount"), pay_attrs.get("currency")):
+            app.logger.error(
+                f"Payment amount mismatch on session {session_id}: "
+                f"expected {expected_charge_centavos(order_data)}, "
+                f"got {pay_attrs.get('amount')} {pay_attrs.get('currency')}. "
+                f"Order NOT created; pending order kept for manual review."
+            )
+            return jsonify({"status": "amount mismatch"}), 200
 
         # Update order data
         order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
@@ -4058,17 +4395,13 @@ def paymongo_webhook():
                 transaction = db.transaction()
                 deduct_stock(transaction, order_data.get("selected_items", []))
             except ValueError as e:
-                parts = str(e).split(":", 2)
-                app.logger.error(f"Stock deduction failed in webhook: {parts}")
-                pending_ref.delete()
+                app.logger.error(
+                    f"Stock deduction failed in webhook for session {session_id} "
+                    f"(user {order_data.get('user_id')}): {e}. "
+                    f"Payment received, NO order created; pending order kept for manual review/refund."
+                )
+                flag_pending_for_review(pending_ref, f"Paid but out of stock ({e})")
                 return jsonify({"status": "stock error"}), 200
-        #verify paid amount matches expected
-        expected_amount = int(round((order_data.get("downpayment_amount") or order_data.get("amount", 0)) * 100))
-        actual_amount = payments[0].get("attributes", {}).get("amount", 0) if payments else 0
-        if actual_amount != expected_amount:
-            app.logger.warning(
-                f"Amount mismatch on session {session_id}: expected {expected_amount}, got {actual_amount}"
-            )
         # Save to orders collection
         doc_ref  = orders.add(order_data)        
         order_id = doc_ref[1].id
@@ -4133,61 +4466,98 @@ def paymongo_webhook():
         pending_ref.delete()
     return jsonify({"status": "ok"}), 200
 # ---------------- PAYMENT SUCCESS ----------------
+def _render_existing_order(order_doc):
+    saved_order = order_doc.to_dict()
+    saved_order["id"] = order_doc.id
+    session.pop('paymongo_session_id', None)
+    return render_template("payment_success.html", order=saved_order, payment_result={"paid": True})
+ 
+ 
 @app.route("/payment/success")
 @login_required
 def payment_success():
     session_id = session.get('paymongo_session_id')
-
+ 
     if not session_id:
         flash("Invalid payment session.", "danger")
         return redirect(url_for("customer_dashboard"))
-
-    # Check if webhook already processed it
-    completed = orders.where("paymongo_session_id", "==", session_id).limit(1).stream()
-    if order_doc := next(completed, None):
-        # Webhook already handled it
-        saved_order = order_doc.to_dict()
-        saved_order["id"] = order_doc.id
-        session.pop('paymongo_session_id', None)
-        return render_template("payment_success.html", order=saved_order, payment_result={"paid": True})
-
-    # Webhook hasn't fired yet, fall back to polling
+ 
+    # 1) Webhook already created the order? Just show it.
+    existing = next(orders.where("paymongo_session_id", "==", session_id).limit(1).stream(), None)
+    if existing:
+        return _render_existing_order(existing)
+ 
+    # 2) Ask PayMongo directly. Never trust the redirect alone.
+    #    Done BEFORE claiming so a slow/failed API call doesn't hold the claim.
     payment_result = verify_payment(session_id)
-
+ 
     if not payment_result.get("paid"):
         flash("Payment not confirmed. Please try again.", "danger")
         session.pop('paymongo_session_id', None)
         return redirect(url_for("customer_dashboard"))
-
-    # Get pending order from Firestore
+ 
+    # 3) Atomically claim the pending order. Only one handler (this or the webhook) wins.
     pending_ref = pending_orders.document(session_id)
-    pending_doc = pending_ref.get()
-
-    if not pending_doc.exists:
-        flash("Order data not found. Please contact support.", "danger")
+    pending = claim_pending(pending_ref)
+ 
+    if pending is None:
+        # Lost the race, or already processed. Show the order if it exists now.
+        done = next(orders.where("paymongo_session_id", "==", session_id).limit(1).stream(), None)
+        if done:
+            return _render_existing_order(done)
+        flash("Your payment is being processed. Check your orders shortly.", "info")
         session.pop('paymongo_session_id', None)
         return redirect(url_for("customer_dashboard"))
-
-    pending = pending_doc.to_dict()
+ 
     order_data = pending["order_data"]
-
+ 
+    # 4) Verify the paid amount (fail closed, same rule as the webhook)
+    if not payment_matches_order(order_data, payment_result.get("amount"), payment_result.get("currency")):
+        app.logger.error(
+            f"Payment amount mismatch (payment_success) on session {session_id}: "
+            f"expected {expected_charge_centavos(order_data)}, "
+            f"got {payment_result.get('amount')} {payment_result.get('currency')}. "
+            f"Order NOT created; pending order kept for manual review."
+        )
+        flag_pending_for_review(pending_ref, "Amount mismatch")
+        flash("We received your payment and are verifying it. The shop will contact you.", "warning")
+        session.pop('paymongo_session_id', None)
+        return redirect(url_for("customer_dashboard"))
+ 
+    # 5) Deduct stock for premade orders (all-or-nothing helper)
+    if order_data.get("order_type") == "premade":
+        try:
+            deduct_stock_for_items(order_data.get("selected_items", []))
+        except ValueError as e:
+            app.logger.error(
+                f"Stock deduction failed in payment_success for session {session_id}: {e}. "
+                f"Order NOT created; pending order kept for manual review."
+            )
+            flag_pending_for_review(pending_ref, f"Paid but out of stock ({e})")
+            flash("We received your payment, but an item is no longer available. The shop will contact you shortly.", "warning")
+            session.pop('paymongo_session_id', None)
+            return redirect(url_for("customer_dashboard"))
+ 
+    # 6) Build and save the order
     order_data["delivery_date"] = datetime.fromisoformat(order_data["delivery_date"])
     order_data["created_at"]    = datetime.fromisoformat(order_data["created_at"])
-    # Set correct payment status based on downpayment type
     dp_type = order_data.get("downpayment_type")
-    if dp_type and dp_type != "full":
-        order_data["payment_status"] = "Downpayment Paid"
-    else:
-        order_data["payment_status"] = "Paid"
+    order_data["payment_status"] = "Downpayment Paid" if dp_type and dp_type != "full" else "Paid"
     order_data["payment_id"]     = payment_result.get("reference")
     order_data["payment_method"] = payment_result.get("payment_method", order_data["payment_method"]).upper()
     order_data["paymongo_session_id"] = session_id
-
-    # Save to orders
-    doc_ref = orders.add(order_data)
+ 
+    doc_ref  = orders.add(order_data)
     order_id = doc_ref[1].id
-    users.document(order_data.get("user_id")).update({"order_count": firestore.Increment(1)})
+    pending_ref.delete()   # the order is now the source of truth
     invalidate_cache("order_counts", "all_cakes", "all_orders")
+ 
+    # 7) Side effects. None of these may fail the request.
+    uid = order_data.get("user_id")
+    try:
+        users.document(uid).update({"order_count": firestore.Increment(1)})
+    except Exception:
+        app.logger.warning(f"order_count increment failed for user {uid}, non-critical")
     try:
         send_new_order_fcm(
             db_ref=db,
@@ -4198,51 +4568,55 @@ def payment_success():
         )
     except Exception:
         app.logger.warning('[FCM] New order notify failed (payment_success), non-critical')
-    # send confirmation email
-    user_doc = users.document(order_data.get("user_id")).get()
-    fname    = user_doc.to_dict().get("fname", "Customer")
-    email    = user_doc.to_dict().get("email", "")
-    send_order_confirmation(
-    fname=fname,
-    email=email,
-    order_id=order_id,
-    amount=order_data.get("amount", 0),
-    payment_method=order_data.get("payment_method"),
-    rush_fee=order_data.get("rush_fee", 0),
-    delivery_fee=order_data.get("delivery_fee", 0),
-    discount_amount=0,
-    downpayment_type=order_data.get("downpayment_type"),
-    downpayment_amount=order_data.get("downpayment_amount"),
-    remaining_balance=order_data.get("remaining_balance"),
-)
-    handle_loyalty_stamp(
-        users,
-        order_data.get('user_id'),
-        order_data.get('order_type'),
-        order_data.get('selected_items', []),
-        cakes,
-        order_id=order_id
-    )
-        # ── Mark voucher as used ──
-    for cv in order_data.get("claimed_vouchers", []):
-        users.document(order_data["user_id"]).collection("vouchers").document(cv["voucher_id"]).update({
-            "used":    True,
-            "used_at": datetime.now(PH_TZ)
-        })
-        
-    # Delete pending order
-    consult_token = pending.get('consult_token', '')
-    if consult_token:
-        pending_consultations.document(consult_token).update({
-            'used': True, 'used_at': datetime.now(PH_TZ)
-        })
-    pending_ref.delete()
-
+    try:
+        user_doc = users.document(uid).get()
+        udata = user_doc.to_dict() if user_doc.exists else {}
+        send_order_confirmation(
+            fname=udata.get("fname", "Customer"),
+            email=udata.get("email", ""),
+            order_id=order_id,
+            amount=order_data.get("amount", 0),
+            payment_method=order_data.get("payment_method"),
+            rush_fee=order_data.get("rush_fee", 0),
+            delivery_fee=order_data.get("delivery_fee", 0),
+            discount_amount=0,
+            downpayment_type=order_data.get("downpayment_type"),
+            downpayment_amount=order_data.get("downpayment_amount"),
+            remaining_balance=order_data.get("remaining_balance"),
+        )
+    except Exception:
+        app.logger.warning(f"Confirmation email failed for order {order_id}, non-critical")
+    try:
+        for cv in order_data.get("claimed_vouchers", []):
+            users.document(uid).collection("vouchers").document(cv["voucher_id"]).update({
+                "used": True, "used_at": datetime.now(PH_TZ)
+            })
+    except Exception:
+        app.logger.error(f"Voucher mark-used failed for order {order_id}")
+    try:
+        handle_loyalty_stamp(
+            users, uid,
+            order_data.get('order_type'),
+            order_data.get('selected_items', []),
+            cakes,
+            order_id=order_id
+        )
+    except Exception:
+        app.logger.error(f"Loyalty stamp failed for order {order_id}")
+    try:
+        consult_token = pending.get('consult_token', '')
+        if consult_token:
+            pending_consultations.document(consult_token).update({
+                'used': True, 'used_at': datetime.now(PH_TZ)
+            })
+    except Exception:
+        app.logger.error(f"Consultation token mark-used failed for order {order_id}")
+ 
     session.pop('paymongo_session_id', None)
-
+ 
     saved_order = order_data.copy()
     saved_order["id"] = order_id
-
+ 
     return render_template("payment_success.html",
         order=saved_order,
         payment_result=payment_result
@@ -4255,6 +4629,13 @@ def cod_success(order_id):
     if not order_doc.exists:
         return redirect(url_for("customer_dashboard"))
     order = order_doc.to_dict()
+
+    # Only the customer who placed the order may view its confirmation page.
+    # Same response as "not found" so we don't reveal that the order exists.
+    session_user_id = session.get("user_id")
+    if not session_user_id or order.get("user_id") != session_user_id:
+        return redirect(url_for("customer_dashboard"))
+
     order["id"] = order_doc.id
     order = convert_timestamps(order)
     return render_template("cod_success.html", order=order)
@@ -4262,11 +4643,11 @@ def cod_success(order_id):
 @app.route("/payment/failed")
 @login_required
 def payment_failed():
-    session_id = session.pop('paymongo_session_id', None)
-
-    if session_id:
-        pending_orders.document(session_id).delete()
-
+    # Do NOT delete the pending order here. This is a plain GET, so a customer who
+    # already paid could hit it (back button) before the webhook lands and destroy
+    # the data needed to create their order. Abandoned pending docs are harmless.
+    session.pop('paymongo_session_id', None)
+ 
     flash("Payment was cancelled or failed. Please try again.", "danger")
     return redirect(url_for("cakes_page"))
 # ================================================================
@@ -4682,7 +5063,7 @@ def get_conversation_status(user_id, conversation_id):
 @admin_required
 def delete_conversation():
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True) or {}
         user_id = data.get('user_id')
         conversation_id = data.get('conversation_id')
         
@@ -4702,7 +5083,7 @@ def delete_conversation():
         return jsonify({'success': True})
     except Exception as e:
         app.logger.exception("Error deleting conversation")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'success': False, 'error': 'Internal server error'}), 500
 
 # ---------------- ADMIN GET CONVERSATIONS ----------------
 @app.route('/admin/conversations')

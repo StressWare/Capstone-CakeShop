@@ -69,7 +69,7 @@ class ChatbotWidget {
 
             localStorage.setItem(`chatbot_conversation_${this.userId}`, convId);
         } catch (error) {
-            console.error('❌ Error creating conversation:', error);
+            console.error('Error creating conversation:', error);
         }
 
         this.conversationId = convId;
@@ -250,6 +250,16 @@ class ChatbotWidget {
                 this.listenMessages();                 // ← start Firestore listener now
                 this.listenAdminTyping();              // ← start admin typing listener
                 this.updateUIForEscalation();
+            } else {
+                console.error('Escalation failed:', data.error);
+                this.addMessage(response.status === 401
+                    ? 'Your session expired. Please refresh the page and log in again.'
+                    : "Sorry, we're having trouble connecting you.", 'bot');
+                this.showFaqButtons();
+                if (this.escalateBtn) {
+                    this.escalateBtn.disabled = false;
+                    this.escalateBtn.textContent = '👤 Chat with Owner';
+                }
             }
         } catch (error) {
             console.error('Error escalating:', error);
@@ -464,7 +474,9 @@ class ChatbotWidget {
             this.hideTyping();
             if (!data.success) {
                 console.error('Failed to send:', data.error);
-                this.addMessage('Sorry, there was an error. Please try again.', 'bot');
+                this.addMessage(response.status === 401
+                    ? 'Your session expired. Please refresh the page and log in again.'
+                    : 'Sorry, there was an error. Please try again.', 'bot');
             } else if (data.escalated && !this.isEscalated) {
                 // ← auto-escalated via order context — switch to owner chat mode
                 this.isEscalated = true;
@@ -582,23 +594,26 @@ showBadge() {
                 : '';
             const typeLabel = orderContext.order_type === 'custom' ? 'Custom' : 'Premade';
             const amount = parseFloat(orderContext.amount || 0).toFixed(2);
+            // Only allow https image URLs; escape for use inside an HTML attribute
+            const safeImage = /^https:\/\//i.test(orderContext.item_image || '')
+                ? this.escapeAttr(orderContext.item_image) : '';
             orderCardHtml = `
             
                 <div style="background:#fff0f6;border:1.5px solid #f5c2dc;border-radius:8px;
                             padding:9px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:center;">
-                    ${orderContext.item_image
-                        ? `<img src="${orderContext.item_image}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
+                    ${safeImage
+                        ? `<img src="${safeImage}" style="width:48px;height:48px;border-radius:6px;object-fit:cover;flex-shrink:0;">`
                         : `<div style="width:48px;height:48px;border-radius:6px;background:#f5c2dc;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎂</div>`}
                     <div>
                         <div style="font-size:12px;font-weight:700;color:#d63384;margin-bottom:3px;">
-                            ${orderContext.item_label || 'Order'}
+                            ${this.escapeHtml(orderContext.item_label || 'Order')}
                         </div>
-                        ${itemDetails ? `<div style="font-size:11px;color:#aaa;margin-bottom:3px;">${orderContext.item_details}</div>` : ''}
+                        ${itemDetails ? `<div style="font-size:11px;color:#aaa;margin-bottom:3px;">${this.escapeHtml(orderContext.item_details)}</div>` : ''}
                         <div style="font-size:11px;color:#aaa;">
-                            ${typeLabel} · ₱${amount} · ${orderContext.status || ''}
+                            ${typeLabel} · ₱${amount} · ${this.escapeHtml(orderContext.status || '')}
                         </div>
                         <div style="font-size:10px;color:#bbb;margin-top:3px;font-family:monospace;">
-                            Order ID #${orderContext.order_id}
+                            Order ID #${this.escapeHtml(orderContext.order_id || '')}
                         </div>
                     </div>
                 </div>`;
@@ -627,6 +642,9 @@ showBadge() {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+        escapeAttr(text) {
+        return this.escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
     linkify(text) {
         if (!text) return '';

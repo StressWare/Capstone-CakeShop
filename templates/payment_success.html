@@ -261,7 +261,7 @@
           {% if order.delivery_type == 'Pickup' %}Pick Up Date{% else %}Delivery Date{% endif %}
         </span>
         <span class="info-value">
-          {{ order.delivery_date.strftime('%b %d, %Y · %I:%M %p') if order.delivery_date is not string else order.delivery_date[:10] }}
+          {{ order.delivery_date.strftime('%b %d, %Y') if order.delivery_date is not string else order.delivery_date[:10] }}
         </span>
       </div>
       {% endif %}
