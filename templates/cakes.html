@@ -34,7 +34,7 @@
   }
   .heart-btn:hover { transform: scale(1.15); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
   .heart-btn.favorited { background: #fff0f5; }
-
+    .heart-btn i { color: #d63384; }
   /* Clickable cake card */
   .cake-image {
     position: relative;
@@ -290,7 +290,7 @@
                     data-cake-id="{{ cake.id }}"
                     data-cake-name="{{ cake.name }}"
                     title="{% if cake.id in favorite_ids %}Remove from favorites{% else %}Add to favorites{% endif %}">
-              {% if cake.id in favorite_ids %}❤️{% else %}🤍{% endif %}
+              {% if cake.id in favorite_ids %}<i class="fa-solid fa-heart"></i>{% else %}<i class="fa-regular fa-heart"></i>{% endif %}
             </button>
             {% endif %}
           </div>
@@ -308,8 +308,8 @@
               <span style="color:#ffc107; font-size:0.85rem;">
                 {% set full = cake.avg_rating | int %}
                 {% set half = cake.avg_rating - full >= 0.5 %}
-                {% for i in range(full) %}⭐{% endfor %}
-                {% if half %}✨{% endif %}
+                {% for i in range(full) %}<i class="fa-solid fa-star"></i>{% endfor %}
+{% if half %}<i class="fa-solid fa-star-half-stroke"></i>{% endif %}
               </span>
               <small class="text-muted" style="font-size:0.78rem;">
                 {{ cake.avg_rating }} ({{ cake.review_count }} review{{ 's' if cake.review_count > 1 }})
@@ -365,7 +365,7 @@
             {% else %}
               <button class="btn w-100" disabled
                       style="background:#eee; color:#999; border:none; padding:10px; border-radius:8px;">
-                😔 Sold Out
+                 Sold Out
               </button>
             {% endif %}
           {% else %}
@@ -450,7 +450,7 @@
             {% set full = cake.avg_rating | int %}
             {% set half = cake.avg_rating - full >= 0.5 %}
             {% for i in range(full) %}⭐{% endfor %}
-            {% if half %}✨{% endif %}
+            {% if half %}{% endif %}
           </span>
           <span style="font-size:0.88rem; color:#555;">
             {{ cake.avg_rating }} / 5 — {{ cake.review_count }} review{{ 's' if cake.review_count > 1 }}
@@ -522,7 +522,7 @@
           <div class="review-item">
             <div class="d-flex align-items-center gap-2">
               <div class="review-stars">
-                {% for i in range(review.rating) %}⭐{% endfor %}
+                {% for i in range(review.rating) %}<i class="fa-solid fa-star"></i>{% endfor %}
               </div>
               <strong style="font-size:0.88rem;">{{ review.reviewer_name }}</strong>
             </div>
@@ -590,13 +590,13 @@ async function toggleFavorite(cakeId, cakeName) {
 
     if (data.success) {
       const isAdded   = data.action === 'added';
-      const emoji     = isAdded ? '❤️' : '🤍';
+      const icon      = isAdded ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
       const title     = isAdded ? 'Remove from favorites' : 'Add to favorites';
 
       // update card heart
       const cardBtn = document.getElementById('heart-' + cakeId);
       if (cardBtn) {
-        cardBtn.textContent = emoji;
+         cardBtn.innerHTML = icon;
         cardBtn.title = title;
         cardBtn.classList.toggle('favorited', isAdded);
       }
@@ -604,7 +604,7 @@ async function toggleFavorite(cakeId, cakeName) {
       // update modal heart
       const modalBtn = document.getElementById('modal-heart-' + cakeId);
       if (modalBtn) {
-        modalBtn.textContent = emoji;
+       modalBtn.innerHTML = icon;
         modalBtn.title = title;
       }
     }

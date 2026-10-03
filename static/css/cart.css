@@ -269,6 +269,56 @@ footer {
       font-size: 0.9rem;
     }
 
+    /* ====== QTY BUTTONS — NO BACKGROUND, NO BORDER (bare glass circles) ====== */
+    .btn-qty {
+      background: pink !important;        /* no fill */
+      border: none !important;                   /* ← removed the pink border */
+      outline: none;
+      border-radius: 50%;
+      color: #df0d61;
+      width: 20px;
+      height: 20px;
+      min-width: 28px;
+      padding: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      box-shadow: none !important;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      text-align: center;
+      
+    }
+
+    .btn-qty:hover {
+      background: rgba(231, 84, 128, 0.18) !important;  /* soft tint on hover */
+      color: #fff;
+      transform: scale(1.08);
+    }
+
+    .btn-qty:active {
+      transform: scale(0.94);
+    }
+
+    .btn-qty:focus-visible {
+      outline: 2px solid #ff8fbc;
+      outline-offset: 2px;
+    }
+    
+    .item-qty form,
+    .item-qty{
+      background: transparent !important;
+      background-color: transparent !important;
+      box-shadow: none !important;
+      
+    }
+
+
     /* Mobile: Prevent horizontal scroll */
 @media (max-width: 575px) {
   .cart-wrapper {

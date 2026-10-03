@@ -1074,7 +1074,7 @@
         <div class="review-card-body">
           <div class="review-cake-name">{{ cake.name }}</div>
           <div class="review-stars" style="color:#ffc107; font-size:0.9rem;">
-            {% for i in range(cake.avg_rating | int) %}⭐{% endfor %}
+            {% for i in range(cake.avg_rating | int) %}<i class="fa-solid fa-star"></i>{% endfor %}
           </div>
           <div class="review-rating-text" style="font-size:0.75rem; color:#ffffff;">
             {{ cake.avg_rating }} / 5 ({{ cake.review_count }} reviews)

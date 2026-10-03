@@ -221,6 +221,33 @@
     text-align: center; padding: 40px; color: #c07090;
   }
 
+ .btn-add-manual {
+background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  padding: 8px 20px !important;
+  letter-spacing: 0.3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(214, 51, 132, 0.25) !important;
+  transition: all 0.25s ease !important;
+}
+.btn-add-manual:hover {
+ background: linear-gradient(135deg, #e75480 0%, #d63384 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(214, 51, 132, 0.35) !important;
+  color: #ffffff !important;
+}
+.btn-add-manual:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(214, 51, 132, 0.2) !important;
+}
+
   /* ════════════════════════════════════════════════
      RESPONSIVE — TABLET (≤ 991px)
   ════════════════════════════════════════════════ */
@@ -565,10 +592,20 @@
         .banner-btn-view, .banner-btn-dismiss { padding: 6px 10px; font-size: 0.78rem; }
         #newOrderBanner { left: 0; }
     }
-    @media (max-width: 992px) {
+        @media (max-width: 992px) {
       #newOrderBanner {
           left: 0; /* full width on tablet/mobile since sidebar is hidden */
       }
+  }
+
+  /* Pink radio buttons – Add Manual Order modal */
+  #manualOrderModal .form-check-input[type="radio"]:checked {
+    background-color: var(--pink-primary);
+    border-color: var(--pink-primary);
+  }
+  #manualOrderModal .form-check-input[type="radio"]:focus {
+    border-color: var(--pink-primary);
+    box-shadow: 0 0 0 0.25rem rgba(214, 51, 132, 0.25);
   }
 </style>
 {% endblock %}
@@ -589,17 +626,17 @@
           </div>
           <div class="banner-actions">
               <button class="banner-btn-view" id="btnBannerView">View Orders</button>
-              <button class="banner-btn-dismiss" id="btnBannerDismiss">✕ Dismiss</button>
-          </div>
+              <button class="banner-btn-dismiss" id="btnBannerDismiss"><i class="fa-solid fa-xmark me-1"></i>Dismiss</button>
+           </div>
       </div>
   </div>
   <div class="container-fluid mt-4 mb-0 px-4">
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Order Management</h4>
-        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
-          <i class="fas fa-plus me-1"></i>Add Manual Order
-        </button>
+<button type="button" class="btn btn-sm btn-add-manual" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
+  <i class="fas fa-plus me-1"></i>Add Manual Order
+</button>
       </div>
       <div class="card-body">
 
@@ -1351,8 +1388,8 @@ document.addEventListener('hidden.bs.modal', function() {
             </div>`,
       showConfirmButton: true,
       showCancelButton: true,
-      confirmButtonText: '✓ Confirm',
-      cancelButtonText: '✕ Cancel',
+      confirmButtonText: '<i class="fa-solid fa-check me-1"></i>Confirm',
+      cancelButtonText: '<i class="fa-solid fa-xmark me-1"></i>Cancel',
       timer: 0
     });
 

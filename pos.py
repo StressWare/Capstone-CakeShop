@@ -162,7 +162,7 @@ def pos_order():
             "receipt_url": url_for('pos.pos_receipt', order_id=order_id),
         }), 200
 
-    flash('Order placed successfully! 🎂', 'success')
+    flash('Order placed successfully!', 'success')
     return redirect(url_for('pos.pos_receipt', order_id=order_id))
 
 

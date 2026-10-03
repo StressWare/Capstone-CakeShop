@@ -47,14 +47,14 @@
         <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="dec">
-          <button type="submit" class="btn-remove" style="padding:0 10px;">−</button>
+          <button type="submit" class="btn-qty">-</button>
         </form>
         <span class="qty-num">{{ item.quantity | default(1) }}</span>
         <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="inc">
-          <button type="submit" class="btn-remove" style="padding:0 10px;">+</button>
-        </form>
+          <button type="submit" class="btn-qty">+</button>
+        </form> 
       </div>      
     </div>
       <form method="POST" action="/cart/remove/{{ item.cake_id }}">

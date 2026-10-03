@@ -143,7 +143,7 @@
         <div class="loyalty-fill" style="width: {{ (loyalty_stamps / 10 * 100)|int }}%;"></div>
       </div>
      {% if loyalty_unclaimed %}
-      <div class="loyalty-sub">🎉 You have an unclaimed <span>reward</span>!</div>
+      <div class="loyalty-sub">You have an unclaimed <span>reward</span>!</div>
             <div style="margin-top:8px;">
               <button id="claimRewardBtn"
                       style="background:var(--pink);color:#fff;border:none;border-radius:var(--radius-sm);
@@ -221,9 +221,9 @@
               {% if order.rush %}<span class="status-pill pill-rush">Rush</span>{% endif %}
             </div>
             {% if s == 'Out for Delivery' %}
-<a href="/track/{{ order.id }}" target="_blank" class="track-order-btn">
-  Track order <span aria-hidden="true">→</span>
-</a>
+            <a href="/track/{{ order.id }}" target="_blank" class="track-order-btn">
+              Track order <span aria-hidden="true">→</span>
+            </a>
             {% endif %}
           </div>
 
@@ -355,10 +355,16 @@
           <div class="fav-card-name">{{ cake.name }}</div>
           <div class="fav-card-price">₱{{ "%.2f"|format(cake.price) }}</div>
           <div class="fav-card-rating">
-            {% if cake.review_count > 0 %}{% for i in range(cake.avg_rating|int) %}⭐{% endfor %} {{ cake.avg_rating }} ({{ cake.review_count }})
-            {% else %}No reviews yet{% endif %}
+            {% if cake.review_count and cake.review_count > 0 %}
+              {% for i in range(cake.avg_rating|int) %}
+                <i class="fa-solid fa-star" style="color:#ffc107;"></i>
+              {% endfor %}
+              {{ cake.avg_rating }} ({{ cake.review_count }})
+            {% else %}
+              No reviews yet
+            {% endif %}
           </div>
-          <div class="fav-card-stock">{% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %}😔 Sold Out{% endif %}</div>
+          <div class="fav-card-stock">{% if cake.quantity > 0 %}{{ cake.quantity }} left{% else %} Sold Out{% endif %}</div>
           {% if cake.quantity > 0 %}
           <div class="fav-btn-group">
             <form method="POST" action="/order/cake" class="order-form">
@@ -490,7 +496,7 @@
 
       <div class="loyalty-sub mb-3">
         {% if loyalty_unclaimed %}
-          <span style="color:var(--pink);">🎉 You have an unclaimed reward!</span>
+          <span style="color:var(--pink);">You have an unclaimed reward!</span>
         {% elif loyalty_stamps >= 5 %}
           <span>{{ 10 - loyalty_stamps }} more stamp{{ 's' if (10 - loyalty_stamps) != 1 else '' }}</span> to unlock a bigger free gift!
         {% else %}
@@ -863,11 +869,11 @@
               {% if order.order_type == 'premade' and order.selected_items %}
                   <button class="btn btn-sm" style="background:var(--pink);color:#fff;"
                           data-bs-toggle="modal"
-                          data-bs-target="#reviewModal{{ order.id }}">⭐ Review</button>
+                          data-bs-target="#reviewModal{{ order.id }}"><i class="fa-solid fa-star me-1"></i>Review</button>
                 {% elif order.order_type == 'custom' %}
                   <button class="btn btn-sm" style="background:var(--pink);color:#fff;"
                           data-bs-toggle="modal"
-                          data-bs-target="#reviewModal{{ order.id }}">⭐ Review</button>
+                          data-bs-target="#reviewModal{{ order.id }}"><i class="fa-solid fa-star me-1"></i>Review</button>
                 {% endif %}
             {% endif %}
             <button type="button" class="btn btn-sm message-shop-btn"

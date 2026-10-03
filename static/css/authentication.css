@@ -300,7 +300,8 @@ button[type="submit"]:active {
     gap: 10px;
     width: 100%;
     padding: 12px 16px;
-    background: rgba(255, 255, 255, 0.06);
+    background-color: rgba(255, 255, 255, 0.06);
+    background-image: none;
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 10px;
     color: #ffffff;
@@ -309,17 +310,31 @@ button[type="submit"]:active {
     cursor: pointer;
     text-align: center;
     text-decoration: none;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.15s ease;
     margin: 0; /* overrides old .toggle-msg margin */
 }
 
-.auth-option-btn:hover {
-    background: rgba(214, 51, 132, 0.18);
+/* Hover only on devices that really hover (mouse). Stops iOS from
+   leaving the buttons "stuck" in the hover state after a tap. */
+@media (hover: hover) and (pointer: fine) {
+    .auth-option-btn:hover {
+        background-color: rgba(214, 51, 132, 0.18);
+        border-color: rgba(214, 51, 132, 0.5);
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+}
+
+/* Brief press feedback for touch screens */
+.auth-option-btn:active {
+    background-color: rgba(214, 51, 132, 0.18);
     border-color: rgba(214, 51, 132, 0.5);
-    transform: translateY(-1px);
-    text-decoration: none;
 }
 
 .auth-option-btn i {
@@ -475,5 +490,27 @@ button[type="submit"]:active {
 
     .form-container {
         flex: 0 0 auto;   /* same fix, in case it's set elsewhere */
+    }
+}
+
+
+/* AUTH OPTIONS BAR - keep the mobile look identical to desktop */
+@media (max-width: 768px) {
+    .auth-option-btn {
+        background-color: rgba(255, 255, 255, 0.06);
+        background-image: none;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-size: 0.95rem;
+        letter-spacing: normal;
+    }
+
+    .auth-option-secondary {
+        color: rgba(255, 255, 255, 0.85);
+        font-weight: 400;
+    }
+
+    .auth-option-secondary strong {
+        color: #ff8fc2;
     }
 }

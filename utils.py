@@ -35,7 +35,7 @@ def _fetch_or_cache(key, fetch_fn):
     # Fast path — no lock
     cached = get_cache(key)
     if cached is not None:
-        print(f"✅ CACHE HIT — {key}")
+        print(f"CACHE HIT — {key}")
         return cached
 
     # Slow path — acquire lock, check again, then fetch
@@ -43,7 +43,7 @@ def _fetch_or_cache(key, fetch_fn):
         cached = get_cache(key)
         if cached is not None:
             return cached
-        print(f"🔥 FIRESTORE READ — {key}")
+        print(f"FIRESTORE READ — {key}")
         result = fetch_fn()
         _cache[key] = {"data": result, "timestamp": time.time()}
         return result

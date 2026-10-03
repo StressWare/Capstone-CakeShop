@@ -181,7 +181,7 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
         right: -5px;
         border-width: 2px;
 
-        /* 👇 Number moves DOWN: reduce bottom padding, add top padding */
+        /*  Number moves DOWN: reduce bottom padding, add top padding */
         padding-bottom: 0;
         padding-top: 1px;
     }
@@ -196,7 +196,7 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
         top: -2px;
         right: -4px;
 
-        /* 👇 Number moves DOWN more */
+        /*  Number moves DOWN more */
         padding-bottom: 0;
         padding-top: 1px;
     }
@@ -212,7 +212,7 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
         right: -4px;
         border-width: 1.5px;
 
-        /* 👇 Number moves DOWN */
+        /*  Number moves DOWN */
         padding-bottom: 0;
         padding-top: 1.5px;
     }
@@ -228,7 +228,7 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
         right: -3px;
         border-width: 1.5px;
 
-        /* 👇 Number moves DOWN */
+        /*  Number moves DOWN */
         padding-bottom: 0;
         padding-top: 1.5px;
     }

@@ -88,7 +88,7 @@ function renderNotifications(notifications) {
                         style="position: absolute; top: 8px; right: 10px; background: none; border: none; color: #ccc; font-size: 0.85rem; cursor: pointer; line-height: 1; padding: 4px 6px; border-radius: 4px; z-index: 10;"
                         onmouseover="this.style.color='#d63384'; this.style.background='#fff0f5';"
                         onmouseout="this.style.color='#ccc'; this.style.background='none';"
-                        title="Delete notification">✕</button>
+                       title="Delete notification"><i class="fa-solid fa-xmark"></i></button>
             </div>
         `;
     });

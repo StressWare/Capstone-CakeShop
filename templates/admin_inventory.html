@@ -359,21 +359,25 @@
     box-shadow: 0 4px 12px rgba(199,21,133,0.15);
   }
 
-  .dropdown-item {
-    font-size: 0.85rem;
-    color: #333;
-    transition: all 0.2s;
+  /* ── Edit / Delete buttons inside the 3-dot menu ── */
+  .inv-actions-menu {
+    min-width: 150px;
+    padding: 8px;
   }
-
-  .dropdown-item:hover {
-    background: #fff0f7;
-    color: #c71585;
+  .inv-actions-menu li + li { margin-top: 8px; }
+  .btn-inv-edit,
+  .btn-inv-delete {
+    border: none;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    transition: opacity 0.18s;
   }
-
-  .dropdown-item.text-danger:hover {
-    background: #ffe6e6 !important;
-    color: #dc3545 !important;
-  }
+  .btn-inv-edit { background: linear-gradient(135deg, #d63384, #a01070); }
+  .btn-inv-delete { background: #dc3545; }
+  .btn-inv-edit:hover,
+  .btn-inv-delete:hover { opacity: 0.88; color: #fff; }
 
   .dropdown-toggle::after {
     display: none; /* Remove default arrow */
@@ -479,21 +483,18 @@
               type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
               <i class="fas fa-ellipsis-v"></i>
             </button>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end inv-actions-menu">
                   <li>
-                    <a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
-                      <i class="fas fa-edit text-primary"></i> Edit
-                    </a>
-                  </li>
-                  <li><hr class="dropdown-divider"></li>
-                  <li>
-                    <form method="POST" action="/inventory/delete/{{ i.id }}" style="display:inline;">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                     <button type="button" class="dropdown-item text-danger" 
-                         data-item-name="{{ i.item }}"
-                        style="border:none;background:none;width:100%;text-align:left;padding:0.5rem 1rem;cursor:pointer;">
-                        <i class="fas fa-trash"></i> Delete
+                    <button type="button" class="btn btn-sm btn-inv-edit w-100" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
+                      <i class="fas fa-edit me-1"></i>Edit
                     </button>
+                  </li>
+                  <li>
+                    <form method="POST" action="/inventory/delete/{{ i.id }}" class="m-0">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="button" class="btn btn-sm btn-inv-delete w-100" data-item-name="{{ i.item }}">
+                        <i class="fas fa-trash me-1"></i>Delete
+                      </button>
                     </form>
                   </li>
                 </ul>
@@ -909,7 +910,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const restockBtn = e.target.closest('[data-restock-id]');
     if (restockBtn) openRestockModal(restockBtn.dataset.restockId, restockBtn.dataset.restockName);
 
-    const deleteBtn = e.target.closest('.dropdown-item.text-danger');
+    const deleteBtn = e.target.closest('.btn-inv-delete');
     if (deleteBtn) handleDeleteInventory(deleteBtn, deleteBtn.dataset.itemName);
   });
 

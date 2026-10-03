@@ -14,12 +14,12 @@ class ChatbotWidget {
         this.escalateBtn = document.getElementById('escalateBtn');
         this.unsubscribe = null;
         
-        if (!this.toggleBtn) console.error('❌ Missing: chatbotToggle');
-        if (!this.chatWindow) console.error('❌ Missing: chatbotWindow');
-        if (!this.messagesContainer) console.error('❌ Missing: chatbotMessages');
+        if (!this.toggleBtn) console.error('Missing: chatbotToggle');
+        if (!this.chatWindow) console.error('Missing: chatbotWindow');
+        if (!this.messagesContainer) console.error('Missing: chatbotMessages');
         
         if (this.userId === 'unknown') {
-            console.error('❌ User ID not found!');
+            console.error('User ID not found!');
             return;
         }
         this.init();
@@ -392,7 +392,7 @@ class ChatbotWidget {
             const resetBtn = document.getElementById('resetConversationBtn');
             if (resetBtn) resetBtn.remove();
 
-            this.addMessage('👋 Starting a new conversation! How can we help you?', 'bot');
+            this.addMessage('Starting a new conversation! How can we help you?', 'bot');
         }
     } catch (error) {
         console.error('Error resetting conversation:', error);
