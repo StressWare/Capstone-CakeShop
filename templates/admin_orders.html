@@ -100,6 +100,20 @@
     100% { background: transparent; }
   }
 
+  /* DEEP-LINK HIGHLIGHT (from dashboard ?open=ID) */
+  #ordersTable tbody td { transition: background-color 0.4s; }
+  #ordersTable tbody tr.row-highlight > td {
+    background-color: #fff3cd !important;
+    box-shadow: none !important;
+  }
+  #ordersTable tbody tr.row-highlight > td:first-child {
+    box-shadow: inset 5px 0 0 var(--pink-primary) !important;
+  }
+  #ordersTable tbody tr.row-highlight .status-select {
+    border-color: var(--pink-primary);
+    box-shadow: 0 0 0 0.2rem rgba(214,51,132,0.25);
+  }
+
   /* BADGES */
   .badge-custom  { background: #6f42c1 !important; }
   .badge-premade { background: #0d6efd !important; }
@@ -991,6 +1005,10 @@ document.addEventListener('hidden.bs.modal', function() {
   let db = null;
   let allOrders = [];         // kept in sync for other functions that still read it (showDetails, etc.)
   let deepLinkedOrder = null;
+  let highlightId = null;     // order to highlight (set from ?open=ID)
+  let needsScroll = false;    // scroll/focus once after the row first renders
+  let pinnedOrder = null;     // deep-linked order that is older than the loaded list
+  let pinnedTried = false;
   let liveOrders = [];        // top LIVE_LIMIT orders, kept live via onSnapshot
   let moreOrders = [];        // older orders, lazy-loaded on demand (not live)
   let lastVisibleDoc = null;  // cursor to continue Mode-1 pagination from
@@ -1188,14 +1206,30 @@ document.addEventListener('hidden.bs.modal', function() {
       return matchTab && matchSearch && matchRush && matchStatus;
     });
 
+    // ── Deep-link: jump to the page that holds the target order ──
+    if (highlightId && needsScroll) {
+      const idx = filtered.findIndex(o => o.id === highlightId);
+      if (idx >= 0) {
+        currentPage = Math.floor(idx / ordersPerPage) + 1;
+      } else if (!isFirstLoad && !pinnedTried && !isManualTab) {
+        pinnedTried = true;               // older than the loaded list -> fetch it directly
+        fetchPinnedOrder(highlightId);
+      }
+    }
+
     const loadedPages = Math.max(Math.ceil(filtered.length / ordersPerPage), 1);
     if (currentPage > loadedPages) currentPage = loadedPages;
     const start = (currentPage - 1) * ordersPerPage;
-    const pageOrders = filtered.slice(start, start + ordersPerPage);
+    let pageOrders = filtered.slice(start, start + ordersPerPage);
+
+    // Pinned (older) order is shown at the top of page 1 while highlighted
+    const showPinned = !!pinnedOrder && pinnedOrder.id === highlightId &&
+      currentPage === 1 && !filtered.some(o => o.id === pinnedOrder.id);
+    if (showPinned) pageOrders = [pinnedOrder, ...pageOrders];
 
     const tbody = document.getElementById('ordersTableBody');
 
-    if (filtered.length === 0) {
+    if (filtered.length === 0 && !showPinned) {
       tbody.innerHTML = '';
       document.getElementById('emptyTabMsg').style.display = 'block';
       const labels = { all: 'No orders yet', custom: 'No customized orders found', premade: 'No premade orders found', manual: 'No manually added orders found' };
@@ -1205,10 +1239,24 @@ document.addEventListener('hidden.bs.modal', function() {
       tbody.innerHTML = pageOrders.map(o => renderRow(o)).join('');
     }
 
+    // ── Deep-link: scroll to the row and focus its status dropdown (once) ──
+    if (highlightId && needsScroll) {
+      const row = tbody.querySelector(`tr[data-id="${CSS.escape(highlightId)}"]`);
+      if (row) {
+        needsScroll = false;
+        requestAnimationFrame(() => {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const sel = row.querySelector('.status-select');
+          if (sel) sel.focus({ preventScroll: true });
+        });
+      }
+    }
+
     const hasMore = isManualTab ? false : (isStatusMode ? statusHasMore : hasMoreOrders);
     const totalPages = loadedPages + (hasMore ? 1 : 0);
 
     updatePaginationButtons('ordersPagination', currentPage, totalPages, page => {
+      clearDeepLink();
       const needsMoreData = page > loadedPages;
       if (needsMoreData) {
         if (isStatusMode) {
@@ -1276,7 +1324,7 @@ document.addEventListener('hidden.bs.modal', function() {
     const updateCell = getUpdateCell(o);
 
     return `
-      <tr class="${isRush}" data-id="${o.id}" data-type="${o.order_type || 'unknown'}">
+      <tr class="${isRush} ${o.id === highlightId ? 'row-highlight' : ''}" data-id="${o.id}" data-type="${o.order_type || 'unknown'}">
         <td data-label="Date">${dateOrdered}</td>
         <td data-label="Type">${typeBadge}</td>
         <td data-label="Customer">${customerCell}</td>
@@ -1420,6 +1468,8 @@ document.addEventListener('hidden.bs.modal', function() {
         title: result.message || (result.success ? 'Updated!' : 'Failed'),
         showConfirmButton: false, timer: result.success ? 2500 : 4000, timerProgressBar: true
       });
+      // Pinned (older) orders aren't covered by the live listener, so re-fetch it
+      if (result.success && pinnedOrder && pinnedOrder.id === orderId) fetchPinnedOrder(orderId);
     } catch (err) {
       glassToast({ icon: 'error', title: 'Network error', showConfirmButton: false, timer: 3000 });
     } finally {
@@ -1880,6 +1930,7 @@ async function updateTabCounts() {
 
   // ── Tab switch ──
   window.switchOrderTab = function(tab, btn) {
+    clearDeepLink();
     currentTab = tab;
     currentPage = 1;
     if (tab === 'manual') listenToManualOrders(); else stopManualOrders();
@@ -1890,8 +1941,9 @@ async function updateTabCounts() {
 
   // ── Filters ──
   function setupFilters() {
-    document.getElementById('searchOrders').addEventListener('keyup', () => { currentPage = 1; renderTable(); });
+    document.getElementById('searchOrders').addEventListener('keyup', () => { clearDeepLink(); currentPage = 1; renderTable(); });
     document.getElementById('statusFilter').addEventListener('change', () => {
+      clearDeepLink();
       statusOrders = [];
       statusLastVisible = null;
       statusHasMore = true;
@@ -1903,7 +1955,7 @@ async function updateTabCounts() {
         renderTable();
       }
     });
-    document.getElementById('rushFilter').addEventListener('change', () => { currentPage = 1; renderTable(); });
+    document.getElementById('rushFilter').addEventListener('change', () => { clearDeepLink(); currentPage = 1; renderTable(); });
   }
 
   // ── Edit modal change listeners ──
@@ -1926,18 +1978,36 @@ async function updateTabCounts() {
     });
   };
 
-  async function openOrderFromQuery() {
+  // Dashboard link: /admin/orders?open=ID -> highlight that row (no modal)
+  function openOrderFromQuery() {
     const id = new URLSearchParams(window.location.search).get('open');
-    if (!id || !/^[^/]{1,150}$/.test(id)) return;          // validate
-    history.replaceState(null, '', window.location.pathname); // refresh won't reopen
+    if (!id || !/^[^/]{1,150}$/.test(id)) return;            // validate
+    history.replaceState(null, '', window.location.pathname);  // refresh won't re-trigger
+    highlightId = id;
+    needsScroll = true;
+    pinnedTried = false;
+    // renderTable() runs when the first snapshot arrives and does the rest
+  }
+
+  // Order older than the live window: fetch it directly and pin it on page 1
+  async function fetchPinnedOrder(id) {
     try {
       const snap = await db.collection('orders').doc(id).get();
-      if (!snap.exists) return;
-      deepLinkedOrder = { ...snap.data(), id: snap.id };
-      window.showDetails(snap.id);
+      if (!snap.exists) { clearDeepLink(); return; }
+      pinnedOrder = { ...snap.data(), id: snap.id };
+      deepLinkedOrder = pinnedOrder;
+      if (needsScroll) currentPage = 1;
+      renderTable();
     } catch (err) {
-      console.error('Deep-link open failed:', err);
+      console.error('Deep-link fetch failed:', err);
+      clearDeepLink();
     }
+  }
+
+  function clearDeepLink() {
+    highlightId = null;
+    needsScroll = false;
+    pinnedOrder = null;
   }
 
   // ── Helpers ──

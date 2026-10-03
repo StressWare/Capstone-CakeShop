@@ -3,6 +3,8 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="static/css/cart.css">
+<style nonce="{{ csp_nonce() }}">
+</style>
 {% endblock %}
 
 {% block content %}
@@ -47,13 +49,13 @@
         <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="dec">
-          <button type="submit" class="btn-qty">-</button>
+          <button type="submit" class="btn-qty btn-dec" aria-label="Decrease quantity"></button>
         </form>
         <span class="qty-num">{{ item.quantity | default(1) }}</span>
         <form method="POST" action="/cart/update/{{ item.cake_id }}" class="m-0">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="action" value="inc">
-          <button type="submit" class="btn-qty">+</button>
+          <button type="submit" class="btn-qty btn-inc" aria-label="Increase quantity"></button>
         </form> 
       </div>      
     </div>
