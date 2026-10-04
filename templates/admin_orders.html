@@ -550,11 +550,16 @@
       padding-bottom: 0 !important;
     }
 
-    /* All common admin template wrapper selectors */
+    /* Keep the gradient covering the full screen, even with 0–1 orders */
+    .main-content {
+      min-height: 100vh !important;
+      padding-bottom: 0 !important;
+      display: flow-root; /* stops the container's mt-4 from collapsing out and shifting the gradient down */
+    }
+
     #layoutSidenav_content,
     #content-wrapper,
     .content-wrapper,
-    .main-content,
     .main-panel,
     .page-wrapper,
     #page-wrapper,
@@ -1006,16 +1011,8 @@
 /* ── Fix 2: No empty space below page ──
    admin_base.html wraps content in .main-content with no explicit height.
    body.bg-light fills 100vh making it appear there is blank space.
-   We set body and .main-content to fit-content height. */
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.style.height = 'auto';
-  document.body.style.minHeight = '0';
-  var mc = document.querySelector('.main-content');
-  if (mc) {
-    mc.style.paddingBottom = '0';
-    mc.style.minHeight = '0';
-  }
-});
+   We set body and .main-content to fit-content height. DELETED*/ 
+
 
 /* ── Fix 3: Modal body padding-right ──
    Bootstrap 5 adds padding-right to <body> when opening a modal
