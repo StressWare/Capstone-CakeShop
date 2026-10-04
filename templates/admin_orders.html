@@ -236,9 +236,9 @@
   }
 
  .btn-add-manual {
-background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
-  border: none !important;
-  color: #ffffff !important;
+  background:transparent;
+  color:#ffffff;
+  border-color:#ffffff;
   border-radius: 8px !important;
   font-weight: 600 !important;
   font-size: 0.85rem !important;
@@ -434,6 +434,29 @@ background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
     margin-right: 8px;
   }
 
+  /* Copy Link Button - Simplified */
+.copy-link-btn {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px !important;
+  transition: all 0.2s ease;
+}
+
+.copy-link-btn:hover {
+  background: var(--pink-light) !important;
+  border-color: var(--pink-primary) !important;
+  color: var(--pink-primary) !important;
+  transform: translateY(-1px);
+}
+
+.copy-link-btn:active {
+  transform: translateY(0);
+}
+
 
   }
 
@@ -468,14 +491,26 @@ background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
         max-height: 82vh;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* The form wraps header/body/footer inside modal-content.
+         Make it the flex container so the body can scroll. */
+      #editOrderModal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        max-height: 82vh;
+        min-height: 0;
+        overflow: hidden;
       }
 
       /* Modal body scrolls internally */
       #orderDetailsModal .modal-body,
       #editOrderModal .modal-body {
-        overflow-y: auto;
+        overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
-        flex: 1;
+        flex: 1 1 auto;
+        min-height: 0;
       }
 
       /* Details two-column → single column */
@@ -648,9 +683,9 @@ background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Order Management</h4>
-<button type="button" class="btn btn-sm btn-add-manual" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
-  <i class="fas fa-plus me-1"></i>Add Manual Order
-</button>
+      <button type="button" class="btn btn-sm btn-add-manual" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
+        <i class="fas fa-plus me-1"></i>Add Manual Order
+      </button>
       </div>
       <div class="card-body">
 
@@ -824,7 +859,7 @@ background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
 
   <!-- MANUAL ORDER MODAL (Messenger / off-site, custom) -->
   <div class="modal fade" id="manualOrderModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog">
       <div class="modal-content">
         <form id="manualOrderForm" autocomplete="off">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -834,7 +869,7 @@ background: linear-gradient(135deg, #d6396e 0%, #db557d 100%) !important;
              <h5 class="modal-title" style="color:#212529;"><i class="fas fa-comment-dots me-2"></i><span id="moTitleText">Add Manual Order</span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
-          <div class="modal-body" style="max-height: calc(100vh - 210px); overflow-y: auto;">
+          <div class="modal-body">
             <div class="row g-3">
               <div class="col-md-6"><label class="form-label">Customer name *</label>
                 <input type="text" name="customer_name" class="form-control" maxlength="100" required></div>
@@ -1314,12 +1349,18 @@ document.addEventListener('hidden.bs.modal', function() {
     const paymentCell = paymentStatusMap[o.payment_status] ||
       `<span class="badge bg-secondary">${o.payment_status || 'Unknown'}</span>`;
     const detailsCell = `
-      <button class="btn btn-sm btn-outline-info">View</button>
-      ${o.status === 'Out for Delivery' && o.delivery_type === 'Delivery' && o.delivery_token
-        ? `<button class="btn btn-sm btn-outline-success mt-1 w-100" data-token="${window.location.origin}/delivery/${o.delivery_token}">
-            <i class="fas fa-link"></i> Copy Link
-          </button>`
-        : ''}`;
+      <div class="d-flex flex-column gap-1">
+        <button class="btn btn-sm btn-outline-info">
+          <i class="fas fa-eye me-1"></i>View
+        </button>
+        ${o.status === 'Out for Delivery' && o.delivery_type === 'Delivery' && o.delivery_token
+          ? `<button class="btn btn-sm btn-outline-success copy-link-btn" 
+                    data-token="${window.location.origin}/delivery/${o.delivery_token}"
+                    title="Copy delivery tracking link">
+              <i class="fas fa-link"></i>
+            </button>`
+          : ''}
+      </div>`;
 
     const updateCell = getUpdateCell(o);
 
@@ -1768,17 +1809,20 @@ footer.innerHTML = `
     if (!btn) return;
     const action = btn.dataset.action;
     const id = btn.dataset.id;
-    if (action === 'edit') {
-      bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal')).hide();
-      showEdit(id);
-    }
-    if (action === 'edit-manual') {
-      bootstrap.Modal.getInstance(document.getElementById('orderDetailsModal')).hide();
-      editManualOrder(id);
-    }
-    if (action === 'balance') markBalanceCollected(id);
-    if (action === 'message') openMessageModal(btn.dataset.userId, btn.dataset.name, id);
-  });
+    const detailsEl = document.getElementById('orderDetailsModal');
+    const closeThen = (fn) => {
+      detailsEl.addEventListener('hidden.bs.modal', function once() {
+        detailsEl.removeEventListener('hidden.bs.modal', once);
+        fn();
+      });
+      bootstrap.Modal.getInstance(detailsEl).hide();
+    };
+
+    if (action === 'edit')        closeThen(() => showEdit(id));
+    if (action === 'edit-manual') closeThen(() => editManualOrder(id));
+    if (action === 'balance')     markBalanceCollected(id);
+    if (action === 'message')     closeThen(() => openMessageModal(btn.dataset.userId, btn.dataset.name, id));
+      });
 
 
   window.editManualOrder = function(orderId) {

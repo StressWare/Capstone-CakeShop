@@ -393,6 +393,41 @@
     border-color: #c71585;
     color: #c71585;
   }
+
+  /* ── FIX: Dropdown overlap with pagination ── */
+.dropdown-menu {
+  z-index: 1055 !important;
+}
+
+/* Ensure table-responsive doesn't clip dropdowns */
+.table-responsive {
+  overflow: visible !important;
+}
+
+/* On mobile, keep the card layout clean */
+@media (max-width: 768px) {
+  .table-responsive {
+    overflow: visible !important;
+  }
+  
+  /* Push pagination below action buttons with proper spacing */
+  nav.mt-3 {
+    margin-top: 1.5rem !important;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .pagination {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Ensure the dropdown floats above everything */
+  .dropdown-menu {
+    z-index: 1060 !important;
+    position: fixed !important;
+  }
+}
 </style>
 {% endblock %}
 
