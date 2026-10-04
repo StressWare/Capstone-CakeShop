@@ -507,41 +507,52 @@
                   <span class="badge badge-status-good">Good</span>
                 {% endif %}
               </td>
-          <td>
-            <div class="d-flex gap-2 align-items-center">
-              <button class="btn btn-sm btn-outline-success" data-restock-id="{{ i.id }}" data-restock-name="{{ i.item }}">
-                <i class="fas fa-plus"></i> Restock
-              </button>
-              
-              <div class="dropdown">
-            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
-              type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
-              <i class="fas fa-ellipsis-v"></i>
-            </button>
-                <ul class="dropdown-menu dropdown-menu-end inv-actions-menu">
-                  <li>
-                    <button type="button" class="btn btn-sm btn-inv-edit w-100" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
-                      <i class="fas fa-edit me-1"></i>Edit
+              <td>
+                <div class="d-flex gap-2 align-items-center">
+                  <button class="btn btn-sm btn-outline-success" data-restock-id="{{ i.id }}" data-restock-name="{{ i.item }}">
+                    <i class="fas fa-plus"></i> Restock
+                  </button>
+                  
+                  <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                      type="button" data-bs-toggle="dropdown" data-bs-boundary="viewport" aria-expanded="false">
+                      <i class="fas fa-ellipsis-v"></i>
                     </button>
-                  </li>
-                  <li>
-                    <form method="POST" action="/inventory/delete/{{ i.id }}" class="m-0">
-                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                      <button type="button" class="btn btn-sm btn-inv-delete w-100" data-item-name="{{ i.item }}">
-                        <i class="fas fa-trash me-1"></i>Delete
-                      </button>
-                    </form>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </td>
+                    <ul class="dropdown-menu dropdown-menu-end inv-actions-menu">
+                      <li>
+                        <button type="button" class="btn btn-sm btn-inv-edit w-100" data-bs-toggle="modal" data-bs-target="#editModal{{ i.id }}">
+                          <i class="fas fa-edit me-1"></i>Edit
+                        </button>
+                      </li>
+                      <li>
+                        <form method="POST" action="/inventory/delete/{{ i.id }}" class="m-0">
+                          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                          <button type="button" class="btn btn-sm btn-inv-delete w-100" data-item-name="{{ i.item }}">
+                            <i class="fas fa-trash me-1"></i>Delete
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </td>
             </tr>
-            {% else %}
-            <tr><td colspan="6" class="text-center text-muted py-5">No inventory items yet</td></tr>
             {% endfor %}
           </tbody>
         </table>
+        
+        {% if not inventory %}
+        <!-- EMPTY STATE - Matches Orders/Consultations/Expenses Style -->
+        <div style="background:white; border-radius:14px; padding:60px 20px; text-align:center; margin-top:20px;">
+          <div style="color:#c07090; margin-bottom:16px;">
+            <i class="fas fa-boxes" style="font-size:48px; opacity:0.5;"></i>
+          </div>
+          <h5 style="color:#c07090; font-weight:600; margin-bottom:8px;">No inventory items yet</h5>
+          <p style="color:#999; font-size:14px; max-width:400px; margin:0 auto;">
+            Track your stock here. Click "+ Add Inventory" to record your first item.
+          </p>
+        </div>
+        {% endif %}
       </div>
 
       <nav class="mt-3">

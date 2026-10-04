@@ -685,6 +685,19 @@
             {% endfor %}
           </tbody>
         </table>
+        
+        {% if not online_sales and not walkin_sales and not pending_sales %}
+        <!-- EMPTY STATE - Matches Orders/Consultations/Expenses/Inventory Style -->
+        <div style="background:white; border-radius:14px; padding:60px 20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:20px;">
+          <div style="color:#c07090; margin-bottom:16px;">
+            <i class="fas fa-chart-line" style="font-size:48px; opacity:0.5;"></i>
+          </div>
+          <h5 style="color:#c07090; font-weight:600; margin-bottom:8px;">No sales records yet</h5>
+          <p style="color:#999; font-size:14px; max-width:400px; margin:0 auto;">
+            Sales data will appear here once customers complete their orders.
+          </p>
+        </div>
+        {% endif %}
       </div>
 
       <nav class="mt-3">

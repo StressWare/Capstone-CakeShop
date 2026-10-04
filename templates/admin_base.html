@@ -10,6 +10,27 @@
 
     <!-- ✅ UPDATED / FIXED RESPONSIVE SIDEBAR CSS -->
     <style nonce="{{ csp_nonce() }}">
+
+        /* ════════════════════════════════════════════════
+        DEFINITIVE FIX: KILL WHITE STRIP AT BOTTOM
+        Overrides any external CSS (admin_dashboard.css, etc.)
+        ════════════════════════════════════════════════ */
+    body.bg-light {
+        min-height: 100vh !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .main-content {
+        flex: 1 !important;
+        min-height: auto !important;
+        height: auto !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+    }
         /* ===== SIDEBAR BASE ===== */
         .sidebar {
         width: 250px;

@@ -24,7 +24,9 @@
 
   /* ── BASE LAYOUT ── */
   html, body {
-    height: 100%;
+    height: auto !important;
+    min-height: 100vh;
+    overflow-x: hidden !important;
   }
 
   .card.shadow-sm {
@@ -550,15 +552,11 @@
       padding-bottom: 0 !important;
     }
 
-    /* Keep the gradient covering the full screen, even with 0–1 orders */
-    .main-content {
-      padding-bottom: 0 !important;
-      display: flow-root; /* stops the container's mt-4 from collapsing out and shifting the gradient down */
-    }
-
+    /* All common admin template wrapper selectors */
     #layoutSidenav_content,
     #content-wrapper,
     .content-wrapper,
+    .main-content,
     .main-panel,
     .page-wrapper,
     #page-wrapper,
@@ -772,8 +770,8 @@
         </div>
 
         <div id="emptyTabMsg" style="display:none;" class="text-center text-muted py-5">
-          <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-          <span id="emptyTabText">No orders found</span>
+          <i class="fas fa-inbox fa-3x mb-3 d-block" style="color:#c07090;"></i>
+          <span id="emptyTabText" style="color:#c07090;">No orders found</span>
         </div>
 
         <nav class="mt-3"><ul class="pagination justify-content-end mb-0" id="ordersPagination"></ul></nav>
@@ -1010,8 +1008,20 @@
 /* ── Fix 2: No empty space below page ──
    admin_base.html wraps content in .main-content with no explicit height.
    body.bg-light fills 100vh making it appear there is blank space.
-   We set body and .main-content to fit-content height. DELETED*/ 
-
+   We set body and .main-content to fit-content height. */
+/* ── Fix 2: No empty space below page ── */
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.style.setProperty('height', 'auto', 'important');
+  document.body.style.setProperty('min-height', '100vh', 'important');
+  
+  var mc = document.querySelector('.main-content');
+  if (mc) {
+    mc.style.setProperty('padding-bottom', '0', 'important');
+    mc.style.setProperty('margin-bottom', '0', 'important');
+    mc.style.setProperty('min-height', 'auto', 'important');
+    mc.style.setProperty('height', 'auto', 'important');
+  }
+});
 
 /* ── Fix 3: Modal body padding-right ──
    Bootstrap 5 adds padding-right to <body> when opening a modal

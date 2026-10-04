@@ -88,20 +88,33 @@
     </div>
     {% endfor %}
   </div>
-<div class="text-center mt-4" id="loadMoreWrapper">
-  <p class="text-white-50 small mb-2" id="logCounter"></p>
-  <button class="btn btn-outline-light btn-sm px-4" id="loadMoreBtn">Load more</button>
-</div>
+  
+  <div class="text-center mt-4" id="loadMoreWrapper">
+    <p class="text-white-50 small mb-2" id="logCounter"></p>
+    <button class="btn btn-outline-light btn-sm px-4" id="loadMoreBtn">Load more</button>
+  </div>
+
   <!-- Empty after filter -->
-  <div id="noResults" class="text-center text-muted py-5 d-none">
-    <i class="bi bi-journal-x fs-1"></i>
-    <p class="mt-2">No logs found.</p>
+  <div id="noResults" class="d-none" style="background:white; border-radius:14px; padding:60px 20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:20px;">
+    <div style="color:#c07090; margin-bottom:16px;">
+      <i class="fas fa-search" style="font-size:48px; opacity:0.5;"></i>
+    </div>
+    <h5 style="color:#c07090; font-weight:600; margin-bottom:8px;">No logs found</h5>
+    <p style="color:#999; font-size:14px; max-width:400px; margin:0 auto;">
+      Try adjusting your search or filter criteria to find what you're looking for.
+    </p>
   </div>
 
   {% else %}
-  <div class="text-center text-muted py-5">
-    <i class="bi bi-journal-text fs-1"></i>
-    <p class="mt-2">No activity logged yet.</p>
+  <!-- EMPTY STATE - Matches other pages style -->
+  <div style="background:white; border-radius:14px; padding:60px 20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:20px;">
+    <div style="color:#c07090; margin-bottom:16px;">
+      <i class="fas fa-history" style="font-size:48px; opacity:0.5;"></i>
+    </div>
+    <h5 style="color:#c07090; font-weight:600; margin-bottom:8px;">No activity logged yet</h5>
+    <p style="color:#999; font-size:14px; max-width:400px; margin:0 auto;">
+      Admin actions and system events will appear here once they occur.
+    </p>
   </div>
   {% endif %}
 

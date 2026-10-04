@@ -255,9 +255,15 @@
     </div>
 
     {% else %}
-    <div style="text-align:center; color:rgba(255,255,255,0.4); padding:60px 0;">
-      <div style="font-size:40px;">📋</div>
-      <p style="margin-top:12px;">No consultations yet.</p>
+    <!-- EMPTY STATE - Matches Orders Page Style -->
+    <div style="background:white; border-radius:14px; padding:60px 20px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      <div style="color:#c07090; margin-bottom:16px;">
+        <i class="fas fa-comments" style="font-size:48px; opacity:0.5;"></i>
+      </div>
+      <h5 style="color:#c07090; font-weight:600; margin-bottom:8px;">No consultations yet</h5>
+      <p style="color:#999; font-size:14px; max-width:400px; margin:0 auto;">
+        Customer cake consultation requests will appear here once submitted through the website.
+      </p>
     </div>
     {% endif %}
   </div>
