@@ -152,7 +152,7 @@
     <div class="stat-grid">
     <div class="stat-card">
         <div class="icon"><i class="fas fa-right-to-bracket"></i></div>
-        <div class="label">Logins Today</div>
+                <div class="label">Customers Logged In Today</div>
         <div class="value">{{ login_count }}</div>
     </div>
 
@@ -160,6 +160,12 @@
         <div class="icon"><i class="fas fa-user-plus"></i></div>
         <div class="label">New Signups Today</div>
         <div class="value">{{ signup_count }}</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="icon"><i class="fas fa-globe"></i></div>
+        <div class="label">Online Orders (Website)</div>
+        <div class="value">{{ online_order_count }}</div>
     </div>
 
     <div class="stat-card">
@@ -175,12 +181,17 @@
     </div>
 
     <div class="stat-card">
+        <div class="icon"><i class="fab fa-facebook-messenger"></i></div>
+        <div class="label">Manual Orders</div>
+        <div class="value">{{ manual_count }}</div>
+    </div>
+
+    <div class="stat-card">
         <div class="icon"><i class="fas fa-store"></i></div>
         <div class="label">Walk-in Transactions</div>
         <div class="value">{{ walkin_order_count }}</div>
     </div>
-
-    <div class="stat-card">
+    <div class="stat-card wide">
         <div class="icon"><i class="fas fa-chart-line"></i></div>
         <div class="label">Total Transactions Today</div>
         <div class="value">{{ total_transactions }}</div>

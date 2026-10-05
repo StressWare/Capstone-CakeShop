@@ -14,7 +14,7 @@ from helpers import (PH_TZ, log_admin_action, convert_timestamps,
                      handle_loyalty_stamp,safe_float, send_new_order_fcm,
                      is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM,
                      is_shop_open_now)
-from decorators import login_required, admin_required, profile_required
+from decorators import login_required, admin_required, profile_required, start_session, enforce_session_policy, revoke_user_sessions
 from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations,get_shop_hours_cached, get_all_orders_cached,get_all_reviews_admin
 from firebase_admin import messaging
 import requests as http_requests
@@ -102,7 +102,8 @@ app.config['WTF_CSRF_TIME_LIMIT'] = None
 @app.errorhandler(CSRFError)
 def csrf_error(_):
     if 'application/json' in request.headers.get('Accept', '') or \
-       'application/json' in request.headers.get('Content-Type', ''):
+       'application/json' in request.headers.get('Content-Type', '') or \
+       request.headers.get('X-Requested-With') == 'fetch':
         return jsonify({'error': 'csrf_expired', 'message': 'Session expired.'}), 400
     return render_template('400.html'), 400
 csp = {
@@ -188,6 +189,7 @@ Talisman(app,
 )
 
 limiter.init_app(app)
+app.before_request(enforce_session_policy)
 @app.errorhandler(RateLimitExceeded)
 def handle_rate_limit(e):
     if request.is_json:  #  covers all routes
@@ -365,18 +367,21 @@ def verify_token():
                 'created_at': firestore.SERVER_TIMESTAMP
             })
 
-        is_admin = decoded_token.get('admin', False)
-        is_professor = decoded_token.get('professor', False)
-        is_developer = decoded_token.get('developer', False)
-        session['user'] = {'uid': uid, 'email': email, 'name': fname or email,
-                     'admin': is_admin, 'professor': is_professor, 'developer': is_developer}
-        session['user_id'] = uid
-        session['username'] = email
-        session.permanent = True
+        # Roles come from the Firebase user record (same source as passkey login
+        # and the live checks in decorators.py), not the possibly stale ID token.
+        claims = firebase_user.custom_claims or {}
+        is_admin = bool(claims.get('admin', False))
+        is_professor = bool(claims.get('professor', False))
+        is_developer = bool(claims.get('developer', False))
+        start_session(uid,
+                      {'uid': uid, 'email': email, 'name': fname or email,
+                       'admin': is_admin, 'professor': is_professor, 'developer': is_developer},
+                      username=email)
         login_logs.add({
         "user_id": uid,
         "email": email,
         "method": "google" if is_google else "password",
+        "is_staff": bool(is_admin or is_professor or is_developer),
         "timestamp": firestore.SERVER_TIMESTAMP,
         })
 
@@ -657,7 +662,7 @@ def webauthn_login_start():
 # ---------------- WEBAUTHN — LOGIN FINISH----------------
 @app.route('/webauthn/login/finish', methods=['POST'])
 @limiter.limit("10 per minute")
-def webauthn_login_finish():
+def webauthn_login_finish():  # sourcery skip: remove-unnecessary-cast
     data = request.get_json()
     if not data:
         return jsonify({'error': 'Invalid request'}), 400
@@ -746,21 +751,20 @@ def webauthn_login_finish():
             is_professor_role = False
             is_developer_role = False
 
-        # Set Flask session
-        session['user_id'] = user_id
-        session['user'] = {
+        # Set Flask session (shared helper: records login time + deadline)
+        session_deadline = start_session(user_id, {
             'uid': user_id,
             'email': user_data.get('email', ''),
             'name': user_data.get('fname') or user_data.get('username') or 'Customer',
             'admin': is_admin_role,
             'professor': is_professor_role,
             'developer': is_developer_role
-        }
-        session.permanent = True
+        })
         login_logs.add({
             "user_id": user_id,
             "email": user_data.get('email', ''),
             "method": "webauthn",
+            "is_staff": bool(is_admin_role or is_professor_role or is_developer_role),
             "timestamp": firestore.SERVER_TIMESTAMP,
         })
         app.logger.info(f"WebAuthn login successful for user {user_id}")
@@ -775,8 +779,10 @@ def webauthn_login_finish():
         # Create Firebase custom token so frontend can sign into Firebase Auth
         firebase_custom_token = None
         try:
-            # Mirror the 'admin' custom claim for Firebase ID token
-            additional_claims = {'admin': True} if is_admin_role else None
+            # Mirror all role claims into the Firebase ID token
+            additional_claims = {k: True for k, v in (('admin', is_admin_role),
+                                                      ('professor', is_professor_role),
+                                                      ('developer', is_developer_role)) if v} or None
             firebase_custom_token = auth.create_custom_token(user_id, additional_claims).decode('utf-8')
         except Exception as e:
             app.logger.warning(f"Failed to create Firebase custom token for {user_id}: {e}")
@@ -784,7 +790,9 @@ def webauthn_login_finish():
         return jsonify({
             'success': True,
             'redirect': redirect_url,
-            'firebase_custom_token': firebase_custom_token
+            'firebase_custom_token': firebase_custom_token,
+            'session_deadline': session_deadline,
+            'uid': user_id
         }), 200
 
     except Exception:

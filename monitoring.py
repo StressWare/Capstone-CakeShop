@@ -41,12 +41,24 @@ def dashboard():
         users.where("created_at", ">=", start).where("created_at", "<", end).stream()
     )
 
+    # Manual (Messenger) orders are stored as custom orders, so split them out
+    manual_count = sum(1 for d in custom if d.to_dict().get("order_source") == "messenger")
+    online_custom_count = len(custom) - manual_count
+
+    # Unique customers only: skips staff logins and repeat logins
+    customer_ids = {
+        l.to_dict().get("user_id") for l in logins
+        if not l.to_dict().get("is_staff")
+    }
+
     return render_template("monitoring_dashboard.html",
         premade_count=len(premade),
-        custom_count=len(custom),
+        custom_count=online_custom_count,
+        manual_count=manual_count,
+        online_order_count=len(premade) + online_custom_count,
         walkin_order_count=len(walkin),
         total_transactions=len(premade) + len(custom) + len(walkin),
-        login_count=len(logins),
+        login_count=len(customer_ids),
         signup_count=len(signups),
         selected_date=start.strftime("%Y-%m-%d"),
         now=datetime.now(PH_TZ),

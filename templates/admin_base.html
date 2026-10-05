@@ -8,7 +8,7 @@
     <link href="../static/css/resposive_admin.css" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/logo.png') }}">
 
-    <!-- ✅ UPDATED / FIXED RESPONSIVE SIDEBAR CSS -->
+    <!-- UPDATED / FIXED RESPONSIVE SIDEBAR CSS -->
     <style nonce="{{ csp_nonce() }}">
 
         /* ════════════════════════════════════════════════
@@ -187,6 +187,8 @@
     <link rel="manifest" href="/manifest-admin.json">
     <meta name="theme-color" content="#d63384">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="session-deadline" content="{{ session.get('session_deadline') or '' }}">
+    <meta name="session-uid" content="{{ session.get('user_id') or '' }}">
     <script nonce="{{ csp_nonce() }}">
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker-admin.js')
@@ -599,34 +601,148 @@
     });
 </script>
 <script nonce="{{ csp_nonce() }}">
-const originalFetch = window.fetch;
-window.fetch = function(url, options = {}) {
-  const isOwnServer = typeof url === 'string' && !url.startsWith('http') 
-    || (typeof url === 'string' && url.includes(window.location.hostname));
-  
-  if (isOwnServer) {
-    options.headers = options.headers || {};
-    options.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]')?.content || '';
+/* ── Session handling: fetch wrapper + expiry warning + passkey re-auth ── */
+(function () {
+  const originalFetch = window.fetch;
+  const meta = (n) => document.querySelector('meta[name="' + n + '"]')?.content || '';
+  let deadline = parseInt(meta('session-deadline'), 10) || null;   // epoch seconds (server)
+  let clockOffset = 0;                                             // server - client, ms
+  let expiredHandled = false;
+  let warned = false;
+  const WARN_MS = 10 * 60 * 1000;
+
+  function isOwnServer(url) {
+    return typeof url === 'string' &&
+      (!url.startsWith('http') || url.includes(window.location.hostname));
   }
-  
-  return originalFetch(url, options).then(response => {
-    if (response.status === 400) {
-      response.clone().json().then(data => {
-        if (data?.error === 'csrf_expired') {
-        glassToast({
-            icon: 'warning',
-            title: 'Session expired. Refreshing...',
-            showConfirmButton: false,
-            timer: 1500,
-            timerProgressBar: true
-        });
-        setTimeout(() => window.location.reload(), 1500);
-        }
-      }).catch(() => {});
+
+  window.fetch = function (url, options = {}) {
+    const own = isOwnServer(url);
+    if (own) {
+      const h = new Headers(options.headers || {});
+      h.set('X-CSRFToken', meta('csrf-token'));
+      h.set('X-Requested-With', 'fetch');   // "I'm script code": reply 401 JSON, not a redirect
+      options = Object.assign({}, options, { headers: h });
     }
-    return response;
-  });
-};
+    return originalFetch(url, options).then(function (response) {
+      if (own) {
+        const d = Date.parse(response.headers.get('Date') || '');
+        if (!isNaN(d)) clockOffset = d - Date.now();
+        if (response.status === 401 || response.status === 400) {
+          response.clone().json().then(function (data) {
+            if (data && (data.error === 'session_expired' || data.error === 'csrf_expired')) {
+              sessionExpired(data.message);
+            }
+          }).catch(function () {});
+        }
+      }
+      return response;
+    });
+  };
+
+  async function sessionExpired(message) {
+    if (expiredHandled) return;
+    expiredHandled = true;
+    try {
+      glassToast({ icon: 'warning',
+        title: message || 'Session expired. Redirecting to login...',
+        showConfirmButton: false, timer: 2200, timerProgressBar: true });
+    } catch (e) {}
+    try { await firebase.auth().signOut(); } catch (e) {}
+    setTimeout(function () { window.location.href = '/logout'; }, 2000);
+  }
+
+  /* ── passkey re-authentication (issues a fresh deadline) ── */
+  function b64urlToBuf(s) {
+    const b = s.replace(/-/g, '+').replace(/_/g, '/');
+    const p = b.padEnd(b.length + (4 - b.length % 4) % 4, '=');
+    return Uint8Array.from(atob(p), function (c) { return c.charCodeAt(0); });
+  }
+  function bufToB64url(buf) {
+    let str = '';
+    for (const x of new Uint8Array(buf)) str += String.fromCharCode(x);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  }
+  async function reauthWithPasskey() {
+    if (!window.PublicKeyCredential) throw new Error('Passkeys are not supported on this device.');
+    const j = { 'Content-Type': 'application/json' };
+    const start = await fetch('/webauthn/login/start', { method: 'POST', headers: j, body: '{}' });
+    if (!start.ok) throw new Error('Could not start passkey sign-in.');
+    const options = await start.json();
+    options.publicKey.challenge = b64urlToBuf(options.publicKey.challenge);
+    (options.publicKey.allowCredentials || []).forEach(function (c) { c.id = b64urlToBuf(c.id); });
+    const a = await navigator.credentials.get(options);
+    const finish = await fetch('/webauthn/login/finish', {
+      method: 'POST', headers: j,
+      body: JSON.stringify({
+        id: a.id, rawId: bufToB64url(a.rawId), type: a.type,
+        response: {
+          clientDataJSON: bufToB64url(a.response.clientDataJSON),
+          authenticatorData: bufToB64url(a.response.authenticatorData),
+          signature: bufToB64url(a.response.signature),
+          userHandle: a.response.userHandle ? bufToB64url(a.response.userHandle) : null
+        }
+      })
+    });
+    const data = await finish.json().catch(function () { return {}; });
+    if (!finish.ok) throw new Error(data.error || 'Passkey sign-in failed.');
+    if (meta('session-uid') && data.uid && data.uid !== meta('session-uid')) {
+      window.location.href = data.redirect || '/logout';   // a different account signed in
+      return;
+    }
+    if (data.firebase_custom_token) {
+      try { await firebase.auth().signInWithCustomToken(data.firebase_custom_token); } catch (e) {}
+    }
+    deadline = data.session_deadline || null;
+    warned = false;
+    glassToast({ icon: 'success', title: 'Session extended', showConfirmButton: false, timer: 2000 });
+  }
+
+  function showWarning() {
+    let timer;
+    Swal.fire({
+      icon: 'warning',
+      title: 'Session ending soon',
+      html: 'Your admin session ends in <b id="sessCountdown"></b>.<br>Confirm with your passkey to stay signed in.',
+      showCancelButton: true,
+      confirmButtonText: 'Stay signed in (passkey)',
+      cancelButtonText: 'Log out now',
+      allowOutsideClick: false,
+      didOpen: function () {
+        const el = document.getElementById('sessCountdown');
+        const upd = function () {
+          const s = Math.max(0, Math.round((deadline * 1000 - (Date.now() + clockOffset)) / 1000));
+          if (el) el.textContent = Math.floor(s / 60) + 'm ' + String(s % 60).padStart(2, '0') + 's';
+        };
+        upd(); timer = setInterval(upd, 1000);
+      },
+      willClose: function () { clearInterval(timer); }
+    }).then(async function (r) {
+      if (r.isConfirmed) {
+        try { await reauthWithPasskey(); }
+        catch (e) {
+          if (e && e.name !== 'NotAllowedError') {
+            Swal.fire({ icon: 'error', title: 'Could not extend session', text: e.message || '' });
+          }
+          setTimeout(function () { warned = false; }, 60000);   // offer again in a minute
+        }
+      } else if (r.dismiss === Swal.DismissReason.cancel) {
+        try { await firebase.auth().signOut(); } catch (e) {}
+        window.location.href = '/logout';
+      }
+    });
+  }
+
+  function tick() {
+    if (!deadline || expiredHandled) return;
+    const ms = deadline * 1000 - (Date.now() + clockOffset);
+    if (ms <= 0) { sessionExpired('Your session has ended. Please log in again.'); return; }
+    if (ms <= WARN_MS && !warned) { warned = true; showWarning(); }
+  }
+  setInterval(tick, 15000);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) tick(); });
+  tick();
+})();
 </script>
     {% block extra_js %}{% endblock %}
 </body>

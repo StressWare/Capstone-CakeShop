@@ -152,11 +152,21 @@
       }
 
       checkoutBtn.addEventListener('click', submitCheckout);
-            document.querySelectorAll('form[action^="/cart/update/"]').forEach(form => {
+            // ── Qty +/- : 3s cooldown per item row ──
+      const QTY_COOLDOWN_MS = 3000;   // change this to adjust the delay
+
+      document.querySelectorAll('form[action^="/cart/update/"]').forEach(form => {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
-          const btn = form.querySelector('button');
-          btn.disabled = true;
+
+          const row = form.closest('.cart-item-row');
+          if (row.dataset.locked === '1') return;      // still cooling down: ignore
+          row.dataset.locked = '1';
+
+          const btns = row.querySelectorAll('.btn-qty');
+          btns.forEach(b => { b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'not-allowed'; });
+
+          const started = Date.now();
           try {
             const res = await fetch(form.getAttribute('action'), {
               method: 'POST',
@@ -173,7 +183,6 @@
               glassToast({ icon: 'warning', title: data.message, showConfirmButton: false, timer: 2500 });
               return;
             }
-            const row  = form.closest('.cart-item-row');
             const cb   = row.querySelector('.item-cb');
             const line = row.querySelector('.line-total');
             row.querySelector('.qty-num').textContent = data.quantity;
@@ -182,8 +191,16 @@
             line.querySelector('.q').textContent = data.quantity;
             line.querySelector('.t').textContent = (parseFloat(cb.dataset.price) * data.quantity).toFixed(2);
             update();   // recompute the Selected Total
+          } catch (err) {
+            console.error('Cart qty error:', err);
+            glassToast({ icon: 'error', title: 'Network error. Please try again.', showConfirmButton: false, timer: 2500 });
           } finally {
-            btn.disabled = false;
+            // unlock only after the full cooldown has passed since the click
+            const wait = Math.max(0, QTY_COOLDOWN_MS - (Date.now() - started));
+            setTimeout(() => {
+              row.dataset.locked = '';
+              btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+            }, wait);
           }
         });
       });

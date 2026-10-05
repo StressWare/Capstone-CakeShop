@@ -432,8 +432,11 @@
       nominatimAddress.municipality ||
       nominatimAddress.village ||
       ''
-    ).toLowerCase();
-    return ALLOWED_PLACES.some(allowed => place.includes(allowed));
+    );
+    var norm = normalizePlaceName(place);
+    if (!norm) return false;
+    if (ALLOWED_MUNICIPALITIES.length === 0) return true;
+    return ALLOWED_MUNICIPALITIES.some(a => norm.includes(a));
   }
 
   function setAreaWarning(show, message) {
@@ -472,13 +475,14 @@
     L.marker([SHOP.lat, SHOP.lng]).addTo(pickupMap).bindPopup('<strong>Mrs. Brave Cake Shop</strong><br>R Mapa St, Mandurriao').openPopup();
   }
 
-  function reverseGeocode(lat, lng) {
+  function reverseGeocode(lat, lng, updateAddress) {
+    if (updateAddress === undefined) updateAddress = true;
     document.getElementById('latInput').value = lat;
     document.getElementById('lngInput').value = lng;
     fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
       .then(r => r.json())
       .then(data => {
-        if (data && data.display_name)
+        if (updateAddress && data && data.display_name)
           document.getElementById('addressInput').value = data.display_name;
         if (data && data.address && !isAllowedLocation(data.address)) {
           setAreaWarning(true, 'Sorry, we currently only deliver within our service area (Iloilo City and select nearby municipalities). Please choose a different location.');
@@ -572,30 +576,35 @@ function selectDelivery(type) {
       ? '<i class="fas fa-lock me-2"></i>Proceed to Payment'
       : '<i class="fas fa-check me-2"></i>Place Order';
   }
-  var addressTimeout;
+  var addressTimeout, addressController;
+  function pinFromTypedAddress(query) {
+    if (addressController) addressController.abort();
+    addressController = new AbortController();
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ph' +
+      '&viewbox=' + [bounds.getWest(), bounds.getNorth(), bounds.getEast(), bounds.getSouth()].join(',') +
+      '&bounded=1&q=' + encodeURIComponent(query + ' Iloilo Philippines');
+    fetch(url, { signal: addressController.signal })
+      .then(r => r.json())
+      .then(results => {
+        if (!results.length) {
+          document.getElementById('latInput').value = '';
+          document.getElementById('lngInput').value = '';
+          return;
+        }
+        var lat = parseFloat(results[0].lat), lon = parseFloat(results[0].lon);
+        if (deliveryMap && deliveryMarker) {
+          deliveryMap.setView([lat, lon], 17);
+          deliveryMarker.setLatLng([lat, lon]);
+        }
+        reverseGeocode(lat, lon, false);
+      })
+      .catch(err => { if (err.name !== 'AbortError') console.error(err); });
+  }
   document.getElementById('addressInput').addEventListener('input', function() {
     clearTimeout(addressTimeout);
-    var query = this.value.trim();
-    if (query.length < 4) return;
-    addressTimeout = setTimeout(function() {
-      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' Iloilo Philippines')}&format=json&limit=1`)
-        .then(r => r.json())
-        .then(results => {
-          if (results.length > 0) {
-            var lat = parseFloat(results[0].lat);
-            var lon = parseFloat(results[0].lon);
-            if (deliveryMap && deliveryMarker) {
-              deliveryMap.setView([lat, lon], 16);
-              deliveryMarker.setLatLng([lat, lon]);
-            }
-            document.getElementById('latInput').value = lat;
-            document.getElementById('lngInput').value = lon;
-            // Re-check allow-list for the typed address too
-            reverseGeocode(lat, lon);
-          }
-        })
-        .catch(() => {});
-    }, 600);
+    var q = this.value.trim();
+    if (q.length < 4) return;
+    addressTimeout = setTimeout(() => pinFromTypedAddress(q), 800);
   });
   // ── Validate lat/lng before submit for delivery orders ──
   document.querySelector('form').addEventListener('submit', function(e) {
@@ -624,7 +633,11 @@ function selectDelivery(type) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Placing Order...';
   });
-  window.addEventListener('load', function() { initDeliveryMap(); });
+  window.addEventListener('load', function() {
+    initDeliveryMap();
+    var pre = document.getElementById('addressInput').value.trim();
+    if (pre.length >= 4 && !document.getElementById('latInput').value) pinFromTypedAddress(pre);
+  });
   document.getElementById('idempotencyKey').value =
     'order_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
     // ── Leave page confirmation ──

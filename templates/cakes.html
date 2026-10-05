@@ -578,8 +578,21 @@ function changeQty(cakeId, delta, maxQty) {
   if (plusBtn)  plusBtn.disabled  = current >= maxQty;
 }
 
-// ── Favorite toggle — syncs card heart + modal heart ──
+// ── Favorite toggle: 3s cooldown per cake + toast, syncs card heart + modal heart ──
+const FAV_COOLDOWN_MS = 3000;
+const favLocks = new Set();
+
 async function toggleFavorite(cakeId, cakeName) {
+  if (favLocks.has(cakeId)) return;               // still cooling down: ignore click
+  favLocks.add(cakeId);
+
+  const btns = [
+    document.getElementById('heart-' + cakeId),
+    document.getElementById('modal-heart-' + cakeId)
+  ].filter(Boolean);
+  btns.forEach(b => { b.disabled = true; b.style.opacity = '0.6'; b.style.cursor = 'not-allowed'; });
+
+  const started = Date.now();
   try {
     const res  = await fetch('/favorites/toggle', {
       method:  'POST',
@@ -589,30 +602,44 @@ async function toggleFavorite(cakeId, cakeName) {
     const data = await res.json();
 
     if (data.success) {
-      const isAdded   = data.action === 'added';
-      const icon      = isAdded ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
-      const title     = isAdded ? 'Remove from favorites' : 'Add to favorites';
+      const isAdded = data.action === 'added';
+      const icon    = isAdded ? '<i class="fa-solid fa-heart"></i>' : '<i class="fa-regular fa-heart"></i>';
+      const title   = isAdded ? 'Remove from favorites' : 'Add to favorites';
 
-      // update card heart
       const cardBtn = document.getElementById('heart-' + cakeId);
       if (cardBtn) {
-         cardBtn.innerHTML = icon;
+        cardBtn.innerHTML = icon;
         cardBtn.title = title;
         cardBtn.classList.toggle('favorited', isAdded);
       }
-
-      // update modal heart
       const modalBtn = document.getElementById('modal-heart-' + cakeId);
       if (modalBtn) {
-       modalBtn.innerHTML = icon;
+        modalBtn.innerHTML = icon;
         modalBtn.title = title;
       }
+
+      glassToast({
+        icon: 'success',
+        title: isAdded ? 'Added to favorites' : 'Removed from favorites',
+        showConfirmButton: false, timer: 2000, timerProgressBar: true
+      });
+    } else {
+      glassToast({ icon: 'error', title: data.error || 'Could not update favorites.',
+                   showConfirmButton: false, timer: 2500 });
     }
   } catch (e) {
     console.error('Favorite toggle error:', e);
+    glassToast({ icon: 'error', title: 'Network error. Please try again.',
+                 showConfirmButton: false, timer: 2500 });
+  } finally {
+    // unlock only after the full 3s has passed since the click
+    const wait = Math.max(0, FAV_COOLDOWN_MS - (Date.now() - started));
+    setTimeout(() => {
+      favLocks.delete(cakeId);
+      btns.forEach(b => { b.disabled = false; b.style.opacity = ''; b.style.cursor = ''; });
+    }, wait);
   }
 }
-
 
 // Get all cake names from the page once
 const cakeNames = Array.from(document.querySelectorAll('.cake-title')).map(el => el.textContent.trim());
