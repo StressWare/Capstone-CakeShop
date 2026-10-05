@@ -902,9 +902,50 @@
                 </div>
               </div>
 
-              <div class="col-12"><label class="form-label">Cake description *</label>
-                <input type="text" name="item" class="form-control" maxlength="300"
-                      placeholder="e.g. 2-tier christening cake, strawberry" required></div>
+              <!-- CAKE DETAILS (all optional) -->
+              <div class="col-md-6"><label class="form-label">Cake flavor</label>
+                <select name="flavor" class="form-select">
+                  <option value="">—</option>
+                  <option>Chocolate</option><option>Vanilla</option><option>Red Velvet</option>
+                  <option>Ube</option><option>Strawberry</option><option>Mocha</option>
+                  <option value="__other">Other…</option>
+                </select>
+                <input type="text" name="flavor_other" id="moFlavorOther" class="form-control mt-2 d-none" maxlength="60" placeholder="Type flavor"></div>
+              <div class="col-md-6"><label class="form-label">Cake size</label>
+                <select name="size" class="form-select">
+                  <option value="">—</option>
+                  <option value="6">6 inches</option><option value="8">8 inches</option>
+                  <option value="10">10 inches</option><option value="12">12 inches</option>
+                  <option value="__other">Other…</option>
+                </select>
+                <input type="text" name="size_other" id="moSizeOther" class="form-control mt-2 d-none" maxlength="60" placeholder="e.g. 9 inches"></div>
+              <div class="col-md-4"><label class="form-label">Shape</label>
+                <select name="shape" class="form-select">
+                  <option value="">—</option><option>Circle</option><option>Rectangle</option>
+                </select></div>
+              <div class="col-md-4"><label class="form-label">Cake type</label>
+                <select name="design" class="form-select">
+                  <option value="">—</option><option>Fondant</option><option>Soft Icing</option>
+                </select></div>
+              <div class="col-md-4"><label class="form-label">Layers</label>
+                <select name="layers" class="form-select">
+                  <option value="">—</option><option value="1">Single Layer</option>
+                  <option value="2">Double Layer</option><option value="3">Triple Layer</option>
+                </select></div>
+              <div class="col-md-6"><label class="form-label">Toppers</label>
+                <select name="toppers" class="form-select">
+                  <option value="">None</option><option>1 set</option><option>Set of 3</option>
+                </select></div>
+              <div class="col-md-6"><label class="form-label">Candles</label>
+                <select name="candles" class="form-select">
+                  <option value="">None</option><option>1</option><option>3</option><option>5</option><option>7</option>
+                </select></div>
+              <div class="col-12"><label class="form-label d-block">Add-ons</label>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="addons" value="filling" id="moAddFilling"><label class="form-check-label" for="moAddFilling">Filling</label></div>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="addons" value="cupcake" id="moAddCupcake"><label class="form-check-label" for="moAddCupcake">Cupcake</label></div>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="addons" value="ediblepaper" id="moAddPaper"><label class="form-check-label" for="moAddPaper">Edible paper</label></div>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="checkbox" name="addons" value="fondanttoppers" id="moAddFondant"><label class="form-check-label" for="moAddFondant">Fondant toppers</label></div>
+                <input type="text" name="other_addons" class="form-control mt-2" maxlength="100" placeholder="Other add-ons (optional)"></div>
               <div class="col-md-4"><label class="form-label">Occasion</label>
                 <input type="text" name="occasion" class="form-control" maxlength="100"></div>
               <div class="col-md-5"><label class="form-label">Celebrant / dedication</label>
@@ -2408,6 +2449,8 @@ window.sendMessageToCustomer = async function() {
     const del = form.querySelector('input[name="delivery_type"]:checked').value === 'Delivery';
     document.getElementById('moDeliveryFields').classList.toggle('d-none', !del);
     document.getElementById('moAddress').required = del;
+    document.getElementById('moFlavorOther').classList.toggle('d-none', form.elements.flavor.value !== '__other');
+    document.getElementById('moSizeOther').classList.toggle('d-none', form.elements.size.value !== '__other');
 
     const cake  = parseFloat(form.elements.cake_total.value) || 0;
     const fee   = del ? (parseFloat(form.elements.delivery_fee.value) || 0) : 0;
@@ -2435,7 +2478,21 @@ window.sendMessageToCustomer = async function() {
     form.querySelector(`input[name="delivery_type"][value="${isDel ? 'Delivery' : 'Pickup'}"]`).checked = true;
     e.address.value       = isDel ? (c.address || '') : '';
     e.delivery_fee.value  = isDel ? (o.delivery_fee || 0) : 0;
-    e.item.value          = o.item || '';
+    const d = o.cake_details || {};
+    const setSel = (sel, other, val, allowed) => {
+      if (!val) { sel.value = ''; return; }
+      if (allowed.includes(val)) sel.value = val;
+      else { sel.value = '__other'; other.value = val; }
+    };
+    setSel(e.flavor, e.flavor_other, d.flavor, ['Chocolate','Vanilla','Red Velvet','Ube','Strawberry','Mocha']);
+    setSel(e.size, e.size_other, d.size, ['6','8','10','12']);
+    e.shape.value        = d.shape   || '';
+    e.design.value       = d.design  || '';
+    e.layers.value       = d.layers  || '';
+    e.toppers.value      = d.toppers || '';
+    e.candles.value      = d.candles || '';
+    e.other_addons.value = d.other_addons || '';
+    form.querySelectorAll('input[name="addons"]').forEach(cb => { cb.checked = (d.addons || []).includes(cb.value); });
     e.occasion.value      = c.occasion || '';
     e.celebrant.value     = c.celebrant || '';
     e.age.value           = c.age || '';

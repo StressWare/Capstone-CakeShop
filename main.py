@@ -3672,10 +3672,49 @@ def admin_manual_order():
         if len(notes) > 500:
             return error("Notes too long (max 500).")
 
-        # ── Cake / dates ──
-        item_name = (f.get("item") or "").strip()
-        if not item_name or len(item_name) > 300:
-            return error("Cake description is required (max 300).")
+        # ── Cake details (all optional) → builds same "item" text as online orders ──
+        def pick(name, other_name=None):
+            v = (f.get(name) or "").strip()
+            if v == "__other" and other_name:
+                v = (f.get(other_name) or "").strip()
+            return v[:60]
+
+        flavor  = pick("flavor", "flavor_other")
+        shape   = pick("shape")
+        size    = pick("size", "size_other")
+        design  = pick("design")
+        layers  = pick("layers")
+        toppers = pick("toppers")
+        candles = pick("candles")
+        other_addons = (f.get("other_addons") or "").strip()[:100]
+
+        ADDON_LABELS = {"filling": "Filling", "cupcake": "Cupcake",
+                        "ediblepaper": "Edible Paper", "fondanttoppers": "Fondant Toppers"}
+        addon_keys = [k for k in f.getlist("addons") if k in ADDON_LABELS]
+        addon_names = [ADDON_LABELS[k] for k in addon_keys]
+        if other_addons:
+            addon_names.append(other_addons)
+
+        size_label   = f"{size} inches" if size.isdigit() else size
+        layers_label = {"1": "Single Layer", "2": "Double Layer", "3": "Triple Layer"}.get(layers, layers)
+
+        parts = [flavor, size_label, layers_label, design]
+        if toppers:                   parts.append(f"Toppers: {toppers}")
+        if shape:                     parts.append(f"Shape: {shape}")
+        if candles and candles != "0": parts.append(f"Candles: {candles}")
+        if addon_names:               parts.append(f"Add-ons: {', '.join(addon_names)}")
+        item_name = ", ".join(p for p in parts if p) or "Custom cake"
+
+        # editing an old order with no cake fields picked → keep its old text
+        if edit_id and existing and existing.get("item") and not any(
+                [flavor, shape, size, design, layers, toppers, candles, addon_names]):
+            item_name = existing["item"]
+
+        cake_details = {
+            "flavor": flavor, "shape": shape, "size": size, "design": design,
+            "layers": layers, "toppers": toppers, "candles": candles,
+            "addons": addon_keys, "other_addons": other_addons,
+        }
 
         created_at = parse_dt(f.get("order_date"), "%Y-%m-%dT%H:%M")
         if not created_at:
@@ -3739,7 +3778,7 @@ def admin_manual_order():
             
         if edit_id:
             upd = {
-                "delivery_date": delivery_dt, "item": item_name,
+                "delivery_date": delivery_dt, "item": item_name, "cake_details": cake_details,
                 "custom_components": [{"name": item_name, "price": cake_total}],
                 "amount": amount, "status": status, "notes": notes,
                 "payment_method": payment_method, "payment_status": payment_status,
@@ -3767,6 +3806,7 @@ def admin_manual_order():
             "order_type":     "custom",
             "delivery_date":  delivery_dt,
             "item":           item_name,
+            "cake_details":   cake_details,
             "selected_items": [],
             "custom_components": [{"name": item_name, "price": cake_total}],
             "amount":         amount,
