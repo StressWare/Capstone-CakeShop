@@ -685,7 +685,7 @@
     <div class="card shadow-sm">
       <div class="card-header card-header-custom d-flex justify-content-between align-items-center">
         <h4 class="mb-0">Order Management</h4>
-      <button type="button" class="btn btn-sm btn-add-manual" data-bs-toggle="modal" data-bs-target="#manualOrderModal">
+      <button type="button" class="btn btn-sm btn-add-manual" data-bs-toggle="modal" data-bs-target="#manualTypeModal">
         <i class="fas fa-plus me-1"></i>Add Manual Order
       </button>
       </div>
@@ -859,6 +859,21 @@
     </div>
   </div>
 
+  <div class="modal fade" id="manualTypeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" style="color:#212529;">Add Manual Order</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body d-grid gap-2">
+          <button type="button" class="btn btn-outline-secondary py-3" data-type="premade"><i class="fas fa-birthday-cake me-2"></i>Premade order</button>
+          <button type="button" class="btn btn-outline-secondary py-3" data-type="custom"><i class="fas fa-palette me-2"></i>Customize order</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- MANUAL ORDER MODAL (Messenger / off-site, custom) -->
   <div class="modal fade" id="manualOrderModal" tabindex="-1">
     <div class="modal-dialog">
@@ -867,6 +882,7 @@
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="idempotency_key" id="moKey">
           <input type="hidden" name="order_id" id="moOrderId">
+          <input type="hidden" name="order_type" id="moType" value="custom">
           <div class="modal-header">
              <h5 class="modal-title" style="color:#212529;"><i class="fas fa-comment-dots me-2"></i><span id="moTitleText">Add Manual Order</span></h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -879,11 +895,11 @@
                 <input type="text" name="contact" class="form-control" placeholder="09XXXXXXXXX" required></div>
 
               <div class="col-md-6"><label class="form-label">Order date (when they ordered) *</label>
-                <input type="datetime-local" name="order_date" id="moOrderDate" class="form-control" required></div>
+                <input type="date" name="order_date" id="moOrderDate" class="form-control" required></div>
               <div class="col-md-3"><label class="form-label">Pickup/Delivery date *</label>
                 <input type="date" name="delivery_date" class="form-control" required></div>
-              <div class="col-md-3"><label class="form-label">Time *</label>
-                <input type="time" name="delivery_time" class="form-control" required></div>
+              <div class="col-md-3"><label class="form-label">Time (optional)</label>
+                              <input type="time" name="delivery_time" class="form-control"></div>
 
               <div class="col-12"><label class="form-label d-block">Fulfillment *</label>
                 <div class="form-check form-check-inline">
@@ -901,7 +917,7 @@
                     <input type="number" name="delivery_fee" class="form-control" min="0" step="0.01" value="0"></div>
                 </div>
               </div>
-
+              <div class="col-12 mo-custom"><div class="row g-3">
               <!-- CAKE DETAILS (all optional) -->
               <div class="col-md-6"><label class="form-label">Cake flavor</label>
                 <select name="flavor" class="form-select">
@@ -952,12 +968,19 @@
                 <input type="text" name="celebrant" class="form-control" maxlength="100"></div>
               <div class="col-md-3"><label class="form-label">Age</label>
                 <input type="number" name="age" class="form-control" min="0" max="150"></div>
+              </div>
+            </div>
+              <div class="col-12 mo-premade d-none">
+                <label class="form-label">Cakes *</label>
+                <div id="moRows"></div>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="moAddRow"><i class="fas fa-plus me-1"></i>Add another cake</button>
+              </div>
               <div class="col-12"><label class="form-label">Notes</label>
                 <textarea name="notes" class="form-control" rows="2" maxlength="500"></textarea></div>
-              <div class="col-12"><label class="form-label">Reference photo (max 2MB)</label>
+              <div class="col-12 mo-custom"><label class="form-label">Reference photo (max 2MB)</label>
                 <input type="file" name="image" class="form-control" accept="image/*"></div>
 
-              <div class="col-md-4"><label class="form-label">Cake price (₱) *</label>
+              <div class="col-md-4"><label class="form-label" id="moPriceLabel">Cake price (₱) *</label>
                 <input type="number" name="cake_total" class="form-control" min="1" step="0.01" required></div>
               <div class="col-md-4"><label class="form-label">Payment method *</label>
                 <select name="payment_method" class="form-select">
@@ -970,7 +993,7 @@
                   <option selected>Completed</option>
                 </select></div>
 
-              <div class="col-12"><label class="form-label d-block">Payment *</label>
+              <div class="col-12 mo-custom"><label class="form-label d-block">Payment *</label> 
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="payment_type" id="moPayFull" value="full" checked>
                   <label class="form-check-label" for="moPayFull">Fully paid</label></div>
@@ -980,6 +1003,14 @@
                 <div class="form-check form-check-inline">
                   <input class="form-check-input" type="radio" name="payment_type" id="moPay75" value="75">
                   <label class="form-check-label" for="moPay75">75% downpayment</label></div>
+              </div>
+              <div class="col-12 mo-premade d-none"><label class="form-label d-block">Payment *</label>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="pay_state" id="moPaidYes" value="paid" checked>
+                  <label class="form-check-label" for="moPaidYes">Paid</label></div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="pay_state" id="moPaidNo" value="unpaid">
+                  <label class="form-check-label" for="moPaidNo">Unpaid</label></div>
               </div>
               <div class="col-12">
                 <div class="p-2 rounded" style="background:#fde8f1;">
@@ -1271,7 +1302,7 @@ document.addEventListener('hidden.bs.modal', function() {
       const isManual = o.order_source === 'messenger';
       const matchTab = currentTab === 'all' ||
         (currentTab === 'custom' && o.order_type === 'custom' && !isManual) ||
-        (currentTab === 'premade' && o.order_type === 'premade') ||
+        (currentTab === 'premade' && o.order_type === 'premade' && !isManual) ||
         (currentTab === 'manual' && isManual);
 
       const searchText = [
@@ -1630,14 +1661,23 @@ document.addEventListener('hidden.bs.modal', function() {
 
     let itemsHtml = '';
     if (o.order_type === 'premade' && o.selected_items?.length) {
-      itemsHtml = o.selected_items.map(item => `
+      itemsHtml = o.selected_items.map(item => {
+        const hasPrice = parseFloat(item.price) > 0;
+        const thumb = (item.image_url && o.order_source === 'messenger')
+          ? `<img src="${esc(item.image_url)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:0 0 auto;">`
+          : '';
+        return `
         <div class="order-item-line">
-          <div>
-            <div class="name">${esc(item.cake_name)}</div>
-            <div class="meta">₱${parseFloat(item.price).toFixed(2)}${item.quantity > 1 ? ` × ${item.quantity}` : ''}</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${thumb}
+            <div>
+              <div class="name">${esc(item.cake_name)}</div>
+              <div class="meta">${hasPrice ? '₱' + parseFloat(item.price).toFixed(2) : ''}${item.quantity > 1 ? `${hasPrice ? ' × ' : '× '}${item.quantity}` : ''}</div>
+            </div>
           </div>
-          <div class="sub">₱${parseFloat(item.subtotal || item.price).toFixed(2)}</div>
-        </div>`).join('');
+          <div class="sub">${hasPrice ? '₱' + parseFloat(item.subtotal || item.price).toFixed(2) : ''}</div>
+        </div>`;
+      }).join('');
     } else if (o.order_type === 'custom' && o.custom_components?.length) {
       itemsHtml = o.custom_components.map(c => `
         <div class="order-item-line">
@@ -1816,8 +1856,8 @@ body.innerHTML = `
         </div>` : ''}
         ${o.inspo_image ? `
         <div class="py-1" style="border-top:1px solid #fce8f3; font-size:0.88rem;">
-          <span class="text-muted d-block mb-2">Cake Inspo</span>
-          <img src="${o.inspo_image}" alt="Cake inspo" class="img-fluid rounded" style="max-width:100%; max-height:180px; object-fit:cover;">
+          <span class="text-muted d-block mb-2">${o.order_type === 'premade' ? 'Cake Photo' : 'Cake Inspo'}</span>
+          <img src="${o.inspo_image}" alt="${o.order_type === 'premade' ? 'Cake photo' : 'Cake inspo'}" class="img-fluid rounded" style="max-width:100%; max-height:180px; object-fit:cover;">
         </div>` : ''}
       </div>
     </div>
@@ -2437,12 +2477,111 @@ window.sendMessageToCustomer = async function() {
   const form = document.getElementById('manualOrderForm');
   if (!form) return;
   const modalEl = document.getElementById('manualOrderModal');
+  const typeEl  = document.getElementById('manualTypeModal');
+  const rowsEl  = document.getElementById('moRows');
+  let pendingType = null;
+
+  function addRow(name = '', qty = 1, price = '', img = '') {
+    const d = document.createElement('div');
+    d.className = 'd-flex gap-2 mb-2 mo-row align-items-center';
+    d.innerHTML = `<input type="text" name="pm_name" class="form-control" placeholder="Cake name" maxlength="100" style="flex:1; min-width:0;">
+      <input type="number" name="pm_price" class="form-control" style="max-width:100px" min="0" step="0.01" placeholder="Price">
+      <input type="number" name="pm_qty" class="form-control" style="max-width:75px" min="1" max="999" placeholder="Qty">
+      <span class="mo-sub text-muted small text-end" style="min-width:78px">₱0.00</span>
+      <input type="hidden" name="pm_image">
+      <input type="file" class="mo-file d-none" accept="image/*">
+      <button type="button" class="btn btn-outline-secondary mo-photo" style="width:44px;height:38px;padding:0;overflow:hidden;flex:0 0 auto" aria-label="Add cake photo"><i class="fas fa-camera"></i></button>
+      <button type="button" class="btn btn-outline-danger mo-del" aria-label="Remove cake"><i class="fas fa-times"></i></button>`;
+    const hidden   = d.querySelector('[name="pm_image"]');
+    const fileIn   = d.querySelector('.mo-file');
+    const photoBtn = d.querySelector('.mo-photo');
+
+    d.querySelector('[name="pm_name"]').value  = name;     // set as values, not HTML
+    d.querySelector('[name="pm_price"]').value = price;
+    d.querySelector('[name="pm_qty"]').value   = qty;
+
+    const setPhoto = (url) => {
+      photoBtn.innerHTML = '';
+      if (url && url.startsWith('https://res.cloudinary.com/')) {
+        hidden.value = url;
+        const im = document.createElement('img');
+        im.src = url; im.alt = 'Cake photo';
+        im.style.cssText = 'width:100%;height:100%;object-fit:cover';
+        photoBtn.appendChild(im);
+        photoBtn.title = 'Click to replace photo';
+      } else {
+        hidden.value = '';
+        photoBtn.innerHTML = '<i class="fas fa-camera"></i>';
+        photoBtn.title = 'Add cake photo';
+      }
+    };
+    setPhoto(img);
+
+    photoBtn.addEventListener('click', () => fileIn.click());
+    fileIn.addEventListener('change', async () => {
+      const file = fileIn.files[0];
+      if (!file) return;
+      if (file.size > 1.9 * 1024 * 1024) {
+        glassToast({ icon: 'error', title: 'Image too large (max about 2MB).', showConfirmButton: false, timer: 3500 });
+        fileIn.value = '';
+        return;
+      }
+      const prev = hidden.value;
+      photoBtn.disabled = true;
+      photoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      try {
+        const fd = new FormData();
+        fd.append('csrf_token', form.elements.csrf_token.value);
+        fd.append('image', file);
+        const res = await fetch('/admin/orders/manual/photo', { method: 'POST', body: fd });
+        if (res.status === 413) throw new Error('Image too large (max about 2MB).');
+        const result = await res.json();
+        if (!result.success) throw new Error(result.message);
+        setPhoto(result.url);
+      } catch (err) {
+        setPhoto(prev);                                    // keep the old photo on failure
+        glassToast({ icon: 'error', title: err.message || 'Upload failed.', showConfirmButton: false, timer: 3500 });
+      } finally {
+        photoBtn.disabled = false;
+        fileIn.value = '';
+      }
+    });
+
+    d.querySelector('.mo-del').addEventListener('click', () => { d.remove(); refresh(); });
+    rowsEl.appendChild(d);
+  }
+
+  function setType(type, isEdit) {
+    const premade = type === 'premade';
+    form.querySelectorAll('.mo-custom').forEach(el => el.classList.toggle('d-none', premade));
+    form.querySelectorAll('.mo-premade').forEach(el => el.classList.toggle('d-none', !premade));
+    document.getElementById('moPriceLabel').textContent = premade ? 'Total (₱) · auto from cakes' : 'Cake price (₱) *';
+    document.getElementById('moTitleText').textContent =
+      (isEdit ? 'Edit' : 'Add') + ' Manual Order · ' + (premade ? 'Premade' : 'Custom');
+    rowsEl.innerHTML = '';
+    if (premade) addRow();
+  }
+
+  document.getElementById('moAddRow').addEventListener('click', () => addRow());
+
+  // chooser → opens the real modal after it has fully closed
+  typeEl.querySelectorAll('[data-type]').forEach(b => b.addEventListener('click', () => {
+    pendingType = b.dataset.type;
+    bootstrap.Modal.getOrCreateInstance(typeEl).hide();
+  }));
+  typeEl.addEventListener('hidden.bs.modal', () => {
+    if (!pendingType) return;
+    window.__newManualType = pendingType;
+    pendingType = null;
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+  });
+
   const peso = n => '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   function nowLocalInput() {
     const d = new Date();
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-    return d.toISOString().slice(0, 16);
+    return d.toISOString().slice(0, 10);
   }
 
   function refresh() {
@@ -2452,11 +2591,27 @@ window.sendMessageToCustomer = async function() {
     document.getElementById('moFlavorOther').classList.toggle('d-none', form.elements.flavor.value !== '__other');
     document.getElementById('moSizeOther').classList.toggle('d-none', form.elements.size.value !== '__other');
 
+    const premade = form.elements.order_type.value === 'premade';
+    if (premade) {
+      let sum = 0;
+      rowsEl.querySelectorAll('.mo-row').forEach(r => {
+        const sub = (parseFloat(r.querySelector('[name="pm_price"]').value) || 0)
+                  * (parseInt(r.querySelector('[name="pm_qty"]').value, 10) || 0);
+        r.querySelector('.mo-sub').textContent = peso(sub);
+        sum += sub;
+      });
+      form.elements.cake_total.value = sum.toFixed(2);   // auto total
+    }
+    form.elements.cake_total.readOnly = premade;
+
     const cake  = parseFloat(form.elements.cake_total.value) || 0;
     const fee   = del ? (parseFloat(form.elements.delivery_fee.value) || 0) : 0;
     const total = cake + fee;
     const pt    = form.querySelector('input[name="payment_type"]:checked').value;
-    const paid  = Math.round(total * (pt === 'full' ? 1 : parseInt(pt, 10) / 100) * 100) / 100;
+    const ratio = premade
+      ? (form.querySelector('input[name="pay_state"]:checked').value === 'paid' ? 1 : 0)
+      : (pt === 'full' ? 1 : parseInt(pt, 10) / 100);
+    const paid  = Math.round(total * ratio * 100) / 100;
     document.getElementById('moTotal').textContent   = peso(total);
     document.getElementById('moPaid').textContent    = peso(paid);
     document.getElementById('moBalance').textContent = peso(total - paid);
@@ -2470,7 +2625,7 @@ window.sendMessageToCustomer = async function() {
 
     e.customer_name.value = c.name || '';
     e.contact.value       = c.contact || '';
-    if (dt(o.created_at))    e.order_date.value = local(dt(o.created_at)).slice(0, 16);
+    if (dt(o.created_at))    e.order_date.value = local(dt(o.created_at)).slice(0, 10);
     if (dt(o.delivery_date)) {
       e.delivery_date.value = local(dt(o.delivery_date)).slice(0, 10);
       e.delivery_time.value = local(dt(o.delivery_date)).slice(11, 16);
@@ -2501,6 +2656,12 @@ window.sendMessageToCustomer = async function() {
     e.payment_method.value = o.payment_method || 'Cash';
     e.status.value        = o.status;
     form.querySelector(`input[name="payment_type"][value="${o.downpayment_type || 'full'}"]`).checked = true;
+    if (o.order_type === 'premade') {
+      rowsEl.innerHTML = '';
+      (o.selected_items || []).forEach(i => addRow(i.cake_name || '', i.quantity || 1, i.price || '', i.image_url || ''));
+      if (!rowsEl.children.length) addRow();
+      form.querySelector(`input[name="pay_state"][value="${o.payment_status === 'Paid' ? 'paid' : 'unpaid'}"]`).checked = true;
+    }
   }
 
   form.addEventListener('input',  refresh);
@@ -2514,10 +2675,13 @@ window.sendMessageToCustomer = async function() {
     od.max   = nowLocalInput();
     document.getElementById('moKey').value = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2))) + '-manual';
 
-    // ── NEW: edit mode vs add mode ──
-    const eo = window.__editManual;     // set by editManualOrder() when you click Edit
+    // ── edit vs add, premade vs custom ──
+    const eo   = window.__editManual;   // set by editManualOrder() when you click Edit
+    const type = eo ? (eo.order_type || 'custom') : (window.__newManualType || 'custom');
+    window.__newManualType = null;
+    document.getElementById('moType').value    = type;
     document.getElementById('moOrderId').value = eo ? eo.id : '';
-    document.getElementById('moTitleText').textContent = eo ? 'Edit Manual Order' : 'Add Manual Order';
+    setType(type, !!eo);
     if (eo) fillManualForm(eo);         // fill the form with the saved order
     window.__editManual = null;         // so the next "Add" opens blank
 

@@ -2866,10 +2866,12 @@ def admin_order_counts():
         custom_count = orders.where("order_type", "==", "custom").count().get()[0][0].value
         premade_count = orders.where("order_type", "==", "premade").count().get()[0][0].value
         manual_count = orders.where("order_source", "==", "messenger").count().get()[0][0].value
+        manual_premade = (orders.where("order_source", "==", "messenger")
+                                .where("order_type", "==", "premade").count().get()[0][0].value)
         return jsonify({
             "all": all_count,
-            "custom": custom_count - manual_count,   # manual orders are also order_type=custom
-            "premade": premade_count,
+            "custom": custom_count - (manual_count - manual_premade),   # minus manual custom
+            "premade": premade_count - manual_premade,                   # online premade only
             "manual": manual_count
         }), 200
     except Exception:
@@ -3147,7 +3149,7 @@ def admin_analytics():
                 premade_revenue += amount
 
             # KPI: top customers
-            if uid:
+            if uid and uid != "manual":
                 user_order_counts[uid] += 1
                 user_order_spend[uid]  += amount
                 if uid not in user_order_names:
@@ -3550,7 +3552,8 @@ def update_order_status(order_id):
 
 
             accepted_statuses = ["Accepted", "Pending", "Ready", "Out for Delivery"]
-            if new_status == "Cancelled" and old_status in accepted_statuses and order_type == "premade":
+            if (new_status == "Cancelled" and old_status in accepted_statuses
+                    and order_type == "premade" and order_data.get("order_source") != "messenger"):
                 for i in order_data.get("selected_items", []):
                     cake_ref = cakes.document(i["cake_id"])
                     cake_doc = cake_ref.get()
@@ -3612,6 +3615,23 @@ def update_order_status(order_id):
         app.logger.exception("Error in update_order_status")
         return jsonify({"success": False, "message": "Something went wrong. Please try again."})
     
+# ---------------- MANUAL ORDER: per-cake photo upload (premade rows) ----------------
+@app.route("/admin/orders/manual/photo", methods=["POST"])
+@admin_required
+@limiter.limit("30 per minute")
+def admin_manual_order_photo():
+    try:
+        file = request.files.get("image")
+        if not file or not file.filename:
+            return jsonify({"success": False, "message": "No image selected."}), 400
+        url = save_uploaded_image(file, "order")
+        if not url:
+            return jsonify({"success": False, "message": "Image too large or invalid! Max 2MB."}), 400
+        return jsonify({"success": True, "url": url})
+    except Exception:
+        app.logger.exception("Error in admin_manual_order_photo")
+        return jsonify({"success": False, "message": "Upload failed. Please try again."}), 500
+    
 # ---------------- MANUAL ORDER (Messenger / off-site, custom cakes) ----------------
 @app.route("/admin/orders/manual", methods=["POST"])
 @admin_required
@@ -3658,6 +3678,10 @@ def admin_manual_order():
             dup = next(orders.where("idempotency_key", "==", key).limit(1).stream(), None)
             if dup:
                 return jsonify({"success": True, "message": "Order already recorded.", "order_id": dup.id})
+
+        otype = existing.get("order_type", "custom") if existing else (f.get("order_type") or "custom")
+        if otype not in ("custom", "premade"):
+            return error("Invalid order type.")
 
         # ── Customer ──
         name      = (f.get("customer_name") or "").strip()
@@ -3724,14 +3748,55 @@ def admin_manual_order():
             "addons": addon_keys, "other_addons": other_addons,
         }
 
-        created_at = parse_dt(f.get("order_date"), "%Y-%m-%dT%H:%M")
+        # ── Premade: typed cake rows (name, price, qty, photo) → selected_items ──
+        selected_items = []
+        if otype == "premade":
+            for n, p, q, img in zip(f.getlist("pm_name"), f.getlist("pm_price"),
+                                    f.getlist("pm_qty"), f.getlist("pm_image")):
+                n = n.strip()[:100]
+                if not n:
+                    continue
+                img = (img or "").strip()
+                if img and not img.startswith("https://res.cloudinary.com/"):
+                    return error("Invalid cake image.")
+                try:
+                    price = round(float(p), 2)
+                    qty   = int(q)
+                except ValueError:
+                    return error("Enter a price and quantity for each cake.")
+                if not math.isfinite(price) or not 0 < price <= 100000:
+                    return error("Each cake needs a price above 0.")
+                if not 1 <= qty <= 999:
+                    return error("Quantity must be 1 to 999.")
+                selected_items.append({
+                    "cake_name": n, "price": price, "quantity": qty,
+                    "subtotal": round(price * qty, 2),
+                    "image_url": img or None, "category": "",
+                })
+            if not selected_items:
+                return error("Add at least one cake.")
+            if len(selected_items) > 20:
+                return error("Too many cakes (max 20).")
+            item_name = ", ".join(
+                f"{i['cake_name']} (₱{i['price']:.0f})" + (f" x{i['quantity']}" if i["quantity"] > 1 else "")
+                for i in selected_items
+            )[:500]
+
+        created_at = parse_dt(f.get("order_date"), "%Y-%m-%d")      # date only
         if not created_at:
             return error("Invalid order date.")
-        if created_at > now + timedelta(minutes=5):
+        if created_at.date() > now.date():
             return error("Order date can't be in the future.")
+        old_created = existing.get("created_at") if existing else None
+        if isinstance(old_created, datetime) and old_created.astimezone(PH_TZ).date() == created_at.date():
+            created_at = old_created                      # same day on edit: keep original time
+        elif created_at.date() == now.date():
+            created_at = now                              # today: real time
+        else:
+            created_at = created_at.replace(hour=12)      # past day: noon
 
         delivery_dt = parse_dt(
-            f"{f.get('delivery_date', '')} {f.get('delivery_time', '')}", "%Y-%m-%d %H:%M"
+            f"{f.get('delivery_date', '')} {(f.get('delivery_time') or '').strip() or '12:00'}", "%Y-%m-%d %H:%M"
         )
         if not delivery_dt:
             return error("Invalid pickup/delivery date or time.")
@@ -3755,18 +3820,28 @@ def admin_manual_order():
             address, delivery_fee = "Pick Up at Shop", 0.0
 
         # ── Money / payment ──
-        cake_total = parse_money("cake_total", 1, 1000000)
-        if cake_total is None:
+        if otype == "premade":
+            cake_total = round(sum(i["subtotal"] for i in selected_items), 2)   # never trust the typed total
+        else:
+            cake_total = parse_money("cake_total", 1, 1000000)
+        if cake_total is None or cake_total < 1 or cake_total > 1000000:
             return error("Invalid cake price.")
         amount = round(cake_total + delivery_fee, 2)   # cake + delivery, same as online orders
 
-        PAY = {"full": ("Fully Paid", 1.0), "50": ("Downpayment Paid", 0.5), "75": ("Downpayment Paid", 0.75)}
-        pay_type = f.get("payment_type")
-        if pay_type not in PAY:
-            return error("Choose a payment option.")
-        payment_status, ratio = PAY[pay_type]
-        dp_amt  = round(amount * ratio, 2)
-        balance = round(amount - dp_amt, 2)
+        if otype == "premade":
+            # premade: just Paid / Unpaid, no downpayment
+            if f.get("pay_state") not in ("paid", "unpaid"):
+                return error("Choose Paid or Unpaid.")
+            payment_status = "Paid" if f.get("pay_state") == "paid" else "Pending"
+            pay_type = dp_amt = balance = None
+        else:
+            PAY = {"full": ("Fully Paid", 1.0), "50": ("Downpayment Paid", 0.5), "75": ("Downpayment Paid", 0.75)}
+            pay_type = f.get("payment_type")
+            if pay_type not in PAY:
+                return error("Choose a payment option.")
+            payment_status, ratio = PAY[pay_type]
+            dp_amt  = round(amount * ratio, 2)
+            balance = round(amount - dp_amt, 2)
 
         payment_method = f.get("payment_method")
         if payment_method not in ("Cash", "GCash", "Bank Transfer", "Other"):
@@ -3783,11 +3858,16 @@ def admin_manual_order():
             inspo_image = save_uploaded_image(file, "order")
             if inspo_image is None:
                 return error("Image too large or invalid! Max 2MB.")
-            
+
+        if otype == "premade":
+            type_fields = {"selected_items": selected_items, "custom_components": []}
+        else:
+            type_fields = {"cake_details": cake_details, "selected_items": [],
+                           "custom_components": [{"name": item_name, "price": cake_total}]}
+
         if edit_id:
             upd = {
-                "delivery_date": delivery_dt, "item": item_name, "cake_details": cake_details,
-                "custom_components": [{"name": item_name, "price": cake_total}],
+                "delivery_date": delivery_dt, "item": item_name, **type_fields,
                 "amount": amount, "status": status, "notes": notes,
                 "payment_method": payment_method, "payment_status": payment_status,
                 "delivery_type": delivery_type, "delivery_fee": delivery_fee,
@@ -3811,12 +3891,10 @@ def admin_manual_order():
             "user_id":        "manual",            # no customer account
             "order_source":   "messenger",
             "created_by":     session.get("user_id"),
-            "order_type":     "custom",
+            "order_type":     otype,
             "delivery_date":  delivery_dt,
             "item":           item_name,
-            "cake_details":   cake_details,
-            "selected_items": [],
-            "custom_components": [{"name": item_name, "price": cake_total}],
+            **type_fields,
             "amount":         amount,
             "status":         status,
             "rush":           False,
