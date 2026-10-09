@@ -530,6 +530,46 @@ def delete_uploaded_image(image_url):
         except Exception:
             current_app.logger.exception("Cloudinary delete error")
 
+# ---------------- HOME GALLERY (category cakes) ----------------
+# category -> Cloudinary subfolder under cake_shop/categories/
+CATEGORY_FOLDERS = {
+    'Girl': 'girls', 'Boy': 'boys', 'Birthdays': 'bdaycakes',
+    'Christening': 'christening', 'Ordinary': 'ordinarycakes',
+    'Holiday': 'holiday', 'Cartoons': 'Cartoons', 'Others': 'others',
+}
+CATEGORY_IMAGE_EXTS = {'webp', 'png', 'jpg', 'jpeg'}
+CATEGORY_IMAGE_MAX_BYTES = 3 * 1024 * 1024  # 3MB
+
+def save_category_image(file, category):
+    """Upload a gallery image. Returns (secure_url, public_id) or None if invalid/failed."""
+    sub = CATEGORY_FOLDERS.get(category)
+    if not sub or not file or not file.filename:
+        return None
+    parts = file.filename.rsplit('.', 1)
+    if len(parts) < 2 or parts[1].lower() not in CATEGORY_IMAGE_EXTS:
+        return None
+    file.seek(0, 2)
+    size = file.tell()
+    file.seek(0)
+    if size == 0 or size > CATEGORY_IMAGE_MAX_BYTES:
+        return None
+    try:
+        result = cloudinary.uploader.upload(
+            file, folder=f'cake_shop/categories/{sub}', resource_type='image'
+        )
+        return result['secure_url'], result['public_id']
+    except Exception:
+        current_app.logger.exception("Cloudinary category upload error")
+        return None
+
+def delete_category_image(public_id):
+    # Guard: only ever delete inside the categories folder
+    if public_id and public_id.startswith('cake_shop/categories/'):
+        try:
+            cloudinary.uploader.destroy(public_id, resource_type='image')
+        except Exception:
+            current_app.logger.exception("Cloudinary category delete error")
+
 def convert_timestamps(order):
     for field in ['created_at', 'delivery_date']:
         val = order.get(field)

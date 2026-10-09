@@ -1202,127 +1202,8 @@
     setTimeout(() => track.classList.remove('paused'), 800);
   }, { passive: true });
 })();
-  /* ---------- Categories data ---------- */
-  const CLOUDINARY_CATEGORY_BASE = 'https://res.cloudinary.com/dnystscn8/image/upload/cake_shop/categories/';
-const categories = {
-    Girl: [
-      { name: 'Jungle Safari',              img: 'girls/girl2-removebg-preview.webp', description: 'Wild adventure-themed cake with edible jungle animals and lush tropical decorations.' },
-      { name: 'Floral Chocolate',        img: 'girls/girl3-removebg-preview.webp', description: 'Rich chocolate cake adorned with hand-crafted sugar flowers and elegant gold accents.' },
-      { name: 'Rose Designer',       img: 'girls/girl4-removebg-preview.webp', description: 'Dreamy ombre sunset layers beautifully topped with blooming rose arrangements.' },
-      { name: 'Butterfly Princess',         img: 'girls/girl5-removebg-preview.webp', description: 'Elegant white cake with delicate butterfly toppers, perfect for a little princess.' },
-      { name: 'Cartoon Celebration',         img: 'girls/girl6-removebg-preview.webp', description: 'Vibrant cartoon-inspired cake bursting with colorful characters and playful details.' },
-      { name: 'Rainbow Dream',              img: 'girls/girl7-removebg-preview.webp', description: 'Magical rainbow cake with soft pastel layers and whimsical cloud decorations.' },
-      { name: 'Unicorn Fantasy',            img: 'girls/girl8-removebg-preview.webp', description: 'Enchanting unicorn cake with a golden horn, floral mane, and shimmering pastel finish.' },
-      { name: 'Safari Rainbow',      img: 'girls/girl9-removebg-preview.webp', description: 'Luxurious gold-accented cake blending safari charm with a rainbow of rich flavors.' },
-      { name: 'Drip Elegance',     img: 'girls/girl10-removebg-preview.webp', description: 'Soft pastel drip cake cascading with delicate sugar flowers and fresh greenery.' },
-      { name: 'Garden Tier',      img: 'girls/girl11.webp', description: 'Multi-tiered garden cake blooming with butterflies, florals, and lush details.' },
-      { name: 'Enchanted Princess',    img: 'girls/girl12.webp', description: 'Fairy-tale cake with sculpted princess figure surrounded by fluttering butterflies.' },
-      { name: 'Cartoon Party',    img: 'girls/girl13.webp', description: 'Fun-filled cake featuring beloved cartoon characters and festive candy decorations.' },
-      { name: 'Rainbow Celebration',      img: 'girls/girl14.webp', description: 'Pastel rainbow celebration cake layered with light cream and colorful sprinkles.' },
-      { name: 'Unicorn Blossom',    img: 'girls/girl15.webp', description: 'Magical blossom cake topped with a shimmering unicorn and blooming floral details.' },
-    ],
-    Boy: [
-      { name: 'Mario Adventure',     img: 'boys/boy2-removebg-preview.webp',  description: 'Fun Mario-themed cake packed with jungle adventure elements and iconic game characters.' },
-      { name: 'Safari Zoo',          img: 'boys/boy3-removebg-preview.webp',  description: 'Adorable zoo-themed cake featuring edible safari animals in a wild setting.' },
-      { name: 'Minecraft Blocks',  img: 'boys/boy4-removebg-preview.webp',  description: 'Creative Minecraft cake with edible building blocks and pixelated game characters.' },
-      { name: 'Doraemon Dream',        img: 'boys/boy5-removebg-preview.webp',  description: 'Charming Doraemon-themed cake in bright blue with beloved cartoon details.' },
-      { name: 'Caleb Whale',          img: 'boys/boy6-removebg-preview.webp',  description: 'Adorable ocean-themed cake featuring a friendly whale and underwater decorations.' },
-      { name: 'Vintage Explorer',      img: 'boys/boy7-removebg-preview.webp',  description: 'Classic town explorer cake with vintage map details and adventure-themed elements.' },
-      { name: 'Elephant Baptism',      img: 'boys/boy8-removebg-preview.webp',  description: 'Sweet baptism cake with a cute baby elephant centerpiece and soft pastel tones.' },
-      { name: 'Hot Wheels',           img: 'boys/boy9-removebg-preview.webp',  description: 'Action-packed Hot Wheels cake with racing cars and bold track decorations.' },
-      { name: 'Racing Champion',       img: 'boys/boy10-removebg-preview.webp', description: 'Champion racing cake with checkered flags and dynamic speed-inspired design.' },
-      { name: "Noah's Ark",       img: 'boys/boy11.webp', description: "Whimsical Noah's Ark cake filled with pairs of adorable edible animals." },
-      { name: 'Truck Galaxy',       img: 'boys/boy12.webp', description: 'Out-of-this-world monster truck cake with galaxy swirls and rugged truck toppers.' },
-      { name: 'Truck Black',        img: 'boys/boy13.webp', description: 'Bold black monster truck cake with dramatic detailing and powerful design.' },
-      { name: 'Gabriel Adventure',    img: 'boys/boy14.webp', description: 'Personalized ocean adventure cake with sea creatures and wave-inspired layers.' },
-      { name: 'Royal Guard',         img: 'boys/boy15.webp', description: 'Sophisticated London-themed cake featuring Royal Guard figures and iconic landmarks.' },
-    ],
-    Birthdays: [
-      { name: 'Jubilee Cake',             img: 'bdaycakes/b1-removebg-preview.webp',  description: 'Luxurious golden jubilee cake dripping in elegance for a milestone celebration.' },
-      { name: 'Mermaid Cake',              img: 'bdaycakes/b3-removebg-preview.webp',  description: 'Enchanting mermaid cake with ocean-blue hues, shells, and shimmering fins.' },
-      { name: 'Racing Track',               img: 'bdaycakes/b4-removebg-preview.webp',  description: 'Exciting racing track cake with mini cars and a checkered finish line design.' },
-      { name: 'Royal Golden',         img: 'bdaycakes/b5-removebg-preview.webp',  description: 'Regal golden wings cake with majestic feather details and opulent gold finish.' },
-      { name: 'Pink Floral',           img: 'bdaycakes/b6-removebg-preview.webp',  description: 'Romantic pink drip cake adorned with fresh-style floral arrangements on top.' },
-      { name: 'Cartoon Fun',                img: 'bdaycakes/b7-removebg-preview.webp',  description: 'Cheerful cartoon cake bursting with bright colors and fun character designs.' },
-      { name: 'Balloon Party',              img: 'bdaycakes/b8-removebg-preview.webp',  description: 'Festive balloon party cake with colorful balloon clusters and celebratory accents.' },
-      { name: 'Midnight Gold',          img: 'bdaycakes/b10-removebg-preview.webp', description: 'Sophisticated dark cake with striking gold accents for an elegant evening celebration.' },
-      { name: 'Oceanic Fantasy',                 img: 'bdaycakes/b11-removebg-preview.webp', description: 'Dreamy ocean-inspired cake with deep blue layers and magical sea creature details.' },
-      { name: 'Speedway Adventure',              img: 'bdaycakes/b12-removebg-preview.webp', description: 'Thrilling speedway cake with dynamic racing elements and bold track designs.' },
-      { name: 'Regal Feathered',         img: 'bdaycakes/b13-removebg-preview.webp', description: 'Elegant feathered cake with luxurious plume details and a regal color palette.' },
-      { name: 'Blossom Drizzle',                 img: 'bdaycakes/b14.webp', description: 'Delicate blossom cake with a gentle drizzle glaze and soft floral accents.' },
-      { name: 'Cartoon Carnival',                img: 'bdaycakes/b15.webp', description: 'Vibrant carnival cake with playful cartoon characters and festive fair-themed decor.' },
-      { name: 'Sunny Balloon',            img: 'bdaycakes/b16.webp', description: 'Bright and cheerful fiesta cake with sunny balloon clusters and joyful colors.' },
-      { name: 'Confetti Burst',                  img: 'bdaycakes/b17.webp', description: 'Celebratory confetti cake bursting with colorful sprinkles and a festive finish.' },
-      { name: 'Twilight Chocolate',      img: 'bdaycakes/b18.webp', description: 'Indulgent chocolate cascade cake with rich dark layers and a twilight-inspired drip.' },
-    ],
-    Christening: [
-      { name: 'Snowy Bliss',         img: 'christening/ch1-removebg-preview.webp',  description: 'Pure white christening cake with soft snowflake details and a heavenly finish.' },
-      { name: 'Golden Pearl',           img: 'christening/ch3-removebg-preview.webp',  description: 'Graceful cake adorned with golden pearl beading and delicate lace-inspired patterns.' },
-      { name: 'Little Prince',          img: 'christening/ch4-removebg-preview.webp',  description: 'Sweet Little Prince-themed cake with soft blue clouds and golden star accents.' },
-      { name: 'Heavenly Grace',     img: 'christening/ch10-removebg-preview.webp', description: 'Serene baptism cake with angelic white tiers and a heavenly cross topper.' },
-      { name: 'Celestial Bloom',      img: 'christening/ch6-removebg-preview.webp',  description: 'Beautiful cross cake blooming with celestial floral arrangements in soft tones.' },
-      { name: 'Angel Wings',          img: 'christening/ch7-removebg-preview.webp',  description: 'Heavenly cake featuring sculpted angel wings and a soft dreamy pastel palette.' },
-      { name: 'Blessed Blue',     img: 'christening/ch8-removebg-preview.webp',  description: 'Elegant blue communion cake with sacred accents and a clean, blessed design.' },
-      { name: 'Rosé Sacred',          img: 'christening/ch9-removebg-preview.webp',  description: 'Charming rosé-toned cake with sacred cross details and delicate floral charm.' },
-    ],
-    Ordinary: [
-      { name: 'Velvet Dream',              img: 'ordinarycakes/c2-removebg-preview.webp',  description: 'Luscious green velvet cake with smooth cream cheese frosting and a velvety crumb.' },
-      { name: 'Purple Passion',   img: 'ordinarycakes/c3-removebg-preview.webp',  description: 'Decadent dark chocolate cake with a golden glaze and rich indulgent layers.' },
-      { name: 'Cherry Blossom',    img: 'ordinarycakes/c4-removebg-preview.webp',  description: 'Delightful choco truffle cake with cherry blossom decorations and a silky finish.' },
-      { name: 'Chocolate Delight',    img: 'ordinarycakes/c5-removebg-preview.webp',  description: 'Bold purple choco truffle cake with deep chocolate layers and floral accents.' },
-      { name: 'Fudge Bliss',           img: 'ordinarycakes/c6-removebg-preview.webp',  description: 'Irresistible chocolate fudge cake with thick fudge drizzle and a moist rich center.' },
-      { name: 'Rose Fantasy',      img: 'ordinarycakes/c7-removebg-preview.webp',  description: 'Romantic rose-topped choco truffle cake with a velvety smooth chocolate ganache.' },
-      { name: 'Funfair Truffle',           img: 'ordinarycakes/c8-removebg-preview.webp',  description: 'Playful funfair-themed choco truffle cake with colorful carnival-inspired decorations.' },
-      { name: 'Whimsical Truffle',  img: 'ordinarycakes/c9-removebg-preview.webp',  description: 'Enchanting choco truffle cake with whimsical details and a dreamy chocolate finish.' },
-      { name: 'Cherry Drip',   img: 'ordinarycakes/c10-removebg-preview.webp', description: 'Luscious cherry drip truffle cake with bold chocolate layers and a glossy finish.' },
-      { name: 'Caramel Spiral',   img: 'ordinarycakes/c11.webp', description: 'Stunning caramel spiral cake with golden swirls and a sweet buttery caramel center.' },
-      { name: 'Butterfly Bloom',     img: 'ordinarycakes/c12.webp', description: 'Soft pastel cake blooming with butterfly accents and light floral decorations.' },
-      { name: 'Confetti Celebration',   img: 'ordinarycakes/c13.webp', description: 'Joyful celebration cake packed with colorful confetti sprinkles inside and out.' },
-      { name: 'Cream Swirl',    img: 'ordinarycakes/c14.webp', description: 'Timeless cream swirl cake with elegant piped rosettes and a classic vanilla base.' },
-      { name: 'Festive Crunch',   img: 'ordinarycakes/c15.webp', description: 'Festive chocolate crunch cake layered with crunchy praline and rich chocolate ganache.' },
-    ],
-    Holiday: [
-      { name: "Valentine's Lava",          img: 'holiday/H1.webp', description: "Romantic choco lava cake with a warm molten center, perfect for Valentine's Day." },
-      { name: 'Festival Holiday',  img: 'holiday/H2.webp', description: 'Rich dark chocolate holiday cake adorned with festive seasonal decorations.' },
-      { name: 'Snowfall Choco',          img: 'holiday/H3.webp', description: 'Wintery choco truffle cake dusted with edible snowfall and cool icy accents.' },
-      { name: 'Red Velvet',     img: 'holiday/H4.webp', description: 'Classic red velvet celebration cake with cream cheese frosting and a vibrant finish.' },
-      { name: 'Winter Delight',       img: 'holiday/H5.webp', description: 'Magical winter cake with snowy white tiers and sparkling wonderland decorations.' },
-      { name: 'Sprinkle Party',             img: 'holiday/H6.webp', description: 'Fun and festive sprinkle cake covered in rainbow sprinkles for a party-ready look.' },
-      { name: 'Golden Moments',        img: 'holiday/H7.webp', description: 'Elegant chocolate celebration cake with golden accents to mark golden moments.' },
-      { name: 'Shiny Golden',          img: 'holiday/H8.webp', description: 'Dazzling golden glow cake with a metallic sheen and a luxurious celebration finish.' },
-    ],
-    Cartoons: [
-      { name: 'Incredibles Hero',     img: 'Cartoons/1.webp',  description: 'Action-packed Incredibles cake featuring superhero designs for a heroic celebration.' },
-      { name: 'Tayo & Friends',     img: 'Cartoons/2.webp',  description: 'Bright and cheerful Tayo bus cake with rainbow colors and friendly character details.' },
-      { name: 'One Piece Pirate',      img: 'Cartoons/3.webp',  description: 'Epic One Piece pirate cake with bold Straw Hat crew designs for true fans.' },
-      { name: 'Roblox 7th Birthday',        img: 'Cartoons/4.webp',  description: 'Cool Roblox birthday cake with pixel-style game characters and bold gaming accents.' },
-      { name: 'Frozen Elsa',        img: 'Cartoons/5.webp',  description: 'Magical Frozen cake with Elsa in shimmering glitter and an icy blue design.' },
-      { name: 'Number 7 Balloon',    img: 'Cartoons/6.webp',  description: 'Festive number 7 balloon cake with colorful decorations for a 7th birthday party.' },
-      { name: 'Frozen & Barbie',      img: 'Cartoons/7.webp',  description: 'Dreamy combo cake featuring Frozen and Barbie characters in a pastel wonderland.' },
-      { name: 'Tokidoki Rainbow',     img: 'Cartoons/8.webp',  description: 'Trendy Tokidoki cake with rainbow hues and adorable character-themed decorations.' },
-      { name: 'Kuromi & My Melody',         img: 'Cartoons/9.webp',  description: 'Adorable Sanrio cake featuring Kuromi and My Melody in soft pastel tones.' },
-      { name: 'Kuromi Purple Dream',        img: 'Cartoons/10.webp', description: 'Chic purple Kuromi cake with bold gothic-cute style and Sanrio charm details.' },
-      { name: 'Animal Crossing Party',      img: 'Cartoons/11.webp', description: 'Wholesome Animal Crossing cake with island characters and nature-inspired decorations.' },
-      { name: 'Pokemon Pokeball',           img: 'Cartoons/12.webp', description: 'Exciting Pokémon cake featuring a bold Pokéball design and your favorite characters.' },
-      { name: 'Minnie Mouse',      img: 'Cartoons/13.webp', description: 'Adorable Minnie Mouse cupcake tower cake with polka dots and a bow-topped centerpiece.' },
-      { name: 'Penguin Gentleman',    img: 'Cartoons/15.webp', description: 'Dapper penguin party cake dressed in a tiny tuxedo for a classy celebration.' },
-      { name: 'Sanrio Friends',       img: 'Cartoons/16.webp', description: 'Sweet Sanrio dream cake featuring Hello Kitty and friends in soft pastel colors.' },
-      { name: 'Enchanted Forest',     img: 'Cartoons/17.webp', description: 'Mystical forest tower cake with enchanted woodland creatures and fairy-tale accents.' },
-    ],
-    Others: [
-      { name: 'Blackpink Lightstick',    img: 'others/ot1.webp',  description: 'Sophisticated gentleman cake with suit-inspired design and classic monochrome elegance.' },
-      { name: 'Floral Garden',      img: 'others/ot2.webp',  description: 'Beautiful garden cake blooming with vibrant edible flowers and lush greenery.' },
-      { name: 'Fairytale Kids',        img: 'others/ot3.webp',  description: 'Whimsical kids play cake with fairytale castle details and storybook-inspired accents.' },
-      { name: 'Boss Lady',      img: 'others/ot4.webp',  description: 'Fierce Boss Lady cake with chic gold accents celebrating the powerful women in your life.' },
-      { name: 'Music Lover',          img: 'others/ot5.webp',  description: 'Elegant piano-themed cake for music lovers with edible keys and musical note details.' },
-      { name: 'Festive Poinsettia',         img: 'others/ot6.webp',  description: 'Stunning poinsettia cake with rich red blooms and a festive holiday-inspired design.' },
-      { name: 'Classic Mickey',       img: 'others/ot7.webp',  description: 'Timeless Mickey Mouse cream cake with classic ears and a smooth whipped finish.' },
-      { name: 'Royal Navy',          img: 'others/ot8.webp',  description: 'Nautical navy anchor cake with bold maritime details and a crisp seafaring style.' },
-      { name: "King's Throne",       img: 'others/ot9.webp',  description: 'Majestic throne cake fit for a king, with royal crown details and regal gold accents.' },
-      { name: 'Princess Doll',        img: 'others/ot10.webp', description: 'Magical princess doll cake with a gown-shaped base and a beautiful doll centerpiece.' },
-      { name: 'Underwater Adventure',       img: 'others/ot11.webp', description: 'Deep-sea adventure cake with ocean creatures, coral reefs, and an underwater wonderland.' },
-    ]
-  };
+  /* ---------- Categories data (Firestore: Admin > Cake Stock > Home Gallery) ---------- */
+  const categories = {{ categories|tojson }};
  
 /* ---------- Open modal (your original logic, unchanged) ---------- */
 function openCategory(category) {
@@ -1330,7 +1211,7 @@ function openCategory(category) {
   const cardsContainer = document.getElementById('categoryCards');
   cardsContainer.innerHTML = '';
  
-  categories[category].forEach(item => {
+  (categories[category] || []).forEach(item => {
     const card = document.createElement('div');
     card.classList.add('category-card');
  
@@ -1341,7 +1222,7 @@ function openCategory(category) {
     front.classList.add('card-front');
  
     const img = document.createElement('img');
-    img.src = CLOUDINARY_CATEGORY_BASE + item.img;
+    img.src = item.img;
     img.alt = item.name;
     img.classList.add('category-card-img');
  

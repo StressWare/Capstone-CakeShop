@@ -4,8 +4,8 @@ import time
 import firebase 
 from firebase_admin import firestore
 from datetime import datetime
-from db import cakes, reviews, orders, custom_cake_price, loyalty_gifts
-from helpers import PH_TZ
+from db import cakes, reviews, orders, custom_cake_price, loyalty_gifts, category_cakes
+from helpers import PH_TZ, CATEGORY_FOLDERS
 
 # After
 _cache = {}
@@ -31,16 +31,16 @@ def invalidate_cache(*keys):
 
 # ── Internal: fetch-or-cache helper ──
 
-def _fetch_or_cache(key, fetch_fn):
+def _fetch_or_cache(key, fetch_fn, ttl=CACHE_TTL):
     # Fast path — no lock
-    cached = get_cache(key)
+    cached = get_cache(key, ttl)
     if cached is not None:
         print(f"CACHE HIT — {key}")
         return cached
 
     # Slow path — acquire lock, check again, then fetch
     with _lock:
-        cached = get_cache(key)
+        cached = get_cache(key, ttl)
         if cached is not None:
             return cached
         print(f"FIRESTORE READ — {key}")
@@ -60,6 +60,35 @@ def get_all_cakes():
             result.append(d)
         return result
     return _fetch_or_cache("all_cakes", fetch)
+
+
+def get_category_cakes_all():
+    """Every home-gallery doc (active + hidden), sorted. Cached; cleared on admin writes."""
+    def fetch():
+        result = []
+        for doc in category_cakes.stream():
+            d = doc.to_dict()
+            d["id"] = doc.id
+            ca = d.get("created_at")
+            d["created_at"] = ca.isoformat() if ca else ""
+            result.append(d)
+        result.sort(key=lambda d: (d.get("order", 0), d["created_at"]))
+        return result
+    # No expiry: only refreshed when an admin add/edit/delete calls invalidate_cache("category_cakes")
+    return _fetch_or_cache("category_cakes", fetch, ttl=float("inf"))
+
+
+def get_category_gallery():
+    """Active items grouped by category, shaped for the home.html modal JS."""
+    grouped = {c: [] for c in CATEGORY_FOLDERS}  # every category key always exists
+    for d in get_category_cakes_all():
+        if d.get("active", True) and d.get("category") in grouped:
+            grouped[d["category"]].append({
+                "name": d.get("name", ""),
+                "img": d.get("image_url", ""),
+                "description": d.get("description", ""),
+            })
+    return grouped
 
 
 def get_custom_prices():
