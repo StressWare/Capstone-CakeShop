@@ -627,6 +627,7 @@
             <tr>
               <th>Date</th>
               <th>Order</th>
+              <th>Customer</th>
               <th>Payment Methods</th>
               <th>Amount (₱)</th>
             </tr>
@@ -638,12 +639,14 @@
               data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
               data-amount="{{ sale.amount }}"
               data-payment="{{ sale.payment_method or 'N/A' }}"
+              data-customer="{{ sale.customer }}"
               data-item="{{ sale.item }}">
             <td data-label="Date">
               <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
               <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
             </td>
             <td data-label="Order">{{ sale.item }}</td>
+            <td data-label="Customer">{{ sale.customer }}</td>
             <td data-label="Payment"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
             <td data-label="Amount" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
           </tr>
@@ -655,12 +658,14 @@
                 data-date="{{ sale.created_at.strftime('%Y-%m-%d') }}"
                 data-amount="{{ sale.amount }}"
                 data-payment="{{ sale.payment_method or 'N/A' }}"
+                data-customer="Walk-in"
                 data-item="{{ sale.item }}">
               <td data-label="DATE">
                 <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
               </td>
               <td data-label="ORDER">{{ sale.item }}</td>
+              <td data-label="CUSTOMER">Walk-in</td>
               <td data-label="PAYMENT"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
               <td data-label="AMOUNT" class="fw-bold text-success">₱{{ "%.2f"|format(sale.amount) }}</td>
             </tr>
@@ -673,12 +678,14 @@
                 data-amount="{{ sale.amount }}"
                 data-delivery="0"
                 data-payment="{{ sale.payment_method or 'N/A' }}"
+                data-customer="{{ sale.customer }}"
                 data-item="{{ sale.item }}">
               <td data-label="DATE">
                 <small>{{ sale.created_at.strftime('%b %d, %Y') }}</small><br>
                 <small class="text-muted">{{ sale.created_at.strftime('%I:%M %p') }}</small>
               </td>
               <td data-label="ORDER">{{ sale.item }}</td>
+              <td data-label="CUSTOMER">{{ sale.customer }}</td>
               <td data-label="PAYMENT"><span class="badge bg-light text-dark">{{ sale.payment_method or 'N/A' }}</span></td>
               <td data-label="AMOUNT" class="fw-bold text-warning">₱{{ "%.2f"|format(sale.amount) }} <span class="badge bg-light text-dark">{{ sale.status }}</span></td>
             </tr>
@@ -900,7 +907,7 @@ function exportCSV() {
     [`Date Generated: ${today}`],
     [`Date Range: ${fromVal} to ${toVal}`],
     [],
-    ['Date', 'Order', 'Payment Method', 'Amount (PHP)'],
+    ['Date', 'Order', 'Customer', 'Payment Method', 'Amount (PHP)'],
   ];
 
   let total = 0;
@@ -908,14 +915,15 @@ function exportCSV() {
     const cells   = row.querySelectorAll('td');
     const date    = cells[0].textContent.trim().replace(/\s+/g, ' ');
     const item    = row.getAttribute('data-item');
+    const customer = row.getAttribute('data-customer') || '';
     const payment = row.getAttribute('data-payment');
     const amount  = parseFloat(row.getAttribute('data-amount')) || 0;
     total += amount;
-    rows.push([date, item, payment, amount.toFixed(2)]);
+    rows.push([date, item, customer, payment, amount.toFixed(2)]);
   });
 
   rows.push([]);
-  rows.push(['TOTAL', '', '', total.toFixed(2)]);
+  rows.push(['TOTAL', '', '', '', total.toFixed(2)]);
 
   const csv  = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], {type: 'text/csv;charset=utf-8;'});
@@ -926,6 +934,11 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
   closeExportModal();
+}
+
+// Customer names are typed by customers, so escape before putting them in innerHTML
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 // ── Export PDF ──
@@ -943,6 +956,7 @@ function exportPDF() {
     const cells   = row.querySelectorAll('td');
     const date    = cells[0].textContent.trim().replace(/\s+/g, ' ');
     const item    = row.getAttribute('data-item');
+    const customer = escapeHtml(row.getAttribute('data-customer') || '');
     const payment = row.getAttribute('data-payment');
     const amount  = parseFloat(row.getAttribute('data-amount')) || 0;
     total += amount;
@@ -950,6 +964,7 @@ function exportPDF() {
       <tr style="background:${i % 2 === 0 ? '#faf5f7' : '#fff'};">
         <td style="padding:8px 12px;font-size:12px;">${date}</td>
         <td style="padding:8px 12px;font-size:12px;">${item}</td>
+        <td style="padding:8px 12px;font-size:12px;">${customer}</td>
         <td style="padding:8px 12px;font-size:12px;">${payment}</td>
         <td style="padding:8px 12px;font-size:12px;text-align:right;">₱${amount.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
       </tr>`;
@@ -973,6 +988,7 @@ function exportPDF() {
         <tr style="background:#c71585;color:#fff;">
           <th style="padding:10px 12px;text-align:left;font-size:12px;">Date</th>
           <th style="padding:10px 12px;text-align:left;font-size:12px;">Order</th>
+          <th style="padding:10px 12px;text-align:left;font-size:12px;">Customer</th>
           <th style="padding:10px 12px;text-align:left;font-size:12px;">Payment</th>
           <th style="padding:10px 12px;text-align:right;font-size:12px;">Amount (₱)</th>
         </tr>
@@ -980,7 +996,7 @@ function exportPDF() {
       <tbody>${tableRows}</tbody>
       <tfoot>
         <tr style="background:#c71585;color:#fff;font-weight:700;">
-          <td colspan="3" style="padding:10px 12px;font-size:13px;">TOTAL (${visibleRows.length} orders)</td>
+          <td colspan="4" style="padding:10px 12px;font-size:13px;">TOTAL (${visibleRows.length} orders)</td>
           <td style="padding:10px 12px;text-align:right;font-size:13px;">₱${total.toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
         </tr>
       </tfoot>

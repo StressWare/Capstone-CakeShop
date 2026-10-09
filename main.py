@@ -2983,6 +2983,7 @@ def admin_sales():
                     "delivery_fee": delivery_fee,
                     "payment_method": payment_method,
                     "item": item,
+                    "customer": (order.get("customer") or {}).get("name") or "—",
                 })
         elif order_type == "custom":
             dp_amt = order.get("downpayment_amount")
@@ -2993,6 +2994,7 @@ def admin_sales():
                     "amount": dp_amt,
                     "payment_method": payment_method,
                     "item": item,
+                    "customer": (order.get("customer") or {}).get("name") or "—",
                     "status": status,
                     "downpayment_type": order.get("downpayment_type"),
                 })
