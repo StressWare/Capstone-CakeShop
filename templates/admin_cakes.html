@@ -150,7 +150,6 @@
     }
 }
 
-
   /* ── Add Cake Button ── */
   .card-header .btn-dark {
     background:transparent;
@@ -677,7 +676,20 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3"><label class="form-label">Product Image</label><input type="file" class="form-control" name="image" accept="image/*" ><small class="text-muted">Max 2MB</small></div>
+          <div class="mb-3"><label class="form-label">Product Image</label>
+          <div class="d-flex align-items-center gap-2">
+            <input type="file" class="d-none" name="image" id="cakeImg" accept="image/*">
+            <button type="button" class="btn btn-outline-secondary" id="cakeImgBtn"
+                    style="width:44px;height:38px;padding:0;overflow:hidden;flex:0 0 auto" aria-label="Add product image">
+              <i class="fas fa-camera"></i>
+            </button>
+            <span id="cakeImgName" class="text-muted small text-truncate">No image selected</span>
+            <button type="button" class="btn btn-outline-danger btn-sm d-none" id="cakeImgClear" aria-label="Remove image">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <small class="text-muted">Max 2MB</small>
+        </div>
           <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label">Product Name *</label><input type="text" class="form-control" name="name" required placeholder="e.g., Chocolate Dream"></div>
             <div class="col-md-6 mb-3">
@@ -1007,6 +1019,45 @@ function loadLoyaltyGiftsUI() {
   renderGiftInputs('small', smallGifts);
   renderGiftInputs('big', bigGifts);
 }
+
+// ── Add Product: image thumbnail (data: URL, since CSP blocks blob:) ──
+const cakeImg      = document.getElementById('cakeImg');
+const cakeImgBtn   = document.getElementById('cakeImgBtn');
+const cakeImgName  = document.getElementById('cakeImgName');
+const cakeImgClear = document.getElementById('cakeImgClear');
+
+function resetCakeImg() {
+  cakeImg.value = '';
+  cakeImgBtn.innerHTML = '<i class="fas fa-camera"></i>';
+  cakeImgName.textContent = 'No image selected';
+  cakeImgClear.classList.add('d-none');
+}
+
+cakeImgBtn.addEventListener('click', () => cakeImg.click());
+cakeImgClear.addEventListener('click', resetCakeImg);
+
+cakeImg.addEventListener('change', () => {
+  const file = cakeImg.files[0];
+  if (!file) { resetCakeImg(); return; }
+  if (!file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) {
+    resetCakeImg();
+    glassToast({ icon: 'error', title: 'Please choose an image under 2MB.', showConfirmButton: false, timer: 3500 });
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    if (cakeImg.files[0] !== file) return;
+    cakeImgBtn.innerHTML = '';
+    const im = document.createElement('img');
+    im.src = ev.target.result;
+    im.alt = 'Product image';
+    im.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    cakeImgBtn.appendChild(im);
+    cakeImgName.textContent = file.name;
+    cakeImgClear.classList.remove('d-none');
+  };
+  reader.readAsDataURL(file);
+});
 
 </script>
 {% endblock %}

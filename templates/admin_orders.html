@@ -316,6 +316,71 @@
     }
   }
 
+    /* ════════════════════════════════════════════════
+     ADD MANUAL ORDER TYPE MODAL (Matches First Image)
+  ════════════════════════════════════════════════ */
+  #manualTypeModal .modal-dialog {
+    width: 350px;
+    max-width: 70vw;
+    margin: 1.75rem auto;
+  }
+  #manualTypeModal .modal-content {
+    border-radius: 12px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    border-top: 4px solid var(--pink-primary);
+  }
+  #manualTypeModal .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #e8e8e8;
+  }
+  #manualTypeModal .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e !important;
+  }
+  #manualTypeModal .modal-body {
+    padding: 20px 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #manualTypeModal .modal-option-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 22px 20px;
+    border: 1.5px solid #d0d0d0;
+    border-radius: 10px;
+    background: #ffffff;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 500;
+    color: #555;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  #manualTypeModal .modal-option-btn:hover {
+    border-color: var(--pink-primary);
+    background: var(--pink-light);
+    color: var(--pink-primary);
+    box-shadow: 0 2px 8px rgba(214, 51, 132, 0.12);
+  }
+  #manualTypeModal .modal-option-btn:active {
+    transform: scale(0.985);
+  }
+  #manualTypeModal .modal-option-btn i {
+    font-size: 22px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+  #manualTypeModal .modal-option-btn:hover i {
+    opacity: 1;
+  }
+
   /* ════════════════════════════════════════════════
      RESPONSIVE — MOBILE (≤ 575px)
   ════════════════════════════════════════════════ */
@@ -658,6 +723,131 @@
     border-color: var(--pink-primary);
     box-shadow: 0 0 0 0.25rem rgba(214, 51, 132, 0.25);
   }
+
+  /* ── Add Manual Order modal: field alignment ──
+     Each col-md-* field becomes a flex column and its input/select is pushed to the
+     bottom, so inputs line up on one baseline even when a label wraps to 2 lines. */
+  #manualOrderModal .row > [class*="col-md-"] {
+    display: flex;
+    flex-direction: column;
+  }
+  #manualOrderModal .row > [class*="col-md-"] > .form-control,
+  #manualOrderModal .row > [class*="col-md-"] > .form-select {
+    margin-top: auto;
+    min-width: 0;
+  }
+  #manualOrderModal .form-label { line-height: 1.3; }
+  #manualOrderModal .form-control,
+  #manualOrderModal .form-select { height: 38px; }
+  #manualOrderModal textarea.form-control { height: auto; }
+  #manualOrderModal input[type="file"].form-control { height: auto; }
+
+  /* Premade cake rows: grid so name / price / qty / subtotal / photo / remove always line up */
+  #manualOrderModal .mo-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 110px 80px 90px 38px 38px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  #manualOrderModal .mo-row .form-control { width: 100%; min-width: 0; }
+  #manualOrderModal .mo-row .mo-sub {
+    text-align: right;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  #manualOrderModal .mo-row .mo-photo,
+  #manualOrderModal .mo-row .mo-del {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ════════════════════════════════════════════════
+     ADD MANUAL ORDER MODAL — RESPONSIVE SIZING & CENTERING (FIX FOR TABLET CUT-OFF)
+  ════════════════════════════════════════════════ */
+
+  /* Small screens (mobile) */
+  @media (max-width: 575px) {
+    #manualOrderModal .modal-dialog {
+      width: calc(100vw - 32px) !important;
+      max-width: calc(100vw - 32px) !important;
+      position: fixed !important;
+      top: 50% !important;
+      left: 50% !important;
+      transform: translate(-50%, -50%) !important;
+      margin: 0 !important;
+    }
+
+    #manualOrderModal .modal-content {
+      max-height: 82vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #manualOrderModal .modal-content > form {
+      display: flex;
+      flex-direction: column;
+      max-height: 82vh;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    #manualOrderModal .modal-body {
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+  }
+
+  /* Tablet + desktop: width never exceeds the space beside the sidebar */
+  @media (min-width: 576px) {
+    #manualOrderModal .modal-dialog {
+      max-width: min(800px, calc(100% - 2rem)) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+    }
+    #manualOrderModal .modal-body {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+  }
+
+  /* Sidebar is permanently visible from 769px up → centre the modal
+     in the area beside it instead of the whole screen */
+  @media (min-width: 993px) {
+    #manualOrderModal { padding-left: 250px !important; }
+  }
+  @media (min-width: 769px) and (max-width: 992px) {
+    #manualOrderModal { padding-left: 220px !important; }
+  }
+
+  /* Desktop */
+  @media (min-width: 992px) {
+    #manualOrderModal .modal-dialog {
+      max-width: 800px;
+    }
+    #manualOrderModal .modal-body {
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+  }
+
+  body.modal-open:has(#manualOrderModal.show) .sidebar-toggle-btn { display: none !important; }
+
+  #manualOrderModal .modal-body { container-type: inline-size; }
+  @container (max-width: 560px) {
+    #manualOrderModal .row > [class*="col-md-"] { width: 100%; }
+    #manualOrderModal .mo-row { grid-template-columns: 1fr 1fr 38px 38px; }
+    #manualOrderModal .mo-row [name="pm_name"] { grid-column: 1 / -1; }
+    #manualOrderModal .mo-row .mo-sub { grid-column: 1 / -1; order: 10; }
+  }
 </style>
 {% endblock %}
 
@@ -859,16 +1049,22 @@
     </div>
   </div>
 
-  <div class="modal fade" id="manualTypeModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal fade" id="manualTypeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" style="color:#212529;">Add Manual Order</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title">Add Manual Order</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <div class="modal-body d-grid gap-2">
-          <button type="button" class="btn btn-outline-secondary py-3" data-type="premade"><i class="fas fa-birthday-cake me-2"></i>Premade order</button>
-          <button type="button" class="btn btn-outline-secondary py-3" data-type="custom"><i class="fas fa-palette me-2"></i>Customize order</button>
+        <div class="modal-body">
+          <button type="button" class="modal-option-btn" data-type="premade">
+            <i class="fas fa-birthday-cake"></i>
+            Premade order
+          </button>
+          <button type="button" class="modal-option-btn" data-type="custom">
+            <i class="fas fa-palette"></i>
+            Customize order
+          </button>
         </div>
       </div>
     </div>
@@ -876,7 +1072,7 @@
 
   <!-- MANUAL ORDER MODAL (Messenger / off-site, custom) -->
   <div class="modal fade" id="manualOrderModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form id="manualOrderForm" autocomplete="off">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -899,7 +1095,7 @@
               <div class="col-md-3"><label class="form-label">Pickup/Delivery date *</label>
                 <input type="date" name="delivery_date" class="form-control" required></div>
               <div class="col-md-3"><label class="form-label">Time (optional)</label>
-                              <input type="time" name="delivery_time" class="form-control"></div>
+                <input type="time" name="delivery_time" class="form-control"></div>
 
               <div class="col-12"><label class="form-label d-block">Fulfillment *</label>
                 <div class="form-check form-check-inline">
@@ -978,7 +1174,18 @@
               <div class="col-12"><label class="form-label">Notes</label>
                 <textarea name="notes" class="form-control" rows="2" maxlength="500"></textarea></div>
               <div class="col-12 mo-custom"><label class="form-label">Reference photo (max 2MB)</label>
-                <input type="file" name="image" class="form-control" accept="image/*"></div>
+                <div class="d-flex align-items-center gap-2">
+                  <input type="file" name="image" id="moImage" class="d-none" accept="image/*">
+                  <button type="button" class="btn btn-outline-secondary" id="moImageBtn"
+                          style="width:44px;height:38px;padding:0;overflow:hidden;flex:0 0 auto" aria-label="Add reference photo">
+                    <i class="fas fa-camera"></i>
+                  </button>
+                  <span id="moImageName" class="text-muted small text-truncate">No photo selected</span>
+                  <button type="button" class="btn btn-outline-danger btn-sm d-none" id="moImageClear" aria-label="Remove photo">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
 
               <div class="col-md-4"><label class="form-label" id="moPriceLabel">Cake price (₱) *</label>
                 <input type="number" name="cake_total" class="form-control" min="1" step="0.01" required></div>
@@ -1509,7 +1716,7 @@ document.addEventListener('hidden.bs.modal', function() {
                         document.querySelectorAll('#adminCancelReasonBox label').forEach(l=>{
                           if(l!==this){l.style.borderColor='#e0e0e0';l.style.background='#fff';}
                         });
-                        document.getElementById('adminCancelOtherBox').style.display='${r === 'Other' ? 'block' : 'none'}';">
+                        document.getElementById('adminCancelOtherBox').style.display='${r === 'Other' ? 'block' : 'none'}';">>
           <input type="radio" name="adminCancelRadio" value="${r}" style="accent-color:#dc3545;"> ${r}
         </label>`).join('');
       glassAlert({
@@ -2483,14 +2690,14 @@ window.sendMessageToCustomer = async function() {
 
   function addRow(name = '', qty = 1, price = '', img = '') {
     const d = document.createElement('div');
-    d.className = 'd-flex gap-2 mb-2 mo-row align-items-center';
-    d.innerHTML = `<input type="text" name="pm_name" class="form-control" placeholder="Cake name" maxlength="100" style="flex:1; min-width:0;">
-      <input type="number" name="pm_price" class="form-control" style="max-width:100px" min="0" step="0.01" placeholder="Price">
-      <input type="number" name="pm_qty" class="form-control" style="max-width:75px" min="1" max="999" placeholder="Qty">
-      <span class="mo-sub text-muted small text-end" style="min-width:78px">₱0.00</span>
+    d.className = 'mo-row';
+    d.innerHTML = `<input type="text" name="pm_name" class="form-control" placeholder="Cake name" maxlength="100">
+      <input type="number" name="pm_price" class="form-control" min="0" step="0.01" placeholder="Price">
+      <input type="number" name="pm_qty" class="form-control" min="1" max="999" placeholder="Qty">
+      <span class="mo-sub text-muted small">₱0.00</span>
       <input type="hidden" name="pm_image">
       <input type="file" class="mo-file d-none" accept="image/*">
-      <button type="button" class="btn btn-outline-secondary mo-photo" style="width:44px;height:38px;padding:0;overflow:hidden;flex:0 0 auto" aria-label="Add cake photo"><i class="fas fa-camera"></i></button>
+      <button type="button" class="btn btn-outline-secondary mo-photo" aria-label="Add cake photo"><i class="fas fa-camera"></i></button>
       <button type="button" class="btn btn-outline-danger mo-del" aria-label="Remove cake"><i class="fas fa-times"></i></button>`;
     const hidden   = d.querySelector('[name="pm_image"]');
     const fileIn   = d.querySelector('.mo-file');
@@ -2675,6 +2882,8 @@ window.sendMessageToCustomer = async function() {
     od.max   = nowLocalInput();
     document.getElementById('moKey').value = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(36).slice(2))) + '-manual';
 
+    resetRefPhoto();
+
     // ── edit vs add, premade vs custom ──
     const eo   = window.__editManual;   // set by editManualOrder() when you click Edit
     const type = eo ? (eo.order_type || 'custom') : (window.__newManualType || 'custom');
@@ -2711,5 +2920,45 @@ window.sendMessageToCustomer = async function() {
     }
   });
 })();
+
+
+// ── Custom order: reference photo thumbnail (data: URL, since CSP blocks blob:) ──
+const imgIn    = document.getElementById('moImage');
+const imgBtn   = document.getElementById('moImageBtn');
+const imgName  = document.getElementById('moImageName');
+const imgClear = document.getElementById('moImageClear');
+
+function resetRefPhoto() {
+  imgIn.value = '';
+  imgBtn.innerHTML = '<i class="fas fa-camera"></i>';
+  imgName.textContent = 'No photo selected';
+  imgClear.classList.add('d-none');
+}
+
+imgBtn.addEventListener('click', () => imgIn.click());
+imgClear.addEventListener('click', resetRefPhoto);
+
+imgIn.addEventListener('change', () => {
+  const file = imgIn.files[0];
+  if (!file) { resetRefPhoto(); return; }
+  if (!file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) {
+    resetRefPhoto();
+    glassToast({ icon: 'error', title: 'Please choose an image under 2MB.', showConfirmButton: false, timer: 3500 });
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    if (imgIn.files[0] !== file) return;
+    imgBtn.innerHTML = '';
+    const im = document.createElement('img');
+    im.src = ev.target.result;
+    im.alt = 'Reference photo';
+    im.style.cssText = 'width:100%;height:100%;object-fit:cover';
+    imgBtn.appendChild(im);
+    imgName.textContent = file.name;
+    imgClear.classList.remove('d-none');
+  };
+  reader.readAsDataURL(file);
+});
 </script>
 {% endblock %}
