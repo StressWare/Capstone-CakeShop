@@ -341,6 +341,9 @@
     <button class="btn tab-btn" id="tabLoyaltyGifts">
       Loyalty Gifts
     </button>
+    <button class="btn tab-btn" id="tabGallery">
+      Displayed Cakes
+    </button>
   </div>
   <button class="btn btn-dark" id="addCakeBtn" data-bs-toggle="modal" data-bs-target="#cakeModal">
     <i class="fas fa-plus me-2"></i>Add New Cake
@@ -662,6 +665,89 @@
   </div>
 </div>
       <!-- END panelLoyalty -->
+
+      <!-- TAB 4: DISPLAYED CAKES -->
+      <div id="panelGallery" style="display:none;">
+        <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+          <div class="d-flex flex-wrap gap-2">
+            <input type="search" id="gallerySearch" class="form-control" style="max-width:220px;" placeholder="Search name...">
+            <select id="galleryFilter" class="form-select" style="max-width:220px;">
+              <option value="">All categories</option>
+              {% for c in gallery_categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <button type="button" class="btn btn-dark" data-action="add-gallery">
+            <i class="fas fa-plus me-2"></i>Add Gallery Cake
+          </button>
+        </div>
+        <p class="text-muted small mb-3">These are the cakes shown when a customer opens a category on the home page. Upload transparent WEBP/PNG (max 3MB).</p>
+        <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="galleryGrid">
+          {% for g in gallery_items %}
+          <div class="col gallery-item" data-category="{{ g.category }}" data-name="{{ g.name|lower }}">
+            <div class="card h-100 shadow-sm">
+              <img src="{{ g.image_url }}" alt="{{ g.name }}" loading="lazy" style="height:140px;object-fit:contain;background:#f8f9fa;">
+              <div class="card-body p-2">
+                <div class="fw-bold small text-truncate">{{ g.name }}</div>
+                <span class="badge bg-warning text-dark">{{ g.category }}</span>
+                {% if not g.active %}<span class="badge bg-secondary">Hidden</span>{% endif %}
+              </div>
+              <div class="card-footer p-2 d-grid gap-1">
+                <button type="button" class="btn btn-sm btn-primary" data-action="edit-gallery"
+                        data-id="{{ g.id }}" data-name="{{ g.name }}" data-description="{{ g.description }}"
+                        data-category="{{ g.category }}" data-active="{{ '1' if g.active else '0' }}"
+                        data-image="{{ g.image_url }}"><i class="fas fa-edit me-1"></i>Edit</button>
+                <form method="POST" action="{{ url_for('delete_gallery_item', item_id=g.id) }}" class="gallery-delete-form">
+                  <button type="submit" class="btn btn-sm btn-danger w-100"><i class="fas fa-trash me-1"></i>Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-muted">No gallery cakes yet.</p>
+          {% endfor %}
+        </div>
+        <p id="galleryEmpty" class="text-muted text-center my-4" style="display:none;">No cakes match your search.</p>
+        <nav class="mt-4"><ul class="pagination justify-content-end mb-0" id="galleryPagination"></ul></nav>
+      </div>
+      <!-- END panelGallery -->
+    </div>
+  </div>
+</div>
+
+<!-- ── DISPLAYED CAKES MODAL (add + edit) ── -->
+<div class="modal fade" id="galleryModal" tabindex="-1"
+     data-add-url="{{ url_for('add_gallery_item') }}"
+     data-edit-url="{{ url_for('edit_gallery_item', item_id='ID_PLACEHOLDER') }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="POST" enctype="multipart/form-data" id="galleryForm">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="galleryModalTitle">Add Gallery Cake</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3 text-center">
+            <img id="galleryPreview" src="" alt="" style="display:none;max-height:140px;max-width:100%;object-fit:contain;background:#f8f9fa;">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Image <span id="galleryImgHint" class="text-muted small">(WEBP/PNG/JPG, max 3MB)</span></label>
+            <input type="file" class="form-control" name="image" id="galleryImage" accept="image/webp,image/png,image/jpeg">
+          </div>
+          <div class="mb-3"><label class="form-label">Name *</label><input type="text" class="form-control" name="name" id="galleryName" maxlength="60" required></div>
+          <div class="mb-3">
+            <label class="form-label">Category *</label>
+            <select class="form-select" name="category" id="galleryCategory" required>
+              {% for c in gallery_categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3"><label class="form-label">Description *</label><textarea class="form-control" name="description" id="galleryDescription" rows="3" maxlength="200" required></textarea></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="active" id="galleryActive" checked><label class="form-check-label" for="galleryActive">Show on home page</label></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning text-dark"><i class="fas fa-save me-2"></i>Save</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -727,6 +813,8 @@ function switchTab(tab) {
   document.getElementById('panelProducts').style.display    = tab === 'products' ? '' : 'none';
   document.getElementById('panelCustom').style.display      = tab === 'custom'   ? '' : 'none';
   document.getElementById('panelLoyalty').style.display     = tab === 'loyalty'  ? '' : 'none';
+  document.getElementById('panelGallery').style.display     = tab === 'gallery'  ? '' : 'none';
+  document.getElementById('tabGallery').classList.toggle('active',       tab === 'gallery');
   document.getElementById('tabProducts').classList.toggle('active',      tab === 'products');
   document.getElementById('tabCustomPricing').classList.toggle('active', tab === 'custom');
   document.getElementById('tabLoyaltyGifts').classList.toggle('active',  tab === 'loyalty');
@@ -800,6 +888,8 @@ function switchTab(tab) {
       document.getElementById('tabProducts').addEventListener('click', function() { switchTab('products'); });
       document.getElementById('tabCustomPricing').addEventListener('click', function() { switchTab('custom'); });
       document.getElementById('tabLoyaltyGifts').addEventListener('click', function() { switchTab('loyalty'); });
+      document.getElementById('tabGallery').addEventListener('click', function() { location.hash = 'gallery'; switchTab('gallery'); });
+      if (location.hash === '#gallery') switchTab('gallery');  // stay on this tab after the save reload
 
       const addForm = document.querySelector('#cakeModal form');
       if (addForm) {
@@ -1057,6 +1147,82 @@ cakeImg.addEventListener('change', () => {
     cakeImgClear.classList.remove('d-none');
   };
   reader.readAsDataURL(file);
+});
+
+/* ── DISPLAYED CAKES ── */
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('galleryModal');
+  const form    = document.getElementById('galleryForm');
+  const preview = document.getElementById('galleryPreview');
+  const fileIn  = document.getElementById('galleryImage');
+  const modal   = new bootstrap.Modal(modalEl);
+
+  function openGalleryModal(item) {
+    form.reset();
+    const editing = !!item;
+    document.getElementById('galleryModalTitle').textContent = editing ? 'Edit Gallery Cake' : 'Add Gallery Cake';
+    form.action = editing ? modalEl.dataset.editUrl.replace('ID_PLACEHOLDER', item.id) : modalEl.dataset.addUrl;
+    fileIn.required = !editing;  // image mandatory on add, optional on edit
+    document.getElementById('galleryImgHint').textContent = editing ? '(leave empty to keep current)' : '(WEBP/PNG/JPG, max 3MB)';
+    if (editing) {
+      document.getElementById('galleryName').value        = item.name;
+      document.getElementById('galleryDescription').value = item.description;
+      document.getElementById('galleryCategory').value    = item.category;
+      document.getElementById('galleryActive').checked    = item.active === '1';
+      preview.src = item.image; preview.style.display = 'inline-block';
+    } else {
+      preview.removeAttribute('src'); preview.style.display = 'none';
+    }
+    modal.show();
+  }
+
+  document.getElementById('panelGallery').addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    if (btn.dataset.action === 'add-gallery')  openGalleryModal(null);
+    if (btn.dataset.action === 'edit-gallery') openGalleryModal(btn.dataset);
+  });
+
+  fileIn.addEventListener('change', function () {
+    if (fileIn.files && fileIn.files[0]) { preview.src = URL.createObjectURL(fileIn.files[0]); preview.style.display = 'inline-block'; }
+  });
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); handleCakeFormSubmit(form, 'gallery'); });
+
+  document.querySelectorAll('.gallery-delete-form').forEach(f => {
+    f.addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const result = await glassToast({
+        icon: 'warning', title: 'Remove from displayed cakes?',
+        showConfirmButton: true, showCancelButton: true,
+        confirmButtonText: '✓ Delete', cancelButtonText: 'Cancel', timer: 0
+      });
+      if (result.isConfirmed) await handleCakeFormSubmit(e.target, 'delete');
+    });
+  });
+
+  /* Search + category filter + pagination (all client-side; the list is already server-cached) */
+  const GALLERY_PAGE_SIZE = 12;
+  let galleryPage = 1;
+  const galleryItems = Array.from(document.querySelectorAll('.gallery-item'));
+  const galleryEmpty = document.getElementById('galleryEmpty');
+
+  function renderGallery() {
+    const cat = document.getElementById('galleryFilter').value;
+    const q   = document.getElementById('gallerySearch').value.trim().toLowerCase();
+    const matches = galleryItems.filter(el =>
+      (!cat || el.dataset.category === cat) && (!q || el.dataset.name.includes(q)));
+    const totalPages = Math.max(1, Math.ceil(matches.length / GALLERY_PAGE_SIZE));
+    if (galleryPage > totalPages) galleryPage = totalPages;
+    const start   = (galleryPage - 1) * GALLERY_PAGE_SIZE;
+    const visible = new Set(matches.slice(start, start + GALLERY_PAGE_SIZE));
+    galleryItems.forEach(el => { el.style.display = visible.has(el) ? '' : 'none'; });
+    galleryEmpty.style.display = (galleryItems.length && !matches.length) ? '' : 'none';
+    updatePaginationButtons('galleryPagination', galleryPage, totalPages, p => { galleryPage = p; renderGallery(); });
+  }
+  document.getElementById('galleryFilter').addEventListener('change', () => { galleryPage = 1; renderGallery(); });
+  document.getElementById('gallerySearch').addEventListener('input',  () => { galleryPage = 1; renderGallery(); });
+  renderGallery();
 });
 
 </script>

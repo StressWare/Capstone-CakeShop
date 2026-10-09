@@ -11,11 +11,12 @@ from datetime import datetime, timedelta, timezone
 from helpers import (PH_TZ, log_admin_action, convert_timestamps, 
                      calculate_order_total, _today_range, 
                      get_faq_response, save_uploaded_image, delete_uploaded_image, 
+                     save_category_image, delete_category_image, CATEGORY_FOLDERS,
                      handle_loyalty_stamp,safe_float, send_new_order_fcm,
                      is_place_in_service_area, ALLOWED_MUNICIPALITIES_NORM,
                      is_shop_open_now)
 from decorators import login_required, admin_required, profile_required, start_session, enforce_session_policy, revoke_user_sessions
-from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations,get_shop_hours_cached, get_all_orders_cached,get_all_reviews_admin
+from utils import get_all_cakes, get_all_reviews, get_order_counts,get_custom_prices,get_loyalty_gifts,get_locked_dates_cached,get_completed_cancelled_orders,invalidate_cache,get_converted_consultations,get_shop_hours_cached, get_all_orders_cached,get_all_reviews_admin,get_category_gallery,get_category_cakes_all
 from firebase_admin import messaging
 import requests as http_requests
 import threading 
@@ -50,7 +51,7 @@ import qrcode
 import io
 import firebase
 import requests
-from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs,settings_ref
+from db import db, sales, expenses, inventory, users, cakes, custom_cake_price, walkin_orders, reviews, admin_logs, orders, notifications, pending_orders, fcm_tokens, conversations,locked_dates_ref,loyalty_gifts,pending_consultations,webauthn_credentials, login_logs,settings_ref,category_cakes
 from firebase_admin import auth, firestore, messaging
 if os.environ.get("FLASK_ENV") == "development":
     from pyngrok import ngrok
@@ -301,7 +302,8 @@ def home_page():
     return render_template("home.html",
         customer     = customer,
         top_cakes    = top_cakes,
-        most_ordered = most_ordered
+        most_ordered = most_ordered,
+        categories   = get_category_gallery()
     )
 @app.route("/privacy-policy")
 def privacy_policy():
@@ -3269,8 +3271,102 @@ def admin_cakes():
     return render_template("admin_cakes.html",
         cakes=cakes_list,
         custom_prices=custom_prices,
-        loyalty_gifts=loyalty_gifts
+        loyalty_gifts=loyalty_gifts,
+        gallery_items=get_category_cakes_all(),
+        gallery_categories=list(CATEGORY_FOLDERS)
     )
+
+# ---------------- ADMIN: HOME GALLERY (category cakes) ----------------
+def _gallery_fields():
+    """Validate the gallery form. Returns (fields, error)."""
+    name        = (request.form.get('name') or '').strip()
+    description = (request.form.get('description') or '').strip()
+    category    = (request.form.get('category') or '').strip()
+    if not 1 <= len(name) <= 60:
+        return None, 'Name is required (max 60 characters).'
+    if not 1 <= len(description) <= 200:
+        return None, 'Description is required (max 200 characters).'
+    if category not in CATEGORY_FOLDERS:
+        return None, 'Invalid category.'
+    return {
+        'name': name, 'description': description, 'category': category,
+        'active': request.form.get('active') == 'on',
+    }, None
+
+@app.route('/admin/gallery/add', methods=['POST'])
+@limiter.limit("20 per minute")
+@admin_required
+def add_gallery_item():
+    fields, err = _gallery_fields()
+    if err:
+        return jsonify({"success": False, "message": err}), 400
+    uploaded = save_category_image(request.files.get('image'), fields['category'])
+    if not uploaded:
+        return jsonify({"success": False, "message": "Image required: WEBP/PNG/JPG, max 3MB."}), 400
+    image_url, public_id = uploaded
+    try:
+        now = datetime.now(timezone.utc)
+        category_cakes.add({
+            **fields,
+            'image_url':  image_url,
+            'public_id':  public_id,
+            'order':      int(now.timestamp()),  # new items sort after seeded ones
+            'created_at': now,
+        })
+    except Exception:
+        app.logger.exception("Error adding gallery item")
+        delete_category_image(public_id)  # don't leave an orphan in Cloudinary
+        return jsonify({"success": False, "message": "Failed to save item."}), 500
+    invalidate_cache("category_cakes")
+    log_admin_action(action="Added gallery cake", target=f"{fields['name']} [{fields['category']}]", category="cake")
+    return jsonify({"success": True, "message": "Added to home gallery!"})
+
+@app.route('/admin/gallery/edit/<item_id>', methods=['POST'])
+@limiter.limit("30 per minute")
+@admin_required
+def edit_gallery_item(item_id):
+    ref = category_cakes.document(item_id)
+    doc = ref.get()
+    if not doc.exists:
+        return jsonify({"success": False, "message": "Item not found."}), 404
+    fields, err = _gallery_fields()
+    if err:
+        return jsonify({"success": False, "message": err}), 400
+    update, new_public_id = dict(fields), None
+    file = request.files.get('image')
+    if file and file.filename:  # image is optional on edit
+        uploaded = save_category_image(file, fields['category'])
+        if not uploaded:
+            return jsonify({"success": False, "message": "Invalid image: WEBP/PNG/JPG, max 3MB."}), 400
+        update['image_url'], update['public_id'] = uploaded
+        new_public_id = uploaded[1]
+    try:
+        ref.update(update)
+    except Exception:
+        app.logger.exception(f"Error editing gallery item {item_id}")
+        delete_category_image(new_public_id)
+        return jsonify({"success": False, "message": "Failed to update item."}), 500
+    if new_public_id:  # replace succeeded -> remove the old file
+        delete_category_image(doc.to_dict().get('public_id'))
+    invalidate_cache("category_cakes")
+    log_admin_action(action="Edited gallery cake", target=f"{fields['name']} (ID: {item_id})", category="cake")
+    return jsonify({"success": True, "message": "Gallery item updated!"})
+
+@app.route('/admin/gallery/delete/<item_id>', methods=['POST'])
+@limiter.limit("30 per minute")
+@admin_required
+def delete_gallery_item(item_id):
+    ref = category_cakes.document(item_id)
+    doc = ref.get()
+    if not doc.exists:
+        return jsonify({"success": False, "message": "Item not found."}), 404
+    data = doc.to_dict()
+    ref.delete()
+    delete_category_image(data.get('public_id'))
+    invalidate_cache("category_cakes")
+    log_admin_action(action="Deleted gallery cake", target=data.get('name', item_id), category="cake")
+    return jsonify({"success": True, "message": "Removed from home gallery."})
+
 
 # ---------------- ADMIN USERS ----------------
 @app.route("/admin/users")
