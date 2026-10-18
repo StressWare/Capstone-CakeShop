@@ -1,11 +1,14 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, jsonify, abort
 from datetime import datetime, timedelta, timezone, date
 import json
-from db import walkin_orders, cakes, db
+import math
+import re
+from db import walkin_orders, cakes, db, pos_sessions
 from extensions import limiter
 from decorators import admin_required
 from helpers import log_admin_action
 import firebase
+from werkzeug.exceptions import HTTPException
 
 pos_bp = Blueprint('pos', __name__)
 PH_TZ = timezone(timedelta(hours=8))
@@ -76,6 +79,27 @@ def pos_order():
             flash('Order already recorded.', 'info')
             return redirect(url_for('pos.pos_receipt', order_id=order_id))
 
+    # ── Session attribution: the client stamps its session id at checkout time, so an order
+    # queued offline still lands in the right session when it syncs later. The device creates
+    # the session itself, so an order can reach the server BEFORE its session has synced:
+    # keep the link (flagged) instead of dropping it. Never let a lookup problem block a sale.
+    session_id = payload.get('session_id')
+    if not (isinstance(session_id, str) and _SESSION_ID_RE.match(session_id)):
+        session_id = None
+    late_for_session = False
+    session_unverified = False
+    if session_id:
+        try:
+            session_snap = pos_sessions.document(session_id).get()
+            if not session_snap.exists:
+                session_unverified = True
+            elif (session_snap.to_dict() or {}).get("status") == "ended":
+                # Session ended before this queued order synced: the ended session's totals
+                # are an immutable snapshot, so flag the order instead of altering it.
+                late_for_session = True
+        except Exception:
+            current_app.logger.exception("Session lookup failed for POS order")
+
     item_names = ", ".join([
         f"{i['cake_name']} x{i.get('quantity', 1)} (₱{float(i['price']):.0f})"
         for i in items
@@ -97,6 +121,9 @@ def pos_order():
         "discount_amount": discount_amount,
         # ── NEW ──
         "idempotency_key": idempotency_key,
+        "session_id":         session_id,
+        "session_unverified": session_unverified,
+        "late_for_session":   late_for_session,
         "synced_at":       now,          # when the SERVER actually recorded it
         "oversold":        False,        # flipped to True below if stock ran out mid-sale
         "oversold_items":  [],
@@ -147,6 +174,13 @@ def pos_order():
             category="pos"
         )
 
+    if late_for_session:
+        log_admin_action(
+            action="POS order synced after its session was ended",
+            target=f"Order {order_id} — session {session_id} (not in that session's closing totals)",
+            category="pos"
+        )
+
     log_admin_action(
         action="Created POS order",
         target=f"Walk-in order {order_id} — {item_names}",
@@ -190,13 +224,10 @@ def pos_receipt(order_id):
 
 
 # ---------------- POS HISTORY ----------------
-@pos_bp.route('/pos/history')
-@admin_required
-def pos_history():
+def _history_range(date_param):
+    """Parse the ?date= filter into (start_dt, end_dt, label, now). Same rules as before."""
     now = datetime.now(PH_TZ)
     today = now.date()
-
-    date_param = request.args.get('date', '')
 
     if date_param.startswith('week_'):
         start_str = date_param.replace('week_', '')
@@ -222,43 +253,698 @@ def pos_history():
 
     start_dt = datetime.combine(start_date, datetime.min.time()).replace(tzinfo=PH_TZ)
     end_dt   = datetime.combine(end_date, datetime.max.time()).replace(tzinfo=PH_TZ)
+    return start_dt, end_dt, selected_date, now
+
+
+def _normalize_order(doc):
+    order = doc.to_dict() or {}
+    order['id'] = doc.id
+    created_at = order.get('created_at')
+    if isinstance(created_at, datetime):
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
+        else:
+            created_at = created_at.astimezone(PH_TZ)
+    order['created_at'] = created_at
+    return order
+
+
+def _fetch_orders(start_dt, end_dt):
+    docs = walkin_orders.where(
+        'created_at', '>=', start_dt
+    ).where(
+        'created_at', '<=', end_dt
+    ).order_by('created_at', direction='DESCENDING').stream()
+    return [_normalize_order(doc) for doc in docs]
+
+
+def _order_totals(orders):
+    cash = sum(o.get('amount', 0) for o in orders if str(o.get('payment_method', '')).lower() == 'cash')
+    gcash = sum(o.get('amount', 0) for o in orders if str(o.get('payment_method', '')).lower() == 'gcash')
+    return {
+        "total_sales": sum(o.get('amount', 0) for o in orders),
+        "total_txn":   len(orders),
+        "total_cash":  cash,
+        "total_gcash": gcash,
+    }
+
+
+@pos_bp.route('/pos/history')
+@admin_required
+def pos_history():
+    """History is organised by SESSION (who ran the till). Click a session to see its orders."""
+    date_param = request.args.get('date', '')
+    start_dt, end_dt, selected_date, now = _history_range(date_param)
 
     orders_list = []
     try:
-        docs = walkin_orders.where(
-            'created_at', '>=', start_dt
-        ).where(
-            'created_at', '<=', end_dt
-        ).order_by('created_at', direction='DESCENDING').stream()
-
-        for doc in docs:
-            order = doc.to_dict()
-            order['id'] = doc.id
-
-            created_at = order.get('created_at')
-            if isinstance(created_at, datetime):
-                if created_at.tzinfo is None:
-                    created_at = created_at.replace(tzinfo=timezone.utc).astimezone(PH_TZ)
-                else:
-                    created_at = created_at.astimezone(PH_TZ)
-            order['created_at'] = created_at
-
-            orders_list.append(order)
+        orders_list = _fetch_orders(start_dt, end_dt)
     except Exception:
         current_app.logger.exception("Error fetching pos history")
 
-    total_sales = sum(o.get('amount', 0) for o in orders_list)
-    total_txn   = len(orders_list)
-    total_cash  = sum(o.get('amount', 0) for o in orders_list if o.get('payment_method', '').lower() == 'cash')
-    total_gcash = sum(o.get('amount', 0) for o in orders_list if o.get('payment_method', '').lower() == 'gcash')
+    sessions_list, unassigned = [], None
+    try:
+        sessions_list, unassigned = _history_sessions(start_dt, end_dt, orders_list)
+    except Exception:
+        current_app.logger.exception("Error fetching POS cash sessions for history")
 
     return render_template(
         'admin_pos_history.html',
-        orders        = orders_list,
-        total_sales   = total_sales,
-        total_txn     = total_txn,
-        total_cash    = total_cash,
-        total_gcash   = total_gcash,
+        sessions      = sessions_list,
+        unassigned    = unassigned,
+        date_param    = date_param or None,
         selected_date = selected_date,
-        now           = now.strftime('%B %d, %Y %I:%M %p')
+        now           = now.strftime('%B %d, %Y %I:%M %p'),
+        **_order_totals(orders_list)
     )
+
+
+@pos_bp.route('/pos/history/session/<session_id>')
+@admin_required
+def pos_history_session(session_id):
+    """One session's orders (same table as the old history page), or 'unassigned' orders."""
+    date_param = request.args.get('date', '')
+    back_url = url_for('pos.pos_history', date=date_param or None)
+    is_unassigned = (session_id == 'unassigned')
+    if not is_unassigned and not _SESSION_ID_RE.match(session_id):
+        abort(404)
+
+    info = None
+    orders_list = []
+    try:
+        if is_unassigned:
+            start_dt, end_dt, selected_date, now = _history_range(date_param)
+            all_orders = _fetch_orders(start_dt, end_dt)
+            orders_list, _ = _split_unassigned(all_orders, {})
+            page_title, page_sub = 'Unassigned orders', selected_date
+        else:
+            now = datetime.now(PH_TZ)
+            snap = pos_sessions.document(session_id).get()
+            if not snap.exists:
+                return abort(404)
+            data = snap.to_dict() or {}
+            orders_list = sorted(
+                (_normalize_order(d) for d in walkin_orders.where('session_id', '==', session_id).stream()),
+                key=lambda o: o.get('created_at') or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
+            movements = _session_movements(session_id)
+            info = _session_info(data, orders_list, movements)
+            page_title = info['name']
+            page_sub = info['started_label'] + (f" → {info['ended_label']}" if info['ended_label'] else '')
+    except HTTPException:
+        raise                                       # the 404 above
+    except Exception:
+        current_app.logger.exception("Error loading POS session history")
+        flash("Could not load this session. Please try again.", "danger")
+        return redirect(back_url)
+
+    pdf_name = "MrsBraves_POS_" + re.sub(r'[^A-Za-z0-9]+', '_', f"{page_title} {page_sub}").strip('_')
+    return render_template(
+        'admin_pos_session.html',
+        page_title   = page_title,
+        page_sub     = page_sub,
+        back_url     = back_url,
+        orders       = orders_list,
+        session_info = info,
+        pdf_name     = pdf_name,
+        now          = now.strftime('%B %d, %Y %I:%M %p'),
+        **_order_totals(orders_list)
+    )
+
+
+# =====================================================================
+# CASH SESSIONS  ("Start of day" -> "End day")
+# The DEVICE creates the session (client-generated id), so a session can be
+# started, take Pay in/out and be ended while the internet is down, then sync.
+# Expected drawer cash = starting_cash + cash_sales + paid_in - paid_out.
+# GCash is confirmed physically by the owner, so it is reported but is NOT
+# part of drawer cash.
+# =====================================================================
+MAX_CASH_AMOUNT = 1_000_000
+MAX_NAME_LEN    = 60
+MAX_COMMENT_LEN = 200
+MAX_NOTE_LEN    = 500
+_SESSION_ID_RE  = re.compile(r'^[A-Za-z0-9]{8,64}$')
+_REQUEST_ID_RE  = re.compile(r'^(?!__)[A-Za-z0-9_-]{8,64}$')   # client-generated idempotency id
+
+# Server-side sanity window for client-supplied times. The POS form enforces the strict
+# "not in the future / at most 7 days back" rule; the server stays loose on purpose so
+# device clock skew or a long outage can never make a legitimate session unsyncable.
+_MAX_FUTURE = timedelta(days=1)
+_MAX_PAST   = timedelta(days=400)
+
+
+class SessionError(Exception):
+    """Expected, user-facing failure (validation / state conflict)."""
+    def __init__(self, message, status=400):
+        super().__init__(message)
+        self.message = message
+        self.status = status
+
+
+# ---------------- session helpers: validation ----------------
+def _money(value):
+    return round(float(value or 0), 2)
+
+
+def _parse_amount(value, field, allow_zero=False):
+    if value is None or isinstance(value, bool) or (isinstance(value, str) and not value.strip()):
+        raise SessionError(f"{field} is required")
+    try:
+        amount = float(value)
+    except (TypeError, ValueError):
+        raise SessionError(f"{field} must be a number")
+    if not math.isfinite(amount):
+        raise SessionError(f"{field} must be a number")
+    amount = round(amount, 2)
+    if amount < 0 or (amount == 0 and not allow_zero):
+        raise SessionError(f"{field} must be greater than zero" if not allow_zero
+                           else f"{field} cannot be negative")
+    if amount > MAX_CASH_AMOUNT:
+        raise SessionError(f"{field} is too large")
+    return amount
+
+
+def _clean_text(value, field, max_len, required=False):
+    if value is None:
+        value = ""
+    if not isinstance(value, str):
+        raise SessionError(f"{field} must be text")
+    value = value.strip()
+    if required and not value:
+        raise SessionError(f"{field} is required")
+    if len(value) > max_len:
+        raise SessionError(f"{field} must be at most {max_len} characters")
+    if any(ord(ch) < 32 for ch in value):
+        raise SessionError(f"{field} contains invalid characters")
+    return value
+
+
+def _parse_client_time(value, field):
+    if not isinstance(value, str) or not value.strip():
+        raise SessionError(f"{field} is required")
+    text = value.strip()
+    if text[-1] in ("Z", "z"):
+        text = text[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(text)
+    except ValueError:
+        raise SessionError(f"{field} is not a valid date/time")
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=PH_TZ)
+    now = datetime.now(PH_TZ)
+    if dt > now + _MAX_FUTURE or dt < now - _MAX_PAST:
+        raise SessionError(f"{field} is out of range")
+    return dt.astimezone(PH_TZ)
+
+
+def _json_body():
+    body = request.get_json(silent=True)
+    if not isinstance(body, dict):
+        raise SessionError("Invalid JSON body")
+    return body
+
+
+def _body_session_id(body):
+    session_id = body.get("session_id")
+    if not (isinstance(session_id, str) and _SESSION_ID_RE.match(session_id)):
+        raise SessionError("A valid session_id is required")
+    return session_id
+
+
+def _admin_identity():
+    user = session.get("user") or {}
+    return user.get("name") or "admin", session.get("user_id")
+
+
+# ---------------- session helpers: serialization ----------------
+def _as_ph(dt):
+    if isinstance(dt, datetime):
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(PH_TZ)
+    return None
+
+
+def _iso(dt):
+    dt = _as_ph(dt)
+    return dt.isoformat() if dt else None
+
+
+def _serialize_session(session_id, data, totals=None, movements=None):
+    out = {
+        "id":            session_id,
+        "name":          data.get("name"),
+        "status":        data.get("status"),
+        "started_at":    _iso(data.get("started_at")),
+        "starting_cash": _money(data.get("starting_cash")),
+    }
+    if data.get("status") == "ended":
+        out.update({
+            "ended_at":         _iso(data.get("ended_at")),
+            "counted_cash":     _money(data.get("counted_cash")),
+            "expected_cash":    _money(data.get("expected_cash")),
+            "difference":       _money(data.get("difference")),
+            "local_expected":   data.get("local_expected"),
+            "local_difference": data.get("local_difference"),
+            "note":             data.get("note", ""),
+        })
+    if totals is not None:
+        out["totals"] = totals
+    if movements is not None:
+        out["movements"] = movements
+    return out
+
+
+def _json(payload, status=200):
+    resp = jsonify(payload)
+    resp.status_code = status
+    resp.headers["Cache-Control"] = "no-store"   # never let a browser/SW serve stale cash totals
+    return resp
+
+
+# ---------------- session helpers: Firestore ----------------
+def _compute_session_totals(session_id, starting_cash, transaction=None):
+    """Aggregate a session's orders + cash movements. Returns (totals, movements)."""
+    cash_sales = gcash_sales = other_sales = discounts = 0.0
+    txn_count = 0
+    for doc in walkin_orders.where("session_id", "==", session_id).stream(transaction=transaction):
+        o = doc.to_dict() or {}
+        amount = float(o.get("amount") or 0)          # post-discount total actually charged
+        method = str(o.get("payment_method", "")).lower()
+        if method == "cash":
+            cash_sales += amount
+        elif method == "gcash":
+            gcash_sales += amount
+        else:
+            other_sales += amount
+        discounts += float(o.get("discount_amount") or 0)
+        txn_count += 1
+
+    paid_in = paid_out = 0.0
+    movements = []
+    mv_query = pos_sessions.document(session_id).collection("cash_movements").order_by("created_at")
+    for doc in mv_query.stream(transaction=transaction):
+        m = doc.to_dict() or {}
+        amount = float(m.get("amount") or 0)
+        if m.get("type") == "paid_in":
+            paid_in += amount
+        elif m.get("type") == "paid_out":
+            paid_out += amount
+        movements.append({
+            "id":         doc.id,
+            "type":       m.get("type"),
+            "amount":     _money(amount),
+            "comment":    m.get("comment", ""),
+            "created_at": _iso(m.get("client_at") or m.get("created_at")),
+            "created_by": m.get("created_by"),
+        })
+
+    net_sales = cash_sales + gcash_sales + other_sales
+    totals = {
+        "transactions":  txn_count,
+        "cash_sales":    _money(cash_sales),
+        "gcash_sales":   _money(gcash_sales),
+        "other_sales":   _money(other_sales),
+        "discounts":     _money(discounts),
+        "gross_sales":   _money(net_sales + discounts),
+        "net_sales":     _money(net_sales),
+        "paid_in":       _money(paid_in),
+        "paid_out":      _money(paid_out),
+        "expected_cash": _money(float(starting_cash or 0) + cash_sales + paid_in - paid_out),
+    }
+    return totals, movements
+
+
+def _start_session(session_id, name, started_at, starting_cash, admin_name, admin_id):
+    """Create-only and idempotent: re-sending the same Start is a harmless no-op."""
+    ref = pos_sessions.document(session_id)
+    now = datetime.now(PH_TZ)
+
+    @firebase.firestore.transactional
+    def _txn(transaction):
+        if ref.get(transaction=transaction).exists:
+            return False
+        transaction.set(ref, {
+            "name":          name,
+            "status":        "open",
+            "started_at":    started_at,      # as typed on the POS (editable, validated)
+            "received_at":   now,             # when the server actually got it
+            "started_by":    admin_name,      # the logged-in admin account
+            "started_by_id": admin_id,
+            "starting_cash": starting_cash,
+        })
+        return True
+
+    return _txn(db.transaction())
+
+
+def _add_cash_movement(session_id, mtype, amount, comment, client_at, admin_name, admin_id, request_id=None):
+    session_ref = pos_sessions.document(session_id)
+    movements_col = session_ref.collection("cash_movements")
+    # A client-generated request_id doubles as the doc id, so a retry after a flaky
+    # connection can never record the same Pay in / Pay out twice.
+    mv_ref = movements_col.document(request_id) if request_id else movements_col.document()
+    now = datetime.now(PH_TZ)
+
+    @firebase.firestore.transactional
+    def _txn(transaction):
+        snap = session_ref.get(transaction=transaction)           # reads first
+        if not snap.exists:
+            raise SessionError("Session not found", 404)
+        already = bool(request_id) and mv_ref.get(transaction=transaction).exists
+        if already:
+            return False                                          # already recorded — no-op
+        if (snap.to_dict() or {}).get("status") != "open":
+            raise SessionError("This session has already ended", 409)
+        transaction.set(mv_ref, {
+            "type":          mtype,
+            "amount":        amount,
+            "comment":       comment,
+            "client_at":     client_at,
+            "created_at":    now,
+            "created_by":    admin_name,
+            "created_by_id": admin_id,
+        })
+        return True
+
+    created = _txn(db.transaction())
+    return mv_ref.id, created
+
+
+def _end_session(session_id, counted_cash, ended_at, note, local_expected, local_difference,
+                 admin_name, admin_id):
+    """Idempotent: ending an already-ended session returns it unchanged. Returns (data, ended_now)."""
+    ref = pos_sessions.document(session_id)
+    now = datetime.now(PH_TZ)
+
+    @firebase.firestore.transactional
+    def _txn(transaction):
+        snap = ref.get(transaction=transaction)                   # reads first
+        if not snap.exists:
+            raise SessionError("Session not found", 404)
+        data = snap.to_dict() or {}
+        if data.get("status") == "ended":
+            return data, False
+        started = _as_ph(data.get("started_at"))
+        if started and ended_at < started:
+            raise SessionError("End time cannot be before the start time")
+        totals, _ = _compute_session_totals(session_id, data.get("starting_cash"), transaction)
+        expected   = totals["expected_cash"]
+        difference = _money(counted_cash - expected)              # + over, - short
+        update = {
+            "status":           "ended",
+            "ended_at":         ended_at,
+            "ended_received_at": now,
+            "ended_by":         admin_name,
+            "ended_by_id":      admin_id,
+            "counted_cash":     counted_cash,
+            "expected_cash":    expected,
+            "difference":       difference,
+            "local_expected":   local_expected,       # the device's own estimate, kept for comparison
+            "local_difference": local_difference,
+            "note":             note,
+            "summary":          totals,
+        }
+        transaction.update(ref, update)
+        return {**data, **update}, True
+
+    return _txn(db.transaction())
+
+
+def _optional_number(value):
+    """Client estimates are informational only; ignore anything that isn't a sane number."""
+    try:
+        n = float(value)
+    except (TypeError, ValueError):
+        return None
+    return round(n, 2) if math.isfinite(n) and abs(n) <= MAX_CASH_AMOUNT * 10 else None
+
+
+# ---------------- POS history: sessions ----------------
+def _diff_display(diff):
+    if diff is None:
+        return '', ''
+    if diff == 0:
+        return 'Exact', 'diff-ok'
+    if diff > 0:
+        return f'Over ₱{diff:,.2f}', 'diff-over'
+    return f'Short ₱{-diff:,.2f}', 'diff-short'
+
+
+def _status_label(data, started):
+    if data.get('status') == 'ended':
+        return 'Ended'
+    today = datetime.now(PH_TZ).date()
+    return 'Not ended' if (started and started.date() < today) else 'In progress'
+
+
+def _valid_session_id(value):
+    return isinstance(value, str) and bool(_SESSION_ID_RE.match(value))
+
+
+def _load_sessions(ids):
+    """Fetch session docs by id. Returns {id: data} for the ones that exist."""
+    found = {}
+    for sid in ids:
+        if not _valid_session_id(sid):
+            continue
+        try:
+            snap = pos_sessions.document(sid).get()
+            if snap.exists:
+                found[sid] = snap.to_dict() or {}
+        except Exception:
+            current_app.logger.exception("Could not load POS session %s", sid)
+    return found
+
+
+def _split_unassigned(orders, known_sessions):
+    """Split orders into (unassigned, assigned). An order is unassigned when it has no
+    session id, or points at a session that does not exist (e.g. its Start never synced)."""
+    referenced = {o.get('session_id') for o in orders if _valid_session_id(o.get('session_id'))}
+    existing = dict(known_sessions)
+    existing.update(_load_sessions(referenced - set(known_sessions)))
+    unassigned, assigned = [], []
+    for o in orders:
+        sid = o.get('session_id')
+        (assigned if (_valid_session_id(sid) and sid in existing) else unassigned).append(o)
+    return unassigned, existing
+
+
+def _history_sessions(start_dt, end_dt, orders):
+    """Sessions to list for a date range: those STARTED in the range, plus any session that has
+    orders in the range (e.g. started late last night). Returns (cards, unassigned_summary|None)."""
+    known = {}
+    docs = pos_sessions.where('started_at', '>=', start_dt).where(
+        'started_at', '<=', end_dt).stream()
+    for doc in docs:
+        known[doc.id] = doc.to_dict() or {}
+
+    unassigned_orders, known = _split_unassigned(orders, known)
+
+    def started_key(item):
+        return _as_ph(item[1].get('started_at')) or datetime.min.replace(tzinfo=PH_TZ)
+
+    cards = []
+    for sid, d in sorted(known.items(), key=started_key, reverse=True):
+        started, ended = _as_ph(d.get('started_at')), _as_ph(d.get('ended_at'))
+        counted = diff = None
+        if d.get('status') == 'ended':
+            t = d.get('summary') or {}
+            expected = _money(d.get('expected_cash'))
+            counted, diff = _money(d.get('counted_cash')), _money(d.get('difference'))
+        else:
+            t, _ = _compute_session_totals(sid, d.get('starting_cash'))
+            expected = t['expected_cash']
+        diff_label, diff_class = _diff_display(diff)
+        cards.append({
+            "id":            sid,
+            "name":          d.get('name') or '—',
+            "status_label":  _status_label(d, started),
+            "started_label": started.strftime('%b %d, %I:%M %p') if started else '—',
+            "ended_label":   ended.strftime('%b %d, %I:%M %p') if ended else None,
+            "starting_cash": _money(d.get('starting_cash')),
+            "expected_cash": expected,
+            "counted_cash":  counted,
+            "diff_label":    diff_label,
+            "diff_class":    diff_class,
+            "cash_sales":    t.get('cash_sales', 0),
+            "gcash_sales":   t.get('gcash_sales', 0),
+            "paid_in":       t.get('paid_in', 0),
+            "paid_out":      t.get('paid_out', 0),
+            "transactions":  t.get('transactions', 0),
+            "note":          d.get('note', ''),
+        })
+
+    unassigned = None
+    if unassigned_orders:
+        unassigned = {"count": len(unassigned_orders),
+                      "total": sum(o.get('amount', 0) for o in unassigned_orders)}
+    return cards, unassigned
+
+
+def _session_movements(session_id):
+    out = []
+    q = pos_sessions.document(session_id).collection("cash_movements").order_by("created_at")
+    for doc in q.stream():
+        m = doc.to_dict() or {}
+        when = _as_ph(m.get("client_at") or m.get("created_at"))
+        out.append({
+            "type":    m.get("type"),
+            "label":   "Paid in" if m.get("type") == "paid_in" else "Paid out",
+            "amount":  _money(m.get("amount")),
+            "comment": m.get("comment", ""),
+            "time":    when.strftime('%I:%M %p') if when else '',
+        })
+    return out
+
+
+def _session_info(data, orders, movements):
+    """Everything the session page shows about the session itself."""
+    started, ended = _as_ph(data.get('started_at')), _as_ph(data.get('ended_at'))
+    starting = _money(data.get('starting_cash'))
+    paid_in = sum(m['amount'] for m in movements if m['type'] == 'paid_in')
+    paid_out = sum(m['amount'] for m in movements if m['type'] == 'paid_out')
+    counted = diff = None
+    if data.get('status') == 'ended':
+        expected = _money(data.get('expected_cash'))
+        counted, diff = _money(data.get('counted_cash')), _money(data.get('difference'))
+    else:
+        cash_sales = sum(o.get('amount', 0) for o in orders if str(o.get('payment_method', '')).lower() == 'cash')
+        expected = _money(starting + cash_sales + paid_in - paid_out)
+    diff_label, diff_class = _diff_display(diff)
+    return {
+        "name":          data.get('name') or '—',
+        "status_label":  _status_label(data, started),
+        "started_label": started.strftime('%b %d, %Y %I:%M %p') if started else '—',
+        "ended_label":   ended.strftime('%b %d, %Y %I:%M %p') if ended else None,
+        "starting_cash": starting,
+        "expected_cash": expected,
+        "counted_cash":  counted,
+        "diff_label":    diff_label,
+        "diff_class":    diff_class,
+        "paid_in":       _money(paid_in),
+        "paid_out":      _money(paid_out),
+        "note":          data.get('note', ''),
+        "movements":     movements,
+        "late_count":    sum(1 for o in orders if o.get('late_for_session')),
+    }
+
+
+# ---------------- SESSION ROUTES ----------------
+def _session_error_response(err):
+    return _json({"error": err.message}, err.status)
+
+
+@pos_bp.route('/pos/session/<session_id>')
+@admin_required
+def pos_session_get(session_id):
+    """Live (open) or frozen (ended) view of one session, for the POS screens."""
+    try:
+        if not _SESSION_ID_RE.match(session_id):
+            raise SessionError("Invalid session id", 400)
+        snap = pos_sessions.document(session_id).get()
+        if not snap.exists:
+            raise SessionError("Session not found", 404)
+        data = snap.to_dict() or {}
+        if data.get("status") == "ended":
+            return _json({"session": _serialize_session(session_id, data, data.get("summary"))})
+        totals, movements = _compute_session_totals(session_id, data.get("starting_cash"))
+        return _json({"session": _serialize_session(session_id, data, totals, movements)})
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error loading POS session")
+        return _json({"error": "Could not load the session"}, 500)
+
+
+@pos_bp.route('/pos/session/start', methods=['POST'])
+@admin_required
+@limiter.limit("20 per minute")
+def pos_session_start():
+    try:
+        body = _json_body()
+        session_id    = _body_session_id(body)
+        name          = _clean_text(body.get("name"), "Name", MAX_NAME_LEN, required=True)
+        started_at    = _parse_client_time(body.get("started_at"), "Start time")
+        starting_cash = _parse_amount(body.get("starting_cash"), "Starting cash", allow_zero=True)
+        admin_name, uid = _admin_identity()
+        created = _start_session(session_id, name, started_at, starting_cash, admin_name, uid)
+        if created:
+            log_admin_action(
+                action="Started POS cash session",
+                target=f"{name} — starting cash ₱{starting_cash:.2f}",
+                category="pos"
+            )
+        return _json({"status": "ok" if created else "duplicate_ignored", "session_id": session_id},
+                     201 if created else 200)
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error starting POS session")
+        return _json({"error": "Could not start the session"}, 500)
+
+
+@pos_bp.route('/pos/session/cash', methods=['POST'])
+@admin_required
+@limiter.limit("60 per minute")
+def pos_session_cash():
+    try:
+        body = _json_body()
+        session_id = _body_session_id(body)
+        mtype = body.get("type")
+        if mtype not in ("paid_in", "paid_out"):
+            raise SessionError("type must be 'paid_in' or 'paid_out'")
+        amount  = _parse_amount(body.get("amount"), "Amount")
+        comment = _clean_text(body.get("comment"), "Comment", MAX_COMMENT_LEN)
+        request_id = body.get("request_id")
+        if request_id is not None and not (isinstance(request_id, str) and _REQUEST_ID_RE.match(request_id)):
+            raise SessionError("Invalid request_id")
+        client_at = _parse_client_time(body.get("at"), "Time") if body.get("at") else None
+        admin_name, uid = _admin_identity()
+        movement_id, created = _add_cash_movement(
+            session_id, mtype, amount, comment, client_at, admin_name, uid, request_id)
+        if created:
+            log_admin_action(
+                action="POS cash paid in" if mtype == "paid_in" else "POS cash paid out",
+                target=f"Session {session_id} — ₱{amount:.2f}" + (f" — {comment}" if comment else ""),
+                category="pos"
+            )
+        return _json({"status": "ok" if created else "duplicate_ignored", "movement_id": movement_id},
+                     201 if created else 200)
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error recording POS cash movement")
+        return _json({"error": "Could not record the cash movement"}, 500)
+
+
+@pos_bp.route('/pos/session/end', methods=['POST'])
+@admin_required
+@limiter.limit("20 per minute")
+def pos_session_end():
+    try:
+        body = _json_body()
+        session_id   = _body_session_id(body)
+        counted_cash = _parse_amount(body.get("counted_cash"), "Counted cash", allow_zero=True)
+        ended_at     = _parse_client_time(body.get("ended_at"), "End time")
+        note         = _clean_text(body.get("note"), "Note", MAX_NOTE_LEN)
+        admin_name, uid = _admin_identity()
+        data, ended_now = _end_session(
+            session_id, counted_cash, ended_at, note,
+            _optional_number(body.get("local_expected")),
+            _optional_number(body.get("local_difference")),
+            admin_name, uid)
+        if ended_now:
+            log_admin_action(
+                action="Ended POS cash session",
+                target=(f"{data.get('name')} — expected ₱{data['expected_cash']:.2f}, "
+                        f"counted ₱{counted_cash:.2f}, difference ₱{data['difference']:.2f}"),
+                category="pos"
+            )
+        return _json({"status": "ok" if ended_now else "already_ended",
+                      "session": _serialize_session(session_id, data, data.get("summary"))})
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error ending POS session")
+        return _json({"error": "Could not end the session"}, 500)

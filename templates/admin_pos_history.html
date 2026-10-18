@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>POS Transaction History – Mrs. Braves Cakes Iloilo</title>
+  <title>POS History – Mrs. Braves Cakes Iloilo</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="icon" type="image/png" href="../static/img/logo.png">    
-  <!--for pdf download cdn-->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <link rel="manifest" href="/manifest-pos.json">
 
   <script nonce="{{ csp_nonce() }}">
@@ -139,6 +137,32 @@
     .summary-card .s-sub {
       font-size: 0.72rem; color: #bbb; margin-top: 2px;
     }
+
+    /* CASH SESSIONS */
+    .sessions-section { margin-bottom: 16px; }
+    .sessions-title {
+      font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #a0205e; margin: 4px 2px 8px;
+    }
+    .session-card {
+      position: relative; background: white; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(214,51,132,0.08); border-left: 4px solid #198754;
+    }
+    .session-card.is-open { border-left-color: #f0ad4e; }
+    .session-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+    .session-name { font-weight: 700; color: #333; }
+    .session-when { font-size: 0.8rem; color: #888; }
+    .session-badge { font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #e8f5ee; color: #198754; }
+    .session-card.is-open .session-badge { background: #fff3cd; color: #856404; }
+    .session-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px 12px; margin-top: 10px; }
+    .session-grid .k { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.4px; color: #aaa; }
+    .session-grid .v { font-size: 0.95rem; font-weight: 600; color: #333; }
+    .diff-ok { color: #198754 !important; } .diff-over { color: #0d6efd !important; } .diff-short { color: #dc3545 !important; }
+    .session-note { margin-top: 8px; font-size: 0.8rem; color: #666; }
+    .session-card.is-unassigned { border-left-color: #adb5bd; }
+    .session-card.is-unassigned .session-badge { background: #eceff1; color: #546e7a; }
+    .session-name { text-decoration: none; }
+    .session-more { margin-top: 8px; font-size: 0.78rem; font-weight: 600; color: #a0205e; text-align: right; }
 
     /* TABLE */
     .history-table-wrap {
@@ -413,12 +437,9 @@
   <!-- HEADER -->
   <div class="history-header">
     <div class="history-header-title">
-      <h5>POS Transaction History</h5>
+      <h5>POS History</h5>
     </div>
     <div class="history-header-actions">
-      <button class="btn-download" id="btnDownloadPDF">
-        <i class="fas fa-file-pdf"></i> <span>Download PDF</span>
-      </button>
       <a href="/pos" class="btn-back">
         <i class="fas fa-arrow-left"></i> <span>Back to POS</span>
       </a>
@@ -460,136 +481,59 @@
     </div>
   </div>
 
-  <!-- TRANSACTION TABLE -->
-  <div class="history-table-wrap">
-    <table class="table history-table">
-      <thead>
-        <tr>
-          <th>Time</th>
-          <th>Items Ordered</th>
-          <th>Payment</th>
-          <th>Type</th>
-          <th>Discount</th>
-          <th>Amount</th>
-          <th>Cash Received</th>
-          <th>Change</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if orders %}
-          {% for o in orders %}
-          <tr>
-            <!-- Added data-label attributes for the mobile card layout -->
-            <td data-label="Time">
-              <small style="font-weight:600;">{{ o.created_at.strftime('%I:%M %p') }}</small><br>
-              <small style="color:#aaa;">{{ o.created_at.strftime('%b %d, %Y') }}</small>
-            </td>
-            <td data-label="Items">
-              {% for item in o.order_items %}
-                <span class="item-pill">{{ item.cake_name }} x{{ item.quantity }}</span>
-              {% endfor %}
-            </td>
-            <td data-label="Payment">
-              <span class="payment-badge {{ 'payment-gcash' if o.payment_method == 'GCash' else 'payment-cash' }}">
-                {{ o.payment_method }}
-              </span>
-            </td>
-            <td data-label="Type">
-              <small>{{ o.order_type or 'Dine In' }}</small>
-            </td>
-            <td data-label="Discount">
-              {% if o.discount_type and o.discount_type != 'none' %}
-                <span style="color:#198754; font-size:0.78rem; font-weight:600;">
-                  {{ 'Senior' if o.discount_type == 'senior' else 'PWD' }} −₱{{ "%.2f"|format(o.discount_amount|float) }}
-                </span>
-              {% else %}
-                <small style="color:#ccc;">—</small>
-              {% endif %}
-            </td>
-            <td data-label="Amount"><strong style="color:#d63384;">₱{{ "%.2f"|format(o.amount) }}</strong></td>
-            <td data-label="Cash Received">₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
-            <td data-label="Change">₱{{ "%.2f"|format(o.change or 0) }}</td>
-          </tr>
-          {% endfor %}
-        {% else %}
-          <tr>
-            <td colspan="8">
-              <div class="empty-state">
-                <i class="fas fa-receipt fa-3x mb-3 d-block"></i>
-                No transactions found for this period
-              </div>
-            </td>
-          </tr>
+  <!-- SESSIONS (click one to see its orders) -->
+  <div class="sessions-section">
+    <div class="sessions-title">Sessions</div>
+    {% for s in sessions %}
+    <div class="session-card {% if s.status_label != 'Ended' %}is-open{% endif %}">
+      <div class="session-head">
+        <div>
+          <a class="session-name stretched-link" href="{{ url_for('pos.pos_history_session', session_id=s.id, date=date_param) }}">{{ s.name }}</a>
+          <span class="session-when">· {{ s.started_label }}{% if s.ended_label %} → {{ s.ended_label }}{% endif %}</span>
+        </div>
+        <span class="session-badge">{{ s.status_label }}</span>
+      </div>
+      <div class="session-grid">
+        <div><div class="k">Starting cash</div><div class="v">₱{{ "{:,.2f}".format(s.starting_cash) }}</div></div>
+        <div><div class="k">Expected cash</div><div class="v">₱{{ "{:,.2f}".format(s.expected_cash) }}</div></div>
+        {% if s.counted_cash is not none %}
+        <div><div class="k">Counted cash</div><div class="v">₱{{ "{:,.2f}".format(s.counted_cash) }}</div></div>
+        <div><div class="k">Difference</div><div class="v {{ s.diff_class }}">{{ s.diff_label }}</div></div>
         {% endif %}
-      </tbody>
-    </table>
+        <div><div class="k">Cash sales</div><div class="v">₱{{ "{:,.2f}".format(s.cash_sales) }}</div></div>
+        <div><div class="k">GCash sales</div><div class="v">₱{{ "{:,.2f}".format(s.gcash_sales) }}</div></div>
+        <div><div class="k">Paid in / out</div><div class="v">₱{{ "{:,.2f}".format(s.paid_in) }} / ₱{{ "{:,.2f}".format(s.paid_out) }}</div></div>
+        <div><div class="k">Transactions</div><div class="v">{{ s.transactions }}</div></div>
+      </div>
+      {% if s.note %}<div class="session-note">Note: {{ s.note }}</div>{% endif %}
+      <div class="session-more">View orders <i class="fas fa-chevron-right"></i></div>
+    </div>
+    {% endfor %}
+
+    {% if unassigned %}
+    <div class="session-card is-unassigned">
+      <div class="session-head">
+        <div>
+          <a class="session-name stretched-link" href="{{ url_for('pos.pos_history_session', session_id='unassigned', date=date_param) }}">Unassigned orders</a>
+          <span class="session-when">· made without a session</span>
+        </div>
+        <span class="session-badge">{{ unassigned.count }} order{{ 's' if unassigned.count != 1 }}</span>
+      </div>
+      <div class="session-grid">
+        <div><div class="k">Total</div><div class="v">₱{{ "{:,.2f}".format(unassigned.total) }}</div></div>
+      </div>
+      <div class="session-more">View orders <i class="fas fa-chevron-right"></i></div>
+    </div>
+    {% endif %}
+
+    {% if not sessions and not unassigned %}
+    <div class="empty-state">
+      <i class="fas fa-user-clock fa-3x mb-3 d-block"></i>
+      No sessions found for this period
+    </div>
+    {% endif %}
   </div>
 
-</div>
-
-<!-- PDF REPORT (hidden, used only for PDF generation) -->
-<div id="pdfReport">
-  <div class="pdf-header">
-    <h2>Mrs. Brave's Cakes Iloilo</h2>
-    <p>POS Transaction Report</p>
-    <p>{{ selected_date }}</p>
-  </div>
-
-  <div class="pdf-summary">
-    <div class="pdf-summary-card">
-      <div class="pdf-label">Total Sales</div>
-      <div class="pdf-value">₱{{ "%.2f"|format(total_sales) }}</div>
-    </div>
-    <div class="pdf-summary-card">
-      <div class="pdf-label">Transactions</div>
-      <div class="pdf-value">{{ total_txn }}</div>
-    </div>
-    <div class="pdf-summary-card">
-      <div class="pdf-label">Cash</div>
-      <div class="pdf-value">₱{{ "%.2f"|format(total_cash) }}</div>
-    </div>
-    <div class="pdf-summary-card">
-      <div class="pdf-label">GCash</div>
-      <div class="pdf-value">₱{{ "%.2f"|format(total_gcash) }}</div>
-    </div>
-  </div>
-
-  <table class="pdf-table">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Items</th>
-        <th>Payment</th>
-        <th>Type</th>
-        <th>Discount</th>
-        <th>Amount</th>
-        <th>Cash Received</th>
-        <th>Change</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% if orders %}
-        {% for o in orders %}
-        <tr>
-          <td>{{ o.created_at.strftime('%I:%M %p') }}</td>
-          <td>{% for item in o.order_items %}{{ item.cake_name }} x{{ item.quantity }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
-          <td>{{ o.payment_method }}</td>
-          <td>{{ o.order_type or 'Dine In' }}</td>
-          <td>{% if o.discount_type and o.discount_type != 'none' %}{{ 'Senior' if o.discount_type == 'senior' else 'PWD' }} -₱{{ "%.2f"|format(o.discount_amount|float) }}{% else %}—{% endif %}</td>
-          <td>₱{{ "%.2f"|format(o.amount) }}</td>
-          <td>₱{{ "%.2f"|format(o.cash_received or 0) }}</td>
-          <td>₱{{ "%.2f"|format(o.change or 0) }}</td>
-        </tr>
-        {% endfor %}
-      {% else %}
-        <tr><td colspan="8" style="text-align:center;color:#aaa;">No transactions</td></tr>
-      {% endif %}
-    </tbody>
-  </table>
-
-  <div class="pdf-footer">
-    Generated on {{ now }} · Mrs. Brave's Cakes Iloilo POS System
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -629,27 +573,7 @@
     return `${year}-${month}-${day}`;
   }
 
-  function downloadPDF() {
-    const report = document.getElementById('pdfReport');
-    report.style.display = 'block';
-
-    const filename = `MrsBraves_POS_{{ selected_date | replace(' ', '_') | replace(',', '') }}.pdf`;
-
-    const opt = {
-      margin:      [10, 10, 10, 10],
-      filename:    filename,
-      image:       { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(report).save().then(() => {
-      report.style.display = 'none';
-    });
-  }
   document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('btnDownloadPDF').addEventListener('click', downloadPDF);
-
     document.querySelectorAll('[data-filter]').forEach(function (btn) {
       btn.addEventListener('click', function () { setFilter(btn.dataset.filter, btn); });
     });
