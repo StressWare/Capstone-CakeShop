@@ -43,6 +43,13 @@ self.addEventListener('fetch', event => {
 
     const url = new URL(event.request.url);
 
+    // Live session / cash data must never be served from cache — let it fail offline
+    // so the POS can show "needs internet" instead of stale cash totals.
+    if (url.pathname.startsWith('/pos/session')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
+
     // POS pages — Network First, fallback to cache, then offline page
     const posPaths = [
         '/pos',

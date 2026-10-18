@@ -247,6 +247,54 @@
       padding: 8px; text-align: center; font-size: 0.85rem;
     }
 
+    /* ── SESSION BAR + OVERLAYS (plain DOM/CSS: no Bootstrap JS needed, so they work offline) ── */
+    .pos-hide { display: none !important; }
+    .session-bar {
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+      min-height: 46px; padding: 6px 16px; background: #fff; border-bottom: 1px solid #eadfe8;
+      font-size: 0.9rem; font-weight: 600; color: #333;
+    }
+    .session-meta { font-weight: 500; color: #777; font-size: 0.82rem; margin-left: 6px; }
+    .session-warn { color: #b02a37; margin-left: 8px; font-weight: 600; font-size: 0.82rem; }
+    .session-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .pos-overlay {
+      position: fixed; inset: 0; z-index: 1050; background: rgba(0,0,0,.55);
+      display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto;
+    }
+    .pos-overlay.gate { background: #f5f5f5; }
+    .pos-card {
+      background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 420px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.18); max-height: 100%; overflow-y: auto;
+    }
+    .pos-card h5 { margin: 0 0 4px; font-weight: 700; color: #333; }
+    .pos-sub { color: #777; font-size: 0.85rem; margin-bottom: 4px; }
+    .pos-card label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 4px; }
+    .pos-card input[type=text], .pos-card input[type=number], .pos-card input[type=datetime-local], .pos-card textarea {
+      width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box;
+    }
+    .pos-row { display: flex; gap: 8px; align-items: center; }
+    .pos-peso { font-weight: 700; }
+    .pos-error { color: #dc3545; font-size: 0.85rem; min-height: 1.1em; margin-top: 8px; }
+    .pos-note { color: #777; font-size: 0.8rem; margin: 6px 0; }
+    .pos-actions { display: flex; gap: 8px; margin-top: 14px; }
+    .pos-actions .btn { flex: 1; }
+    .pos-back { display: block; text-align: center; margin-top: 12px; font-size: 0.85rem; color: #777; }
+    .s-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.92rem; }
+    .s-row.strong { font-weight: 700; border-top: 1px solid #ddd; margin-top: 4px; padding-top: 6px; }
+    .s-row.lead { font-weight: 700; margin-top: 6px; }
+    .s-heading {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      color: #198754; margin: 10px 0 2px;
+    }
+    .s-moves { list-style: none; padding: 0; margin: 0; max-height: 160px; overflow-y: auto; font-size: 0.85rem; }
+    .s-moves li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid #f0e8f0; }
+    .s-moves .mv-in  { color: #198754; font-weight: 600; }
+    .s-moves .mv-out { color: #b02a37; font-weight: 600; }
+    .s-diff-ok { color: #198754; } .s-diff-over { color: #0d6efd; } .s-diff-short { color: #dc3545; }
+    @media (min-width: 1025px) {
+      .session-bar:not(.pos-hide) ~ .pos-wrapper { height: calc(100vh - 46px); }   /* keep the bar from causing page scroll */
+    }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .pos-wrapper { grid-template-columns: 1fr; height: auto; }
@@ -298,6 +346,19 @@
 </div>
 <div id="queued-banner">
   <i class="fas fa-clock me-2"></i>Order saved offline — will sync automatically when reconnected.
+</div>
+
+<!-- ===== SESSION BAR ("Hi, name") ===== -->
+<div id="sessionBar" class="session-bar pos-hide">
+  <div>
+    <i class="fas fa-user me-2"></i><span id="sessionGreeting"></span><span id="sessionMeta" class="session-meta"></span><span id="sessionWarn" class="session-warn"></span>
+  </div>
+  <div class="session-actions">
+    <span id="syncNote" class="session-meta"></span>
+    <button type="button" class="btn btn-sm btn-outline-secondary pos-hide" id="syncNowBtn">Sync now</button>
+    <button type="button" class="btn btn-sm btn-outline-dark" id="cashMgmtBtn"><i class="fas fa-coins me-1"></i>Cash management</button>
+    <button type="button" class="btn btn-sm btn-outline-danger" id="endDayBtn"><i class="fas fa-flag-checkered me-1"></i>End day</button>
+  </div>
 </div>
 
 <div class="pos-wrapper">
@@ -472,6 +533,83 @@
     <button type="button" class="btn-clear" id="clearBtn">
       <i class="fas fa-trash me-2"></i>Clear Order
     </button>
+  </div>
+</div>
+
+<!-- ===== START OF DAY GATE + CASH / END OVERLAYS ===== -->
+<div id="gateOverlay" class="pos-overlay gate pos-hide" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="pos-card">
+    <h5 id="gateTitle">Start of day</h5>
+    <div class="pos-sub">Enter your details to start taking orders.</div>
+    <label for="gateName">Your name</label>
+    <input type="text" id="gateName" maxlength="60" autocomplete="off" placeholder="Type your name">
+    <label for="gateStart">Date and time</label>
+    <div class="pos-row">
+      <input type="datetime-local" id="gateStart">
+      <button type="button" class="btn btn-sm btn-outline-secondary" id="gateNowBtn">Now</button>
+    </div>
+    <label for="gateCash">Starting cash (cash on hand)</label>
+    <div class="pos-row">
+      <span class="pos-peso">₱</span>
+      <input type="number" id="gateCash" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="pos-error" id="gateError"></div>
+    <div class="pos-note" id="gateSyncNote"></div>
+    <button type="button" class="btn btn-success w-100" id="gateStartBtn">Start</button>
+    <a href="/admin/dashboard" class="pos-back">Back to dashboard</a>
+  </div>
+</div>
+
+<div id="cashOverlay" class="pos-overlay pos-hide" role="dialog" aria-modal="true" aria-labelledby="cashTitle">
+  <div class="pos-card">
+    <h5 id="cashTitle">Cash management</h5>
+    <div class="s-row lead">
+      <span>Expected cash in drawer</span><span id="cashExpected">₱0.00</span>
+    </div>
+    <div class="pos-note" id="cashSource"></div>
+    <label for="cashAmount">Amount</label>
+    <div class="pos-row">
+      <span class="pos-peso">₱</span>
+      <input type="number" id="cashAmount" min="0.01" step="0.01" inputmode="decimal" placeholder="0.00">
+    </div>
+    <label for="cashComment">Comment</label>
+    <input type="text" id="cashComment" maxlength="200" placeholder="e.g. walk-in cake payment, supplies">
+    <div class="pos-error" id="cashError"></div>
+    <div class="pos-actions">
+      <button type="button" class="btn btn-success" id="cashInBtn"><i class="fas fa-arrow-down me-1"></i>Pay in</button>
+      <button type="button" class="btn btn-danger" id="cashOutBtn"><i class="fas fa-arrow-up me-1"></i>Pay out</button>
+    </div>
+    <div class="s-heading">Cash movements today</div>
+    <ul class="s-moves" id="cashMoves"></ul>
+    <div class="pos-actions"><button type="button" class="btn btn-light border" id="cashCloseBtn">Close</button></div>
+  </div>
+</div>
+
+<div id="endOverlay" class="pos-overlay pos-hide" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+  <div class="pos-card">
+    <h5 id="endTitle">End day</h5>
+    <div id="endFormView">
+      <div class="pos-note" id="endSource"></div>
+      <div id="endSummary"></div>
+      <label for="endCounted">Counted cash in drawer</label>
+      <div class="pos-row">
+        <span class="pos-peso">₱</span>
+        <input type="number" id="endCounted" min="0" step="0.01" inputmode="decimal" placeholder="0.00">
+      </div>
+      <div class="pos-note">Difference: <strong id="endDifference">—</strong></div>
+      <label for="endNote">Note (optional)</label>
+      <textarea id="endNote" rows="2" maxlength="500"></textarea>
+      <div class="pos-error" id="endError"></div>
+      <div class="pos-actions">
+        <button type="button" class="btn btn-light border" id="endCancelBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="endConfirmBtn">End day</button>
+      </div>
+    </div>
+    <div id="endDoneView" class="pos-hide">
+      <div class="pos-note" id="endDoneNote"></div>
+      <div id="endDoneSummary"></div>
+      <div class="pos-actions"><button type="button" class="btn btn-success" id="endDoneBtn">Done</button></div>
+    </div>
   </div>
 </div>
 
@@ -755,9 +893,17 @@
       order_type:        document.getElementById('orderTypeInput').value,
       discount_type:     document.getElementById('discountInput').value,
       discount_amount:   parseFloat(document.getElementById('discountAmtInput').value) || 0,
+      // Stamped at checkout so an order queued offline still lands in the right session
+      session_id:        (window.POSSession && window.POSSession.currentId()) || null,
     };
 
     var result = await window.POSOfflineQueue.submitOrder(orderPayload);
+
+    if (result.synced || result.queued) {
+      // Keep this device's running cash tally current (works offline).
+      // Must run before the redirect to the receipt below.
+      if (window.POSSession) window.POSSession.recordSale(orderPayload);
+    }
 
     if (result.synced) {
       // Went through immediately
@@ -899,6 +1045,550 @@
     // Cash input
     document.getElementById('cashReceived').addEventListener('input', calculateChange);
   });
+</script>
+
+<!-- ===== CASH SESSIONS (start of day -> end day) ===== -->
+<script nonce="{{ csp_nonce() }}">
+(function () {
+  'use strict';
+  var STORE_KEY = 'pos_sessions_v1';
+  var MAX_DAYS_BACK = 7;
+  var MAX_CASH = 1000000;
+
+  // Everything lives on this device first, then syncs in order: start -> cash entries -> end.
+  // session = { id, name, started_at, starting_cash, startSynced,
+  //             tally:{transactions,cash_sales,gcash_sales,other_sales,discounts,net_sales},
+  //             movements:[{request_id,type,amount,comment,at,synced}],
+  //             ending: null | {counted_cash, ended_at, note, local_expected, local_difference, notify} }
+  var sessions = [];
+  var flushPromise = null;
+  var waitingForOrders = false;
+  var holdGate = false;
+  var storageOk = true;
+  var results = {};
+  var endCtx = { totals: null, source: 'device' };
+
+  function $(id) { return document.getElementById(id); }
+  function r2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+  function peso(n) {
+    return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function randHex(bytes) {
+    var a = new Uint8Array(bytes);
+    if (window.crypto && window.crypto.getRandomValues) { window.crypto.getRandomValues(a); }
+    else { for (var i = 0; i < bytes; i++) a[i] = Math.floor(Math.random() * 256); }
+    return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function uuid() {
+    var h = randHex(16);
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  function fmtWhen(iso) {
+    var d = new Date(iso);
+    return isNaN(d.getTime()) ? '' : d.toLocaleString('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  function diffText(d) {
+    d = r2(d);
+    return d === 0 ? 'Exact match' : (d > 0 ? 'Over by ' + peso(d) : 'Short by ' + peso(-d));
+  }
+  function diffClass(d) { d = r2(d); return d === 0 ? 's-diff-ok' : (d > 0 ? 's-diff-over' : 's-diff-short'); }
+
+  // ── storage ──
+  function normalize(s) {
+    s.tally = s.tally || {};
+    ['transactions', 'cash_sales', 'gcash_sales', 'other_sales', 'discounts', 'net_sales'].forEach(function (k) {
+      s.tally[k] = Number(s.tally[k]) || 0;
+    });
+    s.movements = Array.isArray(s.movements) ? s.movements : [];
+    s.startSynced = !!s.startSynced;
+    s.ending = s.ending || null;
+    delete s.syncError;            // one fresh retry per page load
+    return s;
+  }
+  function load() {
+    try {
+      var arr = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+      return Array.isArray(arr) ? arr.filter(function (s) { return s && s.id; }).map(normalize) : [];
+    } catch (e) { return []; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(sessions)); return true; }
+    catch (e) { storageOk = false; return false; }
+  }
+  function probeStorage() {
+    try { localStorage.setItem('pos_probe', '1'); localStorage.removeItem('pos_probe'); storageOk = true; }
+    catch (e) { storageOk = false; }
+  }
+  function current() {
+    for (var i = 0; i < sessions.length; i++) if (!sessions[i].ending) return sessions[i];
+    return null;
+  }
+
+  // ── network ──
+  async function api(method, url, body, timeoutMs) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, timeoutMs || 20000) : null;
+    var opts = {
+      method: method, cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.CSRF_TOKEN || '' }
+    };
+    if (ctrl) opts.signal = ctrl.signal;
+    if (body) opts.body = JSON.stringify(body);
+    var res;
+    try { res = await fetch(url, opts); }
+    catch (e) {
+      var ne = new Error('No internet connection.');
+      ne.network = true;
+      throw ne;
+    } finally { if (timer) clearTimeout(timer); }
+    var data = null;
+    try { data = await res.json(); } catch (e) { /* not JSON */ }
+    if (!res.ok) {
+      var err = new Error((data && data.error) || ('Request failed (HTTP ' + res.status + ')'));
+      err.status = res.status;
+      throw err;
+    }
+    return data;
+  }
+  async function queuedCount() {
+    try { return window.POSOfflineQueue ? (await window.POSOfflineQueue.getQueuedOrders()).length : 0; }
+    catch (e) { return 0; }
+  }
+
+  // ── local cash tally (the device's own, always-current estimate) ──
+  function localTotals(s) {
+    var t = s.tally, pin = 0, pout = 0;
+    s.movements.forEach(function (m) { if (m.type === 'paid_in') pin += m.amount; else pout += m.amount; });
+    return {
+      transactions: t.transactions, cash_sales: r2(t.cash_sales), gcash_sales: r2(t.gcash_sales),
+      other_sales: r2(t.other_sales), discounts: r2(t.discounts),
+      gross_sales: r2(t.net_sales + t.discounts), net_sales: r2(t.net_sales),
+      paid_in: r2(pin), paid_out: r2(pout),
+      expected_cash: r2(s.starting_cash + t.cash_sales + pin - pout)
+    };
+  }
+  function hasUnsyncedMoves(s) { return s.movements.some(function (m) { return !m.synced; }); }
+
+  // Server totals are authoritative, but only when everything from this device has synced
+  async function getTotals(s) {
+    try {
+      if (navigator.onLine && s.startSynced && !hasUnsyncedMoves(s) && (await queuedCount()) === 0) {
+        var d = await api('GET', '/pos/session/' + s.id, null, 4000);
+        if (d && d.session && d.session.totals) return { totals: d.session.totals, source: 'server' };
+      }
+    } catch (e) { /* fall back to the device tally */ }
+    return { totals: localTotals(s), source: 'device' };
+  }
+
+  function recordSale(payload) {
+    var s = current();
+    if (!s || !payload) return;
+    var amount = Number(payload.amount) || 0;
+    var method = String(payload.payment_method || '').toLowerCase();
+    if (method === 'cash') s.tally.cash_sales += amount;
+    else if (method === 'gcash') s.tally.gcash_sales += amount;
+    else s.tally.other_sales += amount;
+    s.tally.net_sales += amount;                       // amount is the post-discount total
+    s.tally.discounts += Number(payload.discount_amount) || 0;
+    s.tally.transactions += 1;
+    save();
+  }
+
+  // ── rendering ──
+  function showOverlay(id) { $(id).classList.remove('pos-hide'); }
+  function hideOverlay(id) { $(id).classList.add('pos-hide'); }
+
+  function pendingCount() {
+    var n = 0;
+    sessions.forEach(function (s) {
+      if (!s.startSynced) n++;
+      s.movements.forEach(function (m) { if (!m.synced) n++; });
+      if (s.ending) n++;
+    });
+    return n;
+  }
+
+  function renderBar() {
+    var s = current();
+    $('sessionBar').classList.toggle('pos-hide', !s);
+    if (s) {
+      $('sessionGreeting').textContent = 'Hi, ' + s.name;
+      $('sessionMeta').textContent = ' · started ' + fmtWhen(s.started_at);
+      var started = new Date(s.started_at);
+      $('sessionWarn').textContent = (!isNaN(started.getTime()) && started.toDateString() !== new Date().toDateString())
+        ? '⚠ started on a previous day — tap End day when finished' : '';
+    }
+    var note = '';
+    if (pendingCount() > 0) {
+      note = !navigator.onLine ? 'Offline — will sync when connected'
+           : (waitingForOrders ? 'Waiting for queued orders to sync…' : 'Syncing…');
+    }
+    $('syncNote').textContent = note;
+    $('syncNowBtn').classList.toggle('pos-hide', !waitingForOrders);
+
+    if (!s) hideOverlay('cashOverlay');
+    if (!s && !holdGate) {
+      if ($('gateOverlay').classList.contains('pos-hide')) openGate();
+    } else {
+      hideOverlay('gateOverlay');
+    }
+  }
+
+  function addRows(container, rows) {
+    container.textContent = '';
+    rows.forEach(function (r) {
+      var el = document.createElement('div');
+      if (r.heading) {
+        el.className = 's-heading';
+        el.textContent = r.heading;
+      } else {
+        el.className = 's-row' + (r.strong ? ' strong' : '');
+        var l = document.createElement('span'); l.textContent = r.label;
+        var v = document.createElement('span'); v.textContent = r.value;
+        if (r.cls) v.className = r.cls;
+        el.appendChild(l); el.appendChild(v);
+      }
+      container.appendChild(el);
+    });
+  }
+  function summaryRows(starting, t) {
+    var rows = [
+      { heading: 'Cash drawer' },
+      { label: 'Starting cash', value: peso(starting) },
+      { label: 'Cash sales',    value: peso(t.cash_sales) },
+      { label: 'Paid in',       value: peso(t.paid_in) },
+      { label: 'Paid out',      value: '− ' + peso(t.paid_out) },
+      { label: 'Expected cash', value: peso(t.expected_cash), strong: true },
+      { heading: 'Sales summary' },
+      { label: 'Transactions',  value: String(t.transactions) },
+      { label: 'Gross sales',   value: peso(t.gross_sales) },
+      { label: 'Discounts',     value: '− ' + peso(t.discounts) },
+      { label: 'Net sales',     value: peso(t.net_sales), strong: true },
+      { label: 'of which cash', value: peso(t.cash_sales) },
+      { label: 'of which GCash (not in drawer)', value: peso(t.gcash_sales) }
+    ];
+    if (t.other_sales > 0) rows.push({ label: 'of which other', value: peso(t.other_sales) });
+    return rows;
+  }
+
+  // ── START OF DAY (gate) ──
+  function toLocalInput(d) {
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function openGate() {
+    $('gateName').value = '';
+    $('gateCash').value = '';
+    $('gateError').textContent = '';
+    $('gateStart').value = toLocalInput(new Date());
+    var notes = [];
+    if (!storageOk) notes.push('This browser is blocking storage, so your session cannot be remembered after a reload.');
+    var waiting = sessions.filter(function (x) { return x.ending; }).length;
+    if (waiting) notes.push(waiting + ' previous session(s) still syncing.');
+    $('gateSyncNote').textContent = notes.join(' ');
+    showOverlay('gateOverlay');
+    setTimeout(function () { $('gateName').focus(); }, 50);
+  }
+  function startSession() {
+    var err = $('gateError');
+    err.textContent = '';
+    var name = $('gateName').value.trim();
+    if (!name) { err.textContent = 'Please type your name.'; return; }
+    if (name.length > 60) { err.textContent = 'Name must be at most 60 characters.'; return; }
+    var start = $('gateStart').value ? new Date($('gateStart').value) : null;
+    if (!start || isNaN(start.getTime())) { err.textContent = 'Enter a valid date and time.'; return; }
+    var now = Date.now();
+    if (start.getTime() > now + 60000) { err.textContent = 'Start time cannot be in the future.'; return; }
+    if (start.getTime() < now - MAX_DAYS_BACK * 86400000) {
+      err.textContent = 'Start time cannot be more than ' + MAX_DAYS_BACK + ' days ago.'; return;
+    }
+    var cash = parseFloat($('gateCash').value);
+    if (isNaN(cash) || cash < 0) { err.textContent = 'Enter the starting cash (0 or more).'; return; }
+    if (cash > MAX_CASH) { err.textContent = 'Starting cash is too large.'; return; }
+
+    sessions.push(normalize({
+      id: randHex(16), name: name, started_at: start.toISOString(), starting_cash: r2(cash)
+    }));
+    save();
+    renderBar();
+    flush();
+  }
+
+  // ── CASH MANAGEMENT (Pay in / Pay out) — works offline ──
+  function renderCashList(s) {
+    var list = $('cashMoves');
+    list.textContent = '';
+    if (!s.movements.length) {
+      var li = document.createElement('li');
+      li.textContent = 'No cash movements yet.';
+      list.appendChild(li);
+      return;
+    }
+    s.movements.slice().reverse().forEach(function (m) {
+      var li = document.createElement('li');
+      var left = document.createElement('span');
+      var tag = document.createElement('span');
+      tag.className = m.type === 'paid_in' ? 'mv-in' : 'mv-out';
+      tag.textContent = (m.type === 'paid_in' ? 'Paid in ' : 'Paid out ') + peso(m.amount);
+      left.appendChild(tag);
+      if (m.comment) left.appendChild(document.createTextNode(' — ' + m.comment));
+      var right = document.createElement('span');
+      right.style.color = '#888';
+      right.textContent = fmtWhen(m.at).replace(/^.*, /, '') + (m.synced ? '' : ' · pending sync');
+      li.appendChild(left); li.appendChild(right);
+      list.appendChild(li);
+    });
+  }
+  async function renderCash() {
+    var s = current();
+    if (!s) { hideOverlay('cashOverlay'); return; }
+    // instant, from the device tally ...
+    $('cashExpected').textContent = peso(localTotals(s).expected_cash);
+    $('cashSource').textContent = 'Estimate from this device — confirmed once synced';
+    renderCashList(s);
+    // ... then upgrade to the server's figure when it is reachable and everything has synced
+    var tot = await getTotals(s);
+    if (current() !== s || $('cashOverlay').classList.contains('pos-hide')) return;
+    $('cashExpected').textContent = peso(tot.totals.expected_cash);
+    $('cashSource').textContent = tot.source === 'server' ? 'Confirmed with the server'
+                                                          : 'Estimate from this device — confirmed once synced';
+  }
+  function openCash() {
+    if (!current()) return;
+    $('cashAmount').value = '';
+    $('cashComment').value = '';
+    $('cashError').textContent = '';
+    showOverlay('cashOverlay');
+    renderCash();
+  }
+  async function addMovement(type) {
+    var s = current(), err = $('cashError');
+    if (!s) return;
+    var amount = parseFloat($('cashAmount').value);
+    var comment = $('cashComment').value.trim();
+    if (isNaN(amount) || amount <= 0) { err.textContent = 'Enter an amount greater than zero.'; return; }
+    if (amount > MAX_CASH) { err.textContent = 'Amount is too large.'; return; }
+    if (comment.length > 200) { err.textContent = 'Comment must be at most 200 characters.'; return; }
+    err.textContent = '';
+    amount = r2(amount);
+
+    if (type === 'paid_out') {
+      var expected = localTotals(s).expected_cash;
+      if (amount > expected) {
+        var ok = await glassAlert({
+          icon: 'warning', title: 'Pay out exceeds expected cash',
+          text: 'You are paying out ' + peso(amount) + ' but expected cash is ' + peso(expected) + '. Continue?',
+          showCancelButton: true, confirmButtonText: 'Yes, continue', cancelButtonText: 'Cancel'
+        });
+        if (!ok.isConfirmed) return;
+      }
+    }
+    if (current() !== s) return;
+    s.movements.push({ request_id: uuid(), type: type, amount: amount, comment: comment,
+                       at: new Date().toISOString(), synced: false });
+    save();
+    $('cashAmount').value = '';
+    $('cashComment').value = '';
+    renderBar();
+    renderCash();
+    flush();
+  }
+
+  // ── END DAY ──
+  function renderEndSummary() {
+    var s = current();
+    if (!s || !endCtx.totals) return;
+    addRows($('endSummary'), summaryRows(s.starting_cash, endCtx.totals));
+    $('endSource').textContent = endCtx.source === 'server'
+      ? 'Figures confirmed with the server.'
+      : 'Figures are an estimate from this device — the server confirms them once synced.';
+    renderEndDifference();
+  }
+  function renderEndDifference() {
+    var el = $('endDifference');
+    var counted = parseFloat($('endCounted').value);
+    if (isNaN(counted) || !endCtx.totals) { el.textContent = '—'; el.className = ''; return; }
+    var d = r2(counted - endCtx.totals.expected_cash);
+    el.textContent = diffText(d);
+    el.className = diffClass(d);
+  }
+  async function openEnd() {
+    var s = current();
+    if (!s) return;
+    $('endFormView').classList.remove('pos-hide');
+    $('endDoneView').classList.add('pos-hide');
+    $('endTitle').textContent = 'End day — ' + s.name;
+    $('endCounted').value = '';
+    $('endNote').value = '';
+    $('endError').textContent = '';
+    $('endConfirmBtn').disabled = false;
+    $('endConfirmBtn').textContent = 'End day';
+    endCtx = { totals: localTotals(s), source: 'device' };
+    renderEndSummary();
+    showOverlay('endOverlay');
+    var tot = await getTotals(s);
+    if (current() !== s || $('endOverlay').classList.contains('pos-hide')) return;
+    endCtx = tot;
+    renderEndSummary();
+  }
+  async function confirmEnd() {
+    var s = current(), err = $('endError');
+    if (!s) return;
+    var counted = parseFloat($('endCounted').value);
+    if (isNaN(counted) || counted < 0) { err.textContent = 'Enter the cash you counted (0 or more).'; return; }
+    if (counted > MAX_CASH) { err.textContent = 'Counted cash is too large.'; return; }
+    err.textContent = '';
+    var ok = await glassAlert({
+      icon: 'warning', title: 'End day for ' + s.name + '?', text: 'This cannot be undone.',
+      showCancelButton: true, confirmButtonText: 'Yes, end day', cancelButtonText: 'Cancel'
+    });
+    if (!ok.isConfirmed || current() !== s) return;
+
+    counted = r2(counted);
+    var local = localTotals(s);
+    s.ending = {
+      counted_cash: counted, ended_at: new Date().toISOString(), note: $('endNote').value.trim(),
+      local_expected: local.expected_cash, local_difference: r2(counted - local.expected_cash), notify: false
+    };
+    save();
+    holdGate = true;                      // keep the start screen away until the person taps Done
+    $('endConfirmBtn').disabled = true;
+    $('endConfirmBtn').textContent = 'Ending…';
+    renderBar();
+
+    await flush();                        // sends right away when online and the order queue is empty
+
+    var final = results[s.id], rows, note;
+    if (final) {
+      rows = summaryRows(final.starting_cash, final.totals);
+      rows.push({ heading: 'Cash count' });
+      rows.push({ label: 'Counted cash', value: peso(final.counted_cash) });
+      rows.push({ label: 'Difference', value: diffText(final.difference), strong: true, cls: diffClass(final.difference) });
+      note = 'Day ended and confirmed with the server.';
+      delete results[s.id];
+    } else {
+      rows = summaryRows(s.starting_cash, local);
+      rows.push({ heading: 'Cash count' });
+      rows.push({ label: 'Counted cash', value: peso(counted) });
+      rows.push({ label: 'Difference', value: diffText(s.ending.local_difference), strong: true, cls: diffClass(s.ending.local_difference) });
+      note = 'Saved on this device. It will be confirmed with the server automatically once you are online and queued orders have synced.';
+      s.ending.notify = true;             // tell the person when the final figures arrive
+      save();
+    }
+    addRows($('endDoneSummary'), rows);
+    $('endDoneNote').textContent = note;
+    $('endFormView').classList.add('pos-hide');
+    $('endDoneView').classList.remove('pos-hide');
+    $('endTitle').textContent = 'Day ended';
+  }
+  function finishEnd() {
+    hideOverlay('endOverlay');
+    holdGate = false;
+    renderBar();                          // no active session -> Start of day screen
+  }
+
+  // ── SYNC (ordered: start -> cash entries -> end) ──
+  function announceFinal(session) {
+    glassAlert({
+      icon: 'info', title: 'Day ended — final figures',
+      text: (session.name || 'Session') + ': expected ' + peso(session.expected_cash) +
+            ', counted ' + peso(session.counted_cash) + ' — ' + diffText(session.difference) + '.'
+    });
+  }
+  async function doFlush(opts) {
+    opts = opts || {};
+    waitingForOrders = false;
+    for (var i = 0; i < sessions.length; i++) {
+      var s = sessions[i];
+      if (s.syncError) continue;
+      try {
+        if (!s.startSynced) {
+          await api('POST', '/pos/session/start', {
+            session_id: s.id, name: s.name, started_at: s.started_at, starting_cash: s.starting_cash
+          });
+          s.startSynced = true; save();
+        }
+        for (var j = 0; j < s.movements.length; j++) {
+          var m = s.movements[j];
+          if (m.synced) continue;
+          await api('POST', '/pos/session/cash', {
+            session_id: s.id, type: m.type, amount: m.amount, comment: m.comment,
+            request_id: m.request_id, at: m.at
+          });
+          m.synced = true; save();
+        }
+        if (s.ending) {
+          if (!opts.force) {
+            // the End must reach the server AFTER this session's orders, or its totals would miss them
+            try { if (window.POSOfflineQueue) await window.POSOfflineQueue.syncQueuedOrders(); } catch (e) { /* ignore */ }
+            if ((await queuedCount()) > 0) { waitingForOrders = true; continue; }
+          }
+          var data = await api('POST', '/pos/session/end', {
+            session_id: s.id, counted_cash: s.ending.counted_cash, ended_at: s.ending.ended_at,
+            note: s.ending.note, local_expected: s.ending.local_expected, local_difference: s.ending.local_difference
+          });
+          results[s.id] = data.session;
+          var notify = s.ending.notify;
+          sessions.splice(i, 1); i--; save();
+          if (notify) announceFinal(data.session);
+        }
+      } catch (e) {
+        if (e.network || !e.status || e.status >= 500) break;   // unreachable / server down: retry later
+        s.syncError = e.message;                                  // the server rejected it: don't loop forever
+        glassAlert({ icon: 'error', title: 'Could not sync a session',
+                     text: (s.name || 'Session') + ': ' + e.message + '. Reload the page to try again.' });
+      }
+    }
+    renderBar();
+  }
+  function flush(opts) {
+    if (flushPromise) { return flushPromise.then(function () { return flush(opts); }); }
+    var done = function () { flushPromise = null; };
+    flushPromise = doFlush(opts).then(done, done);
+    return flushPromise;
+  }
+
+  // ── wiring ──
+  $('gateStartBtn').addEventListener('click', startSession);
+  $('gateNowBtn').addEventListener('click', function () { $('gateStart').value = toLocalInput(new Date()); });
+  ['gateName', 'gateStart', 'gateCash'].forEach(function (id) {
+    $(id).addEventListener('keydown', function (e) { if (e.key === 'Enter') startSession(); });
+  });
+  $('cashMgmtBtn').addEventListener('click', openCash);
+  $('cashInBtn').addEventListener('click',  function () { addMovement('paid_in'); });
+  $('cashOutBtn').addEventListener('click', function () { addMovement('paid_out'); });
+  $('cashCloseBtn').addEventListener('click', function () { hideOverlay('cashOverlay'); });
+  $('endDayBtn').addEventListener('click', openEnd);
+  $('endCounted').addEventListener('input', renderEndDifference);
+  $('endConfirmBtn').addEventListener('click', confirmEnd);
+  $('endCancelBtn').addEventListener('click', function () { hideOverlay('endOverlay'); });
+  $('endDoneBtn').addEventListener('click', finishEnd);
+  $('syncNowBtn').addEventListener('click', async function () {
+    var n = await queuedCount();
+    var ok = await glassAlert({
+      icon: 'warning', title: 'Send the End day now?',
+      text: n + ' queued order(s) have not synced yet. They will be saved as late orders and will NOT be counted in that session\'s closing totals.',
+      showCancelButton: true, confirmButtonText: 'Send now', cancelButtonText: 'Wait'
+    });
+    if (ok.isConfirmed) flush({ force: true });
+  });
+  window.addEventListener('online',  function () { renderBar(); flush(); });
+  window.addEventListener('offline', renderBar);
+  window.addEventListener('pos-order-synced', function () { flush(); });   // a shrinking queue may unblock an End
+  window.addEventListener('storage', function (e) { if (e.key === STORE_KEY) { sessions = load(); renderBar(); } });
+  setInterval(function () { if (navigator.onLine && pendingCount() > 0) flush(); }, 30000);
+
+  window.POSSession = {
+    currentId: function () { var s = current(); return s ? s.id : null; },
+    recordSale: recordSale,
+    flush: flush
+  };
+
+  probeStorage();
+  sessions = load();
+  renderBar();     // shows the Start of day gate when there is no active session
+  flush();
+})();
 </script>
 
 </body>
