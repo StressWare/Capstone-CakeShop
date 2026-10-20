@@ -247,54 +247,147 @@
       padding: 8px; text-align: center; font-size: 0.85rem;
     }
 
-    /* ── SESSION BAR + OVERLAYS (plain DOM/CSS: no Bootstrap JS needed, so they work offline) ── */
-    .pos-hide { display: none !important; }
-    .session-bar {
-      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-      min-height: 46px; padding: 6px 16px; background: #fff; border-bottom: 1px solid #eadfe8;
-      font-size: 0.9rem; font-weight: 600; color: #333;
-    }
-    .session-meta { font-weight: 500; color: #777; font-size: 0.82rem; margin-left: 6px; }
-    .session-warn { color: #b02a37; margin-left: 8px; font-weight: 600; font-size: 0.82rem; }
-    .session-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .pos-overlay {
-      position: fixed; inset: 0; z-index: 1050; background: rgba(0,0,0,.55);
-      display: flex; align-items: center; justify-content: center; padding: 16px; overflow-y: auto;
-    }
-    .pos-overlay.gate { background: #f5f5f5; }
-    .pos-card {
-      background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 420px;
-      box-shadow: 0 8px 30px rgba(0,0,0,.18); max-height: 100%; overflow-y: auto;
-    }
-    .pos-card h5 { margin: 0 0 4px; font-weight: 700; color: #333; }
-    .pos-sub { color: #777; font-size: 0.85rem; margin-bottom: 4px; }
-    .pos-card label { display: block; font-size: 0.85rem; font-weight: 600; margin: 12px 0 4px; }
-    .pos-card input[type=text], .pos-card input[type=number], .pos-card input[type=datetime-local], .pos-card textarea {
-      width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box;
-    }
-    .pos-row { display: flex; gap: 8px; align-items: center; }
-    .pos-peso { font-weight: 700; }
-    .pos-error { color: #dc3545; font-size: 0.85rem; min-height: 1.1em; margin-top: 8px; }
-    .pos-note { color: #777; font-size: 0.8rem; margin: 6px 0; }
-    .pos-actions { display: flex; gap: 8px; margin-top: 14px; }
-    .pos-actions .btn { flex: 1; }
-    .pos-back { display: block; text-align: center; margin-top: 12px; font-size: 0.85rem; color: #777; }
-    .s-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 0.92rem; }
-    .s-row.strong { font-weight: 700; border-top: 1px solid #ddd; margin-top: 4px; padding-top: 6px; }
-    .s-row.lead { font-weight: 700; margin-top: 6px; }
-    .s-heading {
-      font-size: 0.72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
-      color: #198754; margin: 10px 0 2px;
-    }
-    .s-moves { list-style: none; padding: 0; margin: 0; max-height: 160px; overflow-y: auto; font-size: 0.85rem; }
-    .s-moves li { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; border-bottom: 1px solid #f0e8f0; }
-    .s-moves .mv-in  { color: #198754; font-weight: 600; }
-    .s-moves .mv-out { color: #b02a37; font-weight: 600; }
-    .s-diff-ok { color: #198754; } .s-diff-over { color: #0d6efd; } .s-diff-short { color: #dc3545; }
-    @media (min-width: 1025px) {
-      .session-bar:not(.pos-hide) ~ .pos-wrapper { height: calc(100vh - 46px); }   /* keep the bar from causing page scroll */
-    }
+/* ── SESSION BAR + OVERLAYS (plain DOM/CSS: no Bootstrap JS needed, so they work offline) ── */
+:root {
+  --brand-pink: #d63384;
+  --brand-pink-light: #e75480;
+  --brand-pink-deep: #c71585;
+  --pink-tint: #fdf0f5;
+  --pink-border: rgba(214, 51, 132, 0.18);
+  --ink: #2b2b2b;
+  --ink-soft: #777;
+}
 
+.pos-hide { display: none !important; }
+
+/* Session bar */
+.session-bar {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  min-height: 46px; padding: 6px 16px;
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom: 1px solid var(--pink-border);
+  box-shadow: 0 2px 12px rgba(214, 51, 132, 0.08);
+  font-size: 0.9rem; font-weight: 600; color: var(--ink);
+}
+.session-bar .fa-user { color: var(--brand-pink); }
+.session-meta { font-weight: 500; color: var(--ink-soft); font-size: 0.82rem; margin-left: 6px; }
+.session-warn { color: #b02a37; margin-left: 8px; font-weight: 600; font-size: 0.82rem; }
+.session-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Overlays — the OVERLAY scrolls (not the card), so the scrollbar never clips the rounded corners.
+   margin:auto on the card = centered when short, top-aligned and scrollable when tall. */
+.pos-overlay {
+  position: fixed; inset: 0; z-index: 1050;
+  background: rgba(60, 20, 40, 0.45);
+  backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+  display: flex; padding: 16px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: rgba(214, 51, 132, 0.45) transparent;
+}
+.pos-overlay::-webkit-scrollbar { width: 8px; }
+.pos-overlay::-webkit-scrollbar-track { background: transparent; }
+.pos-overlay::-webkit-scrollbar-thumb { background: rgba(214, 51, 132, 0.45); border-radius: 8px; }
+.pos-overlay.gate {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(231, 84, 128, 0.14), transparent 45%),
+    radial-gradient(circle at 90% 95%, rgba(214, 51, 132, 0.12), transparent 50%),
+    linear-gradient(135deg, #ffffff, #fdf0f5 60%, #fbe3ee);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+
+/* Glass card (light) */
+.pos-card {
+  margin: auto;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid rgba(255, 192, 203, 0.55);
+  border-top: 4px solid var(--brand-pink);
+  border-radius: 20px; padding: 26px; width: 100%; max-width: 420px;
+  box-shadow: 0 10px 35px rgba(199, 21, 133, 0.14), 0 2px 8px rgba(0, 0, 0, 0.05);
+  color: var(--ink);
+}
+.pos-brand {
+  width: 46px; height: 46px; border-radius: 14px; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  color: var(--brand-pink); background: var(--pink-tint);
+  border: 1px solid var(--pink-border);
+}
+.pos-card h5 { margin: 0 0 4px; font-weight: 700; color: #1a1a1a; font-size: 1.25rem; }
+.pos-sub { color: var(--ink-soft); font-size: 0.85rem; margin-bottom: 4px; }
+.pos-card label {
+  display: block; font-size: 0.8rem; font-weight: 600; margin: 14px 0 5px; color: #444;
+}
+
+/* Inputs */
+.pos-card input[type=text], .pos-card input[type=number],
+.pos-card input[type=datetime-local], .pos-card textarea {
+  width: 100%; padding: 10px 12px; box-sizing: border-box; font-size: 1rem; color: var(--ink);
+  background: #fff; border: 1px solid #e8d8e0; border-radius: 12px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.pos-card input::placeholder, .pos-card textarea::placeholder { color: #b5a8ae; }
+.pos-card input:focus, .pos-card textarea:focus {
+  outline: none; border-color: var(--brand-pink);
+  box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.15);
+}
+.pos-row { display: flex; gap: 8px; align-items: center; }
+.pos-peso { font-weight: 700; color: var(--brand-pink); font-size: 1.1rem; }
+.pos-error { color: #dc3545; font-size: 0.85rem; min-height: 1.1em; margin-top: 8px; }
+.pos-note { color: var(--ink-soft); font-size: 0.8rem; margin: 6px 0; }
+
+/* Buttons */
+.pos-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: 12px; font-weight: 600; font-size: 0.9rem;
+  border: 1px solid transparent; cursor: pointer; transition: transform .15s, opacity .2s, background .2s;
+  white-space: nowrap; font-family: inherit;
+}
+.pos-btn:hover { opacity: 0.92; }
+.pos-btn:active { transform: scale(0.98); }
+.pos-btn-block { width: 100%; }
+.pos-btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 10px; }
+.pos-btn-primary {
+  background: linear-gradient(135deg, var(--brand-pink-light), var(--brand-pink-deep)); color: #fff;
+  box-shadow: 0 4px 14px rgba(199, 21, 133, 0.28);
+}
+.pos-btn-ghost { background: #fff; color: #555; border-color: #e5dce1; }
+.pos-btn-ghost:hover { background: var(--pink-tint); color: var(--brand-pink); border-color: var(--pink-border); }
+.pos-btn-danger { background: #fff; color: #b02a37; border-color: rgba(176, 42, 55, 0.35); }
+.pos-btn-danger:hover { background: #fdecea; }
+.pos-btn-in  { background: #eaf7ef; color: #198754; border-color: rgba(25, 135, 84, 0.35); }
+.pos-btn-in:hover { background: #dcf1e5; }
+.pos-btn-out { background: #fdecea; color: #b02a37; border-color: rgba(176, 42, 55, 0.3); }
+.pos-btn-out:hover { background: #fadbd8; }
+.pos-actions { display: flex; gap: 8px; margin-top: 16px; }
+.pos-actions .pos-btn { flex: 1; }
+.pos-back { display: block; text-align: center; margin-top: 14px; font-size: 0.85rem; color: var(--ink-soft); text-decoration: none; }
+.pos-back:hover { color: var(--brand-pink); }
+
+/* Summary rows (generated by JS) */
+.s-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.92rem; color: #444; }
+.s-row.strong { font-weight: 700; color: #1a1a1a; border-top: 1px solid #efe3ea; margin-top: 6px; padding-top: 8px; }
+.s-row.lead {
+  font-weight: 700; margin: 12px 0 4px; padding: 12px 14px; border-radius: 12px; color: #1a1a1a;
+  background: var(--pink-tint); border: 1px solid var(--pink-border);
+}
+.s-heading {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--brand-pink); margin: 14px 0 2px;
+}
+.s-moves {
+  list-style: none; padding: 0; margin: 0; max-height: 160px; overflow-y: auto; font-size: 0.85rem;
+  scrollbar-width: thin; scrollbar-color: rgba(214, 51, 132, 0.4) transparent;
+}
+.s-moves::-webkit-scrollbar { width: 6px; }
+.s-moves::-webkit-scrollbar-track { background: transparent; }
+.s-moves::-webkit-scrollbar-thumb { background: rgba(214, 51, 132, 0.4); border-radius: 6px; }
+.s-moves li { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f3e8ee; color: #444; }
+.s-moves .mv-in  { color: #198754; font-weight: 600; }
+.s-moves .mv-out { color: #b02a37; font-weight: 600; }
+.s-diff-ok { color: #198754; } .s-diff-over { color: #0d6efd; } .s-diff-short { color: #dc3545; }
+
+@media (min-width: 1025px) {
+  .session-bar:not(.pos-hide) ~ .pos-wrapper { height: calc(100vh - 46px); }   /* keep the bar from causing page scroll */
+}
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .pos-wrapper { grid-template-columns: 1fr; height: auto; }
@@ -539,6 +632,7 @@
 <!-- ===== START OF DAY GATE + CASH / END OVERLAYS ===== -->
 <div id="gateOverlay" class="pos-overlay gate pos-hide" role="dialog" aria-modal="true" aria-labelledby="gateTitle">
   <div class="pos-card">
+    <div class="pos-brand"><i class="fas fa-cake-candles"></i></div>
     <h5 id="gateTitle">Start of day</h5>
     <div class="pos-sub">Enter your details to start taking orders.</div>
     <label for="gateName">Your name</label>
@@ -546,7 +640,7 @@
     <label for="gateStart">Date and time</label>
     <div class="pos-row">
       <input type="datetime-local" id="gateStart">
-      <button type="button" class="btn btn-sm btn-outline-secondary" id="gateNowBtn">Now</button>
+      <button type="button" class="pos-btn pos-btn-sm pos-btn-ghost" id="gateNowBtn">Now</button>
     </div>
     <label for="gateCash">Starting cash (cash on hand)</label>
     <div class="pos-row">
@@ -555,7 +649,7 @@
     </div>
     <div class="pos-error" id="gateError"></div>
     <div class="pos-note" id="gateSyncNote"></div>
-    <button type="button" class="btn btn-success w-100" id="gateStartBtn">Start</button>
+    <button type="button" class="pos-btn pos-btn-primary pos-btn-block" id="gateStartBtn">Start</button>
     <a href="/admin/dashboard" class="pos-back">Back to dashboard</a>
   </div>
 </div>

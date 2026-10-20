@@ -4,6 +4,7 @@ html, body {
 }
 
 body {
+  font-family: var(--font-body);
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -17,6 +18,8 @@ body > *:not(.custom-footer):not(.navbar):not(.custom-offcanvas):not(.menu-overl
 
 /* ====== NAVBAR (glassmorphism) ====== */
 :root {
+    --font-body: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-heading: 'Playfair Display', Georgia, serif;
     --brand-pink: #d63384;
     --brand-pink-light: #ff4d88;
     --nav-glass-1: rgba(10, 2, 6, 0.78);
