@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone, date
 import json
 import math
 import re
-from db import walkin_orders, cakes, db, pos_sessions
+from db import walkin_orders, cakes, db, pos_sessions, pos_drafts
 from extensions import limiter
 from decorators import admin_required
 from helpers import log_admin_action
@@ -131,6 +131,15 @@ def pos_order():
 
     doc_ref  = walkin_orders.add(order_data)
     order_id = doc_ref[1].id
+
+    # If this order was resumed from a draft, the draft is finished: remove it.
+    # Best effort — a failure here must never affect the sale.
+    draft_id = payload.get('draft_id')
+    if isinstance(draft_id, str) and _DRAFT_ID_RE.match(draft_id):
+        try:
+            pos_drafts.document(draft_id).delete()
+        except Exception:
+            current_app.logger.exception("Could not remove POS draft %s after checkout", draft_id)
 
     # ── NEW: atomic, transactional stock deduction (replaces read-then-write) ──
     oversold_items = []
@@ -948,3 +957,182 @@ def pos_session_end():
     except Exception:
         current_app.logger.exception("Error ending POS session")
         return _json({"error": "Could not end the session"}, 500)
+
+
+
+# =====================================================================
+# DRAFT ORDERS  (hold an order, finish it later)
+# Stored in Firestore (`pos_drafts`), so saving a draft needs internet.
+# A draft is NOT a sale: no stock is deducted, nothing counts in sales or
+# the cash drawer until it is checked out (checkout removes the draft).
+# Stock and prices are re-checked on the POS when a draft is resumed.
+# =====================================================================
+MAX_DRAFTS     = 30
+MAX_DRAFT_ITEMS = 50
+DRAFT_TTL      = timedelta(hours=24)      # a draft expires 24h after it was last saved
+DRAFT_DISCOUNT_RATE = 0.20                # display only — mirrors the POS Senior/PWD discount
+_DRAFT_ID_RE   = re.compile(r'^[A-Za-z0-9]{8,64}$')
+_CAKE_ID_RE    = re.compile(r'^[^/\s]{1,128}$')
+_ORDER_TYPES   = ("Dine In", "Take Out")
+_DISCOUNT_TYPES = ("none", "senior", "pwd")
+
+
+def _clean_draft_items(items):
+    if not isinstance(items, list) or not items:
+        raise SessionError("A draft needs at least one item")
+    if len(items) > MAX_DRAFT_ITEMS:
+        raise SessionError(f"A draft can have at most {MAX_DRAFT_ITEMS} items")
+    cleaned = []
+    for raw in items:
+        if not isinstance(raw, dict):
+            raise SessionError("Invalid item")
+        cake_id = raw.get("cake_id")
+        if not (isinstance(cake_id, str) and _CAKE_ID_RE.match(cake_id)):
+            raise SessionError("Invalid item id")
+        qty = raw.get("quantity")
+        if isinstance(qty, bool) or not isinstance(qty, int) or not (1 <= qty <= 999):
+            raise SessionError("Item quantity must be a whole number from 1 to 999")
+        cleaned.append({
+            "cake_id":   cake_id,
+            "cake_name": _clean_text(raw.get("cake_name"), "Item name", 100, required=True),
+            "price":     _parse_amount(raw.get("price"), "Item price", allow_zero=True),
+            "quantity":  qty,
+        })
+    return cleaned
+
+
+def _draft_label(name, when):
+    return name or ("Draft " + when.strftime('%I:%M %p').lstrip('0'))
+
+
+def _serialize_draft(draft_id, d):
+    created = _as_ph(d.get("created_at")) or datetime.now(PH_TZ)
+    updated = _as_ph(d.get("updated_at")) or created
+    return {
+        "id":              draft_id,
+        "name":            d.get("name", ""),
+        "label":           _draft_label(d.get("name", ""), created),
+        "items":           d.get("items", []),
+        "item_count":      sum(i.get("quantity", 0) for i in d.get("items", [])),
+        "order_type":      d.get("order_type", "Dine In"),
+        "discount_type":   d.get("discount_type", "none"),
+        "subtotal":        _money(d.get("subtotal")),
+        "discount_amount": _money(d.get("discount_amount")),
+        "total":           _money(d.get("total")),
+        "by":              d.get("session_name") or d.get("created_by") or "",
+        "saved_at":        updated.strftime('%b %d, %I:%M %p'),
+    }
+
+
+@pos_bp.route('/pos/drafts')
+@admin_required
+def pos_drafts_list():
+    try:
+        now = datetime.now(PH_TZ)
+        live, expired = [], []
+        for doc in pos_drafts.stream():
+            d = doc.to_dict() or {}
+            exp = _as_ph(d.get("expires_at"))
+            if exp and exp <= now:
+                expired.append(doc.id)
+            else:
+                live.append((doc.id, d))
+        for draft_id in expired[:20]:               # lazy cleanup (a Firestore TTL policy can do this too)
+            try:
+                pos_drafts.document(draft_id).delete()
+            except Exception:
+                current_app.logger.exception("Could not remove expired POS draft %s", draft_id)
+        live.sort(key=lambda r: _as_ph(r[1].get("updated_at")) or datetime.min.replace(tzinfo=PH_TZ), reverse=True)
+        return _json({"drafts": [_serialize_draft(i, d) for i, d in live]})
+    except Exception:
+        current_app.logger.exception("Error listing POS drafts")
+        return _json({"error": "Could not load drafts"}, 500)
+
+
+@pos_bp.route('/pos/drafts', methods=['POST'])
+@admin_required
+@limiter.limit("30 per minute")
+def pos_drafts_save():
+    """Create a draft, or overwrite one when draft_id is given (a resumed draft saved again)."""
+    try:
+        body = _json_body()
+        items = _clean_draft_items(body.get("items"))
+        order_type = body.get("order_type", "Dine In")
+        discount_type = body.get("discount_type", "none")
+        if order_type not in _ORDER_TYPES:
+            raise SessionError("Invalid order type")
+        if discount_type not in _DISCOUNT_TYPES:
+            raise SessionError("Invalid discount type")
+        name = _clean_text(body.get("name"), "Name", MAX_NAME_LEN)
+        session_name = _clean_text(body.get("session_name"), "Session name", MAX_NAME_LEN)
+        session_id = body.get("session_id")
+        if session_id is not None and not _valid_session_id(session_id):
+            raise SessionError("Invalid session id")
+        draft_id = body.get("draft_id")
+        if draft_id is not None and not (isinstance(draft_id, str) and _DRAFT_ID_RE.match(draft_id)):
+            raise SessionError("Invalid draft id")
+
+        subtotal = _money(sum(i["price"] * i["quantity"] for i in items))
+        discount = _money(subtotal * DRAFT_DISCOUNT_RATE) if discount_type in ("senior", "pwd") else 0.0
+        admin_name, _ = _admin_identity()
+        now = datetime.now(PH_TZ)
+        fields = {
+            "name": name, "items": items, "order_type": order_type, "discount_type": discount_type,
+            "subtotal": subtotal, "discount_amount": discount, "total": _money(subtotal - discount),
+            "session_id": session_id, "session_name": session_name,
+            "updated_at": now, "expires_at": now + DRAFT_TTL,
+        }
+
+        if draft_id:
+            ref = pos_drafts.document(draft_id)
+            snap = ref.get()
+            if not snap.exists:
+                raise SessionError("That draft no longer exists (it may have been used or deleted)", 404)
+            ref.update(fields)
+            data = {**(snap.to_dict() or {}), **fields}
+            created = False
+        else:
+            if len(list(pos_drafts.limit(MAX_DRAFTS).stream())) >= MAX_DRAFTS:
+                raise SessionError(f"Too many drafts ({MAX_DRAFTS}). Finish or delete some first.", 409)
+            ref = pos_drafts.document()
+            data = {**fields, "created_at": now, "created_by": admin_name}
+            ref.set(data)
+            created = True
+
+        log_admin_action(
+            action="Saved POS draft" if created else "Updated POS draft",
+            target=f"{_draft_label(name, now)} — ₱{data['total']:.2f}",
+            category="pos"
+        )
+        return _json({"status": "ok", "draft": _serialize_draft(ref.id, data)}, 201 if created else 200)
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error saving POS draft")
+        return _json({"error": "Could not save the draft"}, 500)
+
+
+@pos_bp.route('/pos/drafts/<draft_id>', methods=['DELETE'])
+@admin_required
+@limiter.limit("30 per minute")
+def pos_drafts_delete(draft_id):
+    try:
+        if not _DRAFT_ID_RE.match(draft_id):
+            raise SessionError("Invalid draft id")
+        ref = pos_drafts.document(draft_id)
+        snap = ref.get()
+        if not snap.exists:
+            raise SessionError("Draft not found", 404)
+        d = snap.to_dict() or {}
+        ref.delete()
+        log_admin_action(
+            action="Deleted POS draft",
+            target=f"{_draft_label(d.get('name', ''), _as_ph(d.get('created_at')) or datetime.now(PH_TZ))} — ₱{_money(d.get('total')):.2f}",
+            category="pos"
+        )
+        return _json({"status": "ok"})
+    except SessionError as err:
+        return _session_error_response(err)
+    except Exception:
+        current_app.logger.exception("Error deleting POS draft")
+        return _json({"error": "Could not delete the draft"}, 500)

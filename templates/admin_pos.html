@@ -388,6 +388,35 @@
 @media (min-width: 1025px) {
   .session-bar:not(.pos-hide) ~ .pos-wrapper { height: calc(100vh - 46px); }   /* keep the bar from causing page scroll */
 }
+    /* ── DRAFTS ── */
+    .order-panel .panel-title { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .btn-drafts {
+      background: #fff; color: var(--brand-pink, #d63384); border: 1px solid var(--pink-border, #f0c9dc); border-radius: 10px;
+      padding: 5px 11px; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .btn-drafts:hover:not(:disabled) { background: var(--pink-tint, #fdf0f6); }
+    .btn-drafts:disabled, .btn-draft:disabled { opacity: .5; cursor: not-allowed; }
+    .draft-count {
+      display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 4px; border-radius: 9px;
+      background: var(--brand-pink, #d63384); color: #fff; font-size: 0.7rem; text-align: center;
+    }
+    .btn-draft {
+      background: #fff; color: var(--brand-pink, #d63384); border: 1px solid var(--pink-border, #f0c9dc); border-radius: 10px;
+      padding: 10px; font-size: 0.85rem; cursor: pointer; width: 100%; margin-bottom: 8px; transition: all 0.2s; font-family: inherit;
+    }
+    .btn-draft:hover:not(:disabled) { background: var(--pink-tint, #fdf0f6); }
+    .draft-banner {
+      background: #fff8e1; border: 1px solid #ffe08a; color: #6b5300; border-radius: 10px;
+      padding: 6px 10px; font-size: 0.8rem; margin-bottom: 8px;
+    }
+    .draft-card { border: 1px solid #f0e3ea; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+    .draft-card .d-head { display: flex; justify-content: space-between; gap: 8px; font-weight: 700; color: #1a1a1a; }
+    .draft-card .d-sub { font-size: 0.78rem; color: #888; }
+    .draft-card .d-items { font-size: 0.85rem; margin: 6px 0; color: #444; }
+    .draft-card .d-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .draft-card .d-actions .pos-btn { flex: 1; }
+    #draftsList { max-height: 55vh; overflow-y: auto; }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 1024px) {
       .pos-wrapper { grid-template-columns: 1fr; height: auto; }
@@ -510,8 +539,11 @@
   <!-- ===== RIGHT: ORDER ===== -->
   <div class="order-panel">
     <div class="panel-title">
-      Current Order
+      <span>Current Order</span>
+      <button type="button" class="btn-drafts" id="draftsBtn"><i class="fas fa-pause-circle me-1"></i>Drafts<span class="draft-count pos-hide" id="draftCount">0</span></button>
     </div>
+
+    <div class="draft-banner pos-hide" id="draftBanner"><i class="fas fa-pen me-1"></i>Resumed draft: <strong id="draftBannerName"></strong></div>
 
     <!-- ORDER ITEMS -->
     <div class="order-items" id="orderItems">
@@ -623,6 +655,9 @@
     <button type="button" class="btn-place" id="placeBtn" disabled>
       <i class="fas fa-check-circle me-2"></i>Checkout
     </button>
+    <button type="button" class="btn-draft" id="saveDraftBtn" disabled>
+      <i class="fas fa-pause-circle me-2"></i>Save as draft
+    </button>
     <button type="button" class="btn-clear" id="clearBtn">
       <i class="fas fa-trash me-2"></i>Clear Order
     </button>
@@ -707,6 +742,33 @@
   </div>
 </div>
 
+<!-- ===== DRAFT ORDERS ===== -->
+<div id="draftSaveOverlay" class="pos-overlay pos-hide" role="dialog" aria-modal="true" aria-labelledby="draftSaveTitle">
+  <div class="pos-card">
+    <div class="pos-brand"><i class="fas fa-pause-circle"></i></div>
+    <h5 id="draftSaveTitle">Save as draft</h5>
+    <div class="pos-sub">The order is held (not paid, no stock used). Finish it later from Drafts.</div>
+    <label for="draftName">Name (optional)</label>
+    <input type="text" id="draftName" maxlength="60" autocomplete="off" placeholder="Customer Name">
+    <div class="pos-note">Leave it empty to label the draft by the time.</div>
+    <div class="pos-error" id="draftSaveError"></div>
+    <div class="pos-actions">
+      <button type="button" class="pos-btn pos-btn-ghost" id="draftSaveCancel">Cancel</button>
+      <button type="button" class="pos-btn pos-btn-primary" id="draftSaveConfirm">Save draft</button>
+    </div>
+  </div>
+</div>
+
+<div id="draftsOverlay" class="pos-overlay pos-hide" role="dialog" aria-modal="true" aria-labelledby="draftsTitle">
+  <div class="pos-card">
+    <div class="pos-brand"><i class="fas fa-pause-circle"></i></div>
+    <h5 id="draftsTitle">Draft Orders</h5>
+    <div class="pos-note" id="draftsNote"></div>
+    <div id="draftsList"></div>
+    <div class="pos-actions"><button type="button" class="pos-btn pos-btn-ghost" id="draftsClose">Close</button></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -743,6 +805,7 @@
   var currentOrderType = 'Dine In';
   var currentDiscount  = 'none';
   var gcashConfirmed   = false;
+  var activeDraft      = null;   // { id, name, label } while a resumed draft is in the cart
   var DISCOUNT_RATE    = 0.20;
 
   // ── CATEGORY FILTER ──
@@ -824,6 +887,7 @@
       document.getElementById('totalOriginal').style.display = 'none';
       document.getElementById('amountInput').value           = '0';
       document.getElementById('discountAmtInput').value      = '0';
+      if (window.POSDrafts) window.POSDrafts.refreshButtons();
       return;
     }
 
@@ -880,6 +944,7 @@
 
     updatePlaceBtn();
     calculateChange();
+    if (window.POSDrafts) window.POSDrafts.refreshButtons();
   }
 
   // ── CALCULATE CHANGE ──
@@ -989,6 +1054,8 @@
       discount_amount:   parseFloat(document.getElementById('discountAmtInput').value) || 0,
       // Stamped at checkout so an order queued offline still lands in the right session
       session_id:        (window.POSSession && window.POSSession.currentId()) || null,
+      // If this order was resumed from a draft, the server removes that draft once the order is saved
+      draft_id:          activeDraft ? activeDraft.id : null,
     };
 
     var result = await window.POSOfflineQueue.submitOrder(orderPayload);
@@ -1041,6 +1108,8 @@
 
   // ── CLEAR ORDER (internal, no confirm — used after a successful queue) ──
   function clearOrder() {
+    activeDraft = null;
+    if (window.POSDrafts) window.POSDrafts.refreshBanner();
     orderItems.forEach(function(i) {
       var badge = document.getElementById('badge_' + i.cake_id);
       if (badge) badge.style.display = 'none';
@@ -1674,6 +1743,7 @@
 
   window.POSSession = {
     currentId: function () { var s = current(); return s ? s.id : null; },
+    currentName: function () { var s = current(); return s ? s.name : null; },
     recordSale: recordSale,
     flush: flush
   };
@@ -1682,6 +1752,221 @@
   sessions = load();
   renderBar();     // shows the Start of day gate when there is no active session
   flush();
+})();
+</script>
+
+<!-- ===== DRAFT ORDERS (saved in Firestore, so they need internet) ===== -->
+<script nonce="{{ csp_nonce() }}">
+(function () {
+  'use strict';
+  var drafts = [];
+  var saving = false;
+
+  function $(id) { return document.getElementById(id); }
+  function peso(n) {
+    return '₱' + Number(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function online() { return navigator.onLine; }
+  function show(id) { $(id).classList.remove('pos-hide'); }
+  function hide(id) { $(id).classList.add('pos-hide'); }
+
+  async function api(method, url, body) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function () { ctrl.abort(); }, 15000) : null;
+    var opts = { method: method, cache: 'no-store',
+                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': window.CSRF_TOKEN || '' } };
+    if (ctrl) opts.signal = ctrl.signal;
+    if (body) opts.body = JSON.stringify(body);
+    var res;
+    try { res = await fetch(url, opts); }
+    catch (e) { var ne = new Error('No internet connection.'); ne.network = true; throw ne; }
+    finally { if (timer) clearTimeout(timer); }
+    var data = null;
+    try { data = await res.json(); } catch (e) { /* not JSON */ }
+    if (!res.ok) { var err = new Error((data && data.error) || ('Request failed (HTTP ' + res.status + ')')); err.status = res.status; throw err; }
+    return data;
+  }
+
+  // ── buttons / banner / count ──
+  function refreshButtons() {
+    var hasItems = orderItems.length > 0, on = online();
+    $('saveDraftBtn').disabled = !hasItems || !on;
+    $('saveDraftBtn').title = on ? '' : 'Saving a draft needs an internet connection';
+    $('draftsBtn').disabled = !on;
+    $('draftsBtn').title = on ? '' : 'Drafts need an internet connection';
+  }
+  function refreshBanner() {
+    if (activeDraft) {
+      $('draftBannerName').textContent = activeDraft.label;
+      show('draftBanner');
+    } else {
+      hide('draftBanner');
+    }
+  }
+  function updateCount() {
+    $('draftCount').textContent = String(drafts.length);
+    $('draftCount').classList.toggle('pos-hide', drafts.length === 0);
+  }
+  async function refreshCount() {
+    if (!online()) return;
+    try { drafts = (await api('GET', '/pos/drafts')).drafts || []; updateCount(); } catch (e) { /* count stays as is */ }
+  }
+
+  // ── SAVE ──
+  function openSave() {
+    if (!orderItems.length) return;
+    if (!online()) {
+      glassAlert({ icon: 'warning', title: 'No internet connection', text: 'Saving a draft needs an internet connection.' });
+      return;
+    }
+    $('draftName').value = activeDraft ? (activeDraft.name || '') : '';
+    $('draftSaveError').textContent = '';
+    show('draftSaveOverlay');
+    setTimeout(function () { $('draftName').focus(); }, 50);
+  }
+  async function saveDraft() {
+    if (saving || !orderItems.length) return;
+    saving = true;
+    var btn = $('draftSaveConfirm');
+    btn.disabled = true; $('draftSaveError').textContent = '';
+    try {
+      var body = {
+        name: $('draftName').value.trim(),
+        items: orderItems.map(function (i) { return { cake_id: i.cake_id, cake_name: i.cake_name, price: i.price, quantity: i.quantity }; }),
+        order_type: currentOrderType,
+        discount_type: currentDiscount,
+        session_id: (window.POSSession && window.POSSession.currentId()) || null,
+        session_name: (window.POSSession && window.POSSession.currentName()) || ''
+      };
+      if (activeDraft) body.draft_id = activeDraft.id;
+      var data = await api('POST', '/pos/drafts', body);
+      hide('draftSaveOverlay');
+      clearOrder();                          // also forgets the resumed draft + empties the cart
+      selectDiscount('none');                // next customer starts clean
+      selectOrderType('Dine In');
+      await refreshCount();
+      glassAlert({ icon: 'success', title: 'Draft saved', text: data.draft.label, timer: 1400, showConfirmButton: false });
+    } catch (e) {
+      $('draftSaveError').textContent = e.network ? 'No internet connection. The draft was NOT saved.' : e.message;
+      if (e.status === 404) { activeDraft = null; refreshBanner(); }   // it was used/deleted elsewhere: save as new next time
+    } finally {
+      saving = false; btn.disabled = false;
+    }
+  }
+
+  // ── LIST / RESUME / DELETE ──
+  function renderDrafts() {
+    var list = $('draftsList');
+    list.textContent = '';
+    $('draftsNote').textContent = drafts.length ? '' : 'No drafts yet.';
+    drafts.forEach(function (d) {
+      var card = document.createElement('div'); card.className = 'draft-card';
+
+      var head = document.createElement('div'); head.className = 'd-head';
+      var name = document.createElement('span'); name.textContent = d.label;
+      var total = document.createElement('span'); total.textContent = peso(d.total);
+      head.appendChild(name); head.appendChild(total);
+
+      var sub = document.createElement('div'); sub.className = 'd-sub';
+      sub.textContent = d.order_type + ' · saved ' + d.saved_at + (d.by ? ' · by ' + d.by : '') +
+                        (d.discount_type !== 'none' ? ' · ' + d.discount_type.toUpperCase() + ' discount' : '');
+
+      var items = document.createElement('div'); items.className = 'd-items';
+      items.textContent = d.items.map(function (i) { return i.cake_name + ' x' + i.quantity; }).join(', ');
+
+      var actions = document.createElement('div'); actions.className = 'd-actions';
+      var resume = document.createElement('button'); resume.type = 'button'; resume.className = 'pos-btn pos-btn-sm pos-btn-primary'; resume.textContent = 'Resume';
+      resume.addEventListener('click', function () { resumeDraft(d); });
+      var del = document.createElement('button'); del.type = 'button'; del.className = 'pos-btn pos-btn-sm pos-btn-danger'; del.textContent = 'Delete';
+      del.addEventListener('click', function () { deleteDraft(d); });
+      actions.appendChild(resume); actions.appendChild(del);
+
+      card.appendChild(head); card.appendChild(sub); card.appendChild(items); card.appendChild(actions);
+      list.appendChild(card);
+    });
+  }
+  async function openDrafts() {
+    if (!online()) return;
+    $('draftsList').textContent = '';
+    $('draftsNote').textContent = 'Loading…';
+    show('draftsOverlay');
+    try {
+      drafts = (await api('GET', '/pos/drafts')).drafts || [];
+      updateCount();
+      renderDrafts();
+    } catch (e) {
+      $('draftsNote').textContent = 'Could not load drafts: ' + (e.network ? 'no internet connection.' : e.message);
+    }
+  }
+  async function resumeDraft(d) {
+    if (orderItems.length) {
+      var ok = await glassAlert({
+        icon: 'warning', title: 'Replace the current order?',
+        text: 'The items in the current order will be removed. They are not saved anywhere.',
+        showCancelButton: true, confirmButtonText: 'Replace', cancelButtonText: 'Cancel'
+      });
+      if (!ok.isConfirmed) return;
+    }
+    clearOrder();
+    var notes = [];
+    d.items.forEach(function (it) {
+      var btn = document.getElementById('cakeBtn_' + it.cake_id);
+      if (!btn) { notes.push(it.cake_name + ' is no longer on the menu'); return; }
+      var stock = parseInt(btn.dataset.qty, 10) || 0;
+      var price = parseFloat(btn.dataset.price);
+      if (stock <= 0) { notes.push(it.cake_name + ' is sold out'); return; }
+      var qty = Math.min(it.quantity, stock);
+      if (qty < it.quantity) notes.push(it.cake_name + ': only ' + stock + ' left (the draft had ' + it.quantity + ')');
+      if (Math.abs(price - it.price) > 0.001) notes.push(it.cake_name + ' price is now ' + peso(price));
+      orderItems.push({ cake_id: it.cake_id, cake_name: btn.dataset.name, price: price,
+                        quantity: qty, subtotal: price * qty, max_qty: stock });
+      updateBadge(it.cake_id);
+    });
+    if (!orderItems.length) {
+      renderOrder();
+      glassAlert({ icon: 'warning', title: 'Nothing to resume', text: notes.join('; ') || 'None of the draft items are available.' });
+      return;
+    }
+    selectOrderType(d.order_type === 'Take Out' ? 'Take Out' : 'Dine In');
+    activeDraft = { id: d.id, name: d.name, label: d.label };
+    selectDiscount(d.discount_type === 'senior' || d.discount_type === 'pwd' ? d.discount_type : 'none');   // re-renders the order
+    refreshBanner();
+    hide('draftsOverlay');
+    if (notes.length) glassAlert({ icon: 'info', title: 'Draft loaded with changes', text: notes.join('; ') });
+  }
+  async function deleteDraft(d) {
+    var ok = await glassAlert({
+      icon: 'warning', title: 'Delete this draft?', text: d.label + ' (' + peso(d.total) + ')',
+      showCancelButton: true, confirmButtonText: 'Yes, delete', cancelButtonText: 'Cancel'
+    });
+    if (!ok.isConfirmed) return;
+    try {
+      await api('DELETE', '/pos/drafts/' + encodeURIComponent(d.id));
+    } catch (e) {
+      if (e.status !== 404) {                           // 404 = already gone, which is what we wanted
+        glassAlert({ icon: 'error', title: 'Could not delete', text: e.network ? 'No internet connection.' : e.message });
+        return;
+      }
+    }
+    drafts = drafts.filter(function (x) { return x.id !== d.id; });
+    if (activeDraft && activeDraft.id === d.id) { activeDraft = null; refreshBanner(); }
+    updateCount(); renderDrafts();
+  }
+
+  // ── wiring ──
+  $('saveDraftBtn').addEventListener('click', openSave);
+  $('draftSaveCancel').addEventListener('click', function () { hide('draftSaveOverlay'); });
+  $('draftSaveConfirm').addEventListener('click', saveDraft);
+  $('draftName').addEventListener('keydown', function (e) { if (e.key === 'Enter') saveDraft(); });
+  $('draftsBtn').addEventListener('click', openDrafts);
+  $('draftsClose').addEventListener('click', function () { hide('draftsOverlay'); });
+  window.addEventListener('online',  function () { refreshButtons(); refreshCount(); });
+  window.addEventListener('offline', refreshButtons);
+
+  window.POSDrafts = { refreshButtons: refreshButtons, refreshBanner: refreshBanner };
+  refreshButtons();
+  refreshBanner();
+  refreshCount();
 })();
 </script>
 
