@@ -4,435 +4,479 @@
 {% block extra_css %}
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 <style nonce="{{ csp_nonce() }}">
-    .stat-card-analytics {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px 24px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      border-left: 4px solid;
-    }
-    .stat-label  { font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:#c71585; margin-bottom:6px; }
-    .stat-value  { font-size:1.6rem; font-weight:700; color:#c71585; }
-    .stat-sub    { font-size:0.78rem; color:#888; margin-top:4px; }
+  /* ════════════════════════════════════════════════
+     ANALYTICS PAGE — scoped under .an
+     Tokens live on .an so nothing leaks to other admin pages.
+     ════════════════════════════════════════════════ */
+  .an {
+    --an-pink:      var(--brand-pink, #c71585);
+    --an-pink-soft: #ff85c1;
+    --an-pink-tint: #fdf3f8;
+    --an-ink:       #2b2b33;
+    --an-muted:     #8a8a96;
+    --an-line:      #f3e6ee;
+    --an-good:      #198754;
+    --an-bad:       #dc3545;
+    --an-radius:    14px;
+    --an-gap:       16px;
+    padding: 24px 28px 40px;
+  }
 
-    .stat-value.profit  { color: #28a745; }
-    .stat-value.expense { color: #dc3545; }
+  /* ── Page header ── */
+  .an-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  .an-title    { color: #fff; font-size: clamp(1.3rem, 4vw, 2rem); font-weight: 700; margin: 0; }
+  .an-subtitle { color: rgba(255,255,255,0.7); margin: 2px 0 0; font-size: 0.9rem; }
 
-    .chart-card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 20px 24px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-      margin-bottom: 24px;
-    }
-    .chart-title {
-      font-size:0.9rem; font-weight:600; color:#c71585;
-      margin-bottom:16px; padding-bottom:10px;
-      border-bottom:1px solid #f5f5f5;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .section-label {
-      font-size:0.72rem; text-transform:uppercase;
-      letter-spacing:0.1em; color:#c71585; font-weight:600;
-      margin-bottom:16px; margin-top:8px;
-    }
+  .btn-export {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 16px;
+    border: 1.5px solid #c71585; border-radius: 8px;
+    background: #c71585; color: white;
+    font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-export:hover { background: rgba(255,255,255,0.22); }
 
-    .tab-switcher {
-      display: flex;
-      gap: 4px;
-      background: #f8f2f8;
-      border-radius: 10px;
-      padding: 4px;
-    }
-    .tab-btn {
-      padding: 6px 18px;
-      border: none;
-      border-radius: 8px;
-      background: transparent;
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: #c71585;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .tab-btn.active {
-      background: #ffe6f0;
-      color: #c71585;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    .tab-btn:hover:not(.active) { color: #aa6da0; }
+  /* ── Sections ── */
+  .an-section       { margin-top: 28px; }
+  .an-section-title {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 12px;
+    color: #fff; font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+  }
+  .an-section-title em {
+    font-style: normal; font-weight: 500; font-size: 0.75rem;
+    text-transform: none; letter-spacing: 0; color: rgba(255,255,255,0.7);
+  }
+  .an-section-title::after { content: ""; flex: 1; height: 1px; background: rgba(255,255,255,0.2); }
 
-    .chart-wrapper { position: relative; overflow: hidden; }
-    #mainChartDiv { transition: opacity 0.3s ease, transform 0.3s ease; }
+  /* ── Cards ── */
+  .an-card {
+    background: #fff; color: var(--an-ink);
+    border-radius: var(--an-radius);
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    min-width: 0;
+  }
+  .an-card-title {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px 12px;
+    margin: 0 0 14px;
+    font-size: 0.9rem; font-weight: 700; color: var(--an-ink);
+  }
+  .an-card-title small { font-weight: 500; font-size: 0.75rem; color: var(--an-muted); }
 
-    /* ── Export buttons ── */
-    .btn-export {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 16px;
-      border: 1.5px solid #c71585; border-radius: 8px;
-      background: #c71585; color: white;
-      font-size: 0.82rem; font-weight: 600;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-export:hover { background: #a01070; border-color: #a01070; }
+  .an-label {
+    font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--an-muted); margin-bottom: 6px;
+  }
+  .an-sub { font-size: 0.78rem; color: var(--an-muted); margin-top: 4px; }
 
-    /* Tooltip for truncated names */
-    [data-tooltip] { position: relative; cursor: help; }
-    [data-tooltip]::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 0.75rem;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s;
-      z-index: 999;
-    }
-    [data-tooltip]:hover::after { opacity: 1; }
+  /* ── Layout grids ── */
+  .an-row {
+    display: grid; gap: var(--an-gap); margin-top: var(--an-gap);
+  }
+  .an-section-title + .an-row,
+  .an-section-title + .an-hero { margin-top: 0; }
+  .an-row.r-2-1 { grid-template-columns: 2fr 1fr; }
+  .an-row.r-1-1 { grid-template-columns: 1fr 1fr; }
+  .an-row.r-5-7 { grid-template-columns: 5fr 7fr; }
+  .an-stack     { display: grid; gap: var(--an-gap); align-content: start; }
 
+  /* ── Hero KPIs (revenue / expenses / profit) ── */
+  .an-hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--an-gap); }
+  .an-hero-card { position: relative; overflow: hidden; }
+  .an-hero-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: #c9c9d1;
+  }
+  .an-hero-card.is-brand::before  { background: var(--an-pink); }
+  .an-hero-card.is-profit::before { background: var(--an-good); }
+  .an-hero-card.is-loss::before   { background: var(--an-bad); }
+  .an-hero-value {
+    font-size: clamp(1.4rem, 2.6vw, 2rem); font-weight: 700; line-height: 1.15;
+    color: var(--an-ink); overflow-wrap: anywhere;
+  }
+  .an-hero-card.is-brand  .an-hero-value { color: var(--an-pink); }
+  .an-hero-card.is-profit .an-hero-value { color: var(--an-good); }
+  .an-hero-card.is-loss   .an-hero-value { color: var(--an-bad); }
+  .an-pill {
+    display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 700; vertical-align: middle;
+    background: #e8f5ee; color: var(--an-good);
+  }
+  .is-loss .an-pill { background: #fdecee; color: var(--an-bad); }
 
-    /* ── Mobile Responsive ── */
+  /* ── "At a glance" strip (secondary numbers in ONE card) ── */
+  .an-glance {
+    margin-top: var(--an-gap); padding: 14px;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px;
+  }
+  .an-tile { background: var(--an-pink-tint); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+  .an-tile-value { font-size: 1.25rem; font-weight: 700; color: var(--an-ink); overflow-wrap: anywhere; }
+  .an-meter { height: 5px; border-radius: 4px; background: var(--an-line); overflow: hidden; margin-top: 8px; }
+  .an-meter > i { display: block; height: 100%; border-radius: 4px; background: var(--an-pink); }
+
+  /* ── Trend chart tabs ── */
+  .tab-switcher { display: flex; gap: 4px; background: #f8f2f8; border-radius: 10px; padding: 4px; }
+  .tab-btn {
+    padding: 6px 18px; border: none; border-radius: 8px;
+    background: transparent; color: var(--an-pink);
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+  }
+  .tab-btn.active { background: #ffe6f0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .tab-btn:hover:not(.active) { color: #aa6da0; }
+  .an-chart-wrap { position: relative; overflow: hidden; }
+  #mainChartDiv  { width: 100%; height: 320px; transition: opacity 0.3s ease, transform 0.3s ease; }
+  .an-chart-sm   { width: 100%; height: 260px; }
+
+  /* ── Bars, splits, lists ── */
+  .an-bars { display: grid; gap: 14px; }
+  .an-bar-row .top {
+    display: flex; justify-content: space-between; gap: 10px;
+    font-size: 0.83rem; margin-bottom: 5px;
+  }
+  .an-bar-row .name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .an-bar-row .val  { font-weight: 700; color: var(--an-pink); white-space: nowrap; }
+  .an-bar-row.bad .val { color: var(--an-bad); }
+  .an-track { height: 6px; border-radius: 4px; background: var(--an-line); overflow: hidden; }
+  .an-track > i { display: block; height: 100%; border-radius: 4px; background: var(--an-pink); }
+  .an-bar-row.bad .an-track > i { background: var(--an-bad); }
+
+  .an-duo { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .an-duo .v { font-size: 1.2rem; font-weight: 700; }
+  .an-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .an-dot.a, .an-split > i.a { background: var(--an-pink); }
+  .an-dot.b, .an-split > i.b { background: var(--an-pink-soft); }
+  .an-dot.c, .an-split > i.c { background: var(--an-bad); }
+  .an-dot.d, .an-split > i.d { background: #f3b8bf; }
+  .an-split { display: flex; height: 8px; border-radius: 6px; overflow: hidden; background: var(--an-line); }
+  .an-split > i { display: block; height: 100%; }
+  .an-split-legend { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.75rem; color: var(--an-muted); }
+
+  .an-rank { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--an-line); }
+  .an-rank:last-child { border-bottom: 0; padding-bottom: 0; }
+  .an-rank-n {
+    flex: none; width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--an-pink-tint); color: var(--an-pink); font-weight: 700; font-size: 0.78rem;
+  }
+  .an-rank-n.top { background: var(--an-pink); color: #fff; }
+  .an-rank-main { flex: 1; min-width: 0; }
+  .an-rank-name { font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .an-rank-sub  { font-size: 0.75rem; color: var(--an-muted); }
+  .an-rank-val  { font-weight: 700; font-size: 0.9rem; color: var(--an-pink); white-space: nowrap; }
+
+  .an-pay { display: grid; grid-template-columns: minmax(150px, 210px) 1fr; gap: 16px; align-items: center; }
+  #paymentChart { width: 100%; height: 200px; }
+  .an-legend { display: grid; gap: 9px; font-size: 0.83rem; }
+  .an-legend-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .an-legend-row .count { font-weight: 700; white-space: nowrap; }
+  .an-legend-row .count small { font-weight: 500; color: var(--an-muted); margin-left: 4px; }
+
+  .an-empty { text-align: center; color: var(--an-muted); font-size: 0.85rem; padding: 36px 0; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .an-glance { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 992px) {
+    .an-row.r-2-1, .an-row.r-1-1, .an-row.r-5-7 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .an-hero { grid-template-columns: 1fr 1fr; }
+    .an-hero-card:first-child { grid-column: 1 / -1; }
+  }
   @media (max-width: 576px) {
-    .container-fluid.my-4.px-4 {
-      padding-left: 12px !important;
-      padding-right: 12px !important;
-    }
-
-    /* 2-column grid for stat cards on mobile */
-    .row.g-3.mb-4 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    /* Override Bootstrap col classes inside stat card grid */
-    .row.g-3.mb-4 > [class*="col-"] {
-      width: 100% !important;
-      max-width: 100% !important;
-      flex: none !important;
-      padding: 0 !important;
-    }
-
-    .stat-card-analytics {
-      padding: 14px 16px;
-      border-radius: 10px;
-    }
-
-    .stat-value {
-      font-size: 1.25rem;
-    }
-
-    .stat-label {
-      font-size: 0.68rem;
-    }
-
-    .stat-sub {
-      font-size: 0.7rem;
-    }
-
-    /* Section header stacks on mobile */
-    .section-header {
-      flex-direction: column;
-      align-items: flex-start !important;
-      gap: 10px;
-    }
-
-    /* Chart card inner padding tighter */
-    .chart-card {
-      padding: 14px 12px;
-    }
-
-    /* Tab switcher smaller text */
-    .tab-btn {
-      padding: 5px 10px;
-      font-size: 0.75rem;
-    }
-
-    /* Chart title wraps gracefully */
-    .chart-title {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 10px;
-    }
+    .an { padding: 16px 12px 32px; }
+    .an-card { padding: 16px; }
+    .an-glance { grid-template-columns: 1fr 1fr; padding: 10px; gap: 8px; }
+    .an-pay { grid-template-columns: 1fr; }
+    #mainChartDiv { height: 260px; }
+    .tab-btn { padding: 5px 10px; font-size: 0.75rem; }
   }
-  @media (max-width: 850px) {
-  .row.g-3.mb-4 {
-    grid-template-columns: 1fr;
+
+  @keyframes modalIn {
+    from { transform: translateY(24px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
   }
-  .stat-value {
-    font-size: 1.1rem !important;
-  }
-    .col-lg-4.col-md-6 {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  }
-    @keyframes modalIn {
-      from { transform: translateY(24px); opacity: 0; }
-      to   { transform: translateY(0);   opacity: 1; }
-    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid my-4 px-4">
+{% set pay_palette = ['#c71585', '#ff85c1', '#8f1d63', '#ffb6d5', '#e75480', '#b86a97'] %}
+<div class="an">
 
-  <div class="section-header d-flex align-items-center justify-content-between mb-2">
+  <!-- ═════════ HEADER ═════════ -->
+  <header class="an-head">
     <div>
-    <h1 class="mb-1" style="font-size: clamp(1.2rem, 5vw, 2rem);">Analytics</h1>      
-    <p class="mb-0 opacity-75">Business performance overview</p>
+      <h1 class="an-title">Analytics</h1>
+      <p class="an-subtitle">Business performance overview · as of {{ now.strftime('%b %d, %Y') }}</p>
     </div>
-    <button class="btn-export" id="btn-analytics-export">Export</button>
-  </div>
+    <button class="btn-export" id="btn-analytics-export" type="button">Export</button>
+  </header>
 
-  <!-- SUMMARY CARDS -->
-  <div class="section-label mt-3 text-white">All Time Summary</div>
-  <div class="row g-3 mb-4">
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Total Revenue</div>
-        <div class="stat-value">₱{{ "%.2f"|format(total_revenue) }}</div>
-        <div class="stat-sub">From completed orders</div>
+  <!-- ═════════ 1. OVERVIEW ═════════ -->
+  <section class="an-section">
+    <h2 class="an-section-title">Overview <em>All time</em></h2>
+
+    {% set margin_pct = ((net_profit / total_revenue * 100)|round(1)) if total_revenue > 0 else 0 %}
+    <div class="an-hero">
+      <div class="an-card an-hero-card is-brand">
+        <div class="an-label">Revenue</div>
+        <div class="an-hero-value">₱{{ "{:,.2f}".format(total_revenue) }}</div>
+        <div class="an-sub">Completed &amp; pickup orders, excl. delivery fees</div>
       </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#dc3545;">
-        <div class="stat-label">Total Expenses</div>
-        <div class="stat-value expense">₱{{ "%.2f"|format(total_expenses) }}</div>
-        <div class="stat-sub">All recorded expenses</div>
+      <div class="an-card an-hero-card">
+        <div class="an-label">Expenses</div>
+        <div class="an-hero-value">₱{{ "{:,.2f}".format(total_expenses) }}</div>
+        <div class="an-sub">All recorded expenses</div>
       </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:{% if net_profit >= 0 %}#28a745{% else %}#dc3545{% endif %};">
-        <div class="stat-label">Net Profit</div>
-        <div class="stat-value {% if net_profit >= 0 %}profit{% else %}expense{% endif %}">
-          ₱{{ "%.2f"|format(net_profit) }}
+      <div class="an-card an-hero-card {{ 'is-profit' if net_profit >= 0 else 'is-loss' }}">
+        <div class="an-label">Net Profit</div>
+        <div class="an-hero-value">
+          ₱{{ "{:,.2f}".format(net_profit) }}
+          <span class="an-pill">{{ margin_pct }}% margin</span>
         </div>
-        <div class="stat-sub">Revenue minus expenses</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Total Orders</div>
-        <div class="stat-value">{{ total_orders }}</div>
-        <div class="stat-sub">All orders placed</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Completion Rate</div>
-        <div class="stat-value">{{ completion_rate }}%</div>
-        <div class="stat-sub">{{ total_completed }} of {{ total_orders }} completed</div>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Avg Order Value</div>
-        <div class="stat-value">₱{{ "%.2f"|format(avg_order_value) }}</div>
-        <div class="stat-sub">Per completed order</div>
-      </div>
-    </div>
-  </div>
-  <!-- KPI SECTION -->
-  <div class="section-label mt-2 text-white">Customer & Operational KPIs</div>
-  <div class="row g-3 mb-4">
-
-    <!-- Repeat Customer Rate -->
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#8e44ad;">
-        <div class="stat-label" style="color:#8e44ad;">Repeat Customer Rate</div>
-        <div class="stat-value" style="color:#8e44ad;">{{ repeat_rate }}%</div>
-        <div class="stat-sub">{{ repeat_customers }} of {{ total_online_customers }} customers reordered</div>
+        <div class="an-sub">Revenue minus expenses</div>
       </div>
     </div>
 
-    <!-- Rush Order % -->
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#e67e22;">
-        <div class="stat-label" style="color:#e67e22;">Rush Order Rate</div>
-        <div class="stat-value" style="color:#e67e22;">{{ rush_pct }}%</div>
-        <div class="stat-sub">{{ rush_count }} rush out of {{ total_orders }} orders</div>
+    <div class="an-card an-glance">
+      <div class="an-tile">
+        <div class="an-label">Orders</div>
+        <div class="an-tile-value">{{ total_orders }}</div>
+        <div class="an-sub">{{ total_completed }} completed</div>
+      </div>
+      <div class="an-tile">
+        <div class="an-label">Completion</div>
+        <div class="an-tile-value">{{ completion_rate }}%</div>
+        <div class="an-meter"><i style="width:{{ completion_rate }}%"></i></div>
+      </div>
+      <div class="an-tile">
+        <div class="an-label">Avg Order</div>
+        <div class="an-tile-value">₱{{ "{:,.2f}".format(avg_order_value) }}</div>
+        <div class="an-sub">Per completed order</div>
+      </div>
+      <div class="an-tile">
+        <div class="an-label">Repeat Customers</div>
+        <div class="an-tile-value">{{ repeat_rate }}%</div>
+        <div class="an-sub">{{ repeat_customers }} of {{ total_online_customers }} reordered</div>
+      </div>
+      <div class="an-tile">
+        <div class="an-label">Rush Orders</div>
+        <div class="an-tile-value">{{ rush_pct }}%</div>
+        <div class="an-sub">{{ rush_count }} of {{ total_orders }} orders</div>
+      </div>
+      <div class="an-tile">
+        <div class="an-label">Peak Day</div>
+        <div class="an-tile-value">{{ peak_day }}</div>
+        <div class="an-sub">Most orders placed</div>
       </div>
     </div>
+  </section>
 
-    <!-- Peak Day -->
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#2980b9;">
-        <div class="stat-label" style="color:#2980b9;">Peak Order Day</div>
-        <div class="stat-value" style="color:#2980b9; font-size:1.3rem;">{{ peak_day }}</div>
-        <div class="stat-sub">Most orders placed on this day</div>
+  <!-- ═════════ 2. TREND ═════════ -->
+  <section class="an-section">
+    <h2 class="an-section-title">Trend <em>Sales vs expenses vs profit</em></h2>
+    <div class="an-card">
+      <div class="an-card-title">
+        <span id="chartTitleText">Weekly Overview (Mon–Sun)</span>
+        <div class="tab-switcher">
+          <button class="tab-btn active" data-tab="weekly" type="button">Weekly</button>
+          <button class="tab-btn" data-tab="monthly" type="button">Monthly</button>
+          <button class="tab-btn" data-tab="alltime" type="button">All Time</button>
+        </div>
+      </div>
+      <div class="an-chart-wrap">
+        <div id="mainChartDiv"></div>
       </div>
     </div>
+  </section>
 
-    <!-- Walk-in vs Online -->
-    <div class="col-md-3 col-sm-6">
-      <div class="stat-card-analytics" style="border-color:#27ae60;">
-        <div class="stat-label" style="color:#27ae60;">Walk-in vs Online</div>
-        <div class="stat-value" style="color:#27ae60; font-size:1.3rem;">{{ walkin_count }} / {{ online_count }}</div>
-        <div class="stat-sub">Walk-in / Online orders</div>
+  <!-- ═════════ 3. SALES BREAKDOWN ═════════ -->
+  <section class="an-section">
+    <h2 class="an-section-title">Sales Breakdown</h2>
+
+    <div class="an-row r-2-1">
+      <!-- Monthly revenue -->
+      <div class="an-card">
+        <div class="an-card-title">Monthly Revenue <small>{{ now.year }}</small></div>
+        <div id="monthlyRevenueChart" class="an-chart-sm"></div>
       </div>
-    </div>
 
-    <!-- Custom vs Premade Revenue -->
-    <div class="col-md-6 col-sm-12">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Custom vs Premade Revenue</div>
-        <div class="d-flex gap-4 mt-1">
+      <!-- Custom vs premade -->
+      <div class="an-card">
+        <div class="an-card-title">Revenue by Cake Type</div>
+        {% if custom_revenue + premade_revenue > 0 %}
+        <div class="an-duo">
           <div>
-            <div class="stat-value" style="font-size:1.2rem;">₱{{ "%.0f"|format(custom_revenue) }}</div>
-            <div class="stat-sub">Custom ({{ custom_pct }}%)</div>
+            <div class="an-label"><span class="an-dot a"></span>Custom</div>
+            <div class="v">₱{{ "{:,.0f}".format(custom_revenue) }}</div>
+            <div class="an-sub">{{ custom_pct }}% of revenue</div>
           </div>
-          <div style="border-left:2px solid #f0e0f0; padding-left:16px;">
-            <div class="stat-value" style="font-size:1.2rem;">₱{{ "%.0f"|format(premade_revenue) }}</div>
-            <div class="stat-sub">Premade ({{ premade_pct }}%)</div>
+          <div>
+            <div class="an-label"><span class="an-dot b"></span>Premade</div>
+            <div class="v">₱{{ "{:,.0f}".format(premade_revenue) }}</div>
+            <div class="an-sub">{{ premade_pct }}% of revenue</div>
           </div>
         </div>
-        <!-- Mini bar -->
-        <div style="margin-top:10px; height:6px; border-radius:4px; background:#f0e0f0; overflow:hidden;">
-          <div style="height:100%; width:{{ custom_pct }}%; background:#c71585; border-radius:4px;"></div>
+        <div class="an-split">
+          <i class="a" style="width:{{ custom_pct }}%"></i>
+          <i class="b" style="width:{{ premade_pct }}%"></i>
         </div>
-      </div>
-    </div>
-
-    <!-- Top 5 Customers -->
-    <div class="col-md-6 col-sm-12">
-      <div class="stat-card-analytics" style="border-color:#c71585;">
-        <div class="stat-label">Top Customers by Spend</div>
-        <div style="margin-top:8px;">
-          {% for c in top_customers %}
-          <div style="display:flex; justify-content:space-between; align-items:center;
-                      padding:5px 0; border-bottom:1px solid #fce8f3; font-size:0.83rem;">
-            <div>
-              <span style="font-weight:600; color:#333;">{{ loop.index }}. {{ c.name }}</span>
-              <span style="color:#aaa; margin-left:6px;">{{ c.orders }} order{{ 's' if c.orders != 1 else '' }}</span>
-            </div>
-            <span style="font-weight:700; color:#c71585;">₱{{ "%.0f"|format(c.spend) }}</span>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CANCELLATION ANALYTICS -->
-  {% if total_cancelled > 0 %}
-  <div class="section-label mt-2">Cancellation Insights</div>
-  <div class="row g-3 mb-4">
-
-    <!-- Cancelled by split -->
-    <div class="col-md-4">
-      <div class="stat-card-analytics" style="border-color:#dc3545;">
-        <div class="stat-label" style="color:#dc3545;">Total Cancelled</div>
-        <div class="stat-value" style="color:#dc3545;">{{ total_cancelled }}</div>
-        <div class="stat-sub">
-          Customer: {{ cancelled_by_data.customer }} |
-          Admin: {{ cancelled_by_data.admin }}
-        </div>
-        <!-- Mini bar -->
-        {% if total_cancelled > 0 %}
-        {% set cust_pct = (cancelled_by_data.customer / total_cancelled * 100)|int %}
-        <div style="margin-top:10px; height:6px; border-radius:4px; background:#f5c2dc; overflow:hidden;">
-          <div style="height:100%; width:{{ cust_pct }}%; background:#dc3545; border-radius:4px;"></div>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:#aaa; margin-top:4px;">
-          <span>Customer {{ cust_pct }}%</span>
-          <span>Admin {{ 100 - cust_pct }}%</span>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- Cancellation reasons -->
-    <div class="col-md-8">
-      <div class="stat-card-analytics" style="border-color:#dc3545;">
-        <div class="stat-label" style="color:#dc3545;">Cancellation Reasons</div>
-        <div style="margin-top:10px;">
-          {% for reason, count in cancel_reasons.items() | sort(attribute='1', reverse=True) %}
-          {% set pct = (count / total_cancelled * 100)|int %}
-          <div style="margin-bottom:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.83rem; margin-bottom:4px;">
-              <span style="font-weight:600; color:#333;">{{ reason }}</span>
-              <span style="color:#dc3545; font-weight:700;">{{ count }} ({{ pct }}%)</span>
-            </div>
-            <div style="height:6px; border-radius:4px; background:#f5c2dc; overflow:hidden;">
-              <div style="height:100%; width:{{ pct }}%; background:#dc3545; border-radius:4px;"></div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-  </div>
-  {% endif %}
-
-  <!-- MAIN CHART -->
-  <div class="section-label text-white">Sales vs Expenses vs Profit</div>
-  <div class="chart-card">
-    <div class="chart-title">
-      <span id="chartTitleText">Weekly Overview</span>
-      <div class="tab-switcher">
-        <button class="tab-btn active" data-tab="weekly">Weekly</button>
-        <button class="tab-btn" data-tab="monthly">Monthly</button>
-        <button class="tab-btn" data-tab="alltime">All Time</button>
-      </div>
-    </div>
-    <div class="chart-wrapper">
-      <div id="mainChartDiv" style="width:100%; height:320px;"></div>
-    </div>
-  </div>
-
-  <!-- BOTTOM ROW -->
-  <div class="section-label text-white">Detailed Breakdown</div>
-  <div class="row g-3">
-
-    <!-- Monthly Revenue Bar -->
-    <div class="col-lg-4 col-md-12">
-      <div class="chart-card h-100">
-        <div class="chart-title">Monthly Revenue ({{ now.year }})</div>
-        <div id="monthlyRevenueChart" style="width:100%; height:260px;"></div>
-      </div>
-    </div>
-
-    <!-- Top 3 Premade Cakes -->
-    <div class="col-lg-4 col-md-6">
-      <div class="chart-card h-100">
-        <div class="chart-title">Top 3 Premade Cakes</div>
-        {% if top_premade_names %}
-          <div id="topPremadeChart" style="width:100%; height:260px;"></div>
         {% else %}
-          <div class="text-center text-muted py-5">No premade cake orders yet</div>
+        <div class="an-empty">No revenue yet</div>
         {% endif %}
       </div>
     </div>
 
-    <!-- Payment Methods -->
-    <div class="col-lg-4 col-md-6">
-      <div class="chart-card h-100">
-        <div class="chart-title">Payment Methods</div>
+    <div class="an-row r-1-1">
+      <!-- Top premade cakes -->
+      <div class="an-card">
+        <div class="an-card-title">Top 3 Premade Cakes <small>by orders</small></div>
+        {% if top_premade_names %}
+        {% set max_pm = top_premade_counts|max %}
+        <div class="an-bars">
+          {% for i in range(top_premade_names|length) %}
+          <div class="an-bar-row">
+            <div class="top">
+              <span class="name" title="{{ top_premade_names[i] }}">{{ loop.index }}. {{ top_premade_names[i] }}</span>
+              <span class="val">{{ top_premade_counts[i] }} order{{ 's' if top_premade_counts[i] != 1 else '' }}</span>
+            </div>
+            <div class="an-track"><i style="width:{{ (top_premade_counts[i] / max_pm * 100)|round(1) }}%"></i></div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="an-empty">No premade cake orders yet</div>
+        {% endif %}
+      </div>
+
+      <!-- Payment methods -->
+      <div class="an-card">
+        <div class="an-card-title">Payment Methods <small>by orders</small></div>
         {% if payment_counts %}
-          <div id="paymentChart" style="width:100%; height:260px;"></div>
-          <!-- Full legend below chart — no pagination -->
-          <div class="d-flex flex-wrap gap-2 mt-2">
+        {% set pay_total = payment_counts.values()|sum %}
+        <div class="an-pay">
+          <div id="paymentChart"></div>
+          <div class="an-legend">
             {% for method, count in payment_counts.items() %}
-              <span class="badge bg-light text-dark" style="font-size:0.78rem;">
-                {{ method }}: {{ count }}
-              </span>
+            <div class="an-legend-row">
+              <span><span class="an-dot" style="background:{{ pay_palette[loop.index0 % 6] }}"></span>{{ method }}</span>
+              <span class="count">{{ count }}<small>{{ (count / pay_total * 100)|round|int }}%</small></span>
+            </div>
             {% endfor %}
           </div>
+        </div>
         {% else %}
-          <div class="text-center text-muted py-5">No orders yet</div>
+        <div class="an-empty">No orders yet</div>
         {% endif %}
       </div>
     </div>
-  </div>
+  </section>
+
+  <!-- ═════════ 4. CUSTOMERS & OPERATIONS ═════════ -->
+  <section class="an-section">
+    <h2 class="an-section-title">Customers &amp; Operations</h2>
+
+    <div class="an-row r-5-7">
+      <!-- Top customers -->
+      <div class="an-card">
+        <div class="an-card-title">Top Customers <small>by spend</small></div>
+        {% if top_customers %}
+          {% for c in top_customers %}
+          <div class="an-rank">
+            <div class="an-rank-n {{ 'top' if loop.first else '' }}">{{ loop.index }}</div>
+            <div class="an-rank-main">
+              <div class="an-rank-name" title="{{ c.name }}">{{ c.name }}</div>
+              <div class="an-rank-sub">{{ c.orders }} order{{ 's' if c.orders != 1 else '' }}</div>
+            </div>
+            <div class="an-rank-val">₱{{ "{:,.0f}".format(c.spend) }}</div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="an-empty">No customer orders yet</div>
+        {% endif %}
+      </div>
+
+      <div class="an-stack">
+        <!-- Order channels -->
+        {% set channel_total = walkin_count + online_count %}
+        {% set walkin_pct = ((walkin_count / channel_total * 100)|round|int) if channel_total > 0 else 0 %}
+        <div class="an-card">
+          <div class="an-card-title">Order Channels</div>
+          {% if channel_total > 0 %}
+          <div class="an-duo">
+            <div>
+              <div class="an-label"><span class="an-dot a"></span>Online</div>
+              <div class="v">{{ online_count }}</div>
+            </div>
+            <div>
+              <div class="an-label"><span class="an-dot b"></span>Walk-in</div>
+              <div class="v">{{ walkin_count }}</div>
+            </div>
+          </div>
+          <div class="an-split">
+            <i class="a" style="width:{{ 100 - walkin_pct }}%"></i>
+            <i class="b" style="width:{{ walkin_pct }}%"></i>
+          </div>
+          <div class="an-split-legend"><span>Online {{ 100 - walkin_pct }}%</span><span>Walk-in {{ walkin_pct }}%</span></div>
+          {% else %}
+          <div class="an-empty">No orders yet</div>
+          {% endif %}
+        </div>
+
+        <!-- Cancellations -->
+        <div class="an-card">
+          <div class="an-card-title">
+            Cancellations
+            {% if total_cancelled > 0 %}
+            <small>{{ total_cancelled }} total · {{ ((total_cancelled / total_orders * 100)|round(1)) if total_orders > 0 else 0 }}% of orders</small>
+            {% endif %}
+          </div>
+          {% if total_cancelled > 0 %}
+            {% set cust_pct = (cancelled_by_data.customer / total_cancelled * 100)|round|int %}
+            <div class="an-split">
+              <i class="c" style="width:{{ cust_pct }}%"></i>
+              <i class="d" style="width:{{ 100 - cust_pct }}%"></i>
+            </div>
+            <div class="an-split-legend" style="margin-bottom:16px;">
+              <span><span class="an-dot c"></span>Customer {{ cancelled_by_data.customer }}</span>
+              <span><span class="an-dot d"></span>Admin {{ cancelled_by_data.admin }}</span>
+            </div>
+
+            {% set reasons = (cancel_reasons.items() | sort(attribute='1', reverse=True)) | list %}
+            <div class="an-label">Top reasons</div>
+            <div class="an-bars">
+              {% for reason, count in reasons[:4] %}
+              {% set pct = (count / total_cancelled * 100)|round|int %}
+              <div class="an-bar-row bad">
+                <div class="top">
+                  <span class="name" title="{{ reason }}">{{ reason }}</span>
+                  <span class="val">{{ count }} ({{ pct }}%)</span>
+                </div>
+                <div class="an-track"><i style="width:{{ pct }}%"></i></div>
+              </div>
+              {% endfor %}
+            </div>
+            {% if reasons|length > 4 %}
+            <div class="an-sub">+ {{ reasons|length - 4 }} more reason{{ 's' if reasons|length - 4 != 1 else '' }}</div>
+            {% endif %}
+          {% else %}
+            <div class="an-empty">No cancelled orders</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
   <div id="analyticsExportOverlay"
   style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:1050;align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;box-shadow:0 8px 40px rgba(199,21,133,0.18);padding:32px 28px 24px;width:100%;max-width:420px;position:relative;animation:modalIn 0.22s ease;">
@@ -490,7 +534,6 @@
       <span id="aExpDownloadLabel">Download PDF</span>
     </button>
   </div>
-</div>
 </div>
 
 {% endblock %}
@@ -641,9 +684,10 @@
   }
 </script>
 <script type="text/javascript" nonce="{{ csp_nonce() }}">
-  google.charts.load("current", {packages: ["corechart"]});
+  google.charts.load("current", { packages: ["corechart"] });
   google.charts.setOnLoadCallback(initCharts);
 
+  /* ── Data from Flask ── */
   var weeklyData = {
     labels:   {{ days_order | tojson }},
     sales:    [{% for d in days_order %}{{ weekly_sales[d]|float }},{% endfor %}],
@@ -665,14 +709,32 @@
     profit:   {{ alltime_profit_vals | tojson }},
   };
 
+  var paymentData = {
+    labels: {{ payment_counts.keys() | list | tojson }},
+    counts: {{ payment_counts.values() | list | tojson }}
+  };
+
+  var currentMonthIndex = {{ now.month - 1 }};
   var currentTab = 'weekly';
   var mainChart  = null;
+
+  /* ── Shared chart styling ── */
+  var CHART = {
+    pink: '#c71585', soft: '#ff85c1', grey: '#9aa0ae', good: '#198754',
+    text: { color: '#8a8a96', fontSize: 11, fontName: 'Arial' },
+    grid: '#f3e6ee',
+    palette: ['#c71585', '#ff85c1', '#8f1d63', '#ffb6d5', '#e75480', '#b86a97']
+  };
 
   var tabTitles = {
     weekly:  'Weekly Overview (Mon–Sun)',
     monthly: 'Monthly Overview (' + new Date().getFullYear() + ')',
     alltime: 'All Time Overview'
   };
+
+  function currentData() {
+    return currentTab === 'weekly' ? weeklyData : currentTab === 'monthly' ? monthlyData : alltimeData;
+  }
 
   function buildDataTable(data) {
     var table = new google.visualization.DataTable();
@@ -686,13 +748,14 @@
     return table;
   }
 
+  /* ── Main trend chart ── */
   function drawMainChart(data, animate) {
     var options = {
       curveType: 'function',
-      legend: { position: 'bottom' },
-      colors: ['#c71585', '#ff85c1', '#28a745'],
-      hAxis: { textStyle: { fontSize: 11 } },
-      vAxis: { format: '₱#,###', textStyle: { fontSize: 11 }, minValue: 0 },
+      legend: { position: 'bottom', textStyle: CHART.text },
+      colors: [CHART.pink, CHART.grey, CHART.good],
+      hAxis: { textStyle: CHART.text },
+      vAxis: { format: '₱#,##0', textStyle: CHART.text, minValue: 0, gridlines: { color: CHART.grid } },
       chartArea: { width: '85%', height: '68%' },
       backgroundColor: 'transparent',
       lineWidth: 3,
@@ -708,156 +771,116 @@
   function switchTab(tab, btn) {
     if (tab === currentTab) return;
     currentTab = tab;
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
     btn.classList.add('active');
     document.getElementById('chartTitleText').textContent = tabTitles[tab];
     var chartDiv = document.getElementById('mainChartDiv');
     chartDiv.style.opacity = '0';
     chartDiv.style.transform = 'translateX(20px)';
-    setTimeout(function() {
-      var data = tab === 'weekly' ? weeklyData : tab === 'monthly' ? monthlyData : alltimeData;
-      drawMainChart(data, true);
-      chartDiv.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    setTimeout(function () {
+      drawMainChart(currentData(), true);
       chartDiv.style.opacity = '1';
       chartDiv.style.transform = 'translateX(0)';
     }, 250);
   }
 
+  /* ── Monthly revenue (current month highlighted) ── */
+  function drawMonthlyRevenue(animate) {
+    var el = document.getElementById('monthlyRevenueChart');
+    if (!el) return;
+    var dt = new google.visualization.DataTable();
+    dt.addColumn('string', 'Month');
+    dt.addColumn('number', 'Revenue');
+    dt.addColumn({ type: 'string', role: 'style' });
+    for (var i = 0; i < monthlyData.labels.length; i++) {
+      dt.addRow([
+        monthlyData.labels[i],
+        monthlyData.sales[i],
+        'color: ' + (i === currentMonthIndex ? CHART.pink : '#f3b6d6')
+      ]);
+    }
+    new google.visualization.ColumnChart(el).draw(dt, {
+      legend: { position: 'none' },
+      chartArea: { width: '88%', height: '72%' },
+      backgroundColor: 'transparent',
+      hAxis: { textStyle: CHART.text },
+      vAxis: { format: '₱#,##0', minValue: 0, textStyle: CHART.text, gridlines: { color: CHART.grid } },
+      animation: animate ? { startup: true, duration: 600, easing: 'out' } : {}
+    });
+  }
+
+  /* ── Payment methods donut (legend is HTML, next to the chart) ── */
+  function drawPayments(animate) {
+    var el = document.getElementById('paymentChart');
+    if (!el || !paymentData.labels.length) return;
+    var dt = new google.visualization.DataTable();
+    dt.addColumn('string', 'Method');
+    dt.addColumn('number', 'Orders');
+    for (var i = 0; i < paymentData.labels.length; i++) {
+      dt.addRow([paymentData.labels[i], paymentData.counts[i]]);
+    }
+    new google.visualization.PieChart(el).draw(dt, {
+      legend: 'none',
+      pieHole: 0.55,
+      pieSliceText: 'none',
+      chartArea: { width: '92%', height: '92%' },
+      backgroundColor: 'transparent',
+      colors: CHART.palette,
+      tooltip: { trigger: 'focus' },
+      animation: animate ? { startup: true, duration: 600, easing: 'out' } : {}
+    });
+  }
+
   function initCharts() {
     drawMainChart(weeklyData, true);
-
-    // Monthly Revenue
-    var monthlyRevData = new google.visualization.DataTable();
-    monthlyRevData.addColumn('string', 'Month');
-    monthlyRevData.addColumn('number', 'Revenue');
-    {% for m in months %}
-    monthlyRevData.addRow(['{{ m }}', {{ monthly_sales[m]|float }}]);
-    {% endfor %}
-    new google.visualization.ColumnChart(document.getElementById('monthlyRevenueChart')).draw(
-      monthlyRevData, {
-        legend: { position: 'none' },
-        colors: ['#c71585'],
-        chartArea: { width: '80%', height: '65%' },
-        backgroundColor: 'transparent',
-        vAxis: { format: '₱#,###', minValue: 0 },
-        animation: { startup: true, duration: 600, easing: 'out' }
-      }
-    );
-
-    // Top 3 Premade Cakes
-    {% if top_premade_names %}
-    var premadeData = new google.visualization.DataTable();
-    premadeData.addColumn('string', 'Cake');
-    premadeData.addColumn('number', 'Orders');
-    {% for i in range(top_premade_names|length) %}
-    premadeData.addRow(['{{ top_premade_names[i] }}', {{ top_premade_counts[i] }}]);
-    {% endfor %}
-    new google.visualization.BarChart(document.getElementById('topPremadeChart')).draw(
-      premadeData, {
-        legend: { position: 'none' },
-        colors: ['#ff85c1'],
-        chartArea: { width: '65%', height: '65%' },
-        backgroundColor: 'transparent',
-        hAxis: { minValue: 0 },
-        tooltip: { trigger: 'focus' },
-        animation: { startup: true, duration: 600, easing: 'out' }
-      }
-    );
-    {% endif %}
-
-    // Top 3 Custom Cakes
-    {% if top_custom_names %}
-    var customData = new google.visualization.DataTable();
-    customData.addColumn('string', 'Cake');
-    customData.addColumn('number', 'Orders');
-    {% for i in range(top_custom_names|length) %}
-    customData.addRow(['{{ top_custom_names[i] }}', {{ top_custom_counts[i] }}]);
-    {% endfor %}
-    new google.visualization.BarChart(document.getElementById('topCustomChart')).draw(
-      customData, {
-        legend: { position: 'none' },
-        colors: ['#c71585'],
-        chartArea: { width: '65%', height: '65%' },
-        backgroundColor: 'transparent',
-        hAxis: { minValue: 0 },
-        tooltip: { trigger: 'focus' },
-        animation: { startup: true, duration: 600, easing: 'out' }
-      }
-    );
-    {% endif %}
-
-    // Payment Methods — donut, no pagination
-    {% if payment_counts %}
-    var payData = new google.visualization.DataTable();
-    payData.addColumn('string', 'Method');
-    payData.addColumn('number', 'Count');
-    {% for method, count in payment_counts.items() %}
-    payData.addRow(['{{ method }}', {{ count }}]);
-    {% endfor %}
-    new google.visualization.PieChart(document.getElementById('paymentChart')).draw(
-      payData, {
-        legend: { position: 'none' },
-        chartArea: { width: '90%', height: '80%' },
-        backgroundColor: 'transparent',
-        colors: ['#c71585', '#ff85c1', '#aa6da0', '#ffb6c1'],
-        pieHole: 0.4,
-        tooltip: { trigger: 'focus' },
-        animation: { startup: true, duration: 600, easing: 'out' }
-      }
-    );
-    {% endif %}
+    drawMonthlyRevenue(true);
+    drawPayments(true);
   }
 
-  // ── Export CSV ──
-  function exportCSV() {
-    var rows = [['Period', 'Sales', 'Expenses', 'Profit']];
-    var data = currentTab === 'weekly' ? weeklyData : currentTab === 'monthly' ? monthlyData : alltimeData;
-    for (var i = 0; i < data.labels.length; i++) {
-      rows.push([data.labels[i], data.sales[i], data.expenses[i], data.profit[i]]);
-    }
-    var csv = rows.map(r => r.join(',')).join('\n');
-    var blob = new Blob([csv], { type: 'text/csv' });
-    var url  = URL.createObjectURL(blob);
-    var a    = document.createElement('a');
-    a.href     = url;
-    a.download = 'analytics_' + currentTab + '_{{ now.strftime("%Y%m%d") }}.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-  document.addEventListener('DOMContentLoaded', () => {
+  /* Google Charts don't resize themselves — redraw (debounced) */
+  var resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!window.google || !google.visualization) return;
+      drawMainChart(currentData(), false);
+      drawMonthlyRevenue(false);
+      drawPayments(false);
+    }, 150);
+  });
 
-  document.getElementById('btn-analytics-export')
-    .addEventListener('click', openAnalyticsExportModal);
+  document.addEventListener('DOMContentLoaded', function () {
 
-  document.getElementById('aExpClose')
-    .addEventListener('click', closeAnalyticsExportModal);
+    document.getElementById('btn-analytics-export')
+      .addEventListener('click', openAnalyticsExportModal);
 
-  document.getElementById('analyticsExportOverlay')
-    .addEventListener('click', e => {
-      if (e.target === document.getElementById('analyticsExportOverlay'))
-        closeAnalyticsExportModal();
+    document.getElementById('aExpClose')
+      .addEventListener('click', closeAnalyticsExportModal);
+
+    document.getElementById('analyticsExportOverlay')
+      .addEventListener('click', function (e) {
+        if (e.target === document.getElementById('analyticsExportOverlay'))
+          closeAnalyticsExportModal();
+      });
+
+    ['Weekly', 'Monthly', 'Alltime'].forEach(function (r) {
+      document.getElementById('aExp' + r)
+        .addEventListener('click', function () { selectAnalyticsRange(r.toLowerCase()); });
     });
 
-  ['Weekly','Monthly','Alltime'].forEach(r => {
-    document.getElementById('aExp' + r)
-      .addEventListener('click', () => selectAnalyticsRange(r.toLowerCase()));
+    document.getElementById('aExpPDF')
+      .addEventListener('click', function () { selectAnalyticsFormat('pdf'); });
+
+    document.getElementById('aExpCSV')
+      .addEventListener('click', function () { selectAnalyticsFormat('csv'); });
+
+    document.getElementById('aExpRun')
+      .addEventListener('click', runAnalyticsExport);
+
+    document.querySelectorAll('.tab-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () { switchTab(btn.dataset.tab, btn); });
+    });
+
   });
-
-  document.getElementById('aExpPDF')
-    .addEventListener('click', () => selectAnalyticsFormat('pdf'));
-
-  document.getElementById('aExpCSV')
-    .addEventListener('click', () => selectAnalyticsFormat('csv'));
-
-  document.getElementById('aExpRun')
-    .addEventListener('click', runAnalyticsExport);
-
-  // Tab buttons via delegation
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab, btn));
-  });
-
-});
 </script>
-
 {% endblock %}

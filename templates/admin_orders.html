@@ -590,18 +590,33 @@
       .modal-title   { font-size: 0.95rem !important; }
     }
 
-    /* Tablet */
-    @media (min-width: 576px) and (max-width: 991px) {
+    /* Tablet (extended to 1199px: sidebar stays docked 993-1199px) */
+    @media (min-width: 576px) and (max-width: 1199px) {
       #orderDetailsModal .modal-dialog,
       #editOrderModal .modal-dialog {
-        max-width: 88% !important;
+        max-width: min(760px, calc(100vw - 48px)) !important;
         margin-left: auto !important;
         margin-right: auto !important;
       }
+      #orderDetailsModal .modal-content,
+      #editOrderModal .modal-content {
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+      }
+      #editOrderModal .modal-content > form {
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+        min-height: 0;
+      }
       #orderDetailsModal .modal-body,
       #editOrderModal .modal-body {
-        max-height: 68vh;
+        flex: 1 1 auto;
+        min-height: 0;
+        max-height: none;
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
     }
 
